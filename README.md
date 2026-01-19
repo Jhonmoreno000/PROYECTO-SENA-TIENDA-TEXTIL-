@@ -346,7 +346,7 @@ const jhon = {
     currentlyLearning: ["Docker", "AWS", "Spring Boot"],
     hobbies: ["Coding", "Tech blogs", "Problem solving"],
     funFact: "I debug with console.log() and I'm not ashamed",
-    coffee: "☕☕☕☕☕ (Required for coding)",
+    coffee: "☕ (Required for coding)",
     timezone: "GMT-5"
 };
 ```
@@ -365,6 +365,6 @@ const jhon = {
 
 ![Profile Views](https://komarev.com/ghpvc/?username=Jhonmoreno000&color=blueviolet&style=for-the-badge)
 
-**💼 Open to collaboration | 📖 Continuous learner | 🎯 Future Full-Stack Developer**
+
 
 </div>
