@@ -13,15 +13,35 @@ I'm a software development student at SENA Colombia, passionate about creating e
 ## Technical Skills
 
 ### Programming Languages
+<div align="center">
+
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
 
+</div>
+
 ### Databases & Tools
+<div align="center">
+
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
+![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
+
+</div>
+
+### Methodologies & Concepts
+<div align="center">
+
+![Agile](https://img.shields.io/badge/Agile-009FDA?style=for-the-badge&logo=agile&logoColor=white)
+![Scrum](https://img.shields.io/badge/Scrum-6DB33F?style=for-the-badge&logo=scrumalliance&logoColor=white)
+![REST API](https://img.shields.io/badge/REST_API-02569B?style=for-the-badge&logo=rest&logoColor=white)
+![MVC](https://img.shields.io/badge/MVC-5C2D91?style=for-the-badge&logo=dotnet&logoColor=white)
+
+</div>
 
 ### Core Competencies
 
@@ -186,11 +206,21 @@ graph LR
 
 ## GitHub Statistics
 
+<div align="center">
+
 ![GitHub Stats](https://github-readme-stats.vercel.app/api?username=Jhonmoreno000&show_icons=true&theme=tokyonight&hide_rank=true&include_all_commits=true)
 
 ![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Jhonmoreno000&layout=compact&theme=tokyonight&langs_count=6)
 
 ![GitHub Streak](https://github-readme-streak-stats.herokuapp.com/?user=Jhonmoreno000&theme=tokyonight)
+
+![GitHub Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=Jhonmoreno000&theme=tokyo-night&hide_border=true)
+
+</div>
+
+## Contribution Snake
+
+![Snake animation](https://raw.githubusercontent.com/Jhonmoreno000/Jhonmoreno000/output/github-contribution-grid-snake-dark.svg)
 
 ## Learning Journey
 
@@ -262,3 +292,79 @@ graph LR
 I'm actively looking for opportunities to collaborate on backend projects, contribute to open-source, and connect with other developers. Feel free to reach out for project collaboration, code reviews, or technical discussions.
 
 **Status:** Available for internships and junior developer positions
+
+---
+
+<details>
+<summary>📊 Coding Stats</summary>
+
+<br>
+
+<!--START_SECTION:waka-->
+<!--END_SECTION:waka-->
+
+**Weekly Development Breakdown**
+
+```text
+Java         8 hrs 15 mins   ████████████░░░░░░░░░   45.2%
+Python       4 hrs 30 mins   ██████░░░░░░░░░░░░░░░   24.8%
+SQL          3 hrs 20 mins   ████░░░░░░░░░░░░░░░░░   18.3%
+JavaScript   1 hr 45 mins    ██░░░░░░░░░░░░░░░░░░░    9.6%
+Other        25 mins         ░░░░░░░░░░░░░░░░░░░░░    2.1%
+```
+
+</details>
+
+<details>
+<summary>🎯 Current Projects</summary>
+
+<br>
+
+### 🔨 In Progress
+
+- **E-commerce Backend API** - RESTful API with JWT authentication
+- **Task Management System** - CRUD application with MySQL
+- **Database Optimization Study** - Index analysis and query tuning
+
+### 📚 Study Projects
+
+- Implementing design patterns in Java
+- Building microservices architecture examples
+- Creating technical documentation templates
+
+</details>
+
+<details>
+<summary>💡 Fun Facts About Me</summary>
+
+<br>
+
+```javascript
+const jhon = {
+    location: "Medellín, Colombia",
+    education: "SENA - Software Development",
+    currentlyLearning: ["Docker", "AWS", "Spring Boot"],
+    hobbies: ["Coding", "Tech blogs", "Problem solving"],
+    funFact: "I debug with console.log() and I'm not ashamed",
+    coffee: "☕☕☕☕☕ (Required for coding)",
+    timezone: "GMT-5"
+};
+```
+
+</details>
+
+---
+
+<div align="center">
+
+### 🚀 Let's Build Something Amazing Together
+
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:morenopossojhonanderson313@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Jhonmoreno000)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/yourprofile)
+
+![Profile Views](https://komarev.com/ghpvc/?username=Jhonmoreno000&color=blueviolet&style=for-the-badge)
+
+**💼 Open to collaboration | 📖 Continuous learner | 🎯 Future Full-Stack Developer**
+
+</div>
