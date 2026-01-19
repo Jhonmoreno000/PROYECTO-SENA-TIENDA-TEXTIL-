@@ -21,3 +21,8 @@ Software Developer focused on software analysis, backend development and databas
 
 ## Contact
 - Email: morenopossojhonanderson313@gmail.com
+## GitHub Activity
+
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=Jhonmoreno000&show_icons=false&hide_title=true&hide_rank=true)
+
+![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Jhonmoreno000&layout=compact)
