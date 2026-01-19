@@ -296,7 +296,7 @@ I'm actively looking for opportunities to collaborate on backend projects, contr
 ---
 
 <details>
-<summary>📊 Coding Stats</summary>
+<summary> Coding Stats</summary>
 
 <br>
 
@@ -316,17 +316,17 @@ Other        25 mins         ░░░░░░░░░░░░░░░░░
 </details>
 
 <details>
-<summary>🎯 Current Projects</summary>
+<summary> Current Projects</summary>
 
 <br>
 
-### 🔨 In Progress
+###  In Progress
 
 - **E-commerce Backend API** - RESTful API with JWT authentication
 - **Task Management System** - CRUD application with MySQL
 - **Database Optimization Study** - Index analysis and query tuning
 
-### 📚 Study Projects
+###  Study Projects
 
 - Implementing design patterns in Java
 - Building microservices architecture examples
@@ -335,7 +335,7 @@ Other        25 mins         ░░░░░░░░░░░░░░░░░
 </details>
 
 <details>
-<summary>💡 Fun Facts About Me</summary>
+<summary> Fun Facts About Me</summary>
 
 <br>
 
@@ -346,7 +346,7 @@ const jhon = {
     currentlyLearning: ["Docker", "AWS", "Spring Boot"],
     hobbies: ["Coding", "Tech blogs", "Problem solving"],
     funFact: "I debug with console.log() and I'm not ashamed",
-    coffee: "☕ (Required for coding)",
+    coffee: " (Required for coding)",
     timezone: "GMT-5"
 };
 ```
@@ -357,7 +357,7 @@ const jhon = {
 
 <div align="center">
 
-### 🚀 Let's Build Something Amazing Together
+###  Let's Build Something Amazing Together
 
 [![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:morenopossojhonanderson313@gmail.com)
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Jhonmoreno000)
