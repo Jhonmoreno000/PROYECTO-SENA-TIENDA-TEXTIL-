@@ -1,16 +1,23 @@
-## Hi there 👋
+# Jhon Moreno
 
-<!--
-**Jhonmoreno000/Jhonmoreno000** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Software Developer focused on software analysis, backend development and databases.
 
-Here are some ideas to get you started:
+## About me
+- Software Analysis and Development student
+- Experience with Java, Python and MySQL
+- Interest in clean code and structured solutions
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## Technologies
+- Java
+- Python
+- JavaScript
+- php
+- MySQL
+- Git and GitHub
+
+## Featured projects
+- Academic and personal projects related to software development
+- Backend systems and database design exercises
+
+## Contact
+- Email: morenopossojhonanderson313@gmail.com
