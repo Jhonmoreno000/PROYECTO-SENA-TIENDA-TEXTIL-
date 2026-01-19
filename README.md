@@ -41,17 +41,9 @@ Software Developer focused on software analysis, backend development and databas
 ```mermaid
 graph TD
     A[User] --> B[API]
-    B --> C[Database]
+    B --> C[(Database)]
 
-Eso **sí renderiza**.  
-Eso **no da errores**.  
-Eso es **profesional y limpio**.
 
----
-
-## 4. Si quieres el flujo por capas (más nivel)
-
-Usa este en lugar del anterior (también correcto):
 
 ```md
 ## System Flow
@@ -62,17 +54,17 @@ graph TD
     S --> R[Repository]
     R --> D[(Database)]
 
-Nota:  
-`[(Database)]` es la sintaxis correcta para representar base de datos.
 
----
 
-## 5. Dónde poner las explicaciones (sin romper nada)
 
-Las explicaciones **van después**, como Markdown normal:
+
+
+## 4. Dónde poner el texto explicativo (FORMA CORRECTA)
+
+Justo **después** del bloque Mermaid:
 
 ```md
 ### Flow Explanation
 - The client sends a request to the controller
 - Business logic is handled in the service layer
-- Data access is managed by the repository
+- Data access is managed by the repository layer
