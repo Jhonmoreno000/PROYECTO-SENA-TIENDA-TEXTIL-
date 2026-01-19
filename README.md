@@ -36,17 +36,61 @@ Software Developer focused on software analysis, backend development and databas
 - Normalized relational model
 - Foreign key constraints
 - Index optimization
-  
-## System Flow
 
+## System Flow
 ```mermaid
 graph TD
-A[User] --> B[API]
-B --> C[Database]
+    A[User] --> B[API]
+    B --> C[Database]
 
-![License](https://img.shields.io/badge/license-none-lightgrey)
-![Status](https://img.shields.io/badge/status-active-success)
+---
 
+## POR QUÉ ESTO FUNCIONA (importante que lo entiendas)
+
+1. **Mermaid va SOLO dentro de su bloque**
+   ```md
+   ```mermaid
+   ...
+
+2. **Nada puede ir dentro del bloque Mermaid**
+- No badges
+- No texto
+- No links
+- No imágenes
+
+3. **Los badges van fuera**, como Markdown normal:
+```md
+![License](...)
+## System Flow
+```mermaid
+graph TD
+    U[Client] --> C[Controller]
+    C --> S[Service]
+    S --> R[Repository]
+    R --> D[(Database)]
+
+Esto demuestra arquitectura por capas, muy bien visto.
+
+---
+
+## RESULTADO FINAL
+
+Con esto tu repositorio:
+- Renderiza sin errores
+- Se ve técnico y limpio
+- Usa interactividad real
+- Mantiene estética profesional
+- No tiene ruido visual
+
+---
+
+## SIGUIENTE PASO RECOMENDADO
+
+Si quieres, dime:
+- Lenguaje del proyecto (Java, Python, etc.)
+- Tipo de proyecto (API, consola, web)
+
+Y te preparo **el README completo del proyecto**, ya estructurado como **repositorio principal profesional**.
 
 
 
