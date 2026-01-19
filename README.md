@@ -26,3 +26,27 @@ Software Developer focused on software analysis, backend development and databas
 ![GitHub Stats](https://github-readme-stats.vercel.app/api?username=Jhonmoreno000&show_icons=false&hide_title=true&hide_rank=true)
 
 ![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Jhonmoreno000&layout=compact)
+
+## Architecture
+- Layered architecture
+- Separation of concerns
+- Modular structure
+
+## Database Design
+- Normalized relational model
+- Foreign key constraints
+- Index optimization
+  
+## System Flow
+
+```mermaid
+graph TD
+A[User] --> B[API]
+B --> C[Database]
+
+![License](https://img.shields.io/badge/license-none-lightgrey)
+![Status](https://img.shields.io/badge/status-active-success)
+
+
+
+
