@@ -220,7 +220,7 @@ graph LR
 
 ## Contribution Snake
 
-![Snake animation](https://raw.githubusercontent.com/Jhonmoreno000/Jhonmoreno000/output/github-contribution-grid-snake-dark.svg)
+![Snake animation](https://raw.githubusercontent.com/Jhonmoreno000/Jhonmoreno000/output/github-snake.svg)
 
 ## Learning Journey
 
