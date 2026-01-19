@@ -43,24 +43,17 @@ graph TD
     A[User] --> B[API]
     B --> C[Database]
 
+Eso **sí renderiza**.  
+Eso **no da errores**.  
+Eso es **profesional y limpio**.
+
 ---
 
-## POR QUÉ ESTO FUNCIONA (importante que lo entiendas)
+## 4. Si quieres el flujo por capas (más nivel)
 
-1. **Mermaid va SOLO dentro de su bloque**
-   ```md
-   ```mermaid
-   ...
+Usa este en lugar del anterior (también correcto):
 
-2. **Nada puede ir dentro del bloque Mermaid**
-- No badges
-- No texto
-- No links
-- No imágenes
-
-3. **Los badges van fuera**, como Markdown normal:
 ```md
-![License](...)
 ## System Flow
 ```mermaid
 graph TD
@@ -69,28 +62,17 @@ graph TD
     S --> R[Repository]
     R --> D[(Database)]
 
-Esto demuestra arquitectura por capas, muy bien visto.
+Nota:  
+`[(Database)]` es la sintaxis correcta para representar base de datos.
 
 ---
 
-## RESULTADO FINAL
+## 5. Dónde poner las explicaciones (sin romper nada)
 
-Con esto tu repositorio:
-- Renderiza sin errores
-- Se ve técnico y limpio
-- Usa interactividad real
-- Mantiene estética profesional
-- No tiene ruido visual
+Las explicaciones **van después**, como Markdown normal:
 
----
-
-## SIGUIENTE PASO RECOMENDADO
-
-Si quieres, dime:
-- Lenguaje del proyecto (Java, Python, etc.)
-- Tipo de proyecto (API, consola, web)
-
-Y te preparo **el README completo del proyecto**, ya estructurado como **repositorio principal profesional**.
-
-
-
+```md
+### Flow Explanation
+- The client sends a request to the controller
+- Business logic is handled in the service layer
+- Data access is managed by the repository
