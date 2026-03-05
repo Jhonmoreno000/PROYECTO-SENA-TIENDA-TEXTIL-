@@ -101,19 +101,21 @@ graph LR
 
 ```mermaid
 graph TD
-    Client[Client Application] --> API[API Gateway]
-    API --> Auth[Authentication]
-    Auth --> Controller[Controller Layer]
-    Controller --> Service[Service Layer]
-    Service --> Repository[Repository Layer]
-    Repository --> DB[(Database)]
-    
-    style Client fill:#e1f5ff
-    style API fill:#fff4e1
-    style Controller fill:#ffe1f5
-    style Service fill:#e1ffe1
-    style Repository fill:#f5e1ff
-    style DB fill:#ffe1e1
+    Client[<b>Client Application</b>] --> API[<b>API Gateway</b>]
+    API --> Auth[<b>Authentication</b>]
+    Auth --> Controller[<b>Controller Layer</b>]
+    Controller --> Service[<b>Service Layer</b>]
+    Service --> Repository[<b>Repository Layer</b>]
+    Repository --> DB[(<b>Database</b>)]
+
+    %% Estilos con texto forzado en negro para que se lea bien
+    style Client fill:#B3E5FC,stroke:#01579B,stroke-width:2px,color:#000
+    style API fill:#FFE0B2,stroke:#E65100,stroke-width:2px,color:#000
+    style Auth fill:#333333,stroke:#000,stroke-width:2px,color:#fff
+    style Controller fill:#F8BBD0,stroke:#880E4F,stroke-width:2px,color:#000
+    style Service fill:#C8E6C9,stroke:#1B5E20,stroke-width:2px,color:#000
+    style Repository fill:#E1BEE7,stroke:#4A148C,stroke-width:2px,color:#000
+    style DB fill:#FFCDD2,stroke:#B71C1C,stroke-width:2px,color:#000
 ```
 
 ### Layer Responsibilities
