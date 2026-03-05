@@ -207,14 +207,30 @@ graph LR
 ## GitHub Statistics
 
 <div align="center">
+  
+  # Hola, soy Jhon Anderson Moreno
+  
+  [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=7AA2F7&center=true&vCenter=true&width=435&lines=Estudiante+de+Ciberseguridad;Entusiasta+de+Kali+Linux;Aprendiendo+Criptograf%C3%ADa)](https://git.io/typing-svg)
 
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=Jhonmoreno000&show_icons=true&theme=tokyonight&hide_rank=true&include_all_commits=true)
+  ---
 
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Jhonmoreno000&layout=compact&theme=tokyonight&langs_count=6)
+  ### Mis Estadísticas de GitHub
+  
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=Jhonmoreno000&theme=tokyonight" alt="Detalles de Perfil" />
+  
+  <br />
 
-![GitHub Streak](https://github-readme-streak-stats.herokuapp.com/?user=Jhonmoreno000&theme=tokyonight)
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=Jhonmoreno000&theme=tokyonight" alt="Lenguajes con más Commits" />
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/stats?username=Jhonmoreno000&theme=tokyonight" alt="Estadísticas Generales" />
 
-![GitHub Activity Graph](https://github-readme-activity-graph.vercel.app/graph?username=Jhonmoreno000&theme=tokyo-night&hide_border=true)
+  ---
+
+  ### Herramientas y Tecnologías
+  
+  ![Kali Linux](https://img.shields.io/badge/Kali_Linux-557C94?style=for-the-badge&logo=kali-linux&logoColor=white)
+  ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+  ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)
+  ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
 
 </div>
 
