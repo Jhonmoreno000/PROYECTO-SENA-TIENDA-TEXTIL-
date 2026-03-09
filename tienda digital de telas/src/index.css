@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f9fafb;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-border: #e5e7eb;
+  }
+
+  .dark {
+    --color-bg-primary: #0f172a;
+    --color-bg-secondary: #1e293b;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-border: #334155;
+  }
+
+  body {
+    @apply bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans;
+    @apply transition-colors duration-300;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-500 text-white px-6 py-3 rounded-lg font-semibold;
+    @apply hover:from-primary-700 hover:to-primary-600 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+    @apply active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-600 text-white px-6 py-3 rounded-lg font-semibold;
+    @apply hover:bg-secondary-700 transition-all duration-300;
+    @apply shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary-600 text-primary-600 px-6 py-3 rounded-lg font-semibold;
+    @apply hover:bg-primary-600 hover:text-white transition-all duration-300;
+    @apply dark:border-primary-400 dark:text-primary-400 dark:hover:bg-primary-400 dark:hover:text-white;
+  }
+
+  .card {
+    @apply bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-md;
+    @apply hover:shadow-xl transition-all duration-300;
+  }
+
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+    @apply dark:bg-slate-800/30 dark:border-slate-700/50;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border-2 border-gray-300;
+    @apply focus:border-primary-500 focus:ring-2 focus:ring-primary-200;
+    @apply dark:bg-slate-800 dark:border-slate-600 dark:text-white;
+    @apply transition-all duration-200 outline-none;
+  }
+
+  .input-field-premium {
+    @apply w-full px-4 py-3.5 rounded-xl border-2 border-gray-200/50;
+    @apply bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm;
+    @apply focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50;
+    @apply dark:border-slate-600/50 dark:text-white dark:focus:border-purple-400 dark:focus:ring-purple-900/30;
+    @apply transition-all duration-300 outline-none;
+    @apply hover:border-blue-300 dark:hover:border-purple-500/50;
+    @apply placeholder:text-gray-400 dark:placeholder:text-gray-500;
+    @apply shadow-sm hover:shadow-md focus:shadow-lg;
+  }
+
+  .btn-premium {
+    @apply relative px-6 py-3.5 rounded-xl font-semibold text-white;
+    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600;
+    @apply shadow-lg hover:shadow-2xl;
+    @apply transition-all duration-300;
+    @apply overflow-hidden;
+  }
+
+  .btn-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400;
+    @apply opacity-0 transition-opacity duration-300;
+  }
+
+  .btn-premium:hover::before {
+    @apply opacity-100;
+  }
+
+  .btn-premium span {
+    @apply relative z-10;
+  }
+
+  .login-card-glass {
+    @apply relative;
+  }
+
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400 bg-clip-text text-transparent;
+  }
+
+  .animate-on-scroll {
+    @apply opacity-0 translate-y-8 transition-all duration-700;
+  }
+
+  .animate-on-scroll.visible {
+    @apply opacity-100 translate-y-0;
+  }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-slate-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary-500 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary-600;
+}
+
+/* Animaciones personalizadas */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+  background-size: 1000px 100%;
+}
+
+.dark .skeleton {
+  background: linear-gradient(to right, #1e293b 4%, #334155 25%, #1e293b 36%);
+}
+
+/* 3D Card Styles */
+.card-perspective {
+  perspective: 1000px;
+}
+
+.card-container {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Smooth animations */
+@media (prefers-reduced-motion: no-preference) {
+  .card-container {
+    transition: transform 0.6s ease-in-out;
+  }
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card-container {
+    transition: none;
+  }
+}
