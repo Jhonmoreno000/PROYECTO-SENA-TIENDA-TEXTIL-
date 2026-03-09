@@ -148,71 +148,7 @@ CREATE TABLE pending_product_images (
 );
 
 -- ============================================================
--- 6. PEDIDOS (ORDERS)
--- ============================================================
-CREATE TABLE orders (
-    id              SERIAL PRIMARY KEY,
-    client_id       INT          NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    seller_id       INT          NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    total           DECIMAL(12,2) NOT NULL CHECK (total >= 0),
-    status          VARCHAR(30)  NOT NULL DEFAULT 'preparing'
-                        CHECK (status IN ('preparing', 'shipped', 'delivered', 'cancelled', 'returned')),
-    coupon_id       INT          NULL REFERENCES coupons(id),
-    discount_amount DECIMAL(12,2) NULL DEFAULT 0,
-    shipping_cost   DECIMAL(12,2) NOT NULL DEFAULT 0,
-    shipping_address TEXT        NULL,
-    notes           TEXT         NULL,
-    order_date      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    shipped_at      TIMESTAMP    NULL,
-    delivered_at    TIMESTAMP    NULL,
-    created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE orders IS 'Pedidos realizados por los clientes';
-
-CREATE INDEX idx_orders_client ON orders(client_id);
-CREATE INDEX idx_orders_seller ON orders(seller_id);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_date ON orders(order_date);
-
--- ============================================================
--- 7. ITEMS DE PEDIDO
--- ============================================================
-CREATE TABLE order_items (
-    id              SERIAL PRIMARY KEY,
-    order_id        INT          NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id      INT          NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    quantity        INT          NOT NULL CHECK (quantity > 0),
-    unit_price      DECIMAL(12,2) NOT NULL CHECK (unit_price >= 0),
-    subtotal        DECIMAL(12,2) NOT NULL GENERATED ALWAYS AS (quantity * unit_price) STORED,
-    created_at      TIMESTAMP    NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE order_items IS 'Detalle de productos en cada pedido';
-
-CREATE INDEX idx_order_items_order ON order_items(order_id);
-CREATE INDEX idx_order_items_product ON order_items(product_id);
-
--- ============================================================
--- 8. CARRITO DE COMPRAS
--- ============================================================
-CREATE TABLE cart_items (
-    id              SERIAL PRIMARY KEY,
-    user_id         INT          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    product_id      INT          NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    quantity        INT          NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    added_at        TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, product_id)
-);
-
-COMMENT ON TABLE cart_items IS 'Carrito de compras de cada usuario';
-
-CREATE INDEX idx_cart_items_user ON cart_items(user_id);
-
--- ============================================================
--- 9. CUPONES DE DESCUENTO
+-- 6. CUPONES DE DESCUENTO
 -- ============================================================
 CREATE TABLE coupons (
     id              SERIAL PRIMARY KEY,
@@ -242,7 +178,71 @@ CREATE TABLE coupon_categories (
     UNIQUE(coupon_id, category_name)
 );
 
--- Registro de uso de cupones
+-- ============================================================
+-- 7. PEDIDOS (ORDERS)
+-- ============================================================
+CREATE TABLE orders (
+    id              SERIAL PRIMARY KEY,
+    client_id       INT          NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    seller_id       INT          NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    total           DECIMAL(12,2) NOT NULL CHECK (total >= 0),
+    status          VARCHAR(30)  NOT NULL DEFAULT 'preparing'
+                        CHECK (status IN ('preparing', 'shipped', 'delivered', 'cancelled', 'returned')),
+    coupon_id       INT          NULL REFERENCES coupons(id),
+    discount_amount DECIMAL(12,2) NULL DEFAULT 0,
+    shipping_cost   DECIMAL(12,2) NOT NULL DEFAULT 0,
+    shipping_address TEXT        NULL,
+    notes           TEXT         NULL,
+    order_date      TIMESTAMP    NOT NULL DEFAULT NOW(),
+    shipped_at      TIMESTAMP    NULL,
+    delivered_at    TIMESTAMP    NULL,
+    created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE orders IS 'Pedidos realizados por los clientes';
+
+CREATE INDEX idx_orders_client ON orders(client_id);
+CREATE INDEX idx_orders_seller ON orders(seller_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_date ON orders(order_date);
+
+-- ============================================================
+-- 8. ITEMS DE PEDIDO
+-- ============================================================
+CREATE TABLE order_items (
+    id              SERIAL PRIMARY KEY,
+    order_id        INT          NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id      INT          NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity        INT          NOT NULL CHECK (quantity > 0),
+    unit_price      DECIMAL(12,2) NOT NULL CHECK (unit_price >= 0),
+    subtotal        DECIMAL(12,2) NOT NULL GENERATED ALWAYS AS (quantity * unit_price) STORED,
+    created_at      TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE order_items IS 'Detalle de productos en cada pedido';
+
+CREATE INDEX idx_order_items_order ON order_items(order_id);
+CREATE INDEX idx_order_items_product ON order_items(product_id);
+
+-- ============================================================
+-- 9. CARRITO DE COMPRAS
+-- ============================================================
+CREATE TABLE cart_items (
+    id              SERIAL PRIMARY KEY,
+    user_id         INT          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id      INT          NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    quantity        INT          NOT NULL DEFAULT 1 CHECK (quantity > 0),
+    added_at        TIMESTAMP    NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, product_id)
+);
+
+COMMENT ON TABLE cart_items IS 'Carrito de compras de cada usuario';
+
+CREATE INDEX idx_cart_items_user ON cart_items(user_id);
+
+-- Registro de uso de cupones (depende de coupons, users y orders)
 CREATE TABLE coupon_usage (
     id              SERIAL PRIMARY KEY,
     coupon_id       INT          NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
