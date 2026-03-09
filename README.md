@@ -1,26 +1,42 @@
-#  Tienda Digital de Telas - D&D Textiles
+#  D&D Textiles - Tienda Digital
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
 
-Una plataforma de comercio electrónico robusta y moderna diseñada para la gestión y venta de productos textiles. Este proyecto utiliza un stack tecnológico de alto rendimiento para ofrecer una experiencia fluida tanto a clientes como a administradores.
+> **Plataforma E-commerce** avanzada para la gestión de productos textiles, con un enfoque en la experiencia de usuario (UX) y la eficiencia administrativa.
 
-##  Tecnologías Utilizadas
+---
 
-* **Frontend:** [React.js](https://reactjs.dev/) con [Vite](https://vitejs.dev/) para un desarrollo ultra rápido.
-* **Estilos:** [Tailwind CSS](https://tailwindcss.com/) para un diseño responsivo y moderno.
-* **Gestión de Rutas:** React Router Dom.
-* **Validaciones:** Formik / Yup (visto en los esquemas de pago).
+##  Funcionalidades Principales
 
-##  Características Principales
+###  Gestión de Usuarios
+* **Autenticación Segura:** Sistema de login y registro integrado.
+* **Dashboards Dinámicos:** Vistas personalizadas según el rol (**Admin**, **Vendedor**, **Cliente**).
 
-* **Sistema de Autenticación:** Flujo completo de Login y Registro de usuarios.
-* **Dashboards Multi-Rol:** Interfaces personalizadas para:
-    * **Admin:** Control total del sistema.
-    * **Seller:** Gestión de inventario y pedidos.
-    * **Client:** Experiencia de compra y seguimiento.
-* **Pasarela de Pago:** Simulación de pagos con validación de tarjetas y formularios PSE.
-* **Gestión de Inventario:** Alertas de stock y métricas en tiempo real.
+###  Experiencia de Compra
+* **Carrito de Compras:** Flujo completo desde la selección hasta el checkout.
+* **Pasarela de Pagos:** Validación de tarjetas y simulación de pagos vía **PSE**.
 
-##  Instalación y Uso
+###  Administración y Control
+* **Gestión de Stock:** Alertas automáticas para productos con baja disponibilidad.
+* **Métricas de Ventas:** Visualización de pedidos y análisis de datos en tiempo real.
 
-1. **Clonar el repositorio:**
+---
+
+##  Stack Tecnológico
+
+| Herramienta | Uso |
+| :--- | :--- |
+| **React + Vite** | Desarrollo del Core y Renderizado ultra rápido. |
+| **Tailwind CSS** | Estilizado moderno y totalmente responsivo. |
+| **Formik / Yup** | Gestión de formularios y validaciones de seguridad. |
+| **Lucide Icons** | Iconografía minimalista y profesional. |
+
+---
+
+##  Guía de Inicio
+
+1. **Clona el repositorio:**
    ```bash
    git clone [https://github.com/Jhonmoreno000/Jhonmoreno000.git](https://github.com/Jhonmoreno000/Jhonmoreno000.git)
