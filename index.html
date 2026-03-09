@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D Textiles - Textiles Premium</title>
+    
+    <!-- React & ReactDOM desde CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        html.dark { background-color: #000000; color: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
+        html.dark body { background-color: #000000; color: #ffffff; }
+        a { color: inherit; text-decoration: none; }
+        button { cursor: pointer; border: none; font-family: inherit; }
+        .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
+        .toast { padding: 14px 18px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); font-size: 13px; font-weight: 500; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px; }
+        .toast.success { background-color: #10b981; color: white; }
+        .toast.error { background-color: #ef4444; color: white; }
+        .toast.info { background-color: #ff6b35; color: white; }
+        @keyframes slideIn { from { transform: translateX(420px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, createContext, useContext } = React;
+
+        // ========== CONTEXTOS ==========
+        const AuthContext = createContext();
+        const DataContext = createContext();
+
+        function AuthProvider({ children }) {
+            const [user, setUser] = useState(null);
+            const [loading, setLoading] = useState(false);
+
+            useEffect(() => {
+                // Cargar usuario desde localStorage al montar
+                const savedUser = localStorage.getItem('user');
+                if (savedUser) {
+                    try {
+                        setUser(JSON.parse(savedUser));
+                    } catch (e) {
+                        console.error('Error al cargar usuario:', e);
+                        localStorage.removeItem('user');
+                    }
+                }
+
+                // Escuchar cambios de sesión desde otras pestañas
+                const handleStorageChange = (e) => {
+                    if (e.key === 'user') {
+                        if (e.newValue) {
+                            try {
+                                setUser(JSON.parse(e.newValue));
+                            } catch (e) {
+                                console.error('Error al cargar usuario:', e);
+                            }
+                        } else {
+                            setUser(null);
+                        }
+                    }
+                };
+                window.addEventListener('storage', handleStorageChange);
+                return () => window.removeEventListener('storage', handleStorageChange);
+            }, []);
+
+            const login = (email, password) => {
+                setLoading(true);
+                const testUsers = [
+                    { id: 1, name: 'Admin User', email: 'admin@test.com', role: 'admin', password: '123' },
+                    { id: 2, name: 'Vendedor User', email: 'vendedor@test.com', role: 'vendedor', password: '123' },
+                    { id: 3, name: 'Cliente User', email: 'cliente@test.com', role: 'cliente', password: '123' }
+                ];
+                
+                // Combinar usuarios de prueba con usuarios registrados
+                const registeredUsers = localStorage.getItem('registeredUsers') 
+                    ? JSON.parse(localStorage.getItem('registeredUsers')) 
+                    : [];
+                const allUsers = [...testUsers, ...registeredUsers];
+                
+                setTimeout(() => {
+                    const found = allUsers.find(u => u.email === email && u.password === password);
+                    if (found) {
+                        const userData = { id: found.id, name: found.name, email: found.email, role: found.role };
+                        setUser(userData);
+                        localStorage.setItem('user', JSON.stringify(userData));
+                    } else {
+                        alert('Email o contraseña incorrectos');
+                    }
+                    setLoading(false);
+                }, 500);
+            };
+
+            const logout = () => {
+                setUser(null);
+                localStorage.removeItem('user');
+            };
+
+            return (
+                <AuthContext.Provider value={{ user, login, logout, loading }}>
+                    {children}
+                </AuthContext.Provider>
+            );
+        }
+
+        function DataProvider({ children }) {
+            const [products, setProducts] = useState([
+                { id: 1, name: 'Algodón Premium', price: 25.99, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop', discount: 20, stock: 45, category: 'Natural', status: 'Activo' },
+                { id: 2, name: 'Lino Elegante', price: 32.99, image: 'https://images.unsplash.com/photo-1591898159041-7a5a0326df80?w=300&h=300&fit=crop', discount: 15, stock: 30, category: 'Natural', status: 'Activo' },
+                { id: 3, name: 'Seda Natural', price: 45.99, image: 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60908?w=300&h=300&fit=crop', discount: 0, stock: 12, category: 'Premium', status: 'Activo' },
+                { id: 4, name: 'Lana Pura', price: 38.99, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300&h=300&fit=crop', discount: 10, stock: 25, category: 'Natural', status: 'Activo' },
+                { id: 5, name: 'Poliéster', price: 18.99, image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=300&h=300&fit=crop', discount: 25, stock: 60, category: 'Sintético', status: 'Activo' },
+                { id: 6, name: 'Mezcla Especial', price: 29.99, image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=300&fit=crop', discount: 5, stock: 35, category: 'Mezcla', status: 'Activo' }
+            ]);
+
+            const [orders] = useState([
+                { id: 'PED001', customer: 'Juan García', items: 3, total: 125.50, status: 'Entregado', date: '2026-01-15' },
+                { id: 'PED002', customer: 'María López', items: 2, total: 89.99, status: 'En tránsito', date: '2026-01-18' },
+                { id: 'PED003', customer: 'Carlos Rodríguez', items: 5, total: 250.00, status: 'Pendiente', date: '2026-01-20' }
+            ]);
+
+            const [users] = useState([
+                { id: 1, name: 'Juan García', email: 'juan@example.com', role: 'cliente', status: 'Activo', joined: '2025-06-10' },
+                { id: 2, name: 'María López', email: 'maria@example.com', role: 'vendedor', status: 'Activo', joined: '2025-08-20' },
+                { id: 3, name: 'Carlos Rodríguez', email: 'carlos@example.com', role: 'cliente', status: 'Activo', joined: '2025-11-05' }
+            ]);
+
+            return (
+                <DataContext.Provider value={{ products, setProducts, orders, users }}>
+                    {children}
+                </DataContext.Provider>
+            );
+        }
+
+        function useAuth() { return useContext(AuthContext); }
+        function useData() { return useContext(DataContext); }
+
+        // ========== ICONOS SVG ==========
+        const IconThread = () => (
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <style>{`
+                    @keyframes threadWave {
+                        0%, 100% { strokeDashoffset: 0; }
+                        50% { strokeDashoffset: 10; }
+                    }
+                    .thread-line {
+                        animation: threadWave 2s ease-in-out infinite;
+                    }
+                `}</style>
+                <defs>
+                    <linearGradient id="threadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="currentColor"/>
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.6"/>
+                    </linearGradient>
+                </defs>
+                <g fill="none" stroke="url(#threadGradient)" strokeWidth="1.5" strokeLinecap="round">
+                    <path className="thread-line" d="M 6 8 Q 12 6 18 8" strokeDasharray="12" style={{animationDelay: '0s'}}/>
+                    <path className="thread-line" d="M 6 12 Q 12 10 18 12" strokeDasharray="12" style={{animationDelay: '0.3s'}}/>
+                    <path className="thread-line" d="M 6 16 Q 12 14 18 16" strokeDasharray="12" style={{animationDelay: '0.6s'}}/>
+                </g>
+            </svg>
+        );
+        const IconCart = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
+        const IconMoon = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>;
+        const IconSun = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m6.08 0l4.24-4.24M1 12h6m6 0h6m-1.78 7.78l-4.24-4.24m-6.08 0l-4.24 4.24"/></svg>;
+        const IconUser = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
+        const IconMail = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
+        const IconPhone = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
+        const IconLocation = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>;
+        const IconAdmin = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M12 1a11 11 0 1 0 0 22 11 11 0 0 0 0-22zm0 20a9 9 0 1 1 0-18 9 9 0 0 1 0 18z"/></svg>;
+        const IconVendedor = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2zm-6-6V7c0-.55-.45-1-1-1s-1 .45-1 1v0H6v14h12V7h-5zM8 19H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6v-2h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2z"/></svg>;
+        const IconCliente = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>;
+        const IconStats = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>;
+        const IconProducts = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-0.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-0.16 0.28-0.25 0.61-0.25 0.96 0 1.1 0.9 2 2 2h12v-2H7.42c-0.14 0-0.25-0.11-0.25-0.25l0.03-0.12 0.9-1.63h7.45c0.75 0 1.41-0.41 1.75-1.03l3.58-6.49c0.08-0.14 0.12-0.31 0.12-0.48 0-0.55-0.45-1-1-1H5.21l-0.94-2H1zm16 16c-1.1 0-1.99 0.9-1.99 2s0.89 2 1.99 2 2-0.9 2-2-0.9-2-2-2z"/></svg>;
+        const IconUsers = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-0.29 0-0.62 0.02-0.97 0.05 1.5 1.1 2.97 2.65 2.97 4.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>;
+        const IconOrders = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>;
+        const IconMessages = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>;
+        const IconEdit = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
+        const IconImage = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
+        const IconDownload = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+
+        // ========== COMPONENTES PRINCIPALES ==========
+        function Navbar({ isDark, setIsDark, user, onShowLogin, logout, cart, onShowCart, onShowDashboard }) {
+            return (
+                <nav className="sticky top-0 z-40 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900 w-full">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center w-full">
+                        <div className="flex items-center gap-3 group cursor-pointer">
+                            <div className="relative transition-transform duration-300 group-hover:scale-110 group-hover:drop-shadow-lg">
+                                <IconThread className="w-6 h-6 text-orange-500 transition-all duration-300 group-hover:rotate-12 group-hover:text-orange-600" />
+                            </div>
+                            <div className="flex flex-col transition-all duration-300 group-hover:translate-x-1">
+                                <span className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-none transition-colors duration-300 group-hover:text-orange-600">D&D</span>
+                                <span className="text-xs font-bold text-orange-500 uppercase tracking-widest transition-colors duration-300 group-hover:text-orange-600">Textiles</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {!user && (
+                                <button onClick={onShowCart} className="relative icon-btn hover:bg-gray-100 dark:hover:bg-gray-900 rounded transition-colors">
+                                    <IconCart className="w-6 h-6 text-gray-900 dark:text-white" />
+                                    {cart.length > 0 && (
+                                        <span className="absolute top-0 right-0 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{cart.length}</span>
+                                    )}
+                                </button>
+                            )}
+                            <button onClick={() => setIsDark(!isDark)} className="icon-btn hover:bg-gray-100 dark:hover:bg-gray-900 rounded transition-colors" title="Cambiar tema">
+                                {isDark ? (
+                                    <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m6.08 0l4.24-4.24M1 12h6m6 0h6m-1.78 7.78l-4.24-4.24m-6.08 0l-4.24 4.24"/></svg>
+                                ) : (
+                                    <svg className="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                                )}
+                            </button>
+                            {user ? (
+                                <div className="flex gap-2 items-center">
+                                    <span className="text-sm hidden sm:inline text-gray-600 dark:text-gray-400 px-2">{user.name}</span>
+                                    <button onClick={onShowDashboard} className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors">Dashboard</button>
+                                    <button onClick={logout} className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-colors">Salir</button>
+                                </div>
+                            ) : (
+                                <button onClick={onShowLogin} className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded transition-colors font-semibold"><IconUser className="w-4 h-4" />Iniciar</button>
+                            )}
+                        </div>
+                    </div>
+                </nav>
+            );
+        }
+
+        function Carousel({ showToast }) {
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const slides = [
+                { title: 'Textiles Premium', subtitle: 'Calidad excepcional para tus espacios', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&h=600&fit=crop' },
+                { title: 'Colecciones Exclusivas', subtitle: 'Diseños únicos y sofisticados', image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1200&h=600&fit=crop' },
+                { title: 'Entregas Rápidas', subtitle: 'Servicio confiable y puntual', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1200&h=600&fit=crop' }
+            ];
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentSlide((prev) => (prev + 1) % slides.length);
+                }, 5000);
+                return () => clearInterval(timer);
+            }, []);
+            return (
+                <div className="relative h-96 overflow-hidden bg-gray-900 w-screen" style={{marginLeft: 'calc(-50vw + 50%)'}}>
+                    {slides.map((slide, i) => (
+                        <div key={i} className={`absolute inset-0 transition-opacity duration-700 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}>
+                            <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex flex-col justify-center items-start text-white px-8 md:px-16">
+                                <div className="max-w-xl">
+                                    <h2 className="text-5xl md:text-6xl font-light mb-4 tracking-tight leading-tight">{slide.title}</h2>
+                                    <p className="text-lg text-gray-200 mb-8 font-light">{slide.subtitle}</p>
+                                    <button onClick={() => showToast('¡Bienvenido a D&D Textiles!', 'success')} className="group relative inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 via-orange-500 to-orange-600 text-white font-bold text-lg rounded-lg shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 overflow-hidden hover:-translate-y-1">
+                                        <span className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                                        <span className="relative flex items-center gap-2">
+                                            Explorar Colecciones
+                                            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    <button onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)} className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 z-10 opacity-0 group-hover:opacity-100 backdrop-blur-sm">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <button onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)} className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition-all duration-200 z-10 opacity-0 group-hover:opacity-100 backdrop-blur-sm">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-10">
+                        {slides.map((_, i) => (
+                            <button key={i} onClick={() => setCurrentSlide(i)} className={`transition-all duration-300 ${i === currentSlide ? 'bg-orange-500 w-8 h-2' : 'bg-white/50 hover:bg-white/70 w-2 h-2'} rounded-full`} />
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function Products({ onAddToCart }) {
+            const [products, setProducts] = useState([]);
+
+            // Cargar productos iniciales
+            const loadProducts = useCallback(() => {
+                const savedProducts = localStorage.getItem('ddTextiles_products');
+                if (savedProducts) {
+                    try {
+                        const parsed = JSON.parse(savedProducts);
+                        setProducts(parsed);
+                        console.log('Productos cargados:', parsed);
+                    } catch (e) {
+                        console.error('Error al cargar productos:', e);
+                        setDefaultProducts();
+                    }
+                } else {
+                    setDefaultProducts();
+                }
+            }, []);
+
+            const setDefaultProducts = () => {
+                const defaultProducts = [
+                    { id: 1, name: 'Algodón Premium', price: 25.99, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop', discount: 20 },
+                    { id: 2, name: 'Lino Elegante', price: 32.99, image: 'https://images.unsplash.com/photo-1591898159041-7a5a0326df80?w=300&h=300&fit=crop', discount: 15 },
+                    { id: 3, name: 'Seda Natural', price: 45.99, image: 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60908?w=300&h=300&fit=crop', discount: 0 },
+                    { id: 4, name: 'Lana Pura', price: 38.99, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300&h=300&fit=crop', discount: 10 },
+                    { id: 5, name: 'Poliéster', price: 18.99, image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=300&h=300&fit=crop', discount: 25 },
+                    { id: 6, name: 'Mezcla Especial', price: 29.99, image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=300&fit=crop', discount: 5 }
+                ];
+                setProducts(defaultProducts);
+                localStorage.setItem('ddTextiles_products', JSON.stringify(defaultProducts));
+            };
+
+            useEffect(() => {
+                loadProducts();
+
+                // Verificar cambios cada 200ms para detectar cambios del admin
+                const interval = setInterval(() => {
+                    const updated = localStorage.getItem('ddTextiles_products');
+                    if (updated) {
+                        try {
+                            const parsedProducts = JSON.parse(updated);
+                            setProducts(parsedProducts);
+                        } catch (e) {
+                            console.error('Error al cargar productos actualizados:', e);
+                        }
+                    }
+                }, 200);
+
+                // Escuchar cambios en otras pestañas
+                const handleStorageChange = () => {
+                    const updated = localStorage.getItem('ddTextiles_products');
+                    if (updated) {
+                        try {
+                            const parsedProducts = JSON.parse(updated);
+                            setProducts(parsedProducts);
+                        } catch (e) {
+                            console.error('Error al cargar productos actualizados:', e);
+                        }
+                    }
+                };
+                window.addEventListener('storage', handleStorageChange);
+                
+                return () => {
+                    clearInterval(interval);
+                    window.removeEventListener('storage', handleStorageChange);
+                };
+            }, []);
+            return (
+                <section className="py-24 px-4 border-t border-gray-200 dark:border-gray-900 bg-white dark:bg-black">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="mb-16">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="h-1 w-12 bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"></div>
+                                <h2 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 dark:from-orange-400 dark:via-orange-300 dark:to-orange-200 tracking-tight">Productos Destacados</h2>
+                                <div className="h-1 w-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full"></div>
+                            </div>
+                            <p className="text-gray-600 dark:text-gray-400 font-light text-lg ml-16">✨ Descubre nuestra selección de textiles premium con los mejores precios</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {products.map((product) => (
+                                <div key={product.id} className="group bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-900 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                    <div className="relative overflow-hidden h-72 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
+                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                        {product.discount > 0 && (
+                                            <div className="absolute top-4 right-4 bg-orange-500 text-white px-4 py-2 text-sm font-bold rounded-lg shadow-lg transform -rotate-3">
+                                                -{product.discount}%
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+                                    </div>
+                                    <div className="p-6">
+                                        <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">{product.name}</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Material Premium • Importado</p>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <span className="text-2xl font-semibold text-orange-500">${product.price}</span>
+                                            <div className="flex items-center gap-0.5">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <span key={i} className={`text-sm ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => onAddToCart(product)} className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 text-sm font-bold shadow-md hover:shadow-lg flex items-center justify-center gap-2 group/btn">
+                                            <IconCart className="w-4 h-4" />
+                                            Añadir al carrito
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function Gallery() {
+            const gallery = ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1591898159041-7a5a0326df80?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60908?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop'];
+            return (
+                <section className="py-24 px-4 bg-gradient-to-b from-white dark:from-black to-gray-50 dark:to-gray-950 border-t border-gray-200 dark:border-gray-900">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="mb-16 text-center">
+                            <h2 className="text-4xl font-light mb-4 text-gray-900 dark:text-white tracking-tight">Galería de Inspiración</h2>
+                            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-light">Mira cómo nuestros clientes transforman sus espacios con nuestros textiles premium</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {gallery.map((img, i) => (
+                                <div key={i} className="group relative overflow-hidden h-80 rounded-lg bg-gray-200 dark:bg-gray-900 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                                    <img src={img} alt={`Galería ${i}`} className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-500" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                                        <p className="text-white text-lg font-medium">Diseño Exclusivo</p>
+                                        <p className="text-gray-200 text-sm font-light">Colección Premium D&D</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function About() {
+            return (
+                <section className="py-24 px-4 border-t border-gray-200 dark:border-gray-900 bg-white dark:bg-black">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                            <div className="relative">
+                                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=500&fit=crop" alt="Sobre nosotros" className="rounded-2xl w-full shadow-2xl" />
+                                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-orange-500 rounded-2xl opacity-20 blur-3xl"></div>
+                            </div>
+                            <div>
+                                <h2 className="text-5xl font-light mb-6 tracking-tight text-gray-900 dark:text-white">D&D Textiles</h2>
+                                <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed text-lg font-light">Somos una empresa dedicada a ofrecer textiles de la más alta calidad. Contamos con más de 20 años de experiencia en el mercado y nos enorgullece servir a nuestros clientes con profesionalismo y dedicación.</p>
+                                <p className="text-gray-600 dark:text-gray-400 mb-12 leading-relaxed text-base font-light">Cada producto está seleccionado cuidadosamente para garantizar satisfacción, durabilidad y estilo en tus espacios.</p>
+                                <div className="grid grid-cols-2 gap-6">
+                                    {[{ num: '1000+', text: 'Clientes Felices' }, { num: '500+', text: 'Productos' }, { num: '20+', text: 'Años Exp.' }, { num: '100%', text: 'Garantía' }].map((stat, i) => (
+                                        <div key={i} className="group bg-gradient-to-br from-orange-50 to-transparent dark:from-orange-950/20 dark:to-transparent p-6 rounded-xl border border-orange-100 dark:border-orange-900/30 text-center hover:border-orange-300 dark:hover:border-orange-700 transition-all duration-300">
+                                            <div className="text-3xl font-bold text-orange-500 mb-2">{stat.num}</div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.text}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function Contact({ showToast }) {
+            const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+            const handleChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                showToast('¡Mensaje enviado exitosamente!', 'success');
+                setFormData({ name: '', email: '', subject: '', message: '' });
+            };
+            return (
+                <section className="py-24 px-4 border-t border-gray-200 dark:border-gray-900 bg-gradient-to-b from-gray-50 dark:from-gray-950 to-white dark:to-black">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl font-light mb-4 tracking-tight text-gray-900 dark:text-white">¿Preguntas? Nos Encantaría Saber de Ti</h2>
+                            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-light">Contacta con nuestro equipo para cualquier duda o consulta sobre nuestros productos</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                            {[{ Icon: IconMail, title: 'Email', text: 'info@ddtextiles.com', color: 'from-blue-500/10 to-blue-500/5' }, { Icon: IconPhone, title: 'Teléfono', text: '+1 (555) 123-4567', color: 'from-green-500/10 to-green-500/5' }, { Icon: IconLocation, title: 'Ubicación', text: 'Calle Principal 123', color: 'from-orange-500/10 to-orange-500/5' }].map((item, i) => {
+                                const Icon = item.Icon;
+                                return (
+                                    <div key={i} className={`bg-gradient-to-br ${item.color} dark:from-gray-900 dark:to-gray-950 p-8 rounded-xl border border-gray-200 dark:border-gray-800 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
+                                        <div className="text-4xl mb-4 text-gray-800 dark:text-gray-200 flex justify-center"><Icon className="w-8 h-8 text-orange-500" /></div>
+                                        <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{item.title}</h3>
+                                        <p className="text-gray-600 dark:text-gray-400">{item.text}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white dark:bg-gray-950 p-8 rounded-xl border border-gray-200 dark:border-gray-900 shadow-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Tu Nombre</label>
+                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm dark:text-white" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Tu Email</label>
+                                    <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm dark:text-white" required />
+                                </div>
+                            </div>
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Asunto</label>
+                                <input type="text" name="subject" value={formData.subject} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm dark:text-white" required />
+                            </div>
+                            <div className="mb-8">
+                                <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Tu Mensaje</label>
+                                <textarea name="message" value={formData.message} onChange={handleChange} rows="5" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm dark:text-white resize-none" required></textarea>
+                            </div>
+                            <button type="submit" className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">Enviar Mensaje</button>
+                        </form>
+                    </div>
+                </section>
+            );
+        }
+
+        function Footer() {
+            return (
+                <footer className="bg-gradient-to-b from-black to-gray-900 text-white py-16 px-4 border-t border-gray-800">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                            <div>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <IconThread className="w-5 h-5 text-orange-500" />
+                                    <span className="font-bold text-lg">D&D Textiles</span>
+                                </div>
+                                <p className="text-gray-400 text-sm leading-relaxed">Textiles premium con 20+ años de experiencia. Calidad, diseño y confianza.</p>
+                            </div>
+                            {[{ title: 'Producto', items: ['Inicio', 'Productos', 'Galería', 'Ofertas'] }, { title: 'Empresa', items: ['Sobre Nosotros', 'Contacto', 'Blog', 'Prensa'] }, { title: 'Legal', items: ['Términos', 'Privacidad', 'Cookies', 'Políticas'] }].map((col, i) => (
+                                <div key={i}>
+                                    <h4 className="font-semibold mb-4 text-white text-sm uppercase tracking-wide">{col.title}</h4>
+                                    {col.items.map((item, j) => (
+                                        <p key={j} className="mb-3 hover:text-orange-400 transition-colors cursor-pointer text-sm text-gray-400">{item}</p>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="border-t border-gray-800 pt-8">
+                            <div className="flex flex-col md:flex-row justify-between items-center">
+                                <p className="text-gray-500 text-sm">&copy; 2026 D&D Textiles. Todos los derechos reservados.</p>
+                                <div className="flex gap-6 mt-4 md:mt-0">
+                                    {['Facebook', 'Instagram', 'LinkedIn', 'Twitter'].map((social, i) => (
+                                        <a key={i} href="#" className="text-gray-400 hover:text-orange-400 transition-colors text-sm font-medium">{social}</a>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        function CartModal({ isOpen, onClose, cartItems, onClearCart }) {
+            const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-950 rounded-lg p-6 max-w-md w-full max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-900">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Carrito</h2>
+                            <button onClick={onClose} className="text-2xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">✕</button>
+                        </div>
+                        <div className="space-y-3 mb-4">
+                            {cartItems.length === 0 ? (
+                                <p className="text-gray-600 dark:text-gray-400">El carrito está vacío</p>
+                            ) : (
+                                cartItems.map((item, i) => (
+                                    <div key={i} className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-900 rounded">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">x{item.quantity}</p>
+                                        </div>
+                                        <p className="font-semibold text-orange-500">${(item.price * item.quantity).toFixed(2)}</p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                            <div className="flex justify-between mb-4">
+                                <span className="font-semibold text-gray-900 dark:text-white">Total:</span>
+                                <span className="font-bold text-lg text-orange-500">${total.toFixed(2)}</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={onClearCart} className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded text-sm font-semibold">Limpiar</button>
+                                <button onClick={onClose} className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-semibold">Comprar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function LoginModal({ isOpen, onClose, onLogin, loading, user }) {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [isRegister, setIsRegister] = useState(false);
+            const [name, setName] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [registeredUsers, setRegisteredUsers] = useState(() => {
+                const stored = localStorage.getItem('registeredUsers');
+                return stored ? JSON.parse(stored) : [];
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (isRegister) {
+                    if (password !== confirmPassword) {
+                        alert('Las contraseñas no coinciden');
+                        return;
+                    }
+                    if (registeredUsers.some(u => u.email === email)) {
+                        alert('El email ya está registrado');
+                        return;
+                    }
+                    const newUser = { id: Date.now(), name, email, password, role: 'cliente' };
+                    const updated = [...registeredUsers, newUser];
+                    setRegisteredUsers(updated);
+                    localStorage.setItem('registeredUsers', JSON.stringify(updated));
+                    alert('Registro exitoso. Ahora inicia sesión');
+                    setIsRegister(false);
+                    setName('');
+                    setEmail('');
+                    setPassword('');
+                    setConfirmPassword('');
+                } else {
+                    onLogin(email, password);
+                    setEmail('');
+                    setPassword('');
+                }
+            };
+
+            useEffect(() => {
+                if (user && isOpen) {
+                    onClose();
+                }
+            }, [user, isOpen, onClose]);
+
+            if (!isOpen) return null;
+            
+            const IconUser = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>;
+            const IconEmail = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>;
+            const IconLock = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5s-5 2.24-5 5v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>;
+            const IconArrow = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13h14v-2H5v2z"/></svg>;
+
+            return (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-950 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-800 shadow-2xl">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                    {isRegister ? 'Crear Cuenta' : 'Bienvenido'}
+                                </h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    {isRegister ? 'Únete a nuestra comunidad' : 'Inicia sesión en tu cuenta'}
+                                </p>
+                            </div>
+                            <button onClick={onClose} className="text-3xl text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 transition-colors">✕</button>
+                        </div>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {isRegister && (
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-gray-900 dark:text-white flex items-center gap-2">
+                                        <IconUser className="text-orange-500" />
+                                        Nombre Completo
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={name} 
+                                        onChange={(e) => setName(e.target.value)} 
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-orange-500 dark:focus:border-orange-500 text-sm dark:text-white transition-colors" 
+                                        placeholder="Tu nombre completo" 
+                                        required={isRegister}
+                                    />
+                                </div>
+                            )}
+                            
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-900 dark:text-white flex items-center gap-2">
+                                    <IconEmail className="text-orange-500" />
+                                    Correo Electrónico
+                                </label>
+                                <input 
+                                    type="email" 
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)} 
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-orange-500 dark:focus:border-orange-500 text-sm dark:text-white transition-colors" 
+                                    placeholder={isRegister ? "tu@email.com" : "admin@test.com"} 
+                                    required 
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-900 dark:text-white flex items-center gap-2">
+                                    <IconLock className="text-orange-500" />
+                                    Contraseña
+                                </label>
+                                <input 
+                                    type="password" 
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-orange-500 dark:focus:border-orange-500 text-sm dark:text-white transition-colors" 
+                                    placeholder={isRegister ? "Crea una contraseña segura" : "123"} 
+                                    required 
+                                />
+                            </div>
+                            
+                            {isRegister && (
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-gray-900 dark:text-white flex items-center gap-2">
+                                        <IconLock className="text-orange-500" />
+                                        Confirmar Contraseña
+                                    </label>
+                                    <input 
+                                        type="password" 
+                                        value={confirmPassword} 
+                                        onChange={(e) => setConfirmPassword(e.target.value)} 
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-orange-500 dark:focus:border-orange-500 text-sm dark:text-white transition-colors" 
+                                        placeholder="Repite tu contraseña" 
+                                        required={isRegister}
+                                    />
+                                </div>
+                            )}
+                            
+                            {!isRegister && (
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl">
+                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300 mb-3">Cuentas de Prueba Disponibles</p>
+                                    <div className="space-y-2">
+                                        <div className="text-xs text-blue-800 dark:text-blue-400">
+                                            <span className="font-semibold">Admin:</span> admin@test.com / 123
+                                        </div>
+                                        <div className="text-xs text-blue-800 dark:text-blue-400">
+                                            <span className="font-semibold">Vendedor:</span> vendedor@test.com / 123
+                                        </div>
+                                        <div className="text-xs text-blue-800 dark:text-blue-400">
+                                            <span className="font-semibold">Cliente:</span> cliente@test.com / 123
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <button 
+                                type="submit" 
+                                disabled={loading} 
+                                className="w-full px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-orange-500/40 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                            >
+                                <IconArrow className="text-white" />
+                                {loading ? 'Cargando...' : (isRegister ? 'Crear Cuenta' : 'Iniciar Sesión')}
+                            </button>
+                        </form>
+                        
+                        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
+                            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                {isRegister ? 'Ya tienes cuenta' : 'No tienes cuenta todavía'}
+                            </p>
+                            <button 
+                                onClick={() => {
+                                    setIsRegister(!isRegister);
+                                    setName('');
+                                    setEmail('');
+                                    setPassword('');
+                                    setConfirmPassword('');
+                                }}
+                                className="w-full px-4 py-3 border-2 border-orange-500 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                                <IconUser className="text-orange-500" />
+                                {isRegister ? 'Inicia Sesión' : 'Regístrate Ahora'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ========== DASHBOARDS ==========
+        function DashboardAdmin({ user, onLogout, onBack, showPublic }) {
+            const { products, setProducts, orders, users } = useData();
+            const [activeTab, setActiveTab] = useState('estadisticas');
+            const [editingProduct, setEditingProduct] = useState(null);
+            const [newImage, setNewImage] = useState('');
+
+            const totalVentas = orders.reduce((sum, o) => sum + o.total, 0);
+            const productosVendidos = orders.reduce((sum, o) => sum + o.items, 0);
+
+            const handleSaveProduct = () => {
+                if (editingProduct) {
+                    setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+                    setEditingProduct(null);
+                    setNewImage('');
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-white dark:bg-black">
+                    <nav className="sticky top-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2"><IconAdmin className="w-6 h-6 text-orange-500" /><span className="font-semibold text-orange-500 text-lg">Admin</span></div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{user?.name}</span>
+                                <button onClick={showPublic} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-sm transition-colors font-semibold text-sm">Ver Tienda</button>
+                                <button onClick={onLogout} className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm transition-colors font-semibold text-sm">Salir</button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-7xl mx-auto px-4 py-8">
+                        <h1 className="text-4xl font-light mb-8 text-gray-900 dark:text-white">Panel de Administración</h1>
+
+                        <div className="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-900 overflow-x-auto">
+                            {[{ id: 'estadisticas', label: 'Estadísticas', icon: IconStats }, { id: 'productos', label: 'Productos', icon: IconProducts }, { id: 'usuarios', label: 'Usuarios', icon: IconUsers }, { id: 'pedidos', label: 'Pedidos', icon: IconOrders }].map(tab => {
+                                const Icon = tab.icon;
+                                return (
+                                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === tab.id ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'}`}>
+                                        <Icon className="w-4 h-4" />
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {activeTab === 'estadisticas' && (
+                            <div>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                    {[{ label: 'Ventas Totales', value: `$${totalVentas.toFixed(2)}`, color: 'text-green-500' }, { label: 'Productos Vendidos', value: productosVendidos, color: 'text-blue-500' }, { label: 'Productos Activos', value: products.length, color: 'text-purple-500' }, { label: 'Clientes Registrados', value: users.length, color: 'text-orange-500' }].map((stat, i) => (
+                                        <div key={i} className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{stat.label}</p>
+                                            <p className={`text-3xl font-semibold ${stat.color}`}>{stat.value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                    <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Productos Más Vendidos</h3>
+                                    <div className="space-y-2">
+                                        {products.slice(0, 3).map(p => (
+                                            <div key={p.id} className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-800">
+                                                <span className="text-gray-700 dark:text-gray-300">{p.name}</span>
+                                                <span className="font-semibold text-orange-500">${p.price}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'productos' && (
+                            <div>
+                                <div className="mb-6 flex justify-between">
+                                    <h2 className="text-2xl font-light text-gray-900 dark:text-white">Gestión de Productos</h2>
+                                    <button className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm transition-colors text-sm font-semibold">+ Nuevo Producto</button>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-gray-900">
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Imagen</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Precio</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Stock</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Descuento</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {products.map(p => (
+                                                <tr key={p.id} className="border-b border-gray-200 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-950">
+                                                    <td className="py-3 px-4"><img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover" /></td>
+                                                    <td className="py-3 px-4 text-gray-900 dark:text-white">{p.name}</td>
+                                                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">${p.price}</td>
+                                                    <td className="py-3 px-4"><span className={p.stock > 20 ? 'text-green-500' : 'text-orange-500'}>{p.stock}</span></td>
+                                                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{p.discount}%</td>
+                                                    <td className="py-3 px-4"><button onClick={() => setEditingProduct(p)} className="text-blue-500 hover:text-blue-600 text-sm font-semibold mr-2 flex items-center gap-1"><IconEdit className="w-4 h-4" />Editar</button></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'usuarios' && (
+                            <div>
+                                <h2 className="text-2xl font-light mb-6 text-gray-900 dark:text-white">Gestión de Usuarios</h2>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-gray-900">
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Email</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Rol</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Estado</th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {users.map(u => (
+                                                <tr key={u.id} className="border-b border-gray-200 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-950">
+                                                    <td className="py-3 px-4 text-gray-900 dark:text-white">{u.name}</td>
+                                                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">{u.email}</td>
+                                                    <td className="py-3 px-4"><span className="px-2 py-1 bg-gray-200 dark:bg-gray-800 rounded text-xs font-medium capitalize">{u.role}</span></td>
+                                                    <td className="py-3 px-4"><span className="text-green-500 text-sm font-semibold">{u.status}</span></td>
+                                                    <td className="py-3 px-4"><button className="text-blue-500 hover:text-blue-600 text-sm font-semibold">Editar</button></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'pedidos' && (
+                            <div>
+                                <h2 className="text-2xl font-light mb-6 text-gray-900 dark:text-white">Gestión de Pedidos</h2>
+                                <div className="space-y-4">
+                                    {orders.map(o => (
+                                        <div key={o.id} className="bg-gray-50 dark:bg-gray-950 p-4 rounded-sm border border-gray-200 dark:border-gray-900">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900 dark:text-white">{o.id} - {o.customer}</p>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">{o.date}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-semibold text-orange-500">${o.total}</p>
+                                                    <p className={`text-xs font-medium ${o.status === 'Entregado' ? 'text-green-500' : o.status === 'En tránsito' ? 'text-blue-500' : 'text-yellow-500'}`}>{o.status}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={onBack} className="mt-8 px-6 py-2 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white rounded-sm hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors font-medium">← Volver</button>
+                    </main>
+
+                    {editingProduct && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white dark:bg-gray-950 rounded-sm p-6 max-w-md w-full border border-gray-200 dark:border-gray-900 max-h-96 overflow-y-auto">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Editar Producto</h2>
+                                    <button onClick={() => setEditingProduct(null)} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">✕</button>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nombre</label>
+                                        <input type="text" value={editingProduct.name} onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})} className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Precio</label>
+                                        <input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({...editingProduct, price: parseFloat(e.target.value)})} className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Stock</label>
+                                        <input type="number" value={editingProduct.stock} onChange={(e) => setEditingProduct({...editingProduct, stock: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Descuento %</label>
+                                        <input type="number" value={editingProduct.discount} onChange={(e) => setEditingProduct({...editingProduct, discount: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Imagen Actual</label>
+                                        <img src={editingProduct.image} alt={editingProduct.name} className="w-full h-32 rounded object-cover mb-3" />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nueva URL de Imagen</label>
+                                        <input type="text" placeholder="Pegar URL de imagen..." value={newImage} onChange={(e) => setNewImage(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm mb-2 dark:text-white" />
+                                        <button onClick={() => { if (newImage) setEditingProduct({...editingProduct, image: newImage}); }} className="w-full px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-sm text-sm font-semibold mb-2 flex items-center justify-center gap-2">
+                                            <IconImage className="w-4 h-4" />
+                                            Aplicar Imagen
+                                        </button>
+                                    </div>
+
+                                    <div className="flex gap-2 mt-6">
+                                        <button onClick={handleSaveProduct} className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm font-semibold text-sm">Guardar</button>
+                                        <button onClick={() => setEditingProduct(null)} className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-sm font-semibold text-sm">Cancelar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function DashboardVendedor({ user, onLogout, onBack, showPublic }) {
+            const { orders, products } = useData();
+            const [activeTab, setActiveTab] = useState('pedidos');
+
+            const misVentas = orders.length;
+            const ingresos = orders.reduce((sum, o) => sum + o.total, 0);
+
+            return (
+                <div className="min-h-screen bg-white dark:bg-black">
+                    <nav className="sticky top-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2"><IconVendedor className="w-6 h-6 text-orange-500" /><span className="font-semibold text-orange-500 text-lg">Vendedor</span></div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{user?.name}</span>
+                                <button onClick={showPublic} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-sm transition-colors font-semibold text-sm">Ver Tienda</button>
+                                <button onClick={onLogout} className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm transition-colors font-semibold text-sm">Salir</button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-7xl mx-auto px-4 py-8">
+                        <h1 className="text-4xl font-light mb-8 text-gray-900 dark:text-white">Panel de Vendedor</h1>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Mis Ventas</p>
+                                <p className={`text-3xl font-semibold text-orange-500`}>{misVentas}</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Ingresos</p>
+                                <p className={`text-3xl font-semibold text-green-500`}>${ingresos.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Mensajes Pendientes</p>
+                                <p className={`text-3xl font-semibold text-blue-500`}>5</p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-900">
+                            {[{ id: 'pedidos', label: 'Pedidos Asignados', icon: IconOrders }, { id: 'mensajes', label: 'Mensajes', icon: IconMessages }, { id: 'descuentos', label: 'Descuentos', icon: IconProducts }].map(tab => {
+                                const Icon = tab.icon;
+                                return (
+                                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === tab.id ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 dark:text-gray-400'}`}>
+                                        <Icon className="w-4 h-4" />
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {activeTab === 'pedidos' && (
+                            <div className="space-y-4">
+                                {orders.map(o => (
+                                    <div key={o.id} className="bg-gray-50 dark:bg-gray-950 p-4 rounded-sm border border-gray-200 dark:border-gray-900">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="font-semibold text-gray-900 dark:text-white">{o.id}</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">{o.customer} - {o.items} items</p>
+                                            </div>
+                                            <p className="font-semibold text-orange-500">${o.total}</p>
+                                        </div>
+                                        <select className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm mb-3 dark:text-white">
+                                            <option>{o.status}</option>
+                                            <option>Pendiente</option>
+                                            <option>En tránsito</option>
+                                            <option>Entregado</option>
+                                        </select>
+                                        <button className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm text-sm font-semibold transition-colors">Confirmar entrega</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'mensajes' && (
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <div className="space-y-4">
+                                    {[{ customer: 'Juan Pérez', message: '¿Cuándo llega mi pedido?', time: 'Hace 5 min' }, { customer: 'María García', message: '¿Tienen este producto en otro color?', time: 'Hace 15 min' }].map((msg, i) => (
+                                        <div key={i} className="border-b border-gray-200 dark:border-gray-800 pb-4">
+                                            <p className="font-semibold text-gray-900 dark:text-white">{msg.customer}</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">{msg.message}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{msg.time}</p>
+                                            <input type="text" placeholder="Escribir respuesta..." className="w-full mt-2 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'descuentos' && (
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Proponer Descuentos (Requiere Aprobación)</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <select className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white">
+                                        {products.map(p => (
+                                            <option key={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <input type="number" placeholder="% Descuento" className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm text-sm dark:text-white" />
+                                </div>
+                                <button className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm font-semibold text-sm">Proponer Descuento</button>
+                            </div>
+                        )}
+
+                        <button onClick={onBack} className="mt-8 px-6 py-2 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white rounded-sm hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors font-medium">← Volver</button>
+                    </main>
+                </div>
+            );
+        }
+
+        function DashboardCliente({ user, onLogout, onBack }) {
+            const { orders } = useData();
+            const [activeTab, setActiveTab] = useState('perfil');
+
+            const purchaseHistory = orders;
+            const totalSpent = purchaseHistory.reduce((sum, o) => sum + o.total, 0);
+
+            return (
+                <div className="min-h-screen bg-white dark:bg-black">
+                    <nav className="sticky top-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2"><IconCliente className="w-6 h-6 text-orange-500" /><span className="font-semibold text-orange-500 text-lg">Mi Cuenta</span></div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{user?.name}</span>
+                                <button onClick={showPublic} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-sm transition-colors font-semibold text-sm">Ver Tienda</button>
+                                <button onClick={onLogout} className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm transition-colors font-semibold text-sm">Salir</button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-7xl mx-auto px-4 py-8">
+                        <h1 className="text-4xl font-light mb-8 text-gray-900 dark:text-white">Mi Cuenta</h1>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Mis Compras</p>
+                                <p className="text-3xl font-semibold text-orange-500">{purchaseHistory.length}</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Gasto Total</p>
+                                <p className="text-3xl font-semibold text-green-500">${totalSpent.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">En Carrito</p>
+                                <p className="text-3xl font-semibold text-blue-500">$0.00</p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-900">
+                            {[{ id: 'perfil', label: 'Mi Perfil', icon: IconCliente }, { id: 'compras', label: 'Historial de Compras', icon: IconOrders }, { id: 'contacto', label: 'Contactar Vendedor', icon: IconMessages }].map(tab => {
+                                const Icon = tab.icon;
+                                return (
+                                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === tab.id ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 dark:text-gray-400'}`}>
+                                        <Icon className="w-4 h-4" />
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {activeTab === 'perfil' && (
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Nombre Completo</p>
+                                        <p className="text-gray-900 dark:text-white font-medium mb-4">{user?.name}</p>
+
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Email</p>
+                                        <p className="text-gray-900 dark:text-white font-medium mb-4">{user?.email}</p>
+
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Teléfono</p>
+                                        <p className="text-gray-900 dark:text-white font-medium mb-4">+1 234 567 8900</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Dirección</p>
+                                        <p className="text-gray-900 dark:text-white font-medium mb-4">Calle Principal 123, Ciudad</p>
+
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Miembro desde</p>
+                                        <p className="text-gray-900 dark:text-white font-medium">Enero 2026</p>
+                                    </div>
+                                </div>
+                                <button className="mt-6 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-sm hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors font-medium">Editar Perfil</button>
+                            </div>
+                        )}
+
+                        {activeTab === 'compras' && (
+                            <div className="space-y-4">
+                                {purchaseHistory.length > 0 ? purchaseHistory.map(p => (
+                                    <div key={p.id} className="bg-gray-50 dark:bg-gray-950 p-4 rounded-sm border border-gray-200 dark:border-gray-900">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-gray-900 dark:text-white">{p.id}</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">{p.date} • {p.items} items</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-semibold text-orange-500">${p.total}</p>
+                                                <p className="text-xs text-green-500 font-medium">{p.status}</p>
+                                            </div>
+                                        </div>
+                                        <button className="mt-3 text-blue-500 hover:text-blue-600 text-sm font-semibold flex items-center gap-1"><IconDownload className="w-4 h-4" />Descargar Factura</button>
+                                    </div>
+                                )) : <p className="text-gray-600 dark:text-gray-400">No tienes compras aún</p>}
+                            </div>
+                        )}
+
+                        {activeTab === 'contacto' && (
+                            <div className="bg-gray-50 dark:bg-gray-950 p-6 rounded-sm border border-gray-200 dark:border-gray-900">
+                                <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Enviar Mensaje al Vendedor</h3>
+                                <div className="space-y-4">
+                                    <select className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm dark:text-white">
+                                        <option>Seleccionar asunto...</option>
+                                        <option>Consulta sobre producto</option>
+                                        <option>Problema con pedido</option>
+                                        <option>Otro</option>
+                                    </select>
+                                    <textarea rows="4" placeholder="Escribir mensaje..." className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-sm focus:outline-none dark:text-white"></textarea>
+                                    <button className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-sm font-semibold transition-colors">Enviar Mensaje</button>
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={onBack} className="mt-8 px-6 py-2 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white rounded-sm hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors font-medium">← Volver</button>
+                    </main>
+                </div>
+            );
+        }
+
+        // ========== APP PRINCIPAL ==========
+        function App() {
+            const [isDark, setIsDark] = useState(false);
+            const [showLogin, setShowLogin] = useState(false);
+            const [cartItems, setCartItems] = useState([]);
+            const [showCart, setShowCart] = useState(false);
+            const [toasts, setToasts] = useState([]);
+            const [showPublicView, setShowPublicView] = useState(true);
+            const { user, login, logout, loading } = useAuth();
+
+            useEffect(() => {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const savedDark = localStorage.getItem('dark') === 'true';
+                setIsDark(savedDark || prefersDark);
+            }, []);
+
+            useEffect(() => {
+                if (isDark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+                localStorage.setItem('dark', isDark);
+            }, [isDark]);
+
+            const showToast = (message, type) => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, message, type }]);
+                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+            };
+
+            const onAddToCart = (product) => {
+                setCartItems(prev => {
+                    const existing = prev.find(p => p.id === product.id);
+                    if (existing) {
+                        return prev.map(p => p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p);
+                    }
+                    return [...prev, { ...product, quantity: 1 }];
+                });
+                showToast(`${product.name} añadido al carrito`, 'success');
+            };
+
+            const onClearCart = () => {
+                setCartItems([]);
+                showToast('Carrito vaciado', 'info');
+            };
+
+            if (user?.role === 'admin' && !showPublicView) {
+                return <DashboardAdmin user={user} onLogout={() => { logout(); setShowPublicView(true); }} onBack={() => setShowPublicView(true)} showPublic={() => setShowPublicView(true)} />;
+            }
+
+            if (user?.role === 'vendedor' && !showPublicView) {
+                return <DashboardVendedor user={user} onLogout={() => { logout(); setShowPublicView(true); }} onBack={() => setShowPublicView(true)} showPublic={() => setShowPublicView(true)} />;
+            }
+
+            if (user?.role === 'cliente' && !showPublicView) {
+                return <DashboardCliente user={user} onLogout={() => { logout(); setShowPublicView(true); }} onBack={() => setShowPublicView(true)} showPublic={() => setShowPublicView(true)} />;
+            }
+
+            return (
+                <div className={isDark ? 'dark' : ''}>
+                    <Navbar isDark={isDark} setIsDark={setIsDark} user={user} onShowLogin={() => setShowLogin(true)} logout={logout} cart={cartItems} onShowCart={() => setShowCart(true)} onShowDashboard={() => setShowPublicView(false)} />
+                    <Carousel showToast={showToast} />
+                    <Products onAddToCart={onAddToCart} />
+                    <Gallery />
+                    <About />
+                    <Contact showToast={showToast} />
+                    <Footer />
+                    <CartModal isOpen={showCart} onClose={() => setShowCart(false)} cartItems={cartItems} onClearCart={onClearCart} />
+                    <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} onLogin={login} loading={loading} user={user} />
+                    <div className="fixed bottom-4 right-4 space-y-2 z-40">
+                        {toasts.map(t => (
+                            <div key={t.id} className={`toast ${t.type}`}>
+                                <span>{t.message}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<AuthProvider><DataProvider><App /></DataProvider></AuthProvider>);
+    </script>
+</body>
+</html>
