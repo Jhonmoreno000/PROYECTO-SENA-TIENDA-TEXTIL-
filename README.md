@@ -1,42 +1,40 @@
-#  D&D Textiles - Tienda Digital
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+# D&D Textiles - Tienda Digital
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=00b4d8&height=200&section=header&text=Jhon%20Moreno&fontSize=70&animation=fadeIn" />
+</p>
 
-> **Plataforma E-commerce** avanzada para la gestión de productos textiles, con un enfoque en la experiencia de usuario (UX) y la eficiencia administrativa.
-
----
-
-##  Funcionalidades Principales
-
-###  Gestión de Usuarios
-* **Autenticación Segura:** Sistema de login y registro integrado.
-* **Dashboards Dinámicos:** Vistas personalizadas según el rol (**Admin**, **Vendedor**, **Cliente**).
-
-###  Experiencia de Compra
-* **Carrito de Compras:** Flujo completo desde la selección hasta el checkout.
-* **Pasarela de Pagos:** Validación de tarjetas y simulación de pagos vía **PSE**.
-
-###  Administración y Control
-* **Gestión de Stock:** Alertas automáticas para productos con baja disponibilidad.
-* **Métricas de Ventas:** Visualización de pedidos y análisis de datos en tiempo real.
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/TailwindCSS-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+</p>
 
 ---
 
-##  Stack Tecnológico
+## Mi Actividad en GitHub
 
-| Herramienta | Uso |
-| :--- | :--- |
-| **React + Vite** | Desarrollo del Core y Renderizado ultra rápido. |
-| **Tailwind CSS** | Estilizado moderno y totalmente responsivo. |
-| **Formik / Yup** | Gestión de formularios y validaciones de seguridad. |
-| **Lucide Icons** | Iconografía minimalista y profesional. |
+<p align="center">
+  <img src="https://github-readme-stats-sigma-five.vercel.app/api?username=Jhonmoreno000&show_icons=true&theme=tokyonight" alt="GitHub Stats" />
+</p>
+
+<p align="center">
+  <img src="https://github-readme-stats-sigma-five.vercel.app/api/top-langs/?username=Jhonmoreno000&layout=compact&theme=tokyonight" alt="Top Langs" />
+</p>
 
 ---
 
-##  Guía de Inicio
+## Habilidades Técnicas
+* **Frontend:** React.js, Vite, Tailwind CSS
+* **Lógica:** JavaScript (ES6+), React Hooks
+* **Herramientas:** Git, GitHub, Metodologías Ágiles
 
-1. **Clona el repositorio:**
-   ```bash
-   git clone [https://github.com/Jhonmoreno000/Jhonmoreno000.git](https://github.com/Jhonmoreno000/Jhonmoreno000.git)
+---
+
+## Conéctate conmigo
+<p align="left">
+<a href="https://github.com/Jhonmoreno000"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white"></a>
+<a href="mailto:tu-correo@sena.edu.co"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white"></a>
+</p>
+
+---
+**Desarrollado con ❤️ para ADSO - SENA**
