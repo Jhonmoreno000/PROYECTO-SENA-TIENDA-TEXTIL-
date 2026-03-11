@@ -5,6 +5,7 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { calculateWasteStatsByReason } from '../../../utils/inventoryUtils';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function WasteCalculator() {
     const { inventoryBatches, wasteEvents, logWaste, users } = useMetrics();
@@ -16,14 +17,6 @@ function WasteCalculator() {
         description: '',
         responsible: ''
     });
-
-    const dashboardLinks = [
-        { label: 'Lotes', path: '/admin/inventario/lotes' },
-        { label: 'Merma', path: '/admin/inventario/merma' },
-        { label: 'Alertas', path: '/admin/inventario/alertas' },
-        { label: 'Historial', path: '/admin/inventario/historial' },
-    ];
-
     const wasteStats = calculateWasteStatsByReason(wasteEvents);
     const totalWaste = wasteEvents.reduce((sum, e) => sum + e.meters, 0);
 
@@ -62,7 +55,7 @@ function WasteCalculator() {
     };
 
     return (
-        <DashboardLayout title="Calculadora de Merma" links={dashboardLinks}>
+        <DashboardLayout title="Calculadora de Merma" links={adminDashboardLinks}>
             <BackButton />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
@@ -290,3 +283,4 @@ function WasteCalculator() {
 }
 
 export default WasteCalculator;
+

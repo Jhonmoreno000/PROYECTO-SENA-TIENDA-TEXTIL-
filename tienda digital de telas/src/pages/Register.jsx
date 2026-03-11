@@ -5,6 +5,7 @@ import { FiMail, FiLock, FiUser, FiArrowRight } from 'react-icons/fi';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 
 function Register() {
     const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ function Register() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const { register } = useAuth();
+    const { showNotification } = useNotification();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -24,7 +26,12 @@ function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
-            alert("Las contraseñas no coinciden");
+            showNotification('error', 'Las contraseñas no coinciden');
+            return;
+        }
+
+        if (formData.password.length < 6) {
+            showNotification('error', 'La contraseña debe tener al menos 6 caracteres');
             return;
         }
 

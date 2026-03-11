@@ -7,7 +7,7 @@ import ProductGrid from '../components/ProductGrid';
 import { useProducts } from '../context/ProductContext';
 
 function Catalog() {
-    const { products } = useProducts();
+    const { products, loading } = useProducts();
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
@@ -33,7 +33,13 @@ function Catalog() {
 
                 {/* Products Section */}
                 <section className="section-container">
-                    <ProductGrid products={products} />
+                    {loading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                        </div>
+                    ) : (
+                        <ProductGrid products={products} />
+                    )}
                 </section>
             </main>
 

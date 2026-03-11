@@ -3,19 +3,13 @@ import { FiMessageSquare, FiCheck, FiClock, FiAlertCircle } from 'react-icons/fi
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function TicketManagement() {
     const { supportTickets, updateTicketStatus, assignTicket, users } = useMetrics();
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [assignToUser, setAssignToUser] = useState('');
-
-    const dashboardLinks = [
-        { label: 'Tickets', path: '/admin/soporte/tickets' },
-        { label: 'Cupones', path: '/admin/soporte/cupones' },
-        { label: 'Historial Pedidos', path: '/admin/soporte/pedidos' },
-    ];
-
     const filteredTickets = filterStatus === 'all'
         ? supportTickets
         : supportTickets.filter(t => t.status === filterStatus);
@@ -50,7 +44,7 @@ function TicketManagement() {
     };
 
     return (
-        <DashboardLayout title="Gestión de Tickets de Soporte" links={dashboardLinks}>
+        <DashboardLayout title="Gestión de Tickets de Soporte" links={adminDashboardLinks}>
             <BackButton />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
@@ -310,3 +304,4 @@ function TicketManagement() {
 }
 
 export default TicketManagement;
+

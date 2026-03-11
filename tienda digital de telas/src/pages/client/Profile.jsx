@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiUser, FiPackage, FiEdit2, FiSave } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../data/clientDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -25,10 +26,7 @@ function ClientProfile() {
         setProfile({ ...profile, [e.target.name]: e.target.value });
     };
 
-    const dashboardLinks = [
-        { label: 'Mi Perfil', path: '/perfil', icon: FiUser },
-        { label: 'Mis Pedidos', path: '/mis-pedidos', icon: FiPackage },
-    ];
+    
 
     const handleSave = () => {
         // Simular guardado
@@ -37,7 +35,7 @@ function ClientProfile() {
     };
 
     return (
-        <DashboardLayout title="Mi Perfil" links={dashboardLinks}>
+        <DashboardLayout title="Mi Perfil" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="card p-6 md:p-8 max-w-2xl">
                 <div className="flex justify-between items-center mb-6">

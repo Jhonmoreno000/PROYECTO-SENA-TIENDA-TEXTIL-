@@ -15,7 +15,7 @@ function ImageGallery({ images, productName }) {
                 <AnimatePresence mode="wait">
                     <motion.img
                         key={selectedImage}
-                        src={images[selectedImage]}
+                        src={images[selectedImage] || '/placeholder.png'}
                         alt={`${productName} - Vista ${selectedImage + 1}`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1, scale: isZoomed ? 1.5 : 1 }}
@@ -35,27 +35,33 @@ function ImageGallery({ images, productName }) {
 
             {/* Thumbnails */}
             <div className="grid grid-cols-4 gap-3">
-                {images.map((image, index) => (
-                    <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                            setSelectedImage(index);
-                            setIsZoomed(false);
-                        }}
-                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
+                {images.length > 0 ? (
+                    images.map((image, index) => (
+                        <motion.button
+                            key={index}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                                setSelectedImage(index);
+                                setIsZoomed(false);
+                            }}
+                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
                                 ? 'border-primary-600 shadow-lg'
                                 : 'border-gray-200 dark:border-slate-700 hover:border-primary-400'
-                            }`}
-                    >
-                        <img
-                            src={image}
-                            alt={`${productName} - Miniatura ${index + 1}`}
-                            className="w-full h-full object-cover"
-                        />
-                    </motion.button>
-                ))}
+                                }`}
+                        >
+                            <img
+                                src={image}
+                                alt={`${productName} - Miniatura ${index + 1}`}
+                                className="w-full h-full object-cover"
+                            />
+                        </motion.button>
+                    ))
+                ) : (
+                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 dark:border-slate-700">
+                        <img src="/placeholder.png" alt="Placeholder Miniatura" className="w-full h-full object-cover opacity-50" />
+                    </div>
+                )}
             </div>
         </div>
     );

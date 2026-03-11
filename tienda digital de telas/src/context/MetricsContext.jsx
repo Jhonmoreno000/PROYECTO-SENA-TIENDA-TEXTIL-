@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+
 import {
     mockUsers,
     mockOrders,
@@ -28,23 +28,108 @@ export function useMetrics() {
 }
 
 export function MetricsProvider({ children }) {
-    // Estado persistente
-    const [users, setUsers] = useLocalStorage('metrics_users', mockUsers);
-    const [orders, setOrders] = useLocalStorage('metrics_orders', mockOrders);
-    const [salesData, setSalesData] = useLocalStorage('metrics_sales', mockSalesData);
-    const [bugReports, setBugReports] = useLocalStorage('metrics_bugs', mockBugReports);
-    const [systemConfig, setSystemConfig] = useLocalStorage('system_config', mockSystemConfig);
-    const [inventoryBatches, setInventoryBatches] = useLocalStorage('inventory_batches', mockInventoryBatches);
-    const [wasteEvents, setWasteEvents] = useLocalStorage('waste_events', mockWasteEvents);
-    const [coupons, setCoupons] = useLocalStorage('coupons', mockCoupons);
-    const [supportTickets, setSupportTickets] = useLocalStorage('support_tickets', mockSupportTickets);
-    const [stockThresholds, setStockThresholds] = useLocalStorage('stock_thresholds', mockStockThresholds);
-    const [pendingProducts, setPendingProducts] = useLocalStorage('pending_products', mockPendingProducts);
+    // Estado desde API y persistente — inicializar con mock data como fallback
+    const [users, setUsers] = useState(mockUsers);
+    const [orders, setOrders] = useState(mockOrders);
+    const [dataSource, setDataSource] = useState('mock'); // 'mock' o 'api'
+
+    const [salesData, setSalesData] = useState(mockSalesData);
+    const [bugReports, setBugReports] = useState(mockBugReports);
+    const [systemConfig, setSystemConfig] = useState(mockSystemConfig);
+    const [inventoryBatches, setInventoryBatches] = useState(mockInventoryBatches);
+    const [wasteEvents, setWasteEvents] = useState(mockWasteEvents);
+    const [coupons, setCoupons] = useState(mockCoupons);
+    const [supportTickets, setSupportTickets] = useState(mockSupportTickets);
+    const [stockThresholds, setStockThresholds] = useState(mockStockThresholds);
+    const [pendingProducts, setPendingProducts] = useState(mockPendingProducts);
 
     // Estado local
     const [products, setProducts] = useState(productsData);
     const [recentActivity] = useState(mockRecentActivity);
     const [regionSales] = useState(mockColombiaRegionSales);
+
+    // Fetch from Backend API — if available, override mock data; otherwise keep mocks
+    useEffect(() => {
+        const fetchRemoteData = async () => {
+            try {
+                const usersRes = await fetch('http://localhost:8081/api/users');
+                if (usersRes.ok) {
+                    const apiUsers = await usersRes.json();
+                    if (apiUsers && apiUsers.length > 0) {
+                        setUsers(apiUsers);
+                        setDataSource('api');
+                    }
+                }
+
+                const ordersRes = await fetch('http://localhost:8081/api/orders');
+                if (ordersRes.ok) {
+                    const apiOrders = await ordersRes.json();
+                    if (apiOrders && apiOrders.length > 0) {
+                        setOrders(apiOrders);
+                    }
+                }
+
+                // Config
+                const configRes = await fetch('http://localhost:8081/api/config/system_config');
+                if (configRes.ok) {
+                    const apiConfigText = await configRes.text();
+                    if (apiConfigText && apiConfigText !== '{}') {
+                        setSystemConfig(JSON.parse(apiConfigText));
+                    }
+                }
+
+                // Coupons
+                const couponsRes = await fetch('http://localhost:8081/api/coupons');
+                if (couponsRes.ok) {
+                    const apiCoupons = await couponsRes.json();
+                    if (apiCoupons && apiCoupons.length > 0) {
+                        setCoupons(apiCoupons);
+                    }
+                }
+                // Tickets & Bugs
+                const ticketsRes = await fetch('http://localhost:8081/api/support/tickets');
+                if (ticketsRes.ok) {
+                    const apiTickets = await ticketsRes.json();
+                    if (apiTickets && apiTickets.length > 0) setSupportTickets(apiTickets);
+                }
+
+                const bugsRes = await fetch('http://localhost:8081/api/support/bugs');
+                if (bugsRes.ok) {
+                    const apiBugs = await bugsRes.json();
+                    if (apiBugs && apiBugs.length > 0) setBugReports(apiBugs);
+                }
+
+                // Pending Products
+                const pendingRes = await fetch('http://localhost:8081/api/products/pending');
+                if (pendingRes.ok) {
+                    const apiPending = await pendingRes.json();
+                    if (apiPending && apiPending.length > 0) setPendingProducts(apiPending);
+                }
+                // Admin Metrics from Config Table
+                const keysToFetch = ['metrics_sales', 'inventory_batches', 'waste_events', 'stock_thresholds'];
+                for (let key of keysToFetch) {
+                    const res = await fetch(`http://localhost:8081/api/config?key=${key}`);
+                    if (res.ok) {
+                        const jsonStr = await res.json();
+                        if (jsonStr) {
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                if (key === 'metrics_sales') setSalesData(parsed);
+                                if (key === 'inventory_batches') setInventoryBatches(parsed);
+                                if (key === 'waste_events') setWasteEvents(parsed);
+                                if (key === 'stock_thresholds') setStockThresholds(parsed);
+                            } catch (e) { console.error('Error parsing config', key); }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Backend parcial o totalmente no disponible, usando datos de demostración:", err.message);
+                // Los datos mock ya están cargados como estado inicial
+            }
+        };
+
+        fetchRemoteData();
+    }, []);
 
     // Funciones para gestión de usuarios
     const updateUserRole = (userId, newRole) => {
@@ -64,7 +149,7 @@ export function MetricsProvider({ children }) {
     };
 
     // Funciones para gestión de reportes
-    const updateBugReportStatus = (reportId, newStatus, assignedTo = null) => {
+    const updateBugReportStatus = async (reportId, newStatus, assignedTo = null) => {
         setBugReports(bugReports.map(report => {
             if (report.id === reportId) {
                 const updated = { ...report, status: newStatus };
@@ -74,6 +159,16 @@ export function MetricsProvider({ children }) {
             }
             return report;
         }));
+
+        try {
+            await fetch(`http://localhost:8081/api/support/bugs/${reportId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus, assignedTo })
+            });
+        } catch (e) {
+            console.error('Error report status', e);
+        }
     };
 
     const getBugReportsBySeller = (sellerId) => {
@@ -89,10 +184,20 @@ export function MetricsProvider({ children }) {
         return orders.filter(order => order.clientId === clientId);
     };
 
-    const updateOrderStatus = (orderId, newStatus) => {
+    const updateOrderStatus = async (orderId, newStatus) => {
         setOrders(orders.map(order =>
             order.id === orderId ? { ...order, status: newStatus } : order
         ));
+
+        try {
+            await fetch(`http://localhost:8081/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+        } catch (e) {
+            console.error('Error updating order status', e);
+        }
     };
 
     // Funciones para productos
@@ -116,43 +221,95 @@ export function MetricsProvider({ children }) {
     };
 
     // Funciones para configuración del sistema
-    const updateSystemConfig = (updates) => {
-        setSystemConfig({ ...systemConfig, ...updates });
+    const updateSystemConfig = async (updates) => {
+        const newConfig = { ...systemConfig, ...updates };
+        setSystemConfig(newConfig);
+        try {
+            await fetch('http://localhost:8081/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'system_config', value: JSON.stringify(newConfig) })
+            });
+        } catch (e) {
+            console.error('Error actualizando config en BD', e);
+        }
+    };
+
+    // Funciones genéricas para persistir métricas en config
+    const persistMetric = async (key, dataArray) => {
+        try {
+            await fetch('http://localhost:8081/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, value: JSON.stringify(dataArray) })
+            });
+        } catch (e) {
+            console.error('Error persisting config ' + key, e);
+        }
     };
 
     // Funciones para inventario
     const addBatch = (newBatch) => {
         const maxId = Math.max(...inventoryBatches.map(b => parseInt(b.id.slice(1)) || 0), 0);
-        setInventoryBatches([...inventoryBatches, { ...newBatch, id: `R${String(maxId + 1).padStart(3, '0')}` }]);
+        const newArray = [...inventoryBatches, { ...newBatch, id: `R${String(maxId + 1).padStart(3, '0')}` }];
+        setInventoryBatches(newArray);
+        persistMetric('inventory_batches', newArray);
     };
 
     const updateBatch = (batchId, updates) => {
-        setInventoryBatches(inventoryBatches.map(batch =>
+        const newArray = inventoryBatches.map(batch =>
             batch.id === batchId ? { ...batch, ...updates, lastUpdate: new Date().toISOString().split('T')[0] } : batch
-        ));
+        );
+        setInventoryBatches(newArray);
+        persistMetric('inventory_batches', newArray);
     };
 
     const logWaste = (wasteEvent) => {
         const maxId = Math.max(...wasteEvents.map(e => e.id), 0);
-        setWasteEvents([...wasteEvents, { ...wasteEvent, id: maxId + 1, date: new Date().toISOString().split('T')[0] }]);
+        const newArray = [...wasteEvents, { ...wasteEvent, id: maxId + 1, date: new Date().toISOString().split('T')[0] }];
+        setWasteEvents(newArray);
+        persistMetric('waste_events', newArray);
     };
 
     const updateStockThreshold = (fabricType, minMeters) => {
-        setStockThresholds(stockThresholds.map(threshold =>
+        const newArray = stockThresholds.map(threshold =>
             threshold.fabricType === fabricType ? { ...threshold, minMeters } : threshold
-        ));
+        );
+        setStockThresholds(newArray);
+        persistMetric('stock_thresholds', newArray);
     };
 
     // Funciones para moderación de vendedores
-    const approveProduct = (productId) => {
+    const approveProduct = async (productId) => {
         setPendingProducts(pendingProducts.filter(p => p.id !== productId));
-        // Aquí se agregaría el producto a la lista principal
+        // Optimistically add to main products array would theoretically go here, 
+        // but normally we just refetch logic.
+
+        try {
+            await fetch(`http://localhost:8081/api/products/${productId}/moderate`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'approved' })
+            });
+        } catch (e) {
+            console.error('Error approving product', e);
+        }
     };
 
-    const rejectProduct = (productId, reason) => {
+    const rejectProduct = async (productId, reason) => {
         setPendingProducts(pendingProducts.map(p =>
             p.id === productId ? { ...p, status: 'rejected', rejectionReason: reason } : p
         ));
+
+        try {
+            await fetch(`http://localhost:8081/api/products/${productId}/moderate`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'rejected', reason: reason })
+            });
+        } catch (e) {
+            console.error('Error rejecting product', e);
+        }
     };
 
     const updateSellerCommission = (sellerId, commissionRate) => {
@@ -176,20 +333,43 @@ export function MetricsProvider({ children }) {
     };
 
     // Funciones para cupones
-    const createCoupon = (newCoupon) => {
+    const createCoupon = async (newCoupon) => {
         const maxId = Math.max(...coupons.map(c => c.id), 0);
-        setCoupons([...coupons, {
+        const couponObj = {
             ...newCoupon,
             id: maxId + 1,
             usageCount: 0,
+            active: true,
             createdAt: new Date().toISOString().split('T')[0]
-        }]);
+        };
+        
+        // Update optimistically
+        setCoupons([...coupons, couponObj]);
+
+        try {
+            await fetch('http://localhost:8081/api/coupons', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(couponObj)
+            });
+            // Re-fetch could be done here to get DB id instead of maxId + 1, but this suffices.
+        } catch (e) {
+            console.error('Error creando cupón', e);
+        }
     };
 
-    const deactivateCoupon = (couponId) => {
+    const deactivateCoupon = async (couponId) => {
         setCoupons(coupons.map(coupon =>
             coupon.id === couponId ? { ...coupon, active: false } : coupon
         ));
+
+        try {
+            await fetch(`http://localhost:8081/api/coupons/${couponId}/deactivate`, {
+                method: 'PUT'
+            });
+        } catch (e) {
+            console.error('Error desactivando cupón', e);
+        }
     };
 
     const validateCoupon = (code, cartTotal, userOrders) => {
@@ -216,18 +396,27 @@ export function MetricsProvider({ children }) {
     };
 
     // Funciones para tickets de soporte
-    const createTicket = (newTicket) => {
+    const createTicket = async (newTicket) => {
         const maxId = Math.max(...supportTickets.map(t => t.id), 0);
-        setSupportTickets([...supportTickets, {
+        const ticketObj = {
             ...newTicket,
             id: maxId + 1,
             status: 'open',
             createdAt: new Date().toISOString().split('T')[0],
             updatedAt: new Date().toISOString().split('T')[0]
-        }]);
+        };
+        setSupportTickets([...supportTickets, ticketObj]);
+
+        try {
+            await fetch('http://localhost:8081/api/support/tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ticketObj)
+            });
+        } catch (e) { console.error('Error creating ticket', e); }
     };
 
-    const updateTicketStatus = (ticketId, newStatus) => {
+    const updateTicketStatus = async (ticketId, newStatus) => {
         setSupportTickets(supportTickets.map(ticket => {
             if (ticket.id === ticketId) {
                 const updated = {
@@ -242,6 +431,14 @@ export function MetricsProvider({ children }) {
             }
             return ticket;
         }));
+
+        try {
+            await fetch(`http://localhost:8081/api/support/tickets/${ticketId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+        } catch (e) { console.error('Error update ticket', e); }
     };
 
     const assignTicket = (ticketId, userId) => {
@@ -254,6 +451,7 @@ export function MetricsProvider({ children }) {
 
     const value = {
         // Datos
+        dataSource,
         users,
         orders,
         salesData,

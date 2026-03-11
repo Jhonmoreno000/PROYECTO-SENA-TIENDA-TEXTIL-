@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiShoppingBag, FiPackage, FiTruck, FiCheck, FiClock } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import sellerDashboardLinks from '../../data/sellerDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
 import { useMetrics } from '../../context/MetricsContext';
 import { useAuth } from '../../context/AuthContext';
@@ -13,10 +14,7 @@ function SellerOrders() {
     const { showNotification } = useNotification();
     const [filterStatus, setFilterStatus] = useState('all');
 
-    const dashboardLinks = [
-        { label: 'Mis Productos', path: '/vendedor/productos', icon: FiPackage },
-        { label: 'Pedidos', path: '/vendedor/pedidos', icon: FiShoppingBag },
-    ];
+    
 
     // Obtener solo pedidos del vendedor actual
     const sellerOrders = getOrdersBySeller(user?.id);
@@ -64,7 +62,7 @@ function SellerOrders() {
     };
 
     return (
-        <DashboardLayout title="Gestión de Pedidos" links={dashboardLinks}>
+        <DashboardLayout title="Gestión de Pedidos" links={sellerDashboardLinks}>
             <BackButton to="/vendedor/productos" label="Volver a Mi Panel" />
             {/* Estadísticas rápidas */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">

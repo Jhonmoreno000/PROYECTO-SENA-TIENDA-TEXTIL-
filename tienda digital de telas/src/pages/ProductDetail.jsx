@@ -15,9 +15,21 @@ function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart } = useCart();
-    const { getProductById } = useProducts();
+    const { getProductById, loading, products } = useProducts();
     const [quantity, setQuantity] = useState(1);
     const [showSuccess, setShowSuccess] = useState(false);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col">
+                <Header />
+                <div className="flex-1 flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     const product = getProductById(id);
 
@@ -38,7 +50,6 @@ function ProductDetail() {
         );
     }
 
-    const { products } = useProducts();
     const relatedProducts = products
         .filter((p) => p.category === product.category && p.id !== product.id)
         .slice(0, 4);
@@ -91,7 +102,7 @@ function ProductDetail() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                         >
-                            <ImageGallery images={product.images} productName={product.name} />
+                            <ImageGallery images={product.images || []} productName={product.name} />
                         </motion.div>
 
                         {/* Info */}

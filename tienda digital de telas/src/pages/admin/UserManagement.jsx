@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useMetrics } from '../../context/MetricsContext';
 import { useNotification } from '../../context/NotificationContext';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function UserManagement() {
     const { users, updateUserRole, toggleUserActive } = useMetrics();
@@ -12,12 +13,6 @@ function UserManagement() {
     const [roleFilter, setRoleFilter] = useState('all');
     const [editingUser, setEditingUser] = useState(null);
     const [newRole, setNewRole] = useState('');
-
-    const dashboardLinks = [
-        { label: 'Resumen', path: '/admin', icon: FiUsers },
-        { label: 'Usuarios', path: '/admin/usuarios', icon: FiUsers },
-    ];
-
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -58,7 +53,7 @@ function UserManagement() {
     };
 
     return (
-        <DashboardLayout title="Gestión de Usuarios" links={dashboardLinks}>
+        <DashboardLayout title="Gestión de Usuarios" links={adminDashboardLinks}>
             <BackButton />
             <div className="card">
                 {/* Header con filtros */}
@@ -254,3 +249,4 @@ function UserManagement() {
 }
 
 export default UserManagement;
+

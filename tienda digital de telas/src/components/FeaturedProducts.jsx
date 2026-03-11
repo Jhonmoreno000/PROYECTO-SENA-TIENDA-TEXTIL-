@@ -6,7 +6,7 @@ import ProductCard from './ProductCard';
 import { useProducts } from '../context/ProductContext';
 
 function FeaturedProducts() {
-    const { getFeaturedProducts } = useProducts();
+    const { getFeaturedProducts, loading } = useProducts();
     const featuredProducts = getFeaturedProducts();
 
     return (
@@ -31,19 +31,25 @@ function FeaturedProducts() {
                 </motion.p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
-                {featuredProducts.map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.1 }}
-                    >
-                        <ProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
+            {loading ? (
+                <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
+                    {featuredProducts.map((product, index) => (
+                        <motion.div
+                            key={product.id}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.1 }}
+                        >
+                            <ProductCard product={product} />
+                        </motion.div>
+                    ))}
+                </div>
+            )}
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}

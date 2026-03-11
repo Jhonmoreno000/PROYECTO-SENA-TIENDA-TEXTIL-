@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiMessageCircle, FiPlus, FiClock, FiCheckCircle, FiAlertCircle, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -12,10 +13,7 @@ function MyTickets() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [expandedTicket, setExpandedTicket] = useState(null);
 
-    const dashboardLinks = [
-        { label: 'Nuevo Reporte', path: '/cliente/soporte/nuevo' },
-        { label: 'Mis Tickets', path: '/cliente/soporte/tickets' },
-    ];
+    
 
     // Mock tickets for demo
     const mockTickets = [
@@ -125,7 +123,7 @@ function MyTickets() {
     };
 
     return (
-        <DashboardLayout title="Mis Tickets de Soporte" links={dashboardLinks}>
+        <DashboardLayout title="Mis Tickets de Soporte" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Header */}
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">

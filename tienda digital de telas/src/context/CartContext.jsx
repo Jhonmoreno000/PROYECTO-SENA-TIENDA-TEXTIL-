@@ -13,6 +13,7 @@ export function useCart() {
 
 export function CartProvider({ children }) {
     const [cartItems, setCartItems] = useLocalStorage('cart', []);
+    const [appliedCoupon, setAppliedCoupon] = useLocalStorage('applied_coupon', null);
 
     // Agregar producto al carrito
     const addToCart = (product, quantity = 1) => {
@@ -55,6 +56,7 @@ export function CartProvider({ children }) {
     // Limpiar todo el carrito
     const clearCart = () => {
         setCartItems([]);
+        setAppliedCoupon(null);
     };
 
     // Obtener total del carrito
@@ -80,6 +82,8 @@ export function CartProvider({ children }) {
 
     const value = {
         cartItems,
+        appliedCoupon,
+        setAppliedCoupon,
         addToCart,
         updateQuantity,
         removeFromCart,

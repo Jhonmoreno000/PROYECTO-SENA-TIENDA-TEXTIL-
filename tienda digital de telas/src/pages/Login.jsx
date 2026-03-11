@@ -104,7 +104,7 @@ const containerVariants = {
         transition: {
             staggerChildren: 0.1,
             delayChildren: 0.2,
-            
+
         },
     },
 };
@@ -168,7 +168,15 @@ function Login() {
         setIsLoading(false);
 
         if (result.success) {
-            navigate(from, { replace: true });
+            // Redirigir según el rol del usuario autenticado
+            const user = JSON.parse(localStorage.getItem('authUser'));
+            const roleRedirects = {
+                admin: '/admin',
+                seller: '/vendedor',
+                client: '/mi-cuenta',
+            };
+            const destination = roleRedirects[user?.role] || from;
+            navigate(destination, { replace: true });
         }
     };
 
@@ -188,13 +196,9 @@ function Login() {
                     style={{ x: cardX, y: cardY }}
                     className="relative z-10 max-w-md w-full"
                     whileHover={{ y: -4, scale: 1.02 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
                     whileTap={{ scale: 0.98 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
                     whileFocus={{ scale: 1.02 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
                     whileBlur={{ scale: 1.02 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
                 >
                     {/* Card hover glow wrapper */}
                     <motion.div

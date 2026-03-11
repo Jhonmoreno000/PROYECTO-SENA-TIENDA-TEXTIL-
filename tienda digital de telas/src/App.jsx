@@ -49,6 +49,7 @@ import SystemConfig from './pages/admin/SystemConfig';
 import ManageCarousel from './pages/admin/ManageCarousel';
 import ManageHome from './pages/admin/ManageHome';
 import AdminBugReports from './pages/admin/AdminBugReports';
+import AdminProducts from './pages/admin/AdminProducts';
 
 // Admin - Inventory Management
 import BatchControl from './pages/admin/Inventory/BatchControl';
@@ -223,6 +224,14 @@ function App() {
 
                     {/* Seller Dashboard */}
                     <Route
+                        path="/vendedor"
+                        element={
+                            <ProtectedRoute roles={['seller', 'admin']}>
+                                <SellerProducts />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/vendedor/productos"
                         element={
                             <ProtectedRoute roles={['seller', 'admin']}>
@@ -243,6 +252,14 @@ function App() {
                         element={
                             <ProtectedRoute roles={['seller', 'admin']}>
                                 <StockAlerts />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/vendedor/configuracion"
+                        element={
+                            <ProtectedRoute roles={['seller', 'admin']}>
+                                <Profile />
                             </ProtectedRoute>
                         }
                     />
@@ -284,7 +301,7 @@ function App() {
                         path="/admin/productos"
                         element={
                             <ProtectedRoute roles="admin">
-                                <SellerProducts />
+                                <AdminProducts />
                             </ProtectedRoute>
                         }
                     />

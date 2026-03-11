@@ -1,6 +1,7 @@
 import React from 'react';
 import { FiPackage, FiAlertCircle, FiTrendingDown, FiArchive, FiShoppingBag } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import sellerDashboardLinks from '../../data/sellerDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
 import { useMetrics } from '../../context/MetricsContext';
 import { useAuth } from '../../context/AuthContext';
@@ -10,11 +11,7 @@ function StockAlerts() {
     const { user } = useAuth();
     const { getProductsBySeller, getBugReportsBySeller, systemConfig } = useMetrics();
 
-    const dashboardLinks = [
-        { label: 'Mis Productos', path: '/vendedor/productos', icon: FiPackage },
-        { label: 'Pedidos', path: '/vendedor/pedidos', icon: FiShoppingBag },
-        { label: 'Alertas de Stock', path: '/vendedor/stock', icon: FiAlertCircle },
-    ];
+
 
     // Obtener solo productos del vendedor actual
     const sellerProducts = getProductsBySeller(user?.id);
@@ -30,7 +27,7 @@ function StockAlerts() {
     const openReports = sellerBugReports.filter(r => r.status === 'open');
 
     return (
-        <DashboardLayout title="Alertas de Stock" links={dashboardLinks}>
+        <DashboardLayout title="Alertas de Stock" links={sellerDashboardLinks}>
             <BackButton to="/vendedor/productos" label="Volver a Mi Panel" />
             {/* Tarjetas de resumen */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -102,7 +99,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
@@ -135,7 +132,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
@@ -168,7 +165,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 opacity-60">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images[0]} alt="" className="w-full h-full object-cover grayscale" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover grayscale" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>

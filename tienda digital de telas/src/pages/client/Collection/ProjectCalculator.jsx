@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiScissors, FiShoppingCart, FiInfo, FiAlertCircle } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { formatCurrency } from '../../../utils/formatters';
 
@@ -96,10 +97,7 @@ function ProjectCalculator() {
     const [measures, setMeasures] = useState({});
     const [result, setResult] = useState(null);
 
-    const dashboardLinks = [
-        { label: 'Lista de Deseos', path: '/cliente/coleccion' },
-        { label: 'Calculadora', path: '/cliente/coleccion/calculadora' },
-    ];
+    
 
     const project = PROJECTS[selectedProject];
 
@@ -155,7 +153,7 @@ function ProjectCalculator() {
     };
 
     return (
-        <DashboardLayout title="Calculadora de Metraje" links={dashboardLinks}>
+        <DashboardLayout title="Calculadora de Metraje" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Project Selection */}

@@ -4,19 +4,12 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { getActiveStockAlerts } from '../../../utils/inventoryUtils';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function StockSettings() {
     const { inventoryBatches, stockThresholds, updateStockThreshold } = useMetrics();
     const [editingType, setEditingType] = useState(null);
     const [tempValue, setTempValue] = useState('');
-
-    const dashboardLinks = [
-        { label: 'Lotes', path: '/admin/inventario/lotes' },
-        { label: 'Merma', path: '/admin/inventario/merma' },
-        { label: 'Alertas', path: '/admin/inventario/alertas' },
-        { label: 'Historial', path: '/admin/inventario/historial' },
-    ];
-
     const activeAlerts = getActiveStockAlerts(inventoryBatches, stockThresholds);
 
     const handleUpdateThreshold = (fabricType) => {
@@ -28,7 +21,7 @@ function StockSettings() {
     };
 
     return (
-        <DashboardLayout title="Configuración de Alertas" links={dashboardLinks}>
+        <DashboardLayout title="Configuración de Alertas" links={adminDashboardLinks}>
             <BackButton />
             <div className="grid lg:grid-cols-3 gap-6 mb-8">
                 <div className="card p-6">
@@ -188,3 +181,4 @@ function StockSettings() {
 }
 
 export default StockSettings;
+

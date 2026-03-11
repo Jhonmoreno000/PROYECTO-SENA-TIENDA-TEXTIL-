@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FiPackage, FiAlertCircle, FiEdit, FiTrash2, FiPlus, FiSave, FiX, FiDollarSign, FiShoppingBag, FiTrendingUp } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import sellerDashboardLinks from '../../data/sellerDashboardLinks';
 import MetricCard from '../../components/dashboard/MetricCard';
 import LineChart from '../../components/dashboard/LineChart';
 import { formatCurrency } from '../../utils/formatters';
 import { useMetrics } from '../../context/MetricsContext';
+import { useProducts } from '../../context/ProductContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { getSellerMetrics, getTopProducts } from '../../utils/metricsUtils';
@@ -13,6 +15,7 @@ function SellerProducts() {
     const { showNotification } = useNotification();
     const { user } = useAuth();
     const { products, orders, bugReports, getProductsBySeller, getOrdersBySeller, getBugReportsBySeller, updateProduct, deleteProduct } = useMetrics();
+    const { refreshProducts } = useProducts();
 
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
@@ -43,11 +46,7 @@ function SellerProducts() {
         };
     });
 
-    const dashboardLinks = [
-        { label: 'Mis Productos', path: '/vendedor/productos', icon: FiPackage },
-        { label: 'Pedidos', path: '/vendedor/pedidos', icon: FiShoppingBag },
-        { label: 'Alertas de Stock', path: '/vendedor/stock', icon: FiAlertCircle },
-    ];
+
 
     const deleteItem = (id) => {
         if (confirm('¿Estás seguro de eliminar este producto?')) {
@@ -66,10 +65,33 @@ function SellerProducts() {
         setEditForm({});
     };
 
-    const saveChanges = () => {
-        updateProduct(editingId, editForm);
+    const saveChanges = async () => {
+        const productId = editingId;
+        const updatedForm = { ...editForm };
+
+        // If a new image was selected (it's a Base64 data URI), send it to the API
+        if (updatedForm.images && updatedForm.images[0] && updatedForm.images[0].startsWith('data:')) {
+            try {
+                const res = await fetch(`http://localhost:8081/api/products/${productId}/image`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: updatedForm.images[0] })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    updatedForm.images = [data.url]; // replace Base64 with the served URL
+                }
+            } catch (err) {
+                console.error('Error al subir imagen:', err);
+            }
+        }
+
+        updateProduct(productId, updatedForm);
         setEditingId(null);
         showNotification('success', 'Producto actualizado correctamente');
+
+        // Refresh the catalog (ProductContext) so main page reflects changes
+        refreshProducts();
     };
 
     const handleFormChange = (e) => {
@@ -81,16 +103,23 @@ function SellerProducts() {
     };
 
     const handleImageChange = (e) => {
-        const newImages = [...editForm.images];
-        newImages[0] = e.target.value;
-        setEditForm({
-            ...editForm,
-            images: newImages
-        });
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const newImages = [...(editForm.images || [])];
+                newImages[0] = reader.result; // data:image/jpeg;base64,...
+                setEditForm({
+                    ...editForm,
+                    images: newImages
+                });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     return (
-        <DashboardLayout title="Panel de Vendedor" links={dashboardLinks}>
+        <DashboardLayout title="Panel de Vendedor" subtitle="Gestión de tienda" links={sellerDashboardLinks}>
             {/* Métricas del Vendedor */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricCard
@@ -148,7 +177,7 @@ function SellerProducts() {
 
             {/* Gestión de Productos */}
             <div className="card">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex flex-wrap gap-4 justify-between items-center">
                     <div>
                         <h2 className="text-xl font-bold">Mi Inventario</h2>
                         <p className="text-sm text-gray-500 mt-1">{sellerProducts.length} productos</p>
@@ -183,23 +212,23 @@ function SellerProducts() {
                                                     className="input-field py-1 text-sm bg-white dark:bg-slate-800 mb-1"
                                                     placeholder="Nombre del producto"
                                                 />
+                                                <div className="text-xs font-semibold text-gray-500 mb-1">Actualizar Imagen:</div>
                                                 <input
-                                                    type="text"
+                                                    type="file"
+                                                    accept="image/*"
                                                     name="images"
-                                                    value={editForm.images[0]}
                                                     onChange={handleImageChange}
-                                                    className="input-field py-1 text-xs bg-white dark:bg-slate-800"
-                                                    placeholder="URL de la imagen"
+                                                    className="w-full text-xs file:mr-4 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/30 dark:file:text-primary-400"
                                                 />
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                                    <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                                                    <img src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-gray-900 dark:text-white">{product.name}</div>
-                                                    <div className="text-xs text-gray-500">ID: {product.id}</div>
+                                                    <div className="text-xs text-gray-500 whitespace-nowrap">ID: {product.id}</div>
                                                 </div>
                                             </div>
                                         )}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiUser, FiPackage, FiEye } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../data/clientDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import OrderDetailsModal from '../../components/client/OrderDetailsModal';
@@ -11,10 +12,7 @@ function OrderHistory() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const dashboardLinks = [
-        { label: 'Mi Perfil', path: '/perfil', icon: FiUser },
-        { label: 'Mis Pedidos', path: '/mis-pedidos', icon: FiPackage },
-    ];
+    
 
     // Mock Orders
     const [orders, setOrders] = useState([
@@ -61,7 +59,7 @@ function OrderHistory() {
     };
 
     return (
-        <DashboardLayout title="Historial de Pedidos" links={dashboardLinks}>
+        <DashboardLayout title="Historial de Pedidos" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">

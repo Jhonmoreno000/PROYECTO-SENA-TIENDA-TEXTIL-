@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiSave, FiCamera, FiLock, FiMail, FiPhone, FiUser, FiBell, FiCheck } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -27,10 +28,7 @@ function Profile() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
 
-    const dashboardLinks = [
-        { label: 'Mi Perfil', path: '/cliente/configuracion' },
-        { label: 'Direcciones', path: '/cliente/configuracion/direcciones' },
-    ];
+    
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -75,7 +73,7 @@ function Profile() {
     };
 
     return (
-        <DashboardLayout title="Mi Perfil" links={dashboardLinks}>
+        <DashboardLayout title="Mi Perfil" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="max-w-3xl mx-auto">
                 <form onSubmit={handleSave}>

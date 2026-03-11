@@ -4,19 +4,12 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { generateMovementHistory } from '../../../utils/inventoryUtils';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function MovementHistory() {
     const { inventoryBatches, wasteEvents, orders } = useMetrics();
     const [filterType, setFilterType] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-
-    const dashboardLinks = [
-        { label: 'Lotes', path: '/admin/inventario/lotes' },
-        { label: 'Merma', path: '/admin/inventario/merma' },
-        { label: 'Alertas', path: '/admin/inventario/alertas' },
-        { label: 'Historial', path: '/admin/inventario/historial' },
-    ];
-
     const movements = generateMovementHistory(inventoryBatches, wasteEvents, orders);
 
     const filteredMovements = movements.filter(m => {
@@ -51,7 +44,7 @@ function MovementHistory() {
     };
 
     return (
-        <DashboardLayout title="Historial de Movimientos" links={dashboardLinks}>
+        <DashboardLayout title="Historial de Movimientos" links={adminDashboardLinks}>
             <BackButton />
             {/* Header */}
             <div className="flex flex-wrap gap-4 mb-6">
@@ -180,3 +173,4 @@ function MovementHistory() {
 }
 
 export default MovementHistory;
+

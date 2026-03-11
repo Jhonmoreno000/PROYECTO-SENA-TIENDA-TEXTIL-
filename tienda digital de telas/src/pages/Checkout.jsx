@@ -9,7 +9,7 @@ import { useCart } from '../context/CartContext';
 
 function Checkout() {
     const navigate = useNavigate();
-    const { cartItems, getCartTotal } = useCart();
+    const { cartItems, getCartTotal, appliedCoupon } = useCart();
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -33,15 +33,32 @@ function Checkout() {
         // Generar número de orden
         const orderNumber = `DD${Date.now().toString().slice(-8)}`;
 
+        const subtotal = getCartTotal();
+        let discountAmount = 0;
+        if (appliedCoupon) {
+            if (appliedCoupon.discountType === 'percentage') {
+                discountAmount = subtotal * (appliedCoupon.discountValue / 100);
+            } else {
+                discountAmount = appliedCoupon.discountValue;
+            }
+            discountAmount = Math.min(discountAmount, subtotal);
+        }
+        const discountedSubtotal = subtotal - discountAmount;
+        const shipping = discountedSubtotal >= 100000 ? 0 : 15000;
+        const tax = discountedSubtotal * 0.19;
+        const total = discountedSubtotal + shipping + tax;
+
         // Guardar datos del pedido en localStorage
         const orderData = {
             orderNumber,
             items: cartItems,
             customerInfo: formData,
-            subtotal: getCartTotal(),
-            shipping: getCartTotal() >= 100000 ? 0 : 15000,
-            tax: getCartTotal() * 0.19,
-            total: getCartTotal() + (getCartTotal() >= 100000 ? 0 : 15000) + (getCartTotal() * 0.19),
+            subtotal: subtotal,
+            discount: discountAmount,
+            couponCode: appliedCoupon ? appliedCoupon.code : null,
+            shipping: shipping,
+            tax: tax,
+            total: total,
             date: new Date().toISOString(),
         };
 

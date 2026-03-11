@@ -28,8 +28,9 @@ function ProductCard({ product }) {
                 {/* Image Container */}
                 <div className="relative h-64 overflow-hidden bg-gray-100 dark:bg-slate-800">
                     <img
-                        src={product.images[0]}
+                        src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.png'}
                         alt={product.name}
+                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
 
@@ -104,8 +105,8 @@ function ProductCard({ product }) {
                             whileTap={{ scale: 0.95 }}
                             onClick={handleAddToCart}
                             className={`p-3 rounded-lg transition-colors ${isInCart(product.id)
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-primary-600 hover:bg-primary-700 text-white'
                                 }`}
                             aria-label="Agregar al carrito"
                         >

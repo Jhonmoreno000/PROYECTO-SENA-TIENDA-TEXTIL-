@@ -3,13 +3,10 @@ import { FiFileText, FiAlertCircle, FiCheck, FiX } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useNotification } from '../../context/NotificationContext';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function AdminBugReports() {
     const { showNotification } = useNotification();
-    const dashboardLinks = [
-        { label: 'Volver al Panel', path: '/admin', icon: FiFileText },
-    ];
-
     const [reports, setReports] = useState([
         { id: 1, title: 'Error en checkout móvil', date: '2023-11-20', severity: 'high', type: 'bug', status: 'open', user: 'Juan Pérez' },
         { id: 2, title: 'Botón de login desalineado', date: '2023-11-19', severity: 'low', type: 'visual', status: 'closed', user: 'Ana García' },
@@ -32,7 +29,7 @@ function AdminBugReports() {
     };
 
     return (
-        <DashboardLayout title="Reportes de Fallos" links={dashboardLinks}>
+        <DashboardLayout title="Reportes de Fallos" links={adminDashboardLinks}>
             <BackButton />
             <div className="card">
                 <div className="p-6 border-b border-gray-200 dark:border-slate-700">
@@ -93,3 +90,4 @@ function AdminBugReports() {
 }
 
 export default AdminBugReports;
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiMapPin, FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiHome, FiTool, FiBriefcase } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 
 const COLOMBIA_DEPARTMENTS = [
@@ -60,10 +61,7 @@ function AddressBook() {
         isDefault: false
     });
 
-    const dashboardLinks = [
-        { label: 'Mi Perfil', path: '/cliente/configuracion' },
-        { label: 'Direcciones', path: '/cliente/configuracion/direcciones' },
-    ];
+    
 
     const resetForm = () => {
         setFormData({
@@ -136,7 +134,7 @@ function AddressBook() {
     };
 
     return (
-        <DashboardLayout title="Libreta de Direcciones" links={dashboardLinks}>
+        <DashboardLayout title="Libreta de Direcciones" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">

@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiLayout, FiEye, FiEyeOff } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useNotification } from '../../context/NotificationContext';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function ManageHome() {
     const { showNotification } = useNotification();
-    const dashboardLinks = [
-        { label: 'Volver al Panel', path: '/admin', icon: FiLayout },
-    ];
-
     const [sections, setSections] = useState([
         { id: 'hero', name: 'Hero Section', visible: true, description: 'Banner principal y CTA' },
         { id: 'carousel', name: 'Carrusel de Promociones', visible: true, description: 'Slides destacados' },
@@ -17,15 +14,37 @@ function ManageHome() {
         { id: 'benefits', name: 'Sección de Beneficios', visible: true, description: 'Iconos de confianza' },
     ]);
 
-    const toggleSection = (id) => {
-        setSections(sections.map(s =>
+    useEffect(() => {
+        fetch('http://localhost:8081/api/config/home_sections_config')
+            .then(res => res.ok ? res.text() : null)
+            .then(text => {
+                if (text && text !== '{}') {
+                    setSections(JSON.parse(text));
+                }
+            })
+            .catch(console.error);
+    }, []);
+
+    const toggleSection = async (id) => {
+        const newSections = sections.map(s =>
             s.id === id ? { ...s, visible: !s.visible } : s
-        ));
+        );
+        setSections(newSections);
         showNotification('success', 'Visibilidad actualizada');
+        
+        try {
+            await fetch('http://localhost:8081/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'home_sections_config', value: JSON.stringify(newSections) })
+            });
+        } catch(e) {
+            console.error('Error saving config', e);
+        }
     };
 
     return (
-        <DashboardLayout title="Gestionar Página de Inicio" links={dashboardLinks}>
+        <DashboardLayout title="Gestionar Página de Inicio" links={adminDashboardLinks}>
             <BackButton />
             <div className="card p-6">
                 <h2 className="text-xl font-bold mb-6">Visibilidad de Secciones</h2>
@@ -56,3 +75,4 @@ function ManageHome() {
 }
 
 export default ManageHome;
+

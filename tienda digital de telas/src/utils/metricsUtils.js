@@ -22,18 +22,19 @@ export const getTopProducts = (orders, products, limit = 5) => {
     const productSales = {};
 
     orders.forEach(order => {
-        order.productIds.forEach(productId => {
+        const pIds = order.productIds || [];
+        pIds.forEach(productId => {
             if (!productSales[productId]) {
                 productSales[productId] = { count: 0, revenue: 0 };
             }
             productSales[productId].count += 1;
-            productSales[productId].revenue += order.total / order.productIds.length;
+            productSales[productId].revenue += order.total / pIds.length;
         });
     });
 
     return Object.entries(productSales)
         .map(([id, data]) => {
-            const product = products.find(p => p.id === parseInt(id));
+            const product = products.find(p => String(p.id) === String(id));
             return {
                 id: parseInt(id),
                 name: product?.name || 'Producto Desconocido',
@@ -188,7 +189,7 @@ export const segmentClients = (clients, orders) => {
 export const getProductsWithoutSales = (products, orders) => {
     const soldProductIds = new Set();
     orders.forEach(order => {
-        order.productIds.forEach(id => soldProductIds.add(id));
+        (order.productIds || []).forEach(id => soldProductIds.add(id));
     });
 
     return products.filter(product => !soldProductIds.has(product.id));

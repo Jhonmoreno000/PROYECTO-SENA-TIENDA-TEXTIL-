@@ -5,17 +5,10 @@ import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { prepareColombiaHeatMapData } from '../../../utils/analyticsUtils';
 import { formatCurrency } from '../../../utils/formatters';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function SalesHeatMap() {
     const { regionSales } = useMetrics();
-
-    const dashboardLinks = [
-        { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas' },
-        { label: 'Rotación', path: '/admin/analytics/rotacion' },
-        { label: 'Devoluciones', path: '/admin/analytics/devoluciones' },
-        { label: 'Proyección', path: '/admin/analytics/proyeccion' },
-    ];
-
     // Safety check for empty data
     const safeRegionSales = regionSales || [];
     const heatMapData = prepareColombiaHeatMapData(safeRegionSales);
@@ -44,7 +37,7 @@ function SalesHeatMap() {
     // If no data, show empty state
     if (safeRegionSales.length === 0) {
         return (
-            <DashboardLayout title="Mapa de Calor de Ventas por Región" links={dashboardLinks}>
+            <DashboardLayout title="Mapa de Calor de Ventas por Región" links={adminDashboardLinks}>
                 <BackButton />
                 <div className="card p-12 text-center">
                     <p className="text-gray-500">No hay datos de ventas regionales disponibles</p>
@@ -54,7 +47,7 @@ function SalesHeatMap() {
     }
 
     return (
-        <DashboardLayout title="Mapa de Calor de Ventas por Región" links={dashboardLinks}>
+        <DashboardLayout title="Mapa de Calor de Ventas por Región" links={adminDashboardLinks}>
             <BackButton />
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -226,3 +219,4 @@ const CustomizedContent = (props) => {
 };
 
 export default SalesHeatMap;
+

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingCart, FiBell, FiTrash2, FiPlus, FiEdit2, FiFolder, FiX } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { formatCurrency } from '../../../utils/formatters';
@@ -14,10 +15,7 @@ function Wishlist() {
     const [editingNotes, setEditingNotes] = useState(null);
     const [tempNotes, setTempNotes] = useState('');
 
-    const dashboardLinks = [
-        { label: 'Lista de Deseos', path: '/cliente/coleccion' },
-        { label: 'Calculadora', path: '/cliente/coleccion/calculadora' },
-    ];
+    
 
     // Mock wishlist data for demo
     const mockWishlist = [
@@ -65,7 +63,7 @@ function Wishlist() {
     };
 
     return (
-        <DashboardLayout title="Mi Lista de Deseos" links={dashboardLinks}>
+        <DashboardLayout title="Mi Lista de Deseos" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Header with Category Filters */}
             <div className="card p-6 mb-8">

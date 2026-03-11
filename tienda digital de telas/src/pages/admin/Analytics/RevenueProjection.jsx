@@ -5,18 +5,11 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { formatCurrency } from '../../../utils/formatters';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function RevenueProjection() {
     const { orders, salesData } = useMetrics();
     const [months, setMonths] = useState(6);
-
-    const dashboardLinks = [
-        { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas' },
-        { label: 'Rotación', path: '/admin/analytics/rotacion' },
-        { label: 'Devoluciones', path: '/admin/analytics/devoluciones' },
-        { label: 'Proyección', path: '/admin/analytics/proyeccion' },
-    ];
-
     // Calculate current monthly revenue from orders
     const safeOrders = orders || [];
     const totalRevenue = safeOrders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -74,7 +67,7 @@ function RevenueProjection() {
         : { projected: 0, conservative: 0, optimistic: 0 };
 
     return (
-        <DashboardLayout title="Proyección de Ingresos" links={dashboardLinks}>
+        <DashboardLayout title="Proyección de Ingresos" links={adminDashboardLinks}>
             <BackButton />
             {/* Config */}
             <div className="flex justify-between items-center mb-6">
@@ -242,3 +235,4 @@ function RevenueProjection() {
 }
 
 export default RevenueProjection;
+

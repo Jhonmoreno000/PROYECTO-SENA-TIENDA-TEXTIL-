@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { FiCheck, FiPackage, FiTruck, FiHome, FiScissors, FiCreditCard, FiMapPin, FiPhone } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { formatCurrency } from '../../../utils/formatters';
@@ -12,10 +13,7 @@ function OrderTracking() {
     const orderId = searchParams.get('id');
     const [trackingInput, setTrackingInput] = useState(orderId || '');
 
-    const dashboardLinks = [
-        { label: 'Historial', path: '/cliente/pedidos' },
-        { label: 'Rastrear Envío', path: '/cliente/pedidos/rastreo' },
-    ];
+    
 
     // Find order by ID or tracking number
     const order = orders.find(o =>
@@ -49,7 +47,7 @@ function OrderTracking() {
     ] : [];
 
     return (
-        <DashboardLayout title="Rastrear Envío" links={dashboardLinks}>
+        <DashboardLayout title="Rastrear Envío" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Search Box */}
             <div className="card p-6 mb-8">

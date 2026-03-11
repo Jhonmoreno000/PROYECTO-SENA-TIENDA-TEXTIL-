@@ -6,6 +6,7 @@ import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { getAllSellersMetrics } from '../../../utils/metricsUtils';
 import { formatCurrency } from '../../../utils/formatters';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function VendorPerformance() {
     const { users, orders, bugReports, updateSellerCommission, toggleSellerSuspension } = useMetrics();
@@ -13,12 +14,6 @@ function VendorPerformance() {
     const [tempCommission, setTempCommission] = useState('');
     const [showSuspendModal, setShowSuspendModal] = useState(null);
     const [suspensionReason, setSuspensionReason] = useState('');
-
-    const dashboardLinks = [
-        { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion' },
-        { label: 'Rendimiento Vendedores', path: '/admin/moderacion/vendedores' },
-    ];
-
     const sellers = users.filter(u => u.role === 'seller');
     const sellersWithMetrics = getAllSellersMetrics(sellers, orders, bugReports);
 
@@ -54,7 +49,7 @@ function VendorPerformance() {
     };
 
     return (
-        <DashboardLayout title="Rendimiento de Vendedores" links={dashboardLinks}>
+        <DashboardLayout title="Rendimiento de Vendedores" links={adminDashboardLinks}>
             <BackButton />
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -255,3 +250,4 @@ function VendorPerformance() {
 }
 
 export default VendorPerformance;
+

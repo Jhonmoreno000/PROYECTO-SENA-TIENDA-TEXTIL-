@@ -3,19 +3,16 @@ import { FiCheck, FiX, FiEye, FiFilter } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
+import { useProducts } from '../../../context/ProductContext';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function ApprovalQueue() {
     const { pendingProducts, approveProduct, rejectProduct } = useMetrics();
+    const { refreshProducts } = useProducts();
     const [filterSeller, setFilterSeller] = useState('all');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [rejectReason, setRejectReason] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(null);
-
-    const dashboardLinks = [
-        { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion' },
-        { label: 'Rendimiento Vendedores', path: '/admin/moderacion/vendedores' },
-    ];
-
     const filteredProducts = filterSeller === 'all'
         ? pendingProducts.filter(p => p.status === 'pending')
         : pendingProducts.filter(p => p.status === 'pending' && p.sellerName === filterSeller);
@@ -24,6 +21,7 @@ function ApprovalQueue() {
 
     const handleApprove = (productId) => {
         approveProduct(productId);
+        refreshProducts(); // Sync catalog
     };
 
     const handleReject = (productId) => {
@@ -35,7 +33,7 @@ function ApprovalQueue() {
     };
 
     return (
-        <DashboardLayout title="Cola de Aprobación de Productos" links={dashboardLinks}>
+        <DashboardLayout title="Cola de Aprobación de Productos" links={adminDashboardLinks}>
             <BackButton />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
@@ -74,7 +72,7 @@ function ApprovalQueue() {
                             {/* Product Image */}
                             <div className="aspect-square bg-gray-100 dark:bg-slate-700 relative overflow-hidden">
                                 <img
-                                    src={product.images?.[0] || '/api/placeholder/400/400'}
+                                    src={product.images?.[0] || '/placeholder.png'}
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                 />
@@ -252,3 +250,4 @@ function ApprovalQueue() {
 }
 
 export default ApprovalQueue;
+

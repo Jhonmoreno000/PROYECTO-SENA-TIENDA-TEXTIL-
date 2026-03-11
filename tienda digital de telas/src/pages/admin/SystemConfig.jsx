@@ -4,17 +4,12 @@ import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useMetrics } from '../../context/MetricsContext';
 import { useNotification } from '../../context/NotificationContext';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function SystemConfig() {
     const { systemConfig, updateSystemConfig } = useMetrics();
     const { showNotification } = useNotification();
     const [config, setConfig] = useState(systemConfig);
-
-    const dashboardLinks = [
-        { label: 'Resumen', path: '/admin', icon: FiSettings },
-        { label: 'Configuración', path: '/admin/configuracion', icon: FiSettings },
-    ];
-
     const handleChange = (field, value) => {
         setConfig({
             ...config,
@@ -38,7 +33,7 @@ function SystemConfig() {
     };
 
     return (
-        <DashboardLayout title="Configuración del Sistema" links={dashboardLinks}>
+        <DashboardLayout title="Configuración del Sistema" links={adminDashboardLinks}>
             <BackButton />
             <div className="space-y-6">
                 {/* Información General */}
@@ -273,3 +268,4 @@ function SystemConfig() {
 }
 
 export default SystemConfig;
+

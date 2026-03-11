@@ -19,56 +19,67 @@ export function AuthProvider({ children }) {
     // Roles: 'client', 'seller', 'admin'
 
     const login = async (email, password) => {
-        // Simulando llamada a API
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Mock simple de login
-                if (email === 'admin@ddtextil.com' && password === 'admin123') {
-                    const userData = { id: 1, name: 'Admin User', email, role: 'admin' };
-                    setUser(userData);
-                    showNotification('success', '¡Bienvenido Administrador!');
-                    resolve({ success: true });
-                } else if (email === 'vendedor@ddtextil.com' && password === 'vendedor123') {
-                    const userData = { id: 2, name: 'Vendedor User', email, role: 'seller' };
-                    setUser(userData);
-                    showNotification('success', '¡Bienvenido al panel de ventas!');
-                    resolve({ success: true });
-                } else if (email === 'cliente@ddtextil.com' && password === 'cliente123') {
-                    const userData = { id: 3, name: 'Cliente User', email, role: 'client' };
-                    setUser(userData);
-                    showNotification('success', '¡Hola de nuevo!');
-                    resolve({ success: true });
-                } else {
-                    // Permitir cualquier otro login como cliente para pruebas
-                    if (password.length >= 6) {
-                        const userData = { id: Date.now(), name: email.split('@')[0], email, role: 'client' };
-                        setUser(userData);
-                        showNotification('success', '¡Login exitoso!');
-                        resolve({ success: true });
-                    } else {
-                        showNotification('error', 'Credenciales inválidas');
-                        resolve({ success: false, message: 'Credenciales inválidas' });
-                    }
-                }
-            }, 800);
-        });
+        try {
+            const response = await fetch('http://localhost:8081/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // Normalize roles for frontend app logic
+                let normalizedRole = data.user.role;
+                if (normalizedRole === 'administrador' || normalizedRole === 'admin') normalizedRole = 'admin';
+                else if (normalizedRole === 'vendedor') normalizedRole = 'seller';
+                else if (normalizedRole === 'cliente') normalizedRole = 'client';
+                
+                const loggedInUser = { ...data.user, role: normalizedRole };
+                
+                // Keep password_hash out of local storage
+                delete loggedInUser.password_hash;
+                
+                setUser(loggedInUser);
+                showNotification('success', `¡Bienvenido ${loggedInUser.name}!`);
+                return { success: true };
+            } else {
+                showNotification('error', data.error || 'Credenciales inválidas');
+                return { success: false, message: data.error };
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showNotification('error', 'Error al conectar con el servidor');
+            return { success: false, message: 'Error de servidor' };
+        }
     };
 
     const register = async (userData) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Mock registro - por defecto crea clientes
-                const newUser = {
-                    id: Date.now(),
+        try {
+            const response = await fetch('http://localhost:8081/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     name: userData.name,
                     email: userData.email,
-                    role: 'client' // Por defecto
-                };
-                setUser(newUser);
-                showNotification('success', '¡Registro exitoso! Bienvenido a D&D Textil');
-                resolve({ success: true });
-            }, 1000);
-        });
+                    password: userData.password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // Auto login after complete
+                return await login(userData.email, userData.password);
+            } else {
+                showNotification('error', data.error || 'No se pudo crear la cuenta');
+                return { success: false, message: data.error };
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            showNotification('error', 'Error al conectar con el servidor');
+            return { success: false, message: 'Error de servidor' };
+        }
     };
 
     const logout = () => {

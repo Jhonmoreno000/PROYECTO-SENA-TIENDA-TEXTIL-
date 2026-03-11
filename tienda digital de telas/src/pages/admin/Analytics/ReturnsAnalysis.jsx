@@ -5,17 +5,10 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { formatCurrency } from '../../../utils/formatters';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function ReturnsAnalysis() {
     const { orders, bugReports, users } = useMetrics();
-
-    const dashboardLinks = [
-        { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas' },
-        { label: 'Rotación', path: '/admin/analytics/rotacion' },
-        { label: 'Devoluciones', path: '/admin/analytics/devoluciones' },
-        { label: 'Proyección', path: '/admin/analytics/proyeccion' },
-    ];
-
     // Calcular órdenes devueltas
     const returnedOrders = orders.filter(o => o.returned || o.status === 'returned');
     const returnRate = orders.length > 0 ? (returnedOrders.length / orders.length) * 100 : 0;
@@ -49,7 +42,7 @@ function ReturnsAnalysis() {
     const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
 
     return (
-        <DashboardLayout title="Análisis de Devoluciones" links={dashboardLinks}>
+        <DashboardLayout title="Análisis de Devoluciones" links={adminDashboardLinks}>
             <BackButton />
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -214,3 +207,4 @@ function ReturnsAnalysis() {
 }
 
 export default ReturnsAnalysis;
+

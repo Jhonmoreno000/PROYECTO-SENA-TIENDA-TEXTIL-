@@ -6,16 +6,11 @@ import BarChart from '../../components/dashboard/BarChart';
 import { useMetrics } from '../../context/MetricsContext';
 import { getAllSellersMetrics } from '../../utils/metricsUtils';
 import { formatCurrency } from '../../utils/formatters';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function SellerMetrics() {
     const { users, orders, bugReports } = useMetrics();
     const [selectedSeller, setSelectedSeller] = useState(null);
-
-    const dashboardLinks = [
-        { label: 'Resumen', path: '/admin', icon: FiTrendingUp },
-        { label: 'Vendedores', path: '/admin/vendedores', icon: FiTrendingUp },
-    ];
-
     const sellers = users.filter(u => u.role === 'seller');
     const sellersWithMetrics = getAllSellersMetrics(sellers, orders, bugReports);
 
@@ -30,7 +25,7 @@ function SellerMetrics() {
     };
 
     return (
-        <DashboardLayout title="Métricas por Vendedor" links={dashboardLinks}>
+        <DashboardLayout title="Métricas por Vendedor" links={adminDashboardLinks}>
             <BackButton />
             {/* Gráfico de comparación */}
             <div className="card p-6 mb-8">
@@ -213,3 +208,4 @@ function SellerMetrics() {
 }
 
 export default SellerMetrics;
+

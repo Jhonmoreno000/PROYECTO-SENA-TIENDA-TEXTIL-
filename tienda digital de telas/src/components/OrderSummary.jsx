@@ -1,14 +1,27 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
+import { FiTag } from 'react-icons/fi';
 
 function OrderSummary({ formData }) {
-    const { cartItems, getCartTotal, getCartItemCount } = useCart();
+    const { cartItems, getCartTotal, getCartItemCount, appliedCoupon } = useCart();
 
     const subtotal = getCartTotal();
-    const shipping = subtotal >= 100000 ? 0 : 15000;
-    const tax = subtotal * 0.19;
-    const total = subtotal + shipping + tax;
+
+    let discountAmount = 0;
+    if (appliedCoupon) {
+        if (appliedCoupon.discountType === 'percentage') {
+            discountAmount = subtotal * (appliedCoupon.discountValue / 100);
+        } else {
+            discountAmount = appliedCoupon.discountValue;
+        }
+        discountAmount = Math.min(discountAmount, subtotal);
+    }
+
+    const discountedSubtotal = subtotal - discountAmount;
+    const shipping = discountedSubtotal >= 100000 ? 0 : 15000;
+    const tax = discountedSubtotal * 0.19;
+    const total = discountedSubtotal + shipping + tax;
 
     return (
         <div className="card p-6 sticky top-24">
@@ -42,6 +55,18 @@ function OrderSummary({ formData }) {
                     <span>Subtotal ({getCartItemCount()} items)</span>
                     <span className="font-semibold">{formatCurrency(subtotal)}</span>
                 </div>
+
+                {appliedCoupon && (
+                    <div className="flex flex-col gap-2 py-2 border-y border-gray-100 dark:border-slate-700 my-2">
+                        <div className="flex justify-between items-center text-green-700 dark:text-green-400">
+                            <div className="flex items-center gap-2">
+                                <FiTag />
+                                <span>Cupón <strong className="uppercase">{appliedCoupon.code}</strong></span>
+                            </div>
+                            <span className="font-medium">-{formatCurrency(discountAmount)}</span>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Envío</span>

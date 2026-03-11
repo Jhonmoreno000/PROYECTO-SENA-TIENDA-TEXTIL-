@@ -1,17 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiTag, FiX } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
+import { useMetrics } from '../context/MetricsContext';
 import { formatCurrency } from '../utils/formatters';
 
 function CartSummary() {
-    const { getCartTotal, getCartItemCount } = useCart();
+    const { getCartTotal, getCartItemCount, appliedCoupon, setAppliedCoupon } = useCart();
+    const { coupons } = useMetrics();
+    const [couponCode, setCouponCode] = useState('');
+    const [couponError, setCouponError] = useState('');
 
     const subtotal = getCartTotal();
-    const shipping = subtotal >= 100000 ? 0 : 15000;
-    const tax = subtotal * 0.19; // IVA 19%
-    const total = subtotal + shipping + tax;
+    
+    // Cálculo de descuento
+    let discountAmount = 0;
+    if (appliedCoupon) {
+        if (appliedCoupon.discountType === 'percentage') {
+            discountAmount = subtotal * (appliedCoupon.discountValue / 100);
+        } else {
+            discountAmount = appliedCoupon.discountValue;
+        }
+        // Limit discount to not exceed subtotal
+        discountAmount = Math.min(discountAmount, subtotal);
+    }
+
+    const discountedSubtotal = subtotal - discountAmount;
+    const shipping = discountedSubtotal >= 100000 ? 0 : 15000;
+    const tax = discountedSubtotal * 0.19; // IVA 19%
+    const total = discountedSubtotal + shipping + tax;
+
+    const handleApplyCoupon = () => {
+        setCouponError('');
+        if (!couponCode.trim()) return;
+
+        const code = couponCode.trim().toUpperCase();
+        const foundCoupon = coupons.find(c => c.code === code && c.active);
+
+        if (!foundCoupon) {
+            setCouponError('Cupón inválido o inactivo');
+            return;
+        }
+
+        // Validate expiration
+        const isExpired = new Date(foundCoupon.expiresAt) < new Date();
+        if (isExpired) {
+            setCouponError('Este cupón ha expirado');
+            return;
+        }
+
+        // Validate min purchase
+        if (foundCoupon.rules.minPurchase && subtotal < foundCoupon.rules.minPurchase) {
+            setCouponError(`Requiere compra mínima de ${formatCurrency(foundCoupon.rules.minPurchase)}`);
+            return;
+        }
+
+        setAppliedCoupon(foundCoupon);
+        setCouponCode('');
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+    };
 
     return (
         <motion.div
@@ -25,6 +76,54 @@ function CartSummary() {
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Subtotal ({getCartItemCount()} items)</span>
                     <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                </div>
+
+                {/* Seción de Cupón */}
+                <div className="border-t border-b border-gray-100 dark:border-slate-700 py-4 my-2">
+                    {appliedCoupon ? (
+                        <div className="flex flex-col gap-2">
+                            <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
+                                <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                                    <FiTag />
+                                    <span className="font-bold">{appliedCoupon.code}</span>
+                                </div>
+                                <button 
+                                    onClick={handleRemoveCoupon}
+                                    className="p-1 hover:bg-green-100 dark:hover:bg-green-800 rounded-full text-green-600 transition-colors"
+                                >
+                                    <FiX />
+                                </button>
+                            </div>
+                            <div className="flex justify-between text-green-600 dark:text-green-400 font-medium">
+                                <span>Descuento</span>
+                                <span>-{formatCurrency(discountAmount)}</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                ¿Tienes un cupón de descuento?
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                    placeholder="Ingresa tu código"
+                                    className="input-field flex-1 uppercase"
+                                />
+                                <button 
+                                    onClick={handleApplyCoupon}
+                                    className="px-4 py-2 bg-gray-900 text-white dark:bg-primary-600 rounded-lg hover:bg-gray-800 dark:hover:bg-primary-700 transition-colors whitespace-nowrap font-medium"
+                                >
+                                    Aplicar
+                                </button>
+                            </div>
+                            {couponError && (
+                                <p className="text-sm text-red-500 mt-1">{couponError}</p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">

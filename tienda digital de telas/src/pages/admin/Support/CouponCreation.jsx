@@ -4,6 +4,7 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { formatCurrency } from '../../../utils/formatters';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function CouponCreation() {
     const { coupons, createCoupon, deactivateCoupon } = useMetrics();
@@ -19,13 +20,6 @@ function CouponCreation() {
             firstTimeOnly: false
         }
     });
-
-    const dashboardLinks = [
-        { label: 'Tickets', path: '/admin/soporte/tickets' },
-        { label: 'Cupones', path: '/admin/soporte/cupones' },
-        { label: 'Historial Pedidos', path: '/admin/soporte/pedidos' },
-    ];
-
     const handleSubmit = (e) => {
         e.preventDefault();
         createCoupon({
@@ -51,7 +45,7 @@ function CouponCreation() {
     };
 
     return (
-        <DashboardLayout title="Creación y Gestión de Cupones" links={dashboardLinks}>
+        <DashboardLayout title="Creación y Gestión de Cupones" links={adminDashboardLinks}>
             <BackButton />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
@@ -327,3 +321,4 @@ function CouponCreation() {
 }
 
 export default CouponCreation;
+

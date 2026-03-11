@@ -3,25 +3,21 @@ import { FiZap, FiClock } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
+import { useProducts } from '../../../context/ProductContext';
 import { identifyDeadStock, identifyBestsellers } from '../../../utils/analyticsUtils';
 import { formatCurrency } from '../../../utils/formatters';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function RotationRanking() {
-    const { products, orders } = useMetrics();
+    const { products: metricsProducts, orders } = useMetrics();
+    const { products: apiProducts } = useProducts();
+    const products = apiProducts.length > 0 ? apiProducts : metricsProducts;
     const [deadStockThreshold, setDeadStockThreshold] = useState(30);
-
-    const dashboardLinks = [
-        { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas' },
-        { label: 'Rotación', path: '/admin/analytics/rotacion' },
-        { label: 'Devoluciones', path: '/admin/analytics/devoluciones' },
-        { label: 'Proyección', path: '/admin/analytics/proyeccion' },
-    ];
-
     const deadStock = identifyDeadStock(products, orders, deadStockThreshold);
     const bestsellers = identifyBestsellers(products, orders, 10);
 
     return (
-        <DashboardLayout title="Análisis de Rotación de Inventario" links={dashboardLinks}>
+        <DashboardLayout title="Análisis de Rotación de Inventario" links={adminDashboardLinks}>
             <BackButton />
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -180,3 +176,4 @@ function RotationRanking() {
 }
 
 export default RotationRanking;
+

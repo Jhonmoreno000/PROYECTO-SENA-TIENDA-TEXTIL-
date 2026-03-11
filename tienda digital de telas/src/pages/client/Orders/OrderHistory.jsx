@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiPackage, FiDownload, FiEye, FiFilter, FiCalendar } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -13,10 +14,7 @@ function OrderHistory() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const dashboardLinks = [
-        { label: 'Historial', path: '/cliente/pedidos' },
-        { label: 'Rastrear Envío', path: '/cliente/pedidos/rastreo' },
-    ];
+    
 
     // Filter orders for current client
     const clientOrders = orders
@@ -61,7 +59,7 @@ function OrderHistory() {
     };
 
     return (
-        <DashboardLayout title="Historial de Pedidos" links={dashboardLinks}>
+        <DashboardLayout title="Historial de Pedidos" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">

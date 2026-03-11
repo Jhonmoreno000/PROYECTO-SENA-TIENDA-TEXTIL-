@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiPackage, FiHeart, FiTool, FiMessageCircle, FiUser, FiTruck, FiScissors, FiArrowRight } from 'react-icons/fi';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../data/clientDashboardLinks';
 import { useMetrics } from '../../context/MetricsContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../utils/formatters';
@@ -51,17 +52,10 @@ function ClientDashboard() {
         }
     ];
 
-    const dashboardLinks = [
-        { label: 'Dashboard', path: '/cliente', icon: FiUser },
-        { label: 'Mis Pedidos', path: '/cliente/pedidos', icon: FiPackage },
-        { label: 'Lista de Deseos', path: '/cliente/coleccion', icon: FiHeart },
-        { label: 'Calculadora', path: '/cliente/coleccion/calculadora', icon: FiScissors },
-        { label: 'Soporte', path: '/cliente/soporte/tickets', icon: FiMessageCircle },
-        { label: 'Configuración', path: '/cliente/configuracion', icon: FiTool },
-    ];
+    
 
     return (
-        <DashboardLayout title={`¡Hola, ${user?.name || 'Cliente'}!`} links={dashboardLinks}>
+        <DashboardLayout title={`¡Hola, ${user?.name || 'Cliente'}!`} links={clientDashboardLinks}>
             {/* Welcome Banner */}
             <div className="card p-8 mb-8 bg-gradient-to-r from-primary-600 to-purple-600 text-white">
                 <div className="flex flex-wrap justify-between items-center gap-4">

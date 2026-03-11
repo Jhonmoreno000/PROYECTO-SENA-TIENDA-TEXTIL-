@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FiAlertCircle, FiCamera, FiX, FiCheck, FiSend, FiUpload, FiPackage } from 'react-icons/fi';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -30,10 +31,7 @@ function NewReport() {
     const [photos, setPhotos] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const dashboardLinks = [
-        { label: 'Nuevo Reporte', path: '/cliente/soporte/nuevo' },
-        { label: 'Mis Tickets', path: '/cliente/soporte/tickets' },
-    ];
+    
 
     // Filter delivered orders (only those can have issues reported)
     const deliveredOrders = orders.filter(o =>
@@ -96,7 +94,7 @@ function NewReport() {
     const selectedIssue = ISSUE_TYPES.find(t => t.value === issueType);
 
     return (
-        <DashboardLayout title="Reportar un Problema" links={dashboardLinks}>
+        <DashboardLayout title="Reportar un Problema" links={clientDashboardLinks}>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="max-w-3xl mx-auto">
                 {/* Header Info */}

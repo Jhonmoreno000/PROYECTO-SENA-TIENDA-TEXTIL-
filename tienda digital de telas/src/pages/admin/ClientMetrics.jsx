@@ -5,15 +5,10 @@ import BackButton from '../../components/dashboard/BackButton';
 import { useMetrics } from '../../context/MetricsContext';
 import { getAllClientsMetrics, segmentClients } from '../../utils/metricsUtils';
 import { formatCurrency } from '../../utils/formatters';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function ClientMetrics() {
     const { users, orders } = useMetrics();
-
-    const dashboardLinks = [
-        { label: 'Resumen', path: '/admin', icon: FiUsers },
-        { label: 'Clientes', path: '/admin/clientes', icon: FiUsers },
-    ];
-
     const clients = users.filter(u => u.role === 'client');
     const clientsWithMetrics = getAllClientsMetrics(clients, orders);
     const segments = segmentClients(clients, orders);
@@ -22,7 +17,7 @@ function ClientMetrics() {
     const topClients = clientsWithMetrics.slice(0, 10);
 
     return (
-        <DashboardLayout title="Métricas por Cliente" links={dashboardLinks}>
+        <DashboardLayout title="Métricas por Cliente" links={adminDashboardLinks}>
             <BackButton />
             {/* Segmentación de clientes */}
             <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -207,3 +202,4 @@ function ClientMetrics() {
 }
 
 export default ClientMetrics;
+

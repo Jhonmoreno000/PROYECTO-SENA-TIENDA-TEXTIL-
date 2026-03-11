@@ -6,20 +6,65 @@ import MetricCard from '../../components/dashboard/MetricCard';
 import LineChart from '../../components/dashboard/LineChart';
 import { formatCurrency } from '../../utils/formatters';
 import { useMetrics } from '../../context/MetricsContext';
+import { useProducts } from '../../context/ProductContext';
 import { calculateTotalSales, calculateAverageTicket, getAllSellersMetrics, calculateQualityMetrics } from '../../utils/metricsUtils';
 
 function AdminOverview() {
-    const { users, orders, salesData, bugReports, products, recentActivity } = useMetrics();
+    const { users, orders, salesData, bugReports, products: metricsProducts, recentActivity } = useMetrics();
+    const { products: apiProducts, refreshProducts } = useProducts();
+    // Use API products if available, otherwise fall back to metrics products
+    const products = apiProducts.length > 0 ? apiProducts : metricsProducts;
 
     const dashboardLinks = [
         { label: 'Resumen', path: '/admin', icon: FiGrid },
-        { label: 'Usuarios', path: '/admin/usuarios', icon: FiUsers },
-        { label: 'Vendedores', path: '/admin/vendedores', icon: FiTrendingUp },
-        { label: 'Clientes', path: '/admin/clientes', icon: FiUsers },
-        { label: 'Productos', path: '/admin/productos', icon: FiShoppingBag },
-        { label: 'Ventas', path: '/admin/vendedores', icon: FiDollarSign },
-        { label: 'Carrusel', path: '/admin/carrusel', icon: FiLayers },
-        { label: 'Página Inicio', path: '/admin/home', icon: FiLayout },
+        {
+            label: 'Usuarios', icon: FiUsers,
+            children: [
+                { label: 'Gestión de Usuarios', path: '/admin/usuarios', icon: FiUsers },
+                { label: 'Vendedores', path: '/admin/vendedores', icon: FiTrendingUp },
+                { label: 'Clientes', path: '/admin/clientes', icon: FiUsers },
+            ],
+        },
+        {
+            label: 'Catálogo', icon: FiShoppingBag,
+            children: [
+                { label: 'Productos', path: '/admin/productos', icon: FiShoppingBag },
+                { label: 'Carrusel', path: '/admin/carrusel', icon: FiLayers },
+                { label: 'Página Inicio', path: '/admin/home', icon: FiLayout },
+            ],
+        },
+        {
+            label: 'Inventario', icon: FiPackage,
+            children: [
+                { label: 'Control de Lotes', path: '/admin/inventario/lotes', icon: FiPackage },
+                { label: 'Calculadora de Merma', path: '/admin/inventario/merma', icon: FiAlertCircle },
+                { label: 'Alertas de Stock', path: '/admin/inventario/alertas', icon: FiAlertCircle },
+                { label: 'Historial de Movimientos', path: '/admin/inventario/historial', icon: FiFileText },
+            ],
+        },
+        {
+            label: 'Moderación', icon: FiTrendingUp,
+            children: [
+                { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion', icon: FiShoppingBag },
+                { label: 'Rendimiento', path: '/admin/moderacion/vendedores', icon: FiTrendingUp },
+            ],
+        },
+        {
+            label: 'Analytics', icon: FiTrendingUp,
+            children: [
+                { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas', icon: FiGrid },
+                { label: 'Rotación de Inventario', path: '/admin/analytics/rotacion', icon: FiPackage },
+                { label: 'Análisis de Devoluciones', path: '/admin/analytics/devoluciones', icon: FiAlertCircle },
+                { label: 'Proyección de Ingresos', path: '/admin/analytics/proyeccion', icon: FiDollarSign },
+            ],
+        },
+        {
+            label: 'Soporte', icon: FiFileText,
+            children: [
+                { label: 'Gestión de Tickets', path: '/admin/soporte/tickets', icon: FiFileText },
+                { label: 'Crear Cupones', path: '/admin/soporte/cupones', icon: FiDollarSign },
+            ],
+        },
         { label: 'Reportes', path: '/admin/reportes', icon: FiFileText },
         { label: 'Configuración', path: '/admin/configuracion', icon: FiGrid },
     ];
@@ -70,10 +115,10 @@ function AdminOverview() {
                 />
                 <MetricCard
                     label="Reportes Calidad"
-                    value={qualityMetrics.total}
+                    value={bugReports.length}
+                    subtitle={`${bugReports.filter(r => r.status === 'open').length} abiertos, ${bugReports.length - bugReports.filter(r => r.status === 'open').length} en rev/res`}
                     icon={FiAlertCircle}
-                    color="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                    subtitle={`${qualityMetrics.open} abiertos, ${qualityMetrics.resolved} resueltos`}
+                    color="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
                 />
             </div>
 
@@ -90,29 +135,42 @@ function AdminOverview() {
             <div className="grid lg:grid-cols-2 gap-8 mb-8">
                 {/* Top Vendedores */}
                 <div className="card p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-lg">Top Vendedores</h3>
-                        <Link to="/admin/vendedores" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                            Ver todos →
-                        </Link>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold">Top Vendedores</h3>
+                        <Link to="/admin/vendedores" className="text-sm text-primary-600 hover:text-primary-700 font-medium">Ver todos →</Link>
                     </div>
-                    <div className="space-y-3">
-                        {topSellers.map((seller, index) => (
-                            <div key={seller.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800/50">
-                                <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center font-bold text-primary-600 dark:text-primary-400">
-                                    {index + 1}
+                    {topSellers.length > 0 ? (
+                        <div className="space-y-4">
+                            {topSellers.map((seller, index) => (
+                                <div key={seller.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-slate-700">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                                            index === 1 ? 'bg-gray-200 text-gray-700' :
+                                                index === 2 ? 'bg-orange-100 text-orange-700' :
+                                                    'bg-primary-50 text-primary-700'
+                                            }`}>
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm">{seller.name}</p>
+                                            <p className="text-xs text-gray-500">{seller.metrics.totalOrders} ventas</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-sm">{formatCurrency(seller.metrics.totalSales)}</p>
+                                        <p className="text-xs text-green-500 flex items-center justify-end gap-1">
+                                            <FiTrendingUp /> +12%
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-gray-900 dark:text-white">{seller.name}</p>
-                                    <p className="text-xs text-gray-500">{seller.metrics.totalOrders} pedidos</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(seller.metrics.totalSales)}</p>
-                                    <p className="text-xs text-gray-500">en ventas</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <FiUsers className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                            <p>No hay datos de vendedores suficientes</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actividad Reciente */}

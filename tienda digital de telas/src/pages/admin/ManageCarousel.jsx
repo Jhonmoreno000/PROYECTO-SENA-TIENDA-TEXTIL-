@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useNotification } from '../../context/NotificationContext';
 import { useUI } from '../../context/UIContext';
+import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function ManageCarousel() {
     const { showNotification } = useNotification();
@@ -13,9 +14,27 @@ function ManageCarousel() {
     const [isAdding, setIsAdding] = useState(false);
     const [newSlide, setNewSlide] = useState({ title: '', subtitle: '', image: '' });
 
-    const dashboardLinks = [
-        { label: 'Volver al Panel', path: '/admin', icon: FiLayers },
-    ];
+    const handleNewImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setNewSlide({ ...newSlide, image: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleEditImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setEditForm({ ...editForm, image: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleDelete = (id) => {
         if (confirm('¿Eliminar este slide?')) {
@@ -47,7 +66,7 @@ function ManageCarousel() {
     };
 
     return (
-        <DashboardLayout title="Gestión del Carrusel" links={dashboardLinks}>
+        <DashboardLayout title="Gestión del Carrusel" links={adminDashboardLinks}>
             <BackButton />
             <div className="card mb-6 p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -73,11 +92,12 @@ function ManageCarousel() {
                                 value={newSlide.subtitle}
                                 onChange={e => setNewSlide({ ...newSlide, subtitle: e.target.value })}
                             />
+                            <div className="text-xs font-semibold text-gray-500 mt-2">Imagen del Slide:</div>
                             <input
-                                placeholder="URL de Imagen (Placehold.co o Unsplash)"
-                                className="input-field"
-                                value={newSlide.image}
-                                onChange={e => setNewSlide({ ...newSlide, image: e.target.value })}
+                                type="file"
+                                accept="image/*"
+                                className="w-full text-xs file:mr-4 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                onChange={handleNewImageUpload}
                             />
                             <button onClick={handleAddSlide} className="btn-primary w-full mt-2">Guardar Nuevo Slide</button>
                         </div>
@@ -106,11 +126,12 @@ function ManageCarousel() {
                                             onChange={e => setEditForm({ ...editForm, subtitle: e.target.value })}
                                             placeholder="Subtítulo"
                                         />
+                                        <div className="text-xs font-semibold text-gray-500 mt-2">Cambiar Imagen:</div>
                                         <input
-                                            className="input-field py-1 text-xs"
-                                            value={editForm.image}
-                                            onChange={e => setEditForm({ ...editForm, image: e.target.value })}
-                                            placeholder="URL Imagen"
+                                            type="file"
+                                            accept="image/*"
+                                            className="w-full text-xs file:mr-4 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                            onChange={handleEditImageUpload}
                                         />
                                     </div>
                                 ) : (
@@ -151,3 +172,4 @@ function ManageCarousel() {
 }
 
 export default ManageCarousel;
+

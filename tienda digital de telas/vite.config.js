@@ -16,6 +16,12 @@ export default defineConfig({
     strictPort: false,
     open: true,
     allowedHosts: true,
+    proxy: {
+      '/uploads': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      }
+    }
   },
 })
 

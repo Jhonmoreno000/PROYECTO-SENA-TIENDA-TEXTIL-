@@ -4,20 +4,13 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { calculateWastePercentage } from '../../../utils/inventoryUtils';
+import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 function BatchControl() {
     const { inventoryBatches, wasteEvents, updateBatch, addBatch } = useMetrics();
     const [filterType, setFilterType] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingBatch, setEditingBatch] = useState(null);
-
-    const dashboardLinks = [
-        { label: 'Lotes', path: '/admin/inventario/lotes', icon: FiPackage },
-        { label: 'Merma', path: '/admin/inventario/merma', icon: FiAlertTriangle },
-        { label: 'Alertas', path: '/admin/inventario/alertas', icon: FiFilter },
-        { label: 'Historial', path: '/admin/inventario/historial', icon: FiEdit2 },
-    ];
-
     const filteredBatches = filterType === 'all'
         ? inventoryBatches
         : inventoryBatches.filter(b => b.status === filterType);
@@ -37,7 +30,7 @@ function BatchControl() {
     };
 
     return (
-        <DashboardLayout title="Control de Lotes y Rollos" links={dashboardLinks}>
+        <DashboardLayout title="Control de Lotes y Rollos" links={adminDashboardLinks}>
             <BackButton />
             {/* Header Actions */}
             <div className="flex justify-between items-center mb-6">
@@ -210,3 +203,4 @@ function BatchControl() {
 }
 
 export default BatchControl;
+
