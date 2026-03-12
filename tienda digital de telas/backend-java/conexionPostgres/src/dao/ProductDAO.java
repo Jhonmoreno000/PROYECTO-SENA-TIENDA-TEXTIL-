@@ -44,11 +44,48 @@ public class ProductDAO {
                 product.setCare(rs.getString("care"));
                 product.setStock(rs.getInt("stock"));
                 product.setFeatured(rs.getBoolean("featured"));
-
-                // Get images for this product
                 product.setImages(getProductImages(conn, productId));
 
                 products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    public List<Product> getProductsBySeller(int sellerId) {
+        List<Product> products = new ArrayList<>();
+        Connection conn = Conexion.getConnection();
+
+        String query = "SELECT p.*, c.name as category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.seller_id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, sellerId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Product product = new Product();
+                    int productId = rs.getInt("id");
+
+                    product.setId(String.valueOf(productId));
+                    product.setName(rs.getString("name"));
+                    product.setCategory(rs.getString("category_name"));
+                    product.setPrice(rs.getDouble("price"));
+                    product.setSellerId(rs.getInt("seller_id"));
+                    product.setDescription(rs.getString("description"));
+                    product.setMaterial(rs.getString("material"));
+                    product.setWidth(rs.getString("width"));
+                    product.setWeight(rs.getString("weight"));
+                    product.setCare(rs.getString("care"));
+                    product.setStock(rs.getInt("stock"));
+                    product.setFeatured(rs.getBoolean("featured"));
+                    product.setImages(getProductImages(conn, productId));
+
+                    products.add(product);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

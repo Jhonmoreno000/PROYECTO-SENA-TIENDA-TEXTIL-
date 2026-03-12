@@ -14,7 +14,7 @@ import { getSellerMetrics, getTopProducts } from '../../utils/metricsUtils';
 function SellerProducts() {
     const { showNotification } = useNotification();
     const { user } = useAuth();
-    const { products, orders, bugReports, getProductsBySeller, getOrdersBySeller, getBugReportsBySeller, updateProduct, deleteProduct } = useMetrics();
+    const { products, orders, bugReports, getProductsBySeller, getOrdersBySeller, getBugReportsBySeller, updateProduct, deleteProduct, refreshData } = useMetrics();
     const { refreshProducts } = useProducts();
 
     const [editingId, setEditingId] = useState(null);
@@ -29,6 +29,13 @@ function SellerProducts() {
     // Calcular métricas del vendedor
     const metrics = getSellerMetrics(sellerId, orders, bugReports);
     const topProducts = getTopProducts(sellerOrders, sellerProducts, 5);
+
+    // Refresh data on mount to ensure we have the latest (including inactive products)
+    React.useEffect(() => {
+        if (sellerId) {
+            refreshData(sellerId);
+        }
+    }, [sellerId]);
 
     // Datos para el gráfico (últimos 7 días de ventas del vendedor)
     const last7Days = [...Array(7)].map((_, i) => {
@@ -86,11 +93,13 @@ function SellerProducts() {
             }
         }
 
-        updateProduct(productId, updatedForm);
+        await updateProduct(productId, updatedForm);
+        
         setEditingId(null);
         showNotification('success', 'Producto actualizado correctamente');
 
-        // Refresh the catalog (ProductContext) so main page reflects changes
+        // Refresh both contexts
+        refreshData();
         refreshProducts();
     };
 

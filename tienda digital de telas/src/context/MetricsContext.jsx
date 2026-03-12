@@ -105,6 +105,13 @@ export function MetricsProvider({ children }) {
                     const apiPending = await pendingRes.json();
                     if (apiPending && apiPending.length > 0) setPendingProducts(apiPending);
                 }
+
+                // Main Products
+                const productsRes = await fetch('http://localhost:8081/api/products');
+                if (productsRes.ok) {
+                    const apiProducts = await productsRes.json();
+                    if (apiProducts && apiProducts.length > 0) setProducts(apiProducts);
+                }
                 // Admin Metrics from Config Table
                 const keysToFetch = ['metrics_sales', 'inventory_batches', 'waste_events', 'stock_thresholds'];
                 for (let key of keysToFetch) {
@@ -130,6 +137,27 @@ export function MetricsProvider({ children }) {
 
         fetchRemoteData();
     }, []);
+
+    const refreshData = async (sellerId = null) => {
+        try {
+            let url = 'http://localhost:8081/api/products';
+            if (sellerId) url += `?sellerId=${sellerId}`;
+            
+            const productsRes = await fetch(url);
+            if (productsRes.ok) {
+                const apiProducts = await productsRes.json();
+                if (apiProducts) setProducts(apiProducts);
+            }
+            
+            const ordersRes = await fetch('http://localhost:8081/api/orders');
+            if (ordersRes.ok) {
+                const apiOrders = await ordersRes.json();
+                if (apiOrders && apiOrders.length > 0) setOrders(apiOrders);
+            }
+        } catch (err) {
+            console.error("Error refreshing metrics data:", err);
+        }
+    };
 
     // Funciones para gestión de usuarios
     const updateUserRole = (userId, newRole) => {
@@ -205,19 +233,51 @@ export function MetricsProvider({ children }) {
         return products.filter(product => product.sellerId === sellerId);
     };
 
-    const updateProduct = (productId, updates) => {
+    const updateProduct = async (productId, updates) => {
+        // Update local state
         setProducts(products.map(product =>
             product.id === productId ? { ...product, ...updates } : product
         ));
+
+        // Persist to API
+        try {
+            await fetch(`http://localhost:8081/api/products/${productId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+        } catch (e) {
+            console.error('Error persisting product update', e);
+        }
     };
 
-    const deleteProduct = (productId) => {
+    const deleteProduct = async (productId) => {
+        // Update local state
         setProducts(products.filter(product => product.id !== productId));
+
+        // Persist to API
+        try {
+            await fetch(`http://localhost:8081/api/products/${productId}`, {
+                method: 'DELETE'
+            });
+        } catch (e) {
+            console.error('Error persisting product deletion', e);
+        }
     };
 
-    const addProduct = (newProduct) => {
-        const maxId = Math.max(...products.map(p => p.id), 0);
-        setProducts([...products, { ...newProduct, id: maxId + 1 }]);
+    const addProduct = async (newProduct) => {
+        try {
+            const response = await fetch('http://localhost:8081/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newProduct)
+            });
+            if (response.ok) {
+                refreshData();
+            }
+        } catch (e) {
+            console.error('Error adding product', e);
+        }
     };
 
     // Funciones para configuración del sistema
@@ -486,6 +546,7 @@ export function MetricsProvider({ children }) {
         updateProduct,
         deleteProduct,
         addProduct,
+        refreshData,
 
         // Funciones de configuración
         updateSystemConfig,

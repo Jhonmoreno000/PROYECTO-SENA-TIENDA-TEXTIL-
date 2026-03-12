@@ -80,8 +80,12 @@ public class ApiServer {
                     ProductDAO dao = new ProductDAO();
                     List<Product> products;
 
+                    String queryParams = exchange.getRequestURI().getQuery();
                     if (path.equals("/api/products/pending")) {
                         products = dao.getPendingProducts();
+                    } else if (queryParams != null && queryParams.contains("sellerId=")) {
+                        int sellerId = Integer.parseInt(queryParams.split("sellerId=")[1].split("&")[0]);
+                        products = dao.getProductsBySeller(sellerId);
                     } else {
                         products = dao.getAllProducts();
                     }
