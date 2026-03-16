@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiFacebook, FiInstagram, FiTwitter, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
+import { FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa';
+import { MdMail, MdPhone, MdLocationOn } from 'react-icons/md';
 
 function Footer() {
     const currentYear = new Date().getFullYear();
@@ -32,13 +33,13 @@ function Footer() {
                         </p>
                         <div className="flex space-x-4">
                             <a href="#" className="hover:text-primary-400 transition-colors">
-                                <FiFacebook className="w-5 h-5" />
+                                <FaFacebook className="w-5 h-5" />
                             </a>
                             <a href="#" className="hover:text-primary-400 transition-colors">
-                                <FiInstagram className="w-5 h-5" />
+                                <FaInstagram className="w-5 h-5" />
                             </a>
                             <a href="#" className="hover:text-primary-400 transition-colors">
-                                <FiTwitter className="w-5 h-5" />
+                                <FaTwitter className="w-5 h-5" />
                             </a>
                         </div>
                     </div>
@@ -102,15 +103,15 @@ function Footer() {
                         <h3 className="text-white font-bold mb-4">Contacto</h3>
                         <ul className="space-y-3">
                             <li className="flex items-start gap-2">
-                                <FiMapPin className="w-5 h-5 mt-1 flex-shrink-0" />
+                                <MdLocationOn className="w-5 h-5 mt-1 flex-shrink-0" />
                                 <span>Calle 123 #45-67, medellin-antioquia, Colombia</span>
                             </li>
                             <li className="flex items-center gap-2">
-                                <FiPhone className="w-5 h-5 flex-shrink-0" />
+                                <MdPhone className="w-5 h-5 flex-shrink-0" />
                                 <span>+57 300 123 4567</span>
                             </li>
                             <li className="flex items-center gap-2">
-                                <FiMail className="w-5 h-5 flex-shrink-0" />
+                                <MdMail className="w-5 h-5 flex-shrink-0" />
                                 <span>info@ddtextil.com</span>
                             </li>
                         </ul>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiMail, FiPhone, FiMapPin, FiClock, FiSend } from 'react-icons/fi';
+import { MdMail, MdPhone, MdLocationOn, MdAccessTime, MdSend } from 'react-icons/md';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import AnimatedPage from '../components/AnimatedPage';
 
 function Contact() {
     const [formData, setFormData] = useState({
@@ -40,28 +41,28 @@ function Contact() {
 
     const contactInfo = [
         {
-            icon: FiMapPin,
+            icon: MdLocationOn,
             title: 'Dirección',
             info: 'Calle 123 #45-67',
             info2: 'Bogotá, Colombia',
             color: 'from-blue-500 to-cyan-500',
         },
         {
-            icon: FiPhone,
+            icon: MdPhone,
             title: 'Teléfono',
             info: '+57 (1) 234 5678',
             info2: '+57 300 123 4567',
             color: 'from-green-500 to-emerald-500',
         },
         {
-            icon: FiMail,
+            icon: MdMail,
             title: 'Email',
             info: 'info@ddtextil.com',
             info2: 'ventas@ddtextil.com',
             color: 'from-purple-500 to-pink-500',
         },
         {
-            icon: FiClock,
+            icon: MdAccessTime,
             title: 'Horario',
             info: 'Lun - Vie: 8:00 AM - 6:00 PM',
             info2: 'Sáb: 9:00 AM - 2:00 PM',
@@ -73,7 +74,7 @@ function Contact() {
         <div className="min-h-screen flex flex-col">
             <Header />
 
-            <main className="flex-1">
+            <AnimatedPage className="flex-1">
                 {/* Hero Section */}
                 <section className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -101,11 +102,12 @@ function Contact() {
                                 return (
                                     <motion.div
                                         key={index}
-                                        initial={{ opacity: 0, y: 20 }}
+                                        initial={{ opacity: 0, y: 30 }}
                                         whileInView={{ opacity: 1, y: 0 }}
+                                        whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
                                         viewport={{ once: true }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className="card p-6 text-center hover:shadow-xl transition-shadow"
+                                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                                        className="card p-6 text-center shadow-sm border border-gray-100 dark:border-slate-700 transition-all"
                                     >
                                         <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br ${item.color} mb-4`}>
                                             <Icon className="w-8 h-8 text-white" />
@@ -223,7 +225,7 @@ function Contact() {
                                     type="submit"
                                     className="btn-primary w-full flex items-center justify-center gap-2"
                                 >
-                                    <FiSend />
+                                    <MdSend />
                                     Enviar Mensaje
                                 </motion.button>
 
@@ -312,7 +314,7 @@ function Contact() {
                         </div>
                     </div>
                 </section>
-            </main>
+            </AnimatedPage>
 
             <Footer />
         </div>

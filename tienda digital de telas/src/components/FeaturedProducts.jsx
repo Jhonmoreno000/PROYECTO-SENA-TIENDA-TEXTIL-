@@ -13,19 +13,22 @@ function FeaturedProducts() {
         <section className="section-container bg-[var(--color-bg-secondary)]">
             <div className="text-center mb-12">
                 <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+                    whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.8 }}
                     className="text-3xl md:text-4xl font-display font-bold mb-4"
                 >
                     Productos <span className="text-gradient">Destacados</span>
                 </motion.h2>
                 <motion.p
+
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.1 }}
                     className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto"
+                    
                 >
                     Descubre nuestra selección especial de telas premium para tus proyectos
                 </motion.p>
@@ -40,10 +43,19 @@ function FeaturedProducts() {
                     {featuredProducts.map((product, index) => (
                         <motion.div
                             key={product.id}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.1 }}
+                            initial={{ opacity: 0, y: 100, scale: 0.9, filter: 'blur(10px) grayscale(1)' }}
+                            whileInView={{ 
+                                opacity: 1, 
+                                y: 0, 
+                                scale: 1, 
+                                filter: 'blur(0px) grayscale(0)',
+                                transition: {
+                                    duration: 1.2,
+                                    delay: index * 0.2,
+                                    ease: [0.16, 1, 0.3, 1]
+                                }
+                            }}
+                            viewport={{ once: true, margin: "-100px" }}
                         >
                             <ProductCard product={product} />
                         </motion.div>
@@ -56,6 +68,8 @@ function FeaturedProducts() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 className="text-center"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
             >
                 <Link to="/catalogo" className="btn-primary inline-flex items-center">
                     Ver Catálogo Completo

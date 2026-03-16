@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiTrash2 } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
@@ -8,22 +8,35 @@ import QuantitySelector from './QuantitySelector';
 function CartItem({ item }) {
     const { updateQuantity, removeFromCart } = useCart();
 
+    // Guardas para imagen segura
+    const imageUrl = Array.isArray(item.images) && item.images.length > 0
+        ? item.images[0]
+        : null;
+
     return (
         <motion.div
-            layout
-            initial={{ opacity: 0, y: 20 }}
+            // Sin `layout` — evita el layout thrashing que distorsiona el carrito al cargar
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -100 }}
+            exit={{ opacity: 0, x: -80, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
             className="card p-4 md:p-6"
         >
             <div className="flex gap-4">
-                {/* Image */}
+                {/* Imagen */}
                 <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800">
-                    <img
-                        src={item.images[0]}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                    />
+                    {imageUrl ? (
+                        <img
+                            src={imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl">
+                            🧵
+                        </div>
+                    )}
                 </div>
 
                 {/* Info */}
@@ -37,7 +50,7 @@ function CartItem({ item }) {
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 hover:text-red-600 p-2"
+                            className="text-red-500 hover:text-red-600 p-2 flex-shrink-0"
                             aria-label="Eliminar producto"
                         >
                             <FiTrash2 className="w-5 h-5" />
@@ -45,17 +58,15 @@ function CartItem({ item }) {
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        {/* Quantity */}
-                        <div>
-                            <QuantitySelector
-                                quantity={item.quantity}
-                                setQuantity={(newQuantity) => updateQuantity(item.id, newQuantity)}
-                                max={item.stock}
-                            />
-                        </div>
+                        {/* Selector de cantidad */}
+                        <QuantitySelector
+                            quantity={item.quantity}
+                            setQuantity={(newQuantity) => updateQuantity(item.id, newQuantity)}
+                            max={item.stock ?? 99}
+                        />
 
-                        {/* Price */}
-                        <div className="text-right">
+                        {/* Precio */}
+                        <div className="text-right flex-shrink-0">
                             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                                 {formatCurrency(item.price)} × {item.quantity}m
                             </div>

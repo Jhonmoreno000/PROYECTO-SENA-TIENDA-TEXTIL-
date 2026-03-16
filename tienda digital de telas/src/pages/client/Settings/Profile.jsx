@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FiSave, FiCamera, FiLock, FiMail, FiPhone, FiUser, FiBell, FiCheck } from 'react-icons/fi';
+import { MdSave, MdCameraAlt, MdLock, MdEmail, MdPhone, MdPerson, MdNotifications, MdCheck } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useAuth } from '../../../context/AuthContext';
@@ -74,11 +75,12 @@ function Profile() {
 
     return (
         <DashboardLayout title="Mi Perfil" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="max-w-3xl mx-auto">
                 <form onSubmit={handleSave}>
                     {/* Profile Picture */}
-                    <div className="card p-6 mb-6">
+                    <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <div className="flex items-center gap-6">
                             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-4xl font-bold">
                                 {formData.name.charAt(0).toUpperCase()}
@@ -99,7 +101,7 @@ function Profile() {
                     </div>
 
                     {/* Personal Info */}
-                    <div className="card p-6 mb-6">
+                    <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">
                             Información Personal
                         </h3>
@@ -107,7 +109,7 @@ function Profile() {
                         <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    <FiUser className="inline w-4 h-4 mr-2" />
+                                    <MdPerson className="inline w-4 h-4 mr-2" />
                                     Nombre completo
                                 </label>
                                 <input
@@ -120,7 +122,7 @@ function Profile() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    <FiMail className="inline w-4 h-4 mr-2" />
+                                    <MdEmail className="inline w-4 h-4 mr-2" />
                                     Correo electrónico
                                 </label>
                                 <input
@@ -133,7 +135,7 @@ function Profile() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    <FiPhone className="inline w-4 h-4 mr-2" />
+                                    <MdPhone className="inline w-4 h-4 mr-2" />
                                     Teléfono
                                 </label>
                                 <input
@@ -148,10 +150,10 @@ function Profile() {
                     </div>
 
                     {/* Password Change */}
-                    <div className="card p-6 mb-6">
+                    <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                                <FiLock className="inline w-5 h-5 mr-2" />
+                                <MdLock className="inline w-5 h-5 mr-2" />
                                 Seguridad
                             </h3>
                             {!showPasswordChange && (
@@ -225,9 +227,9 @@ function Profile() {
                     </div>
 
                     {/* Notification Preferences */}
-                    <div className="card p-6 mb-6">
+                    <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">
-                            <FiBell className="inline w-5 h-5 mr-2" />
+                            <MdNotifications className="inline w-5 h-5 mr-2" />
                             Preferencias de Notificación
                         </h3>
 
@@ -311,18 +313,19 @@ function Profile() {
                             </>
                         ) : saveSuccess ? (
                             <>
-                                <FiCheck className="w-5 h-5" />
+                                <MdCheck className="w-5 h-5" />
                                 ¡Cambios guardados!
                             </>
                         ) : (
                             <>
-                                <FiSave className="w-5 h-5" />
+                                <MdSave className="w-5 h-5" />
                                 Guardar Cambios
                             </>
                         )}
                     </button>
                 </form>
             </div>
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FiPackage, FiAlertCircle, FiEdit, FiTrash2, FiPlus, FiSave, FiX, FiDollarSign, FiShoppingBag, FiTrendingUp } from 'react-icons/fi';
+import { MdInventory2, MdWarningAmber, MdEdit, MdDelete, MdAdd, MdSave, MdClose, MdAttachMoney, MdShoppingBag, MdTrendingUp } from 'react-icons/md';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../components/AnimatedPage';
 import sellerDashboardLinks from '../../data/sellerDashboardLinks';
 import MetricCard from '../../components/dashboard/MetricCard';
 import LineChart from '../../components/dashboard/LineChart';
@@ -30,10 +31,10 @@ function SellerProducts() {
     const metrics = getSellerMetrics(sellerId, orders, bugReports);
     const topProducts = getTopProducts(sellerOrders, sellerProducts, 5);
 
-    // Refresh data on mount to ensure we have the latest (including inactive products)
+    // Refresh data on mount to ensure we have the latest
     React.useEffect(() => {
         if (sellerId) {
-            refreshData(sellerId);
+            refreshData();
         }
     }, [sellerId]);
 
@@ -129,37 +130,38 @@ function SellerProducts() {
 
     return (
         <DashboardLayout title="Panel de Vendedor" subtitle="Gestión de tienda" links={sellerDashboardLinks}>
-            {/* Métricas del Vendedor */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <MetricCard
-                    label="Mis Ventas Totales"
-                    value={formatCurrency(metrics.totalSales)}
-                    icon={FiDollarSign}
-                    color="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                />
-                <MetricCard
-                    label="Mis Pedidos"
-                    value={metrics.totalOrders}
-                    icon={FiShoppingBag}
-                    color="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    subtitle={`${metrics.completedOrders} completados`}
-                />
-                <MetricCard
-                    label="Ticket Promedio"
-                    value={formatCurrency(metrics.averageTicket)}
-                    icon={FiTrendingUp}
-                    color="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                />
-                <MetricCard
-                    label="Reportes Recibidos"
-                    value={metrics.bugReportsCount}
-                    icon={FiAlertCircle}
-                    color="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
-                />
-            </div>
+            <AnimatedPage>
+                {/* Métricas del Vendedor */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <MetricCard
+                        label="Mis Ventas Totales"
+                        value={formatCurrency(metrics.totalSales)}
+                        icon={MdAttachMoney}
+                        color="bg-emerald-100/50 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
+                    />
+                    <MetricCard
+                        label="Mis Pedidos"
+                        value={metrics.totalOrders}
+                        icon={MdShoppingBag}
+                        color="bg-blue-100/50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+                        subtitle={`${metrics.completedOrders} completados`}
+                    />
+                    <MetricCard
+                        label="Ticket Promedio"
+                        value={formatCurrency(metrics.averageTicket)}
+                        icon={MdTrendingUp}
+                        color="bg-purple-100/50 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400"
+                    />
+                    <MetricCard
+                        label="Reportes Recibidos"
+                        value={metrics.bugReportsCount}
+                        icon={MdWarningAmber}
+                        color="bg-orange-100/50 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400"
+                    />
+                </div>
 
-            {/* Gráfico de Ventas */}
-            <div className="card p-6 mb-8">
+                {/* Gráfico de Ventas */}
+                <div className="card p-6 mb-8 shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
                 <LineChart
                     data={chartData}
                     title="Mis Ventas - Últimos 7 Días"
@@ -168,45 +170,48 @@ function SellerProducts() {
                 />
             </div>
 
-            {/* Productos Más Vendidos */}
-            {topProducts.length > 0 && (
-                <div className="card p-6 mb-8">
-                    <h3 className="font-bold text-lg mb-4">Mis Productos Más Vendidos</h3>
-                    <div className="grid md:grid-cols-5 gap-4">
-                        {topProducts.map((product, index) => (
-                            <div key={product.id} className="p-4 rounded-lg bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700">
-                                <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-1">#{index + 1}</div>
-                                <div className="text-sm font-medium text-gray-900 dark:text-white mb-1 truncate">{product.name}</div>
-                                <div className="text-xs text-gray-500">{product.sales} ventas</div>
-                            </div>
-                        ))}
+                {/* Productos Más Vendidos */}
+                {topProducts.length > 0 && (
+                    <div className="card p-6 mb-8 shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+                        <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-white">Mis Productos Más Vendidos</h3>
+                        <div className="grid md:grid-cols-5 gap-5">
+                            {topProducts.map((product, index) => (
+                                <div key={product.id} className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800/80 dark:to-slate-700/80 border border-gray-200/50 dark:border-slate-600 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-accent-500 mb-2">#{index + 1}</div>
+                                    <div className="text-sm font-bold text-gray-900 dark:text-white pb-1 truncate leading-tight">{product.name}</div>
+                                    <div className="text-xs font-semibold text-gray-500">{product.sales} ventas</div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Gestión de Productos */}
-            <div className="card">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex flex-wrap gap-4 justify-between items-center">
-                    <div>
-                        <h2 className="text-xl font-bold">Mi Inventario</h2>
-                        <p className="text-sm text-gray-500 mt-1">{sellerProducts.length} productos</p>
+                {/* Gestión de Productos */}
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
+                    <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex flex-wrap gap-4 justify-between items-center bg-gray-50/30 dark:bg-slate-800/30">
+                        <div>
+                            <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">Mi Inventario</h2>
+                            <p className="text-sm font-medium text-gray-500 flex items-center gap-2 mt-1">
+                                <MdInventory2 className="w-4 h-4 text-primary-500" />
+                                {sellerProducts.length} productos registrados
+                            </p>
+                        </div>
+                        <button className="btn-primary-gradient shadow-md shadow-primary-500/30 flex items-center gap-2 hover:scale-105 transition-transform">
+                            <MdAdd className="w-5 h-5" /> Nuevo Producto
+                        </button>
                     </div>
-                    <button className="btn-primary flex items-center gap-2">
-                        <FiPlus /> Nuevo Producto
-                    </button>
-                </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs text-gray-500 uppercase font-bold text-left">
-                            <tr>
-                                <th className="px-6 py-4">Producto</th>
-                                <th className="px-6 py-4">Precio</th>
-                                <th className="px-6 py-4">Stock</th>
-                                <th className="px-6 py-4">Categoría</th>
-                                <th className="px-6 py-4 text-right">Acciones</th>
-                            </tr>
-                        </thead>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-gray-50/80 dark:bg-slate-800/80 text-xs text-gray-500 uppercase font-extrabold tracking-wider text-left">
+                                <tr>
+                                    <th className="px-6 py-4 rounded-tl-lg">Producto</th>
+                                    <th className="px-6 py-4">Precio</th>
+                                    <th className="px-6 py-4">Stock</th>
+                                    <th className="px-6 py-4">Categoría</th>
+                                    <th className="px-6 py-4 text-right rounded-tr-lg">Acciones</th>
+                                </tr>
+                            </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                             {sellerProducts.map((product) => (
                                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
@@ -278,39 +283,40 @@ function SellerProducts() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         {editingId === product.id ? (
-                                            <div className="flex justify-end gap-2">
-                                                <button onClick={saveChanges} className="text-green-500 hover:text-green-700 p-1" title="Guardar">
-                                                    <FiSave className="w-5 h-5" />
-                                                </button>
-                                                <button onClick={cancelEditing} className="text-gray-500 hover:text-gray-700 p-1" title="Cancelar">
-                                                    <FiX className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => startEditing(product)}
-                                                    className="text-blue-500 hover:text-blue-700 p-1"
-                                                    title="Editar"
-                                                >
-                                                    <FiEdit className="w-5 h-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => deleteItem(product.id)}
-                                                    className="text-red-500 hover:text-red-700 p-1"
-                                                    title="Eliminar"
-                                                >
-                                                    <FiTrash2 className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        )}
+                                                <div className="flex justify-end gap-2">
+                                                    <button onClick={saveChanges} className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 p-2 rounded-lg transition-colors" title="Guardar">
+                                                        <MdSave className="w-5 h-5" />
+                                                    </button>
+                                                    <button onClick={cancelEditing} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-700 p-2 rounded-lg transition-colors" title="Cancelar">
+                                                        <MdClose className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => startEditing(product)}
+                                                        className="text-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 p-2 rounded-lg transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <MdEdit className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteItem(product.id)}
+                                                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 p-2 rounded-lg transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <MdDelete className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

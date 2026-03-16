@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FiCheck, FiPackage, FiTruck, FiHome, FiScissors, FiCreditCard, FiMapPin, FiPhone } from 'react-icons/fi';
+import { MdCheck, MdInventory, MdLocalShipping, MdHome, MdContentCut, MdCreditCard, MdLocationOn, MdPhone } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
@@ -22,11 +23,11 @@ function OrderTracking() {
     );
 
     const trackingSteps = [
-        { key: 'paid', label: 'Pago Recibido', icon: FiCreditCard, description: 'Tu pago ha sido confirmado' },
-        { key: 'cutting', label: 'En Corte', icon: FiScissors, description: 'Estamos cortando tu tela' },
-        { key: 'packed', label: 'Empacado', icon: FiPackage, description: 'Tu pedido está listo para envío' },
-        { key: 'shipped', label: 'Enviado', icon: FiTruck, description: 'En camino a tu dirección' },
-        { key: 'delivered', label: 'Entregado', icon: FiHome, description: '¡Disfruta tus telas!' }
+        { key: 'paid', label: 'Pago Recibido', icon: MdCreditCard, description: 'Tu pago ha sido confirmado' },
+        { key: 'cutting', label: 'En Corte', icon: MdContentCut, description: 'Estamos cortando tu tela' },
+        { key: 'packed', label: 'Empacado', icon: MdInventory, description: 'Tu pedido está listo para envío' },
+        { key: 'shipped', label: 'Enviado', icon: MdLocalShipping, description: 'En camino a tu dirección' },
+        { key: 'delivered', label: 'Entregado', icon: MdHome, description: '¡Disfruta tus telas!' }
     ];
 
     const getStepStatus = (stepKey) => {
@@ -48,9 +49,10 @@ function OrderTracking() {
 
     return (
         <DashboardLayout title="Rastrear Envío" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Search Box */}
-            <div className="card p-6 mb-8">
+            <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-8">
                 <h3 className="font-bold text-lg mb-4">Buscar Pedido</h3>
                 <div className="flex gap-4">
                     <input
@@ -67,8 +69,8 @@ function OrderTracking() {
             </div>
 
             {!order && trackingInput ? (
-                <div className="card p-12 text-center">
-                    <FiPackage className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-12 text-center">
+                    <MdInventory className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                         Pedido no encontrado
                     </h3>
@@ -80,7 +82,7 @@ function OrderTracking() {
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Tracking Progress */}
                     <div className="lg:col-span-2">
-                        <div className="card p-6 mb-6">
+                        <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
                                     <h3 className="font-bold text-2xl text-gray-900 dark:text-white">
@@ -135,7 +137,7 @@ function OrderTracking() {
                                                     }
                                                 `}>
                                                     {status === 'completed' ? (
-                                                        <FiCheck className="w-6 h-6" />
+                                                        <MdCheck className="w-6 h-6" />
                                                     ) : (
                                                         <Icon className="w-5 h-5" />
                                                     )}
@@ -173,7 +175,7 @@ function OrderTracking() {
                         </div>
 
                         {/* Order Items */}
-                        <div className="card overflow-hidden">
+                        <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
                             <div className="p-6 border-b border-gray-200 dark:border-slate-700">
                                 <h3 className="font-bold text-lg">Productos en tu Pedido</h3>
                             </div>
@@ -202,7 +204,7 @@ function OrderTracking() {
 
                     {/* Order Summary Sidebar */}
                     <div className="space-y-6">
-                        <div className="card p-6">
+                        <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6">
                             <h3 className="font-bold text-lg mb-4">Resumen</h3>
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm">
@@ -228,10 +230,10 @@ function OrderTracking() {
                             </div>
                         </div>
 
-                        <div className="card p-6">
+                        <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6">
                             <h3 className="font-bold text-lg mb-4">Dirección de Envío</h3>
                             <div className="flex items-start gap-3">
-                                <FiMapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                                <MdLocationOn className="w-5 h-5 text-gray-400 mt-0.5" />
                                 <div>
                                     <p className="font-medium text-gray-900 dark:text-white">Casa</p>
                                     <p className="text-sm text-gray-500 mt-1">
@@ -242,7 +244,7 @@ function OrderTracking() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
-                                <FiPhone className="w-5 h-5 text-gray-400" />
+                                <MdPhone className="w-5 h-5 text-gray-400" />
                                 <span className="text-sm text-gray-600 dark:text-gray-400">300 123 4567</span>
                             </div>
                         </div>
@@ -258,8 +260,8 @@ function OrderTracking() {
                     </div>
                 </div>
             ) : (
-                <div className="card p-12 text-center">
-                    <FiTruck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-12 text-center">
+                    <MdLocalShipping className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                         Rastrea tu Pedido
                     </h3>
@@ -268,6 +270,7 @@ function OrderTracking() {
                     </p>
                 </div>
             )}
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

@@ -14,7 +14,11 @@
 # Instalar dependencias
 npm install
 
-# Iniciar servidor de desarrollo
+#Iniciar servidor de java
+cd backend-java/conexionPostgres
+java -cp "bin;lib/gson-2.10.1.jar;lib/postgresql-42.7.3.jar" App
+
+#Iniciar servidor de react
 npm run dev
 
 # Construir para producción
@@ -22,6 +26,7 @@ npm run build
 
 # Vista previa de producción
 npm run preview
+
 ```
 
 ##  Estructura del Proyecto

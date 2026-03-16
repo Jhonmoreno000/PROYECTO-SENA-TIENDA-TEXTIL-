@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FiScissors, FiShoppingCart, FiInfo, FiAlertCircle } from 'react-icons/fi';
+import { MdContentCut, MdShoppingCart, MdInfo, MdErrorOutline, MdCheckroom, MdWindow, MdRestaurant, MdWeekend } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { formatCurrency } from '../../../utils/formatters';
@@ -8,7 +9,7 @@ import { formatCurrency } from '../../../utils/formatters';
 const PROJECTS = {
     skirt_circular: {
         name: 'Falda Circular',
-        icon: '👗',
+        icon: <MdCheckroom />,
         fields: ['waist', 'length'],
         calculate: (measures, fabricWidth) => {
             const radius = measures.waist / (2 * Math.PI);
@@ -21,7 +22,7 @@ const PROJECTS = {
     },
     skirt_straight: {
         name: 'Falda Recta',
-        icon: '👗',
+        icon: <MdCheckroom />,
         fields: ['waist', 'hip', 'length'],
         calculate: (measures, fabricWidth) => {
             const widthNeeded = (measures.hip + 10) / 100; // hip + ease
@@ -32,7 +33,7 @@ const PROJECTS = {
     },
     curtains: {
         name: 'Cortinas',
-        icon: '🪟',
+        icon: <MdWindow />,
         fields: ['windowWidth', 'windowHeight', 'fullness'],
         calculate: (measures, fabricWidth) => {
             const fullnessMultiplier = measures.fullness === 'double' ? 2 : measures.fullness === 'triple' ? 3 : 1.5;
@@ -45,7 +46,7 @@ const PROJECTS = {
     },
     tablecloth: {
         name: 'Mantel',
-        icon: '🍽️',
+        icon: <MdRestaurant />,
         fields: ['tableLength', 'tableWidth', 'overhang'],
         calculate: (measures, fabricWidth) => {
             const totalLength = (measures.tableLength + (measures.overhang * 2)) / 100;
@@ -59,7 +60,7 @@ const PROJECTS = {
     },
     cushion: {
         name: 'Cojines',
-        icon: '🛋️',
+        icon: <MdWeekend />,
         fields: ['cushionSize', 'quantity'],
         calculate: (measures, fabricWidth) => {
             const sizeWithSeam = (measures.cushionSize + 3) / 100; // 3cm seam allowance
@@ -71,7 +72,7 @@ const PROJECTS = {
     },
     dress_simple: {
         name: 'Vestido Sencillo',
-        icon: '👗',
+        icon: <MdCheckroom />,
         fields: ['bust', 'dressLength'],
         calculate: (measures, fabricWidth) => {
             const bodyWidth = (measures.bust + 20) / 100; // ease
@@ -154,11 +155,12 @@ function ProjectCalculator() {
 
     return (
         <DashboardLayout title="Calculadora de Metraje" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Project Selection */}
                 <div className="lg:col-span-1">
-                    <div className="card p-6">
+                    <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6">
                         <h3 className="font-bold text-lg mb-4">¿Qué vas a hacer?</h3>
                         <div className="space-y-2">
                             {Object.entries(PROJECTS).map(([key, proj]) => (
@@ -180,7 +182,7 @@ function ProjectCalculator() {
 
                 {/* Calculator Form */}
                 <div className="lg:col-span-2">
-                    <div className="card p-6 mb-6">
+                    <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <div className="flex items-start gap-3 mb-6">
                             <span className="text-4xl">{project.icon}</span>
                             <div>
@@ -225,7 +227,7 @@ function ProjectCalculator() {
 
                         {/* Measurement Fields */}
                         <h4 className="font-medium text-gray-900 dark:text-white mb-4">
-                            <FiScissors className="inline w-4 h-4 mr-2" />
+                            <MdContentCut className="inline w-4 h-4 mr-2" />
                             Tus medidas
                         </h4>
                         <div className="grid md:grid-cols-2 gap-4 mb-6">
@@ -284,7 +286,7 @@ function ProjectCalculator() {
 
                     {/* Result */}
                     {result && (
-                        <div className="card p-6 bg-gradient-to-br from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20">
+                        <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 bg-gradient-to-br from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20">
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
                                 📐 Resultado del Cálculo
                             </h3>
@@ -312,7 +314,7 @@ function ProjectCalculator() {
                             </div>
 
                             <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
-                                <FiInfo className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                <MdInfo className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                                 <div className="text-sm text-blue-800 dark:text-blue-200">
                                     <p className="font-medium mb-1">Consejo:</p>
                                     <p>
@@ -323,13 +325,14 @@ function ProjectCalculator() {
                             </div>
 
                             <button className="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
-                                <FiShoppingCart className="w-5 h-5" />
+                                <MdShoppingCart className="w-5 h-5" />
                                 Agregar {result.recommended}m al Carrito
                             </button>
                         </div>
                     )}
                 </div>
             </div>
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

@@ -78,7 +78,9 @@ public class AuthDAO {
         try (PreparedStatement pst = con.prepareStatement(query)) {
             pst.setInt(1, userId);
             pst.executeUpdate();
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            System.err.println("⚠️ No se pudo actualizar last_login para usuario " + userId + ": " + e.getMessage());
+        }
     }
 
     public boolean register(User user, String password) {

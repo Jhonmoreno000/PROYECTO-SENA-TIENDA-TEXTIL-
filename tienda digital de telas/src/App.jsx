@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { AppProviders } from './components/AppProviders';
-import { ProtectedRoute } from './components';
+import { ProtectedRoute, ScrollToTop } from './components';
 
 // Pages
 import Home from './pages/Home';
@@ -79,11 +80,12 @@ import LoaderDemo from './pages/LoaderDemo';
 // Payment
 import Payment from './pages/payment/Payment';
 
-function App() {
+function AppRoutes() {
+    const location = useLocation();
+    
     return (
-        <AppProviders>
-            <Router>
-                <Routes>
+        <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
                     <Route path="/catalogo" element={<Catalog />} />
@@ -442,7 +444,17 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                </Routes>
+            </Routes>
+        </AnimatePresence>
+    );
+}
+
+function App() {
+    return (
+        <AppProviders>
+            <Router>
+                <ScrollToTop />
+                <AppRoutes />
             </Router>
         </AppProviders>
     );

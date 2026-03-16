@@ -1,14 +1,14 @@
-import { FiPackage, FiShoppingBag, FiAlertCircle, FiTrendingUp, FiSettings } from 'react-icons/fi';
+import { MdInventory2, MdShoppingBag, MdWarningAmber, MdTrendingUp, MdSettings } from 'react-icons/md';
 
 const sellerDashboardLinks = [
     {
         label: 'Panel Principal',
         path: '/vendedor',
-        icon: FiTrendingUp
+        icon: MdTrendingUp
     },
     {
         label: 'Inventario',
-        icon: FiPackage,
+        icon: MdInventory2,
         badge: 2,
         children: [
             { label: 'Mis Productos', path: '/vendedor/productos' },
@@ -17,7 +17,7 @@ const sellerDashboardLinks = [
     },
     {
         label: 'Ventas',
-        icon: FiShoppingBag,
+        icon: MdShoppingBag,
         badge: 5,
         children: [
             { label: 'Gestión de Pedidos', path: '/vendedor/pedidos', badge: 5 },
@@ -25,7 +25,7 @@ const sellerDashboardLinks = [
     },
     {
         label: 'Configuración',
-        icon: FiSettings,
+        icon: MdSettings,
         path: '/vendedor/configuracion'
     }
 ];

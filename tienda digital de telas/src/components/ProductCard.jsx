@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiShoppingCart, FiEye, FiHeart } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MdShoppingCart, MdVisibility, MdFavoriteBorder } from 'react-icons/md';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
 
@@ -22,11 +22,12 @@ function ProductCard({ product }) {
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
             whileHover={{ y: -8 }}
-            className="card overflow-hidden group relative"
+            className="card group relative"
+            style={{ borderRadius: '1rem' }}
         >
             <Link to={`/producto/${product.id}`}>
                 {/* Image Container */}
-                <div className="relative h-64 overflow-hidden bg-gray-100 dark:bg-slate-800">
+                <div className="relative h-64 overflow-hidden bg-gray-100 dark:bg-slate-800 rounded-t-2xl">
                     <img
                         src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.png'}
                         alt={product.name}
@@ -34,7 +35,6 @@ function ProductCard({ product }) {
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
 
-                    {/* Overlay on Hover */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: isHovered ? 1 : 0 }}
@@ -46,7 +46,7 @@ function ProductCard({ product }) {
                             className="bg-white text-gray-900 p-3 rounded-full shadow-lg"
                             aria-label="Ver detalles"
                         >
-                            <FiEye className="w-5 h-5" />
+                            <MdVisibility className="w-5 h-5" />
                         </motion.button>
                         <motion.button
                             whileHover={{ scale: 1.1 }}
@@ -54,7 +54,7 @@ function ProductCard({ product }) {
                             className="bg-white text-gray-900 p-3 rounded-full shadow-lg"
                             aria-label="Agregar a favoritos"
                         >
-                            <FiHeart className="w-5 h-5" />
+                            <MdFavoriteBorder className="w-5 h-5" />
                         </motion.button>
                     </motion.div>
 
@@ -101,6 +101,7 @@ function ProductCard({ product }) {
                         </div>
 
                         <motion.button
+                        
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleAddToCart}
@@ -110,23 +111,29 @@ function ProductCard({ product }) {
                                 }`}
                             aria-label="Agregar al carrito"
                         >
-                            <FiShoppingCart className="w-5 h-5" />
+                            <MdShoppingCart className="w-5 h-5" />
                         </motion.button>
                     </div>
                 </div>
             </Link>
 
             {/* Added to Cart Message */}
-            {showAddedMessage && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-semibold whitespace-nowrap"
-                >
-                    ¡Agregado al carrito!
-                </motion.div>
-            )}
+            <AnimatePresence>
+                {showAddedMessage && (
+                    <motion.div
+                        key="added-msg"
+                        initial={{ opacity: 0, y: -20, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{ opacity: 0, scale: 0.9, x: '-50%' }}
+                        transition={{ duration: 0.2 }}
+                        style={{ zIndex: 50, top: '-1rem' }}
+                        className="absolute left-1/2 bg-green-500/95 text-white px-5 py-2 rounded-full shadow-xl text-sm font-semibold whitespace-nowrap pointer-events-none flex items-center gap-2"
+                    >
+                        <MdShoppingCart size={14} />
+                        ¡Agregado al carrito!
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

@@ -61,6 +61,9 @@ function Carousel() {
                     initial="enter"
                     animate="center"
                     exit="exit"
+                    cursor-pointer
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     transition={{
                         x: { type: 'spring', stiffness: 300, damping: 30 },
                         opacity: { duration: 0.2 },
@@ -83,6 +86,9 @@ function Carousel() {
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.2 }}
                                 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-4"
+                                cursor-pointer
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
                             >
                                 {slides[currentSlide].title}
                             </motion.h2>
@@ -91,16 +97,23 @@ function Carousel() {
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.3 }}
                                 className="text-xl md:text-2xl text-white/90 mb-8"
+                                cursor-pointer
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
                             >
                                 {slides[currentSlide].subtitle}
                             </motion.p>
                             <motion.button
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.4 }}
+                                transition={{ delay: 0.2 }}
                                 className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                                cursor-pointer
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.8 }}
                             >
                                 {slides[currentSlide].cta || 'Ver Más'}
+
                             </motion.button>
                         </div>
                     </div>
@@ -112,6 +125,10 @@ function Carousel() {
                 onClick={prevSlide}
                 className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all"
                 aria-label="Previous slide"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.8 }}
+                transition={{ duration: 0.1 }}
+                cursor-pointer 
             >
                 <FiChevronLeft className="w-6 h-6" />
             </button>
@@ -119,6 +136,11 @@ function Carousel() {
                 onClick={nextSlide}
                 className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all"
                 aria-label="Next slide"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.1 }}
+
+                cursor-pointer 
             >
                 <FiChevronRight className="w-6 h-6" />
             </button>
@@ -134,6 +156,10 @@ function Carousel() {
                             : 'bg-white/50 hover:bg-white/75'
                             }`}
                         aria-label={`Go to slide ${index + 1}`}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.8 }}
+                        transition={{ duration: 0.4 }}
+                        cursor-pointer 
                     />
                 ))}
             </div>

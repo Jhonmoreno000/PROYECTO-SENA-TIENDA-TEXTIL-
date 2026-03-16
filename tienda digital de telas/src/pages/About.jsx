@@ -1,37 +1,38 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiAward, FiUsers, FiTrendingUp, FiHeart } from 'react-icons/fi';
+import { MdStar, MdGroup, MdTrendingUp, MdFavorite, MdWorkspacePremium, MdHandshake, MdRocketLaunch, MdEco } from 'react-icons/md';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import AnimatedPage from '../components/AnimatedPage';
 
 function About() {
     const stats = [
-        { icon: FiAward, value: '15+', label: 'Años de Experiencia' },
-        { icon: FiUsers, value: '10,000+', label: 'Clientes Satisfechos' },
-        { icon: FiTrendingUp, value: '500+', label: 'Productos Premium' },
-        { icon: FiHeart, value: '100%', label: 'Calidad Garantizada' },
+        { icon: MdStar, value: '15+', label: 'Años de Experiencia' },
+        { icon: MdGroup, value: '10,000+', label: 'Clientes Satisfechos' },
+        { icon: MdTrendingUp, value: '500+', label: 'Productos Premium' },
+        { icon: MdFavorite, value: '100%', label: 'Calidad Garantizada' },
     ];
 
     const values = [
         {
             title: 'Calidad Premium',
             description: 'Seleccionamos cuidadosamente cada tela para garantizar la más alta calidad en todos nuestros productos.',
-            icon: '✨',
+            icon: MdWorkspacePremium,
         },
         {
             title: 'Compromiso',
             description: 'Nos comprometemos con la satisfacción de nuestros clientes, ofreciendo productos excepcionales y servicio personalizado.',
-            icon: '🤝',
+            icon: MdHandshake,
         },
         {
             title: 'Innovación',
             description: 'Constantemente buscamos las últimas tendencias y tecnologías en textiles para ofrecer lo mejor del mercado.',
-            icon: '🚀',
+            icon: MdRocketLaunch,
         },
         {
             title: 'Sostenibilidad',
             description: 'Trabajamos con proveedores responsables y promovemos prácticas sostenibles en toda nuestra cadena de suministro.',
-            icon: '🌱',
+            icon: MdEco,
         },
     ];
 
@@ -39,7 +40,7 @@ function About() {
         <div className="min-h-screen flex flex-col">
             <Header />
 
-            <main className="flex-1">
+            <AnimatedPage className="flex-1">
                 {/* Hero Section */}
                 <section className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,8 +123,10 @@ function About() {
                                 alt="Nuestra tienda"
                                 className="rounded-2xl shadow-2xl"
                             />
-                            <div className="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-xs">
-                                <div className="text-4xl mb-2">🏆</div>
+                            <div className="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-xs border border-gray-100 dark:border-slate-700">
+                                <div className="text-primary-600 dark:text-primary-400 mb-2">
+                                    <MdWorkspacePremium className="w-10 h-10" />
+                                </div>
                                 <div className="font-bold text-gray-900 dark:text-white">
                                     Reconocidos por la excelencia
                                 </div>
@@ -147,22 +150,28 @@ function About() {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-8">
-                        {values.map((value, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: index * 0.1 }}
-                                className="card p-8"
-                            >
-                                <div className="text-5xl mb-4">{value.icon}</div>
-                                <h3 className="text-2xl font-bold mb-3">{value.title}</h3>
-                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                                    {value.description}
-                                </p>
-                            </motion.div>
-                        ))}
+                        {values.map((value, index) => {
+                            const Icon = value.icon;
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                                    className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm transition-all"
+                                >
+                                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary-50 dark:bg-primary-900/40 mb-6">
+                                        <Icon className="w-7 h-7 text-primary-600 dark:text-primary-400" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-3">{value.title}</h3>
+                                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                                        {value.description}
+                                    </p>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </section>
 
@@ -183,7 +192,7 @@ function About() {
                         </a>
                     </div>
                 </section>
-            </main>
+            </AnimatedPage>
 
             <Footer />
         </div>

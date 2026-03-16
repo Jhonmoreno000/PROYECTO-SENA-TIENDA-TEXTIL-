@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiLogOut, FiMenu, FiChevronRight, FiSearch, FiPaperclip, FiMoreVertical, FiCheck } from 'react-icons/fi';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { MdHome, MdLogout, MdMenu, MdChevronRight, MdSearch, MdPushPin, MdMoreVert, MdCheck } from 'react-icons/md';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import CommandPalette from '../dashboard/CommandPalette';
@@ -21,7 +21,7 @@ function TenantSelector({ isRailMode }) {
                     }`}
             >
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white font-bold shrink-0 shadow-md">
                         {selectedTenant.charAt(0)}
                     </div>
                     {!isRailMode && (
@@ -29,11 +29,11 @@ function TenantSelector({ isRailMode }) {
                             <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
                                 {selectedTenant}
                             </p>
-                            <p className="text-xs text-gray-500 font-medium">Plan Enterprise</p>
+                            <p className="text-xs text-primary-600 dark:text-primary-400 font-semibold tracking-wide uppercase">Enterprise</p>
                         </div>
                     )}
                 </div>
-                {!isRailMode && <FiMoreVertical className="w-4 h-4 text-gray-400" />}
+                {!isRailMode && <MdMoreVert className="w-5 h-5 text-gray-400" />}
             </button>
 
             {/* Dropdown Menu */}
@@ -56,7 +56,7 @@ function TenantSelector({ isRailMode }) {
                                     className="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                                 >
                                     <span className="text-sm font-medium">{tenant}</span>
-                                    {selectedTenant === tenant && <FiCheck className="w-4 h-4 text-primary-600" />}
+                                    {selectedTenant === tenant && <MdCheck className="w-5 h-5 text-primary-600" />}
                                 </button>
                             ))}
                         </div>
@@ -83,22 +83,23 @@ function NavLeafNode({ link, isActive, indent = false, isRailMode, onPinToggle, 
             {/* Active Indicator Line */}
             {isActive && (
                 <motion.div
-                    layoutId="activeIndicator"
-                    className="absolute left-0 top-1 bottom-1 w-1 bg-primary-600 rounded-r-full z-10"
+                    layoutId={`activeIndicator-${isRailMode}`}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute left-0 top-1 bottom-1 w-[4px] bg-primary-600 rounded-r-full z-10"
                 />
             )}
 
             <Link
                 to={link.path}
-                className={`flex-1 flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-lg transition-all duration-200 ${indent && !isRailMode ? 'pl-9' : ''
+                className={`flex-1 flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-xl transition-all duration-300 ${indent && !isRailMode ? 'pl-9' : ''
                     } ${isRailMode ? 'justify-center mx-1 px-0 py-3' : ''} ${isActive
-                        ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold'
+                        ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold shadow-sm'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800'
                     }`}
                 title={isRailMode ? link.label : undefined}
             >
                 <div className="relative flex items-center justify-center shrink-0">
-                    {Icon && <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />}
+                    {Icon && <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 drop-shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'}`} />}
                     {/* Badge on icon for Rail Mode */}
                     {isRailMode && link.badge && (
                         <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 border-none">
@@ -130,7 +131,7 @@ function NavLeafNode({ link, isActive, indent = false, isRailMode, onPinToggle, 
                     className="absolute right-3 p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors tooltip"
                     title={isPinned ? "Desfijar" : "Fijar a Favoritos"}
                 >
-                    <FiPaperclip className={`w-4 h-4 ${isPinned ? 'text-primary-500' : ''}`} />
+                    <MdPushPin className={`w-4 h-4 ${isPinned ? 'text-primary-500' : ''}`} />
                 </button>
             )}
         </div>
@@ -148,23 +149,23 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
     const totalBadges = link.children?.reduce((acc, child) => acc + (child.badge || 0), 0);
 
     return (
-        <div className="my-[2px]">
+        <div className="my-[2px] relative group/parent">
             {/* Active Indicator Line for Parent */}
             {hasActiveChild && (
-                <div className="absolute left-0 mt-1 mb-1 w-1 h-10 bg-primary-600/50 rounded-r-full" />
+                <div className="absolute left-0 top-1 bottom-1 w-[4px] bg-primary-600/30 rounded-r-full" />
             )}
 
             <button
                 onClick={onToggle}
-                className={`w-full flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-lg transition-all duration-200 group ${isRailMode ? 'justify-center mx-1 px-0 py-3' : ''
+                className={`w-full flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-xl transition-all duration-300 group hover:shadow-sm ${isRailMode ? 'justify-center mx-1 px-0 py-3' : ''
                     } ${hasActiveChild
-                        ? 'bg-primary-50/50 dark:bg-primary-500/5 text-primary-600 dark:text-primary-400 font-semibold'
+                        ? 'bg-primary-50/70 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-semibold'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
                     }`}
                 title={isRailMode ? link.label : undefined}
             >
                 <div className="relative flex items-center justify-center shrink-0">
-                    {Icon && <Icon className={`w-5 h-5 ${hasActiveChild ? 'stroke-[2.5px]' : 'stroke-2'}`} />}
+                    {Icon && <Icon className={`w-5 h-5 transition-transform ${hasActiveChild ? 'scale-110 drop-shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'}`} />}
                     {isRailMode && totalBadges > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 line-clamp-1">
                             {totalBadges}
@@ -181,8 +182,8 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
                                 {totalBadges}
                             </span>
                         )}
-                        <FiChevronRight
-                            className={`w-4 h-4 transition-transform duration-300 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 ${isOpen ? 'rotate-90' : 'rotate-0'
+                        <MdChevronRight
+                            className={`w-5 h-5 transition-transform duration-300 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 ${isOpen ? 'rotate-90' : 'rotate-0'
                                 }`}
                         />
                     </>
@@ -220,10 +221,25 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
 /* ──────────────────────────────────────────────
    Main layout component
    ────────────────────────────────────────────── */
-function DashboardLayout({ children, title, links, subtitle = "Dashboard Administrativo" }) {
+function DashboardLayout({ children, title, links, subtitle }) {
     const { logout, user } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate delay for the loader
+        
+        // Navigate manually before killing the session to prevent ProtectedRoute from instantly unmounting the tree and showing a blank screen
+        navigate('/login', { replace: true });
+        
+        // Wait a small tick before completely destroying the auth context so the transition completes cleanly
+        setTimeout(() => {
+            logout();
+        }, 50);
+    };
 
     // Feature: Rail mode state
     const [isRailMode, setIsRailMode] = useState(false);
@@ -318,10 +334,10 @@ function DashboardLayout({ children, title, links, subtitle = "Dashboard Adminis
                 <div className="px-3 py-3 border-b border-gray-200 dark:border-slate-800">
                     <button
                         onClick={() => setCmdOpen(true)}
-                        className={`w-full flex items-center ${isRailMode ? 'justify-center p-2' : 'px-3 py-2 gap-2'} bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 rounded-lg transition-colors border border-transparent dark:border-slate-700/50`}
+                        className={`w-full flex items-center ${isRailMode ? 'justify-center p-2' : 'px-3 py-2 gap-2'} bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 rounded-xl transition-all shadow-inner border border-transparent dark:border-slate-700/50`}
                         title={isRailMode ? "Buscar (Ctrl+K)" : undefined}
                     >
-                        <FiSearch className="w-5 h-5 shrink-0" />
+                        <MdSearch className="w-5 h-5 shrink-0" />
                         {!isRailMode && (
                             <div className="flex-1 flex items-center justify-between text-sm">
                                 <span>Buscar...</span>
@@ -398,50 +414,46 @@ function DashboardLayout({ children, title, links, subtitle = "Dashboard Adminis
                 </nav>
 
                 {/* Footer Controls */}
-                <div className="p-3 border-t border-gray-200 dark:border-slate-800 flex flex-col gap-1">
-                    {/* Back to Store Link */}
-                    <Link
-                        to="/"
-                        className={`flex items-center mx-1 px-3 py-2.5 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors group ${isRailMode ? 'justify-center mx-1 px-0 py-3' : 'gap-3'
-                            }`}
-                        title={isRailMode ? "Volver a la Tienda" : undefined}
-                    >
-                        <FiHome className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" />
-                        {!isRailMode && <span className="text-sm font-semibold">Volver a la Tienda</span>}
-                    </Link>
-
-                    {/* Expand/Collapse Rail Mode Toggle hidden on small screens */}
-                    <button
-                        onClick={() => setIsRailMode(!isRailMode)}
-                        className={`hidden lg:flex items-center mx-1 px-3 py-2.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${isRailMode ? 'justify-center mx-1 px-0 py-3' : 'gap-3'
-                            }`}
-                        title={isRailMode ? "Expandir" : "Contraer Sidebar"}
-                    >
-                        <FiMenu className="w-5 h-5 shrink-0" />
-                        {!isRailMode && <span className="text-sm font-medium">Contraer</span>}
-                    </button>
-
-                    <button
-                        onClick={logout}
-                        className={`flex items-center mx-1 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group ${isRailMode ? 'justify-center mx-1 px-0 py-3' : 'gap-3'
-                            }`}
-                        title={isRailMode ? "Cerrar Sesión" : undefined}
-                    >
-                        <FiLogOut className="w-5 h-5 shrink-0 group-hover:-translate-x-1 transition-transform" />
-                        {!isRailMode && <span className="text-sm font-medium">Cerrar Sesión</span>}
-                    </button>
-
+                <div className="p-3 border-t border-gray-200 dark:border-slate-800 flex flex-col gap-2 bg-gray-50/50 dark:bg-slate-900/50">
                     {/* User Profile avatar for Rail Mode, detailed for Full Mode */}
-                    <div className={`mt-2 p-2 flex items-center gap-3 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 ${isRailMode ? 'justify-center p-0 bg-transparent border-transparent' : 'mx-1'}`}>
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-amber-500 flex items-center justify-center text-white font-bold shrink-0 shadow-inner">
+                    <div className={`p-2 flex items-center gap-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm ${isRailMode ? 'justify-center bg-transparent border-transparent shadow-none p-0' : 'mx-1'}`}>
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold shrink-0 shadow-inner">
                             {user?.name?.charAt(0) || 'U'}
                         </div>
                         {!isRailMode && (
                             <div className="overflow-hidden flex-1">
-                                <p className="font-semibold text-sm truncate dark:text-white leading-tight">{user?.name || 'Administrador'}</p>
-                                <p className="text-xs text-gray-500 truncate capitalize">{user?.role || 'Admin'}</p>
+                                <p className="font-bold text-sm truncate text-gray-900 dark:text-white leading-tight">{user?.name || 'Administrador'}</p>
+                                <p className="text-xs text-primary-600 dark:text-primary-400 font-semibold truncate capitalize">{user?.role || 'Admin'}</p>
                             </div>
                         )}
+                    </div>
+
+                    <div className={`flex items-center justify-between mt-1 ${isRailMode ? 'flex-col gap-2' : ''}`}>
+                         {/* Back to Store Link */}
+                        <Link
+                            to="/"
+                            className={`flex items-center justify-center p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
+                            title="Volver a la Tienda"
+                        >
+                            <MdHome className="w-6 h-6 shrink-0 group-hover:scale-110 transition-transform" />
+                        </Link>
+
+                        {/* Expand/Collapse Rail Mode Toggle hidden on small screens */}
+                        <button
+                            onClick={() => setIsRailMode(!isRailMode)}
+                            className={`hidden lg:flex items-center justify-center p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${!isRailMode && 'flex-1 mx-1'}`}
+                            title={isRailMode ? "Expandir" : "Contraer Sidebar"}
+                        >
+                            <MdMenu className="w-6 h-6 shrink-0" />
+                        </button>
+
+                        <button
+                            onClick={handleLogout}
+                            className={`flex items-center justify-center p-2 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
+                            title="Cerrar Sesión"
+                        >
+                            <MdLogout className="w-6 h-6 shrink-0 group-hover:-translate-y-1 transition-transform" />
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -455,7 +467,7 @@ function DashboardLayout({ children, title, links, subtitle = "Dashboard Adminis
                             onClick={() => setSidebarOpen(true)}
                             className="p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800 transition-colors"
                         >
-                            <FiMenu className="w-6 h-6" />
+                            <MdMenu className="w-7 h-7" />
                         </button>
                         <span className="font-display font-bold text-lg text-gray-900 dark:text-white truncate">
                             {title}
@@ -464,9 +476,9 @@ function DashboardLayout({ children, title, links, subtitle = "Dashboard Adminis
                     {/* Mobile Command Palette Trigger */}
                     <button
                         onClick={() => setCmdOpen(true)}
-                        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 shadow-sm border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                     >
-                        <FiSearch className="w-5 h-5" />
+                        <MdSearch className="w-5 h-5" />
                     </button>
                 </header>
 
@@ -485,6 +497,21 @@ function DashboardLayout({ children, title, links, subtitle = "Dashboard Adminis
                     </div>
                 </main>
             </div>
+
+            {/* Logout Loader Overlay */}
+            <AnimatePresence>
+                {isLoggingOut && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex flex-col items-center justify-center"
+                    >
+                        <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-4"></div>
+                        <h2 className="text-xl font-bold text-white drop-shadow-md">Cerrando sesión...</h2>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

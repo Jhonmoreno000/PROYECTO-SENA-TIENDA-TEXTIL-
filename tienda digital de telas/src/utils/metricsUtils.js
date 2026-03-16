@@ -51,8 +51,8 @@ export const getTopProducts = (orders, products, limit = 5) => {
  * Obtiene métricas de un vendedor específico
  */
 export const getSellerMetrics = (sellerId, orders, bugReports = []) => {
-    const sellerOrders = orders.filter(order => order.sellerId === sellerId);
-    const sellerBugReports = bugReports.filter(report => report.sellerId === sellerId);
+    const sellerOrders = orders.filter(order => String(order.sellerId) === String(sellerId));
+    const sellerBugReports = bugReports.filter(report => String(report.sellerId) === String(sellerId));
 
     return {
         totalSales: calculateTotalSales(sellerOrders),
@@ -68,7 +68,7 @@ export const getSellerMetrics = (sellerId, orders, bugReports = []) => {
  * Obtiene métricas de un cliente específico
  */
 export const getClientMetrics = (clientId, orders) => {
-    const clientOrders = orders.filter(order => order.clientId === clientId);
+    const clientOrders = orders.filter(order => String(order.clientId) === String(clientId));
 
     // Calcular frecuencia de compra (días entre compras)
     const sortedOrders = [...clientOrders].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -192,7 +192,7 @@ export const getProductsWithoutSales = (products, orders) => {
         (order.productIds || []).forEach(id => soldProductIds.add(id));
     });
 
-    return products.filter(product => !soldProductIds.has(product.id));
+    return products.filter(product => !soldProductIds.has(product.id) && !soldProductIds.has(String(product.id)) && !soldProductIds.has(Number(product.id)));
 };
 
 /**

@@ -1,14 +1,14 @@
-import { FiUser, FiPackage, FiHeart, FiScissors, FiMessageCircle, FiTool } from 'react-icons/fi';
+import { MdPerson, MdShoppingBag, MdFavorite, MdContentCut, MdSupportAgent, MdSettings } from 'react-icons/md';
 
 const clientDashboardLinks = [
     {
         label: 'Mi Resumen',
         path: '/cliente',
-        icon: FiUser
+        icon: MdPerson
     },
     {
         label: 'Compras',
-        icon: FiPackage,
+        icon: MdShoppingBag,
         children: [
             { label: 'Historial de Pedidos', path: '/cliente/pedidos' },
             { label: 'Rastrear Envío', path: '/cliente/pedidos/rastreo' },
@@ -16,7 +16,7 @@ const clientDashboardLinks = [
     },
     {
         label: 'Mi Colección',
-        icon: FiHeart,
+        icon: MdFavorite,
         children: [
             { label: 'Lista de Deseos', path: '/cliente/coleccion' },
             { label: 'Calculadora de Metraje', path: '/cliente/coleccion/calculadora' },
@@ -24,7 +24,7 @@ const clientDashboardLinks = [
     },
     {
         label: 'Ayuda',
-        icon: FiMessageCircle,
+        icon: MdSupportAgent,
         badge: 1,
         children: [
             { label: 'Mis Tickets', path: '/cliente/soporte/tickets', badge: 1 },
@@ -33,7 +33,7 @@ const clientDashboardLinks = [
     },
     {
         label: 'Ajustes',
-        icon: FiTool,
+        icon: MdSettings,
         children: [
             { label: 'Mi Perfil', path: '/cliente/configuracion' },
             { label: 'Libreta de Direcciones', path: '/cliente/configuracion/direcciones' },

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiHeart, FiShoppingCart, FiBell, FiTrash2, FiPlus, FiEdit2, FiFolder, FiX } from 'react-icons/fi';
+import { MdFavorite, MdShoppingCart, MdNotifications, MdDelete, MdAdd, MdEdit, MdFolder, MdClose, MdEditNote } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
@@ -64,9 +65,10 @@ function Wishlist() {
 
     return (
         <DashboardLayout title="Mi Lista de Deseos" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Header with Category Filters */}
-            <div className="card p-6 mb-8">
+            <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-8">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Muestrario Virtual</h2>
@@ -76,7 +78,7 @@ function Wishlist() {
                         onClick={() => setShowAddCategory(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                     >
-                        <FiPlus className="w-4 h-4" />
+                        <MdAdd className="w-4 h-4" />
                         Nueva Categoría
                     </button>
                 </div>
@@ -93,7 +95,7 @@ function Wishlist() {
                                 }`}
                         >
                             <span className="flex items-center gap-2">
-                                <FiFolder className="w-4 h-4" />
+                                <MdFolder className="w-4 h-4" />
                                 {category === 'all' ? 'Todas' : category}
                                 <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
                                     {category === 'all'
@@ -109,8 +111,8 @@ function Wishlist() {
 
             {/* Wishlist Items */}
             {filteredWishlist.length === 0 ? (
-                <div className="card p-12 text-center">
-                    <FiHeart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-12 text-center">
+                    <MdFavorite className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                         Lista vacía
                     </h3>
@@ -129,9 +131,15 @@ function Wishlist() {
                         const isOutOfStock = product.stock === 0;
 
                         return (
-                            <div key={item.id} className="card overflow-hidden group">
+                            <div key={item.id} className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden group">
                                 {/* Product Image */}
-                                <div className="aspect-square bg-gradient-to-br from-primary-400 to-primary-600 relative">
+                                <div className="aspect-square relative flex bg-gray-100 dark:bg-slate-800">
+                                    <img
+                                        src={product?.images?.[0] || '/placeholder.png'}
+                                        alt={product?.name || 'Producto'}
+                                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
                                     {isOutOfStock && (
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                             <span className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold">
@@ -148,7 +156,7 @@ function Wishlist() {
                                         onClick={() => handleRemoveItem(item.id)}
                                         className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                                     >
-                                        <FiTrash2 className="w-4 h-4" />
+                                        <MdDelete className="w-4 h-4" />
                                     </button>
                                 </div>
 
@@ -199,8 +207,8 @@ function Wishlist() {
                                             }}
                                             className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-sm text-left w-full group/note"
                                         >
-                                            <p className="text-gray-600 dark:text-gray-400">
-                                                📝 {item.notes}
+                                            <p className="flex items-center text-gray-600 dark:text-gray-400">
+                                                <MdEditNote className="w-4 h-4 mr-1 text-gray-500" /> {item.notes}
                                             </p>
                                             <span className="text-xs text-primary-600 dark:text-primary-400 opacity-0 group-hover/note:opacity-100">
                                                 Clic para editar
@@ -214,7 +222,7 @@ function Wishlist() {
                                             }}
                                             className="mt-3 flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600"
                                         >
-                                            <FiEdit2 className="w-4 h-4" />
+                                            <MdEdit className="w-4 h-4" />
                                             Añadir nota
                                         </button>
                                     )}
@@ -228,12 +236,12 @@ function Wishlist() {
                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300'
                                                     }`}
                                             >
-                                                <FiBell className="w-4 h-4" />
+                                                <MdNotifications className="w-4 h-4" />
                                                 {item.notifyOnStock ? 'Te avisaremos' : 'Avisar disponibilidad'}
                                             </button>
                                         ) : (
                                             <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                                                <FiShoppingCart className="w-4 h-4" />
+                                                <MdShoppingCart className="w-4 h-4" />
                                                 Agregar al Carrito
                                             </button>
                                         )}
@@ -259,7 +267,7 @@ function Wishlist() {
                                 onClick={() => setShowAddCategory(false)}
                                 className="text-gray-400 hover:text-gray-600"
                             >
-                                <FiX className="w-6 h-6" />
+                                <MdClose className="w-6 h-6" />
                             </button>
                         </div>
                         <p className="text-gray-500 mb-4">
@@ -290,6 +298,7 @@ function Wishlist() {
                     </div>
                 </div>
             )}
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

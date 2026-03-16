@@ -173,7 +173,7 @@ function Login() {
             const roleRedirects = {
                 admin: '/admin',
                 seller: '/vendedor',
-                client: '/mi-cuenta',
+                client: '/cliente',
             };
             const destination = roleRedirects[user?.role] || from;
             navigate(destination, { replace: true });

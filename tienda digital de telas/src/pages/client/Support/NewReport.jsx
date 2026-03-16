@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FiAlertCircle, FiCamera, FiX, FiCheck, FiSend, FiUpload, FiPackage } from 'react-icons/fi';
+import { MdErrorOutline, MdCameraAlt, MdClose, MdCheck, MdSend, MdUpload, MdInventory } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { useAuth } from '../../../context/AuthContext';
 
 const ISSUE_TYPES = [
-    { value: 'stain', label: '🩹 Manchas en la tela', priority: 'high' },
-    { value: 'loose_threads', label: '🧵 Hilos sueltos', priority: 'medium' },
-    { value: 'wrong_color', label: '🎨 Color incorrecto', priority: 'high' },
-    { value: 'wrong_meters', label: '📏 Metraje incorrecto', priority: 'high' },
-    { value: 'damaged', label: '📦 Tela dañada en transporte', priority: 'high' },
-    { value: 'wrong_fabric', label: '❌ Tela equivocada', priority: 'high' },
-    { value: 'quality', label: '⭐ Calidad diferente a la esperada', priority: 'medium' },
-    { value: 'other', label: '💬 Otro problema', priority: 'low' }
+    { value: 'stain', label: 'Manchas en la tela', priority: 'high' },
+    { value: 'loose_threads', label: 'Hilos sueltos', priority: 'medium' },
+    { value: 'wrong_color', label: 'Color incorrecto', priority: 'high' },
+    { value: 'wrong_meters', label: 'Metraje incorrecto', priority: 'high' },
+    { value: 'damaged', label: 'Tela dañada en transporte', priority: 'high' },
+    { value: 'wrong_fabric', label: 'Tela equivocada', priority: 'high' },
+    { value: 'quality', label: 'Calidad diferente a la esperada', priority: 'medium' },
+    { value: 'other', label: 'Otro problema', priority: 'low' }
 ];
 
 function NewReport() {
@@ -95,13 +96,14 @@ function NewReport() {
 
     return (
         <DashboardLayout title="Reportar un Problema" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             <div className="max-w-3xl mx-auto">
                 {/* Header Info */}
-                <div className="card p-6 mb-6 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20">
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20">
                     <div className="flex items-start gap-4">
                         <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
-                            <FiAlertCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                            <MdErrorOutline className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white">
@@ -116,11 +118,11 @@ function NewReport() {
                 </div>
 
                 {/* Report Form */}
-                <form onSubmit={handleSubmit} className="card p-6">
+                <form onSubmit={handleSubmit} className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6">
                     {/* Order Selection */}
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <FiPackage className="inline w-4 h-4 mr-2" />
+                            <MdInventory className="inline w-4 h-4 mr-2" />
                             Selecciona el pedido con el problema *
                         </label>
                         <select
@@ -210,14 +212,14 @@ function NewReport() {
                                         onClick={() => removePhoto(photo.id)}
                                         className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                                     >
-                                        <FiX className="w-4 h-4" />
+                                        <MdClose className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
 
                             {photos.length < 5 && (
                                 <label className="aspect-square border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
-                                    <FiUpload className="w-6 h-6 text-gray-400" />
+                                    <MdUpload className="w-6 h-6 text-gray-400" />
                                     <span className="text-xs text-gray-500 mt-1">Subir</span>
                                     <input
                                         type="file"
@@ -258,13 +260,14 @@ function NewReport() {
                             </>
                         ) : (
                             <>
-                                <FiSend className="w-5 h-5" />
+                                <MdSend className="w-5 h-5" />
                                 Enviar Reporte
                             </>
                         )}
                     </button>
                 </form>
             </div>
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

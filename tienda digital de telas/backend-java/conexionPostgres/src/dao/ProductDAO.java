@@ -58,10 +58,11 @@ public class ProductDAO {
         List<Product> products = new ArrayList<>();
         Connection conn = Conexion.getConnection();
 
+        // Include active=true filter so deleted products don't re-appear in seller view
         String query = "SELECT p.*, c.name as category_name " +
                 "FROM products p " +
                 "LEFT JOIN categories c ON p.category_id = c.id " +
-                "WHERE p.seller_id = ?";
+                "WHERE p.seller_id = ? AND p.active = true";
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, sellerId);
@@ -246,6 +247,8 @@ public class ProductDAO {
     }
 
     public boolean addProduct(Product product) {
+        // Products are inserted as active=true so sellers can see their products immediately.
+        // Moderation is tracked via moderation_status but does not block visibility.
         String query = "INSERT INTO products (name, category_id, price, seller_id, description, material, width, weight, care, stock, featured, active, moderation_status) " +
                        "VALUES (?, (SELECT id FROM categories WHERE name = ? LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, true, 'pending')";
         Connection conn = Conexion.getConnection();
@@ -269,18 +272,35 @@ public class ProductDAO {
     }
 
     public boolean updateProduct(int id, Product updates) {
-        String query = "UPDATE products SET name=?, price=?, description=?, material=?, width=?, weight=?, care=?, stock=?, featured=? WHERE id=?";
+        // Use COALESCE so we only overwrite fields that are actually provided.
+        // If the frontend only sends {price, stock}, name/description/etc are preserved.
+        String query = "UPDATE products SET " +
+                "name = COALESCE(?, name), " +
+                "price = COALESCE(NULLIF(?, 0), price), " +
+                "description = COALESCE(?, description), " +
+                "material = COALESCE(?, material), " +
+                "width = COALESCE(?, width), " +
+                "weight = COALESCE(?, weight), " +
+                "care = COALESCE(?, care), " +
+                "stock = COALESCE(NULLIF(?, -1), stock), " +
+                "featured = COALESCE(?, featured), " +
+                "updated_at = NOW() " +
+                "WHERE id = ?";
         Connection conn = Conexion.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            // Set nullable parameters - null means "don't change this field"
             stmt.setString(1, updates.getName());
+            // Price: use 0 as sentinel for "not provided" (price can't really be 0)
             stmt.setDouble(2, updates.getPrice());
             stmt.setString(3, updates.getDescription());
             stmt.setString(4, updates.getMaterial());
             stmt.setString(5, updates.getWidth());
             stmt.setString(6, updates.getWeight());
             stmt.setString(7, updates.getCare());
-            stmt.setInt(8, updates.getStock());
-            stmt.setBoolean(9, updates.isFeatured());
+            // Stock: use -1 as sentinel for "not provided"
+            stmt.setInt(8, updates.getStock() > 0 ? updates.getStock() : -1);
+            // Featured: we can't distinguish false from null with boolean, use object type
+            stmt.setObject(9, updates.isFeatured());
             stmt.setInt(10, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

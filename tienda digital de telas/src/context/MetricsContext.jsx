@@ -103,10 +103,11 @@ export function MetricsProvider({ children }) {
                 const pendingRes = await fetch('http://localhost:8081/api/products/pending');
                 if (pendingRes.ok) {
                     const apiPending = await pendingRes.json();
-                    if (apiPending && apiPending.length > 0) setPendingProducts(apiPending);
+                    // Accept even empty arrays from API (overrides mock data)
+                    setPendingProducts(apiPending || []);
                 }
 
-                // Main Products
+                // Main Products — only replace if API actually returned products
                 const productsRes = await fetch('http://localhost:8081/api/products');
                 if (productsRes.ok) {
                     const apiProducts = await productsRes.json();
@@ -138,15 +139,20 @@ export function MetricsProvider({ children }) {
         fetchRemoteData();
     }, []);
 
-    const refreshData = async (sellerId = null) => {
+    const refreshData = async () => {
         try {
-            let url = 'http://localhost:8081/api/products';
-            if (sellerId) url += `?sellerId=${sellerId}`;
-            
-            const productsRes = await fetch(url);
+            const productsRes = await fetch('http://localhost:8081/api/products');
             if (productsRes.ok) {
                 const apiProducts = await productsRes.json();
-                if (apiProducts) setProducts(apiProducts);
+                // Only replace if the API returned actual products (guard against empty response)
+                if (apiProducts && apiProducts.length > 0) setProducts(apiProducts);
+            }
+
+            // Also refresh pending products
+            const pendingRes = await fetch('http://localhost:8081/api/products/pending');
+            if (pendingRes.ok) {
+                const apiPending = await pendingRes.json();
+                setPendingProducts(apiPending || []);
             }
             
             const ordersRes = await fetch('http://localhost:8081/api/orders');
@@ -161,13 +167,13 @@ export function MetricsProvider({ children }) {
 
     // Funciones para gestión de usuarios
     const updateUserRole = (userId, newRole) => {
-        setUsers(users.map(user =>
+        setUsers(prev => prev.map(user =>
             user.id === userId ? { ...user, role: newRole } : user
         ));
     };
 
     const toggleUserActive = (userId) => {
-        setUsers(users.map(user =>
+        setUsers(prev => prev.map(user =>
             user.id === userId ? { ...user, active: !user.active } : user
         ));
     };
@@ -178,7 +184,7 @@ export function MetricsProvider({ children }) {
 
     // Funciones para gestión de reportes
     const updateBugReportStatus = async (reportId, newStatus, assignedTo = null) => {
-        setBugReports(bugReports.map(report => {
+        setBugReports(prev => prev.map(report => {
             if (report.id === reportId) {
                 const updated = { ...report, status: newStatus };
                 if (assignedTo !== null) updated.assignedTo = assignedTo;
@@ -213,7 +219,7 @@ export function MetricsProvider({ children }) {
     };
 
     const updateOrderStatus = async (orderId, newStatus) => {
-        setOrders(orders.map(order =>
+        setOrders(prev => prev.map(order =>
             order.id === orderId ? { ...order, status: newStatus } : order
         ));
 
@@ -230,13 +236,14 @@ export function MetricsProvider({ children }) {
 
     // Funciones para productos
     const getProductsBySeller = (sellerId) => {
-        return products.filter(product => product.sellerId === sellerId);
+        // Use == for type-coerced comparison (sellerId can be string or int)
+        return products.filter(product => String(product.sellerId) === String(sellerId));
     };
 
     const updateProduct = async (productId, updates) => {
-        // Update local state
-        setProducts(products.map(product =>
-            product.id === productId ? { ...product, ...updates } : product
+        // Update local state with functional updater to avoid stale closures
+        setProducts(prev => prev.map(product =>
+            String(product.id) === String(productId) ? { ...product, ...updates } : product
         ));
 
         // Persist to API
@@ -252,8 +259,8 @@ export function MetricsProvider({ children }) {
     };
 
     const deleteProduct = async (productId) => {
-        // Update local state
-        setProducts(products.filter(product => product.id !== productId));
+        // Update local state with functional updater and type-safe comparison
+        setProducts(prev => prev.filter(product => String(product.id) !== String(productId)));
 
         // Persist to API
         try {
@@ -341,7 +348,7 @@ export function MetricsProvider({ children }) {
 
     // Funciones para moderación de vendedores
     const approveProduct = async (productId) => {
-        setPendingProducts(pendingProducts.filter(p => p.id !== productId));
+        setPendingProducts(prev => prev.filter(p => String(p.id) !== String(productId)));
         // Optimistically add to main products array would theoretically go here, 
         // but normally we just refetch logic.
 
@@ -357,8 +364,8 @@ export function MetricsProvider({ children }) {
     };
 
     const rejectProduct = async (productId, reason) => {
-        setPendingProducts(pendingProducts.map(p =>
-            p.id === productId ? { ...p, status: 'rejected', rejectionReason: reason } : p
+        setPendingProducts(prev => prev.map(p =>
+            String(p.id) === String(productId) ? { ...p, status: 'rejected', rejectionReason: reason } : p
         ));
 
         try {
@@ -373,13 +380,13 @@ export function MetricsProvider({ children }) {
     };
 
     const updateSellerCommission = (sellerId, commissionRate) => {
-        setUsers(users.map(user =>
+        setUsers(prev => prev.map(user =>
             user.id === sellerId ? { ...user, commissionRate } : user
         ));
     };
 
     const toggleSellerSuspension = (sellerId, reason = null) => {
-        setUsers(users.map(user => {
+        setUsers(prev => prev.map(user => {
             if (user.id === sellerId) {
                 return {
                     ...user,
@@ -404,7 +411,7 @@ export function MetricsProvider({ children }) {
         };
         
         // Update optimistically
-        setCoupons([...coupons, couponObj]);
+        setCoupons(prev => [...prev, couponObj]);
 
         try {
             await fetch('http://localhost:8081/api/coupons', {
@@ -419,7 +426,7 @@ export function MetricsProvider({ children }) {
     };
 
     const deactivateCoupon = async (couponId) => {
-        setCoupons(coupons.map(coupon =>
+        setCoupons(prev => prev.map(coupon =>
             coupon.id === couponId ? { ...coupon, active: false } : coupon
         ));
 
@@ -465,7 +472,7 @@ export function MetricsProvider({ children }) {
             createdAt: new Date().toISOString().split('T')[0],
             updatedAt: new Date().toISOString().split('T')[0]
         };
-        setSupportTickets([...supportTickets, ticketObj]);
+        setSupportTickets(prev => [...prev, ticketObj]);
 
         try {
             await fetch('http://localhost:8081/api/support/tickets', {
@@ -477,7 +484,7 @@ export function MetricsProvider({ children }) {
     };
 
     const updateTicketStatus = async (ticketId, newStatus) => {
-        setSupportTickets(supportTickets.map(ticket => {
+        setSupportTickets(prev => prev.map(ticket => {
             if (ticket.id === ticketId) {
                 const updated = {
                     ...ticket,
@@ -502,7 +509,7 @@ export function MetricsProvider({ children }) {
     };
 
     const assignTicket = (ticketId, userId) => {
-        setSupportTickets(supportTickets.map(ticket =>
+        setSupportTickets(prev => prev.map(ticket =>
             ticket.id === ticketId
                 ? { ...ticket, assignedTo: userId, updatedAt: new Date().toISOString().split('T')[0] }
                 : ticket

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiUser, FiPackage, FiEdit2, FiSave } from 'react-icons/fi';
+import { MdEdit, MdSave } from 'react-icons/md';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../components/AnimatedPage';
 import clientDashboardLinks from '../../data/clientDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
 import { useAuth } from '../../context/AuthContext';
@@ -36,8 +37,9 @@ function ClientProfile() {
 
     return (
         <DashboardLayout title="Mi Perfil" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
-            <div className="card p-6 md:p-8 max-w-2xl">
+            <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 md:p-8 max-w-2xl mb-8">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-2xl font-bold text-primary-600">
@@ -51,12 +53,12 @@ function ClientProfile() {
 
                     <button
                         onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isEditing
-                            ? 'bg-green-500 hover:bg-green-600 text-white'
-                            : 'bg-primary-600 hover:bg-primary-700 text-white'
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-bold ${isEditing
+                            ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/30'
+                            : 'bg-primary-600 hover:bg-primary-700 text-white shadow-md shadow-primary-600/30'
                             }`}
                     >
-                        {isEditing ? <><FiSave /> Guardar</> : <><FiEdit2 /> Editar</>}
+                        {isEditing ? <><MdSave className="w-5 h-5" /> Guardar</> : <><MdEdit className="w-5 h-5"/> Editar</>}
                     </button>
                 </div>
 
@@ -133,6 +135,7 @@ function ClientProfile() {
                     </div>
                 </div>
             </div>
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

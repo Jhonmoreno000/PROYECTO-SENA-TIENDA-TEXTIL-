@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiMessageCircle, FiPlus, FiClock, FiCheckCircle, FiAlertCircle, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { MdMessage, MdAdd, MdAccessTime, MdCheckCircle, MdErrorOutline, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
@@ -93,25 +94,25 @@ function MyTickets() {
             open: {
                 label: 'Abierto',
                 color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                icon: FiMessageCircle,
+                icon: MdMessage,
                 description: 'Tu reporte ha sido recibido'
             },
             in_progress: {
                 label: 'En Revisión',
                 color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                icon: FiClock,
+                icon: MdAccessTime,
                 description: 'El vendedor está revisando tu caso'
             },
             resolved: {
                 label: 'Resuelto',
                 color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                icon: FiCheckCircle,
+                icon: MdCheckCircle,
                 description: 'Tu caso ha sido solucionado'
             },
             closed: {
                 label: 'Cerrado',
                 color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-                icon: FiCheckCircle,
+                icon: MdCheckCircle,
                 description: 'Caso cerrado'
             }
         };
@@ -124,6 +125,7 @@ function MyTickets() {
 
     return (
         <DashboardLayout title="Mis Tickets de Soporte" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Header */}
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
@@ -153,15 +155,15 @@ function MyTickets() {
                     to="/cliente/soporte/nuevo"
                     className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
-                    <FiPlus className="w-4 h-4" />
+                    <MdAdd className="w-4 h-4" />
                     Nuevo Reporte
                 </Link>
             </div>
 
             {/* Tickets List */}
             {filteredTickets.length === 0 ? (
-                <div className="card p-12 text-center">
-                    <FiCheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-12 text-center">
+                    <MdCheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                         ¡Todo en orden!
                     </h3>
@@ -179,7 +181,7 @@ function MyTickets() {
                         const isExpanded = expandedTicket === ticket.id;
 
                         return (
-                            <div key={ticket.id} className="card overflow-hidden">
+                            <div key={ticket.id} className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
                                 {/* Ticket Header */}
                                 <button
                                     onClick={() => toggleExpand(ticket.id)}
@@ -190,7 +192,7 @@ function MyTickets() {
                                             ? 'bg-red-100 dark:bg-red-900/30'
                                             : 'bg-gray-100 dark:bg-slate-700'
                                             }`}>
-                                            <FiAlertCircle className={`w-5 h-5 ${ticket.priority === 'high'
+                                            <MdErrorOutline className={`w-5 h-5 ${ticket.priority === 'high'
                                                 ? 'text-red-600 dark:text-red-400'
                                                 : 'text-gray-600 dark:text-gray-400'
                                                 }`} />
@@ -208,18 +210,18 @@ function MyTickets() {
                                                 Ticket #{ticket.id} • Pedido #{ticket.orderId} •
                                                 Creado el {new Date(ticket.createdAt).toLocaleDateString('es-CO')}
                                             </p>
-                                            {ticket.responses.length > 0 && (
-                                                <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
-                                                    💬 {ticket.responses.length} respuesta(s)
+                                            {(ticket.responses?.length || 0) > 0 && (
+                                                <p className="flex items-center text-sm text-primary-600 dark:text-primary-400 mt-1">
+                                                    <MdMessage className="w-4 h-4 mr-1" /> {ticket.responses.length} respuesta(s)
                                                 </p>
                                             )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         {isExpanded ? (
-                                            <FiChevronUp className="w-5 h-5 text-gray-400" />
+                                            <MdExpandLess className="w-5 h-5 text-gray-400" />
                                         ) : (
-                                            <FiChevronDown className="w-5 h-5 text-gray-400" />
+                                            <MdExpandMore className="w-5 h-5 text-gray-400" />
                                         )}
                                     </div>
                                 </button>
@@ -243,7 +245,7 @@ function MyTickets() {
                                         </div>
 
                                         {/* Responses */}
-                                        {ticket.responses.length > 0 && (
+                                        {(ticket.responses?.length || 0) > 0 && (
                                             <div className="p-6 space-y-4">
                                                 <p className="text-sm font-medium text-gray-500">Conversación:</p>
                                                 {ticket.responses.map(response => (
@@ -284,7 +286,7 @@ function MyTickets() {
                                         {ticket.status === 'resolved' && ticket.resolutionDetails && (
                                             <div className="p-6 bg-green-50 dark:bg-green-900/20 border-t border-green-200 dark:border-green-900/30">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <FiCheckCircle className="w-5 h-5 text-green-600" />
+                                                    <MdCheckCircle className="w-5 h-5 text-green-600" />
                                                     <span className="font-bold text-green-800 dark:text-green-200">
                                                         Caso Resuelto
                                                     </span>
@@ -317,6 +319,7 @@ function MyTickets() {
                     })}
                 </div>
             )}
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

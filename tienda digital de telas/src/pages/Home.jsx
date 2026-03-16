@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Hero, Carousel, FeaturedProducts, Benefits, Footer } from '../components';
+import { Header, Hero, Carousel, FeaturedProducts, Benefits, Footer, AnimatedPage } from '../components';
 
 function Home() {
     const [sections, setSections] = useState([
@@ -29,10 +29,12 @@ function Home() {
         <div className="min-h-screen">
             <Header />
             <main>
-                {isVisible('hero') && <Hero />}
-                {isVisible('carousel') && <Carousel />}
-                {isVisible('featured') && <FeaturedProducts />}
-                {isVisible('benefits') && <Benefits />}
+                <AnimatedPage>
+                    {isVisible('hero') && <Hero />}
+                    {isVisible('carousel') && <Carousel />}
+                    {isVisible('featured') && <FeaturedProducts />}
+                    {isVisible('benefits') && <Benefits />}
+                </AnimatedPage>
             </main>
             <Footer />
         </div>

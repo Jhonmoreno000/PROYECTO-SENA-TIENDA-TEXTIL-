@@ -24,8 +24,16 @@ public class Conexion {
 
     public static Connection getConnection() {
         try {
-            // Reconnect if connection is null or closed
-            if (connection == null || connection.isClosed()) {
+            // Reconnect if connection is null, closed, OR no longer valid (stale)
+            // isValid(3) sends a real check to PostgreSQL with 3-second timeout
+            // This is critical because isClosed() does NOT detect connections
+            // that PostgreSQL has terminated due to inactivity
+            if (connection == null || connection.isClosed() || !connection.isValid(3)) {
+                // Close the old stale connection if it exists
+                if (connection != null) {
+                    try { connection.close(); } catch (SQLException ignored) {}
+                    connection = null;
+                }
                 Class.forName("org.postgresql.Driver");
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
                 System.out.println("✅ Conexión a PostgreSQL establecida con éxito.");
@@ -36,6 +44,8 @@ public class Conexion {
         } catch (SQLException e) {
             System.err.println("❌ Error de conexión a la base de datos PostgreSQL.");
             e.printStackTrace();
+            // Reset connection so next call will try to reconnect
+            connection = null;
         }
         return connection;
     }

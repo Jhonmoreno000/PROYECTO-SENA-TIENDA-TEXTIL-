@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FiUser, FiPackage, FiEye } from 'react-icons/fi';
+import { MdPerson, MdInventory, MdVisibility } from 'react-icons/md';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../components/AnimatedPage';
 import clientDashboardLinks from '../../data/clientDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -60,8 +61,9 @@ function OrderHistory() {
 
     return (
         <DashboardLayout title="Historial de Pedidos" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
-            <div className="card overflow-hidden">
+            <div className="card overflow-hidden shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md mb-8">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700">
@@ -97,7 +99,7 @@ function OrderHistory() {
                                             className="text-gray-400 hover:text-primary-600 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full"
                                             title="Ver detalles"
                                         >
-                                            <FiEye className="w-5 h-5" />
+                                            <MdVisibility className="w-5 h-5" />
                                         </button>
                                     </td>
                                 </tr>
@@ -115,6 +117,7 @@ function OrderHistory() {
                 onRefund={handleRefundRequest}
                 onReport={handleReportProblem}
             />
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

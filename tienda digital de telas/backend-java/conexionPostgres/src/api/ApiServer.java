@@ -65,7 +65,7 @@ public class ApiServer {
 
             // Allow requests from React (CORS)
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "http://localhost:3001");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
             exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type,Authorization");
 
             // Handle preflight OPTIONS request

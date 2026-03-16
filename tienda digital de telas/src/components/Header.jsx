@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiShoppingCart, FiMenu, FiX, FiSun, FiMoon, FiUser, FiLogOut, FiLayout } from 'react-icons/fi';
+import { MdShoppingCart, MdMenu, MdClose, MdLightMode, MdDarkMode, MdPerson, MdLogout, MdDashboard } from 'react-icons/md';
 import { useCart } from '../context/CartContext';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +42,11 @@ function Header() {
                                 }}
                                 animate={{
                                     backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                                    color: ['#f97316', '#ea580c', '#fb923c'],
+                                    filter: ['drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3))', 'drop-shadow(0 2px 4px rgba(234, 88, 12, 0.3))', 'drop-shadow(0 2px 4px rgba(251, 146, 60, 0.3))'],
+                                    WebkitBackgroundClip: ['text', 'text', 'text'],
+                                    WebkitTextFillColor: ['transparent', 'transparent', 'transparent'],
+                                    backgroundClip: ['text', 'text', 'text'],
                                 }}
                                 transition={{
                                     duration: 3,
@@ -56,6 +61,16 @@ function Header() {
                                 initial={{ scaleX: 0 }}
                                 whileHover={{ scaleX: 1 }}
                                 transition={{ duration: 0.3 }}
+                                animate={{
+                                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                                    color: ['#f97316', '#ea580c', '#fb923c'],
+                                    filter: ['drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3))', 'drop-shadow(0 2px 4px rgba(234, 88, 12, 0.3))', 'drop-shadow(0 2px 4px rgba(251, 146, 60, 0.3))'],
+                                    WebkitBackgroundClip: ['text', 'text', 'text'],
+                                    WebkitTextFillColor: ['transparent', 'transparent', 'transparent'],
+                                    backgroundClip: ['text', 'text', 'text'],
+                                }}
+
+
                             />
                         </motion.div>
                         <span className="ml-2 text-sm md:text-base font-semibold text-gray-700 dark:text-gray-300">
@@ -79,7 +94,6 @@ function Header() {
 
                     {/* Actions */}
                     <div className="flex items-center space-x-4">
-                        {/* Dark Mode Toggle */}
                         <motion.button
                             whileTap={{ scale: 0.9 }}
                             onClick={toggleDarkMode}
@@ -87,9 +101,9 @@ function Header() {
                             aria-label="Toggle dark mode"
                         >
                             {darkMode ? (
-                                <FiSun className="w-5 h-5 text-yellow-500" />
+                                <MdLightMode className="w-5 h-5 text-yellow-500" />
                             ) : (
-                                <FiMoon className="w-5 h-5 text-gray-700" />
+                                <MdDarkMode className="w-5 h-5 text-gray-700" />
                             )}
                         </motion.button>
 
@@ -117,14 +131,14 @@ function Header() {
                                                 to={user.role === 'client' ? '/cliente' : user.role === 'admin' ? '/admin' : '/vendedor/productos'}
                                                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
                                             >
-                                                <FiLayout className="w-4 h-4" />
+                                                <MdDashboard className="w-4 h-4" />
                                                 Dashboard
                                             </Link>
                                             <button
                                                 onClick={logout}
                                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg"
                                             >
-                                                <FiLogOut className="w-4 h-4" />
+                                                <MdLogout className="w-4 h-4" />
                                                 Cerrar Sesión
                                             </button>
                                         </div>
@@ -133,7 +147,7 @@ function Header() {
                             </div>
                         ) : (
                             <Link to="/login" className="flex items-center gap-2 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary-600 font-medium transition-colors">
-                                <FiUser className="w-5 h-5" />
+                                <MdPerson className="w-5 h-5" />
                                 <span className="hidden md:block">Ingresar</span>
                             </Link>
                         )}
@@ -145,7 +159,7 @@ function Header() {
                                 whileTap={{ scale: 0.95 }}
                                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                             >
-                                <FiShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                <MdShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                                 {cartCount > 0 && (
                                     <motion.span
                                         initial={{ scale: 0 }}
@@ -158,16 +172,15 @@ function Header() {
                             </motion.div>
                         </Link>
 
-                        {/* Mobile Menu Button */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                             aria-label="Toggle menu"
                         >
                             {mobileMenuOpen ? (
-                                <FiX className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                <MdClose className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                             ) : (
-                                <FiMenu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                <MdMenu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                             )}
                         </button>
                     </div>

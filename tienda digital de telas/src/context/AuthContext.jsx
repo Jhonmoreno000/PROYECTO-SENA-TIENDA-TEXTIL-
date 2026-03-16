@@ -26,7 +26,15 @@ export function AuthProvider({ children }) {
                 body: JSON.stringify({ email, password })
             });
             
-            const data = await response.json();
+            // Guard against non-JSON responses (e.g. backend returning HTML error pages)
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('Response was not valid JSON:', jsonError);
+                showNotification('error', 'El servidor respondió con un formato inesperado');
+                return { success: false, message: 'Respuesta inválida del servidor' };
+            }
             
             if (response.ok && data.success) {
                 // Normalize roles for frontend app logic
@@ -49,8 +57,12 @@ export function AuthProvider({ children }) {
             }
         } catch (error) {
             console.error('Login error:', error);
-            showNotification('error', 'Error al conectar con el servidor');
-            return { success: false, message: 'Error de servidor' };
+            // Distinguish between network errors (backend down) and other errors
+            const msg = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')
+                ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
+                : 'Error al conectar con el servidor';
+            showNotification('error', msg);
+            return { success: false, message: msg };
         }
     };
 
@@ -66,7 +78,14 @@ export function AuthProvider({ children }) {
                 })
             });
             
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('Register response was not valid JSON:', jsonError);
+                showNotification('error', 'El servidor respondió con un formato inesperado');
+                return { success: false, message: 'Respuesta inválida del servidor' };
+            }
             
             if (response.ok && data.success) {
                 // Auto login after complete
@@ -77,8 +96,11 @@ export function AuthProvider({ children }) {
             }
         } catch (error) {
             console.error('Register error:', error);
-            showNotification('error', 'Error al conectar con el servidor');
-            return { success: false, message: 'Error de servidor' };
+            const msg = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')
+                ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
+                : 'Error al conectar con el servidor';
+            showNotification('error', msg);
+            return { success: false, message: msg };
         }
     };
 

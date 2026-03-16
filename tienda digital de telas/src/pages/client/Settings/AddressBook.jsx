@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FiMapPin, FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiHome, FiTool, FiBriefcase } from 'react-icons/fi';
+import { MdLocationOn, MdAdd, MdEdit, MdDelete, MdCheck, MdClose, MdHome, MdBuild, MdWork } from 'react-icons/md';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
 import BackButton from '../../../components/dashboard/BackButton';
 
@@ -13,10 +14,10 @@ const COLOMBIA_DEPARTMENTS = [
 ];
 
 const ADDRESS_LABELS = [
-    { value: 'home', label: 'Casa', icon: FiHome },
-    { value: 'workshop', label: 'Taller', icon: FiTool },
-    { value: 'office', label: 'Oficina', icon: FiBriefcase },
-    { value: 'other', label: 'Otro', icon: FiMapPin }
+    { value: 'home', label: 'Casa', icon: MdHome },
+    { value: 'workshop', label: 'Taller', icon: MdBuild },
+    { value: 'office', label: 'Oficina', icon: MdWork },
+    { value: 'other', label: 'Otro', icon: MdLocationOn }
 ];
 
 function AddressBook() {
@@ -135,6 +136,7 @@ function AddressBook() {
 
     return (
         <DashboardLayout title="Libreta de Direcciones" links={clientDashboardLinks}>
+            <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
@@ -146,7 +148,7 @@ function AddressBook() {
                         onClick={() => setShowForm(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                     >
-                        <FiPlus className="w-4 h-4" />
+                        <MdAdd className="w-4 h-4" />
                         Nueva Dirección
                     </button>
                 )}
@@ -154,7 +156,7 @@ function AddressBook() {
 
             {/* Address Form */}
             {showForm && (
-                <div className="card p-6 mb-6">
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-bold text-lg text-gray-900 dark:text-white">
                             {editingId ? 'Editar Dirección' : 'Nueva Dirección'}
@@ -163,7 +165,7 @@ function AddressBook() {
                             onClick={resetForm}
                             className="text-gray-400 hover:text-gray-600"
                         >
-                            <FiX className="w-6 h-6" />
+                            <MdClose className="w-6 h-6" />
                         </button>
                     </div>
 
@@ -319,7 +321,7 @@ function AddressBook() {
                                 type="submit"
                                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
                             >
-                                <FiCheck className="w-5 h-5" />
+                                <MdCheck className="w-5 h-5" />
                                 {editingId ? 'Guardar Cambios' : 'Agregar Dirección'}
                             </button>
                             <button
@@ -336,8 +338,8 @@ function AddressBook() {
 
             {/* Addresses List */}
             {addresses.length === 0 ? (
-                <div className="card p-12 text-center">
-                    <FiMapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-12 text-center">
+                    <MdLocationOn className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                         Sin direcciones guardadas
                     </h3>
@@ -348,7 +350,7 @@ function AddressBook() {
                         onClick={() => setShowForm(true)}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                     >
-                        <FiPlus className="w-5 h-5" />
+                        <MdAdd className="w-5 h-5" />
                         Agregar Dirección
                     </button>
                 </div>
@@ -361,7 +363,7 @@ function AddressBook() {
                         return (
                             <div
                                 key={address.id}
-                                className={`card p-6 relative ${address.isDefault
+                                className={`card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 relative ${address.isDefault
                                         ? 'ring-2 ring-primary-500'
                                         : ''
                                     }`}
@@ -402,7 +404,7 @@ function AddressBook() {
                                                 onClick={() => handleEdit(address)}
                                                 className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300"
                                             >
-                                                <FiEdit2 className="w-4 h-4" />
+                                                <MdEdit className="w-4 h-4" />
                                                 Editar
                                             </button>
                                             {!address.isDefault && (
@@ -411,14 +413,14 @@ function AddressBook() {
                                                         onClick={() => handleSetDefault(address.id)}
                                                         className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400"
                                                     >
-                                                        <FiCheck className="w-4 h-4" />
+                                                        <MdCheck className="w-4 h-4" />
                                                         Predeterminar
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(address.id)}
                                                         className="flex items-center gap-1 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
                                                     >
-                                                        <FiTrash2 className="w-4 h-4" />
+                                                        <MdDelete className="w-4 h-4" />
                                                     </button>
                                                 </>
                                             )}
@@ -430,6 +432,7 @@ function AddressBook() {
                     })}
                 </div>
             )}
+            </AnimatedPage>
         </DashboardLayout>
     );
 }

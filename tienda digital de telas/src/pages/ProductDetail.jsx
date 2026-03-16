@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiShoppingCart, FiHeart, FiShare2, FiArrowLeft, FiCheck } from 'react-icons/fi';
+import { MdShoppingCart, MdFavoriteBorder, MdShare, MdArrowBack, MdCheck } from 'react-icons/md';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import AnimatedPage from '../components/AnimatedPage';
 import ImageGallery from '../components/ImageGallery';
 import QuantitySelector from '../components/QuantitySelector';
 import ProductCard from '../components/ProductCard';
@@ -69,7 +70,7 @@ function ProductDetail() {
         <div className="min-h-screen flex flex-col">
             <Header />
 
-            <main className="flex-1">
+            <AnimatedPage className="flex-1">
                 {/* Breadcrumb */}
                 <div className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -93,7 +94,7 @@ function ProductDetail() {
                         to="/catalogo"
                         className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 mb-8"
                     >
-                        <FiArrowLeft /> Volver al catálogo
+                        <MdArrowBack /> Volver al catálogo
                     </Link>
 
                     <div className="grid md:grid-cols-2 gap-12 mb-16">
@@ -159,7 +160,7 @@ function ProductDetail() {
 
                             {/* Care Instructions */}
                             <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <FiCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                <MdCheck className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <div className="font-semibold text-blue-900 dark:text-blue-300">
                                         Cuidado del producto
@@ -187,7 +188,7 @@ function ProductDetail() {
                                     onClick={handleAddToCart}
                                     className="flex-1 btn-primary flex items-center justify-center gap-2"
                                 >
-                                    <FiShoppingCart /> Agregar al Carrito
+                                    <MdShoppingCart size={18} /> Agregar al Carrito
                                 </motion.button>
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
@@ -201,10 +202,10 @@ function ProductDetail() {
                             {/* Secondary Actions */}
                             <div className="flex gap-3">
                                 <button className="flex-1 btn-outline flex items-center justify-center gap-2">
-                                    <FiHeart /> Favoritos
+                                    <MdFavoriteBorder size={18} /> Favoritos
                                 </button>
                                 <button className="flex-1 btn-outline flex items-center justify-center gap-2">
-                                    <FiShare2 /> Compartir
+                                    <MdShare size={18} /> Compartir
                                 </button>
                             </div>
 
@@ -215,7 +216,7 @@ function ProductDetail() {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="bg-green-500 text-white p-4 rounded-lg flex items-center gap-3"
                                 >
-                                    <FiCheck className="w-5 h-5" />
+                                    <MdCheck className="w-6 h-6 flex-shrink-0" />
                                     <span className="font-semibold">¡Producto agregado al carrito!</span>
                                 </motion.div>
                             )}
@@ -236,7 +237,7 @@ function ProductDetail() {
                         </div>
                     )}
                 </section>
-            </main>
+            </AnimatedPage>
 
             <Footer />
         </div>
