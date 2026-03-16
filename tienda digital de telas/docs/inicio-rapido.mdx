@@ -1,0 +1,51 @@
+---
+title: "Inicio Rápido"
+description: "Guía para levantar el entorno de desarrollo local."
+---
+
+## Requisitos Previos
+
+Antes de iniciar, asegúrate de tener instaladas las siguientes herramientas:
+
+* **Node.js** (v18+)
+* **Java SDK** (JDK 17+)
+* **PostgreSQL** (v14+)
+
+## 1. Configurar la Base de Datos
+
+El backend utiliza PostgreSQL para persistir el catálogo y la autenticación. 
+Debes arrancar el motor de PostgreSQL y verificar que tengas una base de datos local llamada `dyd_textil`.
+
+## 2. Levantar el Backend (Java)
+
+El backend expone una API REST nativa que atiende las peticiones del dashboard y del registro.
+
+```bash
+# Navegar al directorio de conexión
+cd backend-java/conexionPostgres
+
+# Ejecutar la clase principal mapeando las librerías del driver y gson
+java -cp "bin;lib/gson-2.10.1.jar;lib/postgresql-42.7.3.jar" App
+```
+Si el inicio es exitoso, verás un registro en la terminal indicando `Servidor HTTP iniciado en el puerto 8080`.
+
+## 3. Levantar el Frontend (React)
+
+En una nueva terminal, ubicada en la raíz del proyecto, instalarás los manejadores de estado e interfaces.
+
+```bash
+# Instalar todas las dependencias (Vite, Tailwind, Framer Motion)
+npm install
+
+# Lanzar el servidor en caliente
+npm run dev
+```
+
+### 4. Producción
+
+Para compilar la aplicación React y obtener sus assets purificados listos para despliegue:
+
+```bash
+npm run build
+npm run preview
+```
