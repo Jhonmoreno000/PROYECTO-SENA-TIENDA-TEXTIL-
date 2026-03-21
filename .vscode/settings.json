@@ -1,0 +1,8 @@
+{
+    "java.project.referencedLibraries": [
+        "tienda digital de telas/backend-java/conexionPostgres/lib/**/*.jar"
+    ],
+    "java.project.sourcePaths": [
+        "tienda digital de telas/backend-java/conexionPostgres/src"
+    ]
+}
