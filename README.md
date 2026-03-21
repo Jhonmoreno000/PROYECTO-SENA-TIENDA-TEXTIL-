@@ -57,6 +57,6 @@ src/
 Colores y estilos modificables en el archivo `tailwind.config.js`.
 
 ## Contacto
-Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) o al correo institucional: tu-correo@sena.edu.co
+Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) 
 
 ---
