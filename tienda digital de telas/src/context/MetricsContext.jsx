@@ -1,22 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-import {
-    mockUsers,
-    mockOrders,
-    mockSalesData,
-    mockBugReports,
-    mockRecentActivity,
-    mockSystemConfig,
-    mockInventoryBatches,
-    mockWasteEvents,
-    mockCoupons,
-    mockSupportTickets,
-    mockColombiaRegionSales,
-    mockStockThresholds,
-    mockPendingProducts
-} from '../data/mockData';
-import productsData from '../data/products.json';
-
 const MetricsContext = createContext();
 
 export function useMetrics() {
@@ -27,46 +10,59 @@ export function useMetrics() {
     return context;
 }
 
+// Configuración por defecto del sistema (solo estructura, sin datos mock)
+const defaultSystemConfig = {
+    siteName: 'D&D Textil',
+    defaultDarkMode: false,
+    primaryColor: '#8B5CF6',
+    secondaryColor: '#EC4899',
+    accentColor: '#F59E0B',
+    taxRate: 0.19,
+    shippingCost: 15000,
+    freeShippingThreshold: 200000,
+    lowStockThreshold: 20,
+    maintenanceMode: false,
+    maintenanceMessage: 'Estamos realizando mejoras en el sistema. Volvemos pronto.',
+    globalBanner: {
+        enabled: false,
+        message: '',
+        type: 'info'
+    }
+};
+
 export function MetricsProvider({ children }) {
-    // Estado desde API y persistente — inicializar con mock data como fallback
-    const [users, setUsers] = useState(mockUsers);
-    const [orders, setOrders] = useState(mockOrders);
-    const [dataSource, setDataSource] = useState('mock'); // 'mock' o 'api'
+    // Estado — inicializar vacío, los datos vienen 100% de la API
+    const [users, setUsers] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [salesData, setSalesData] = useState([]);
+    const [bugReports, setBugReports] = useState([]);
+    const [systemConfig, setSystemConfig] = useState(defaultSystemConfig);
+    const [inventoryBatches, setInventoryBatches] = useState([]);
+    const [wasteEvents, setWasteEvents] = useState([]);
+    const [coupons, setCoupons] = useState([]);
+    const [supportTickets, setSupportTickets] = useState([]);
+    const [stockThresholds, setStockThresholds] = useState([]);
+    const [pendingProducts, setPendingProducts] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [regionSales, setRegionSales] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const [salesData, setSalesData] = useState(mockSalesData);
-    const [bugReports, setBugReports] = useState(mockBugReports);
-    const [systemConfig, setSystemConfig] = useState(mockSystemConfig);
-    const [inventoryBatches, setInventoryBatches] = useState(mockInventoryBatches);
-    const [wasteEvents, setWasteEvents] = useState(mockWasteEvents);
-    const [coupons, setCoupons] = useState(mockCoupons);
-    const [supportTickets, setSupportTickets] = useState(mockSupportTickets);
-    const [stockThresholds, setStockThresholds] = useState(mockStockThresholds);
-    const [pendingProducts, setPendingProducts] = useState(mockPendingProducts);
-
-    // Estado local
-    const [products, setProducts] = useState(productsData);
-    const [recentActivity] = useState(mockRecentActivity);
-    const [regionSales] = useState(mockColombiaRegionSales);
-
-    // Fetch from Backend API — if available, override mock data; otherwise keep mocks
+    // Fetch from Backend API
     useEffect(() => {
         const fetchRemoteData = async () => {
+            setLoading(true);
             try {
                 const usersRes = await fetch('http://localhost:8081/api/users');
                 if (usersRes.ok) {
                     const apiUsers = await usersRes.json();
-                    if (apiUsers && apiUsers.length > 0) {
-                        setUsers(apiUsers);
-                        setDataSource('api');
-                    }
+                    if (apiUsers && apiUsers.length > 0) setUsers(apiUsers);
                 }
 
                 const ordersRes = await fetch('http://localhost:8081/api/orders');
                 if (ordersRes.ok) {
                     const apiOrders = await ordersRes.json();
-                    if (apiOrders && apiOrders.length > 0) {
-                        setOrders(apiOrders);
-                    }
+                    if (apiOrders && apiOrders.length > 0) setOrders(apiOrders);
                 }
 
                 // Config
@@ -74,7 +70,7 @@ export function MetricsProvider({ children }) {
                 if (configRes.ok) {
                     const apiConfigText = await configRes.text();
                     if (apiConfigText && apiConfigText !== '{}') {
-                        setSystemConfig(JSON.parse(apiConfigText));
+                        setSystemConfig(prev => ({ ...prev, ...JSON.parse(apiConfigText) }));
                     }
                 }
 
@@ -82,10 +78,9 @@ export function MetricsProvider({ children }) {
                 const couponsRes = await fetch('http://localhost:8081/api/coupons');
                 if (couponsRes.ok) {
                     const apiCoupons = await couponsRes.json();
-                    if (apiCoupons && apiCoupons.length > 0) {
-                        setCoupons(apiCoupons);
-                    }
+                    if (apiCoupons && apiCoupons.length > 0) setCoupons(apiCoupons);
                 }
+
                 // Tickets & Bugs
                 const ticketsRes = await fetch('http://localhost:8081/api/support/tickets');
                 if (ticketsRes.ok) {
@@ -103,25 +98,25 @@ export function MetricsProvider({ children }) {
                 const pendingRes = await fetch('http://localhost:8081/api/products/pending');
                 if (pendingRes.ok) {
                     const apiPending = await pendingRes.json();
-                    // Accept even empty arrays from API (overrides mock data)
                     setPendingProducts(apiPending || []);
                 }
 
-                // Main Products — only replace if API actually returned products
+                // Main Products
                 const productsRes = await fetch('http://localhost:8081/api/products');
                 if (productsRes.ok) {
                     const apiProducts = await productsRes.json();
                     if (apiProducts && apiProducts.length > 0) setProducts(apiProducts);
                 }
+
                 // Admin Metrics from Config Table
                 const keysToFetch = ['metrics_sales', 'inventory_batches', 'waste_events', 'stock_thresholds'];
                 for (let key of keysToFetch) {
-                    const res = await fetch(`http://localhost:8081/api/config?key=${key}`);
+                    const res = await fetch(`http://localhost:8081/api/config/${key}`);
                     if (res.ok) {
-                        const jsonStr = await res.json();
-                        if (jsonStr) {
+                        const text = await res.text();
+                        if (text && text !== '{}' && text !== 'null') {
                             try {
-                                const parsed = JSON.parse(jsonStr);
+                                const parsed = JSON.parse(text);
                                 if (key === 'metrics_sales') setSalesData(parsed);
                                 if (key === 'inventory_batches') setInventoryBatches(parsed);
                                 if (key === 'waste_events') setWasteEvents(parsed);
@@ -131,8 +126,9 @@ export function MetricsProvider({ children }) {
                     }
                 }
             } catch (err) {
-                console.warn("Backend parcial o totalmente no disponible, usando datos de demostración:", err.message);
-                // Los datos mock ya están cargados como estado inicial
+                console.error("Backend no disponible:", err.message);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -144,11 +140,9 @@ export function MetricsProvider({ children }) {
             const productsRes = await fetch('http://localhost:8081/api/products');
             if (productsRes.ok) {
                 const apiProducts = await productsRes.json();
-                // Only replace if the API returned actual products (guard against empty response)
                 if (apiProducts && apiProducts.length > 0) setProducts(apiProducts);
             }
 
-            // Also refresh pending products
             const pendingRes = await fetch('http://localhost:8081/api/products/pending');
             if (pendingRes.ok) {
                 const apiPending = await pendingRes.json();
@@ -236,17 +230,14 @@ export function MetricsProvider({ children }) {
 
     // Funciones para productos
     const getProductsBySeller = (sellerId) => {
-        // Use == for type-coerced comparison (sellerId can be string or int)
         return products.filter(product => String(product.sellerId) === String(sellerId));
     };
 
     const updateProduct = async (productId, updates) => {
-        // Update local state with functional updater to avoid stale closures
         setProducts(prev => prev.map(product =>
             String(product.id) === String(productId) ? { ...product, ...updates } : product
         ));
 
-        // Persist to API
         try {
             await fetch(`http://localhost:8081/api/products/${productId}`, {
                 method: 'PUT',
@@ -259,10 +250,8 @@ export function MetricsProvider({ children }) {
     };
 
     const deleteProduct = async (productId) => {
-        // Update local state with functional updater and type-safe comparison
         setProducts(prev => prev.filter(product => String(product.id) !== String(productId)));
 
-        // Persist to API
         try {
             await fetch(`http://localhost:8081/api/products/${productId}`, {
                 method: 'DELETE'
@@ -317,7 +306,9 @@ export function MetricsProvider({ children }) {
 
     // Funciones para inventario
     const addBatch = (newBatch) => {
-        const maxId = Math.max(...inventoryBatches.map(b => parseInt(b.id.slice(1)) || 0), 0);
+        const maxId = inventoryBatches.length > 0
+            ? Math.max(...inventoryBatches.map(b => parseInt(b.id.slice(1)) || 0), 0)
+            : 0;
         const newArray = [...inventoryBatches, { ...newBatch, id: `R${String(maxId + 1).padStart(3, '0')}` }];
         setInventoryBatches(newArray);
         persistMetric('inventory_batches', newArray);
@@ -332,7 +323,9 @@ export function MetricsProvider({ children }) {
     };
 
     const logWaste = (wasteEvent) => {
-        const maxId = Math.max(...wasteEvents.map(e => e.id), 0);
+        const maxId = wasteEvents.length > 0
+            ? Math.max(...wasteEvents.map(e => e.id), 0)
+            : 0;
         const newArray = [...wasteEvents, { ...wasteEvent, id: maxId + 1, date: new Date().toISOString().split('T')[0] }];
         setWasteEvents(newArray);
         persistMetric('waste_events', newArray);
@@ -349,8 +342,6 @@ export function MetricsProvider({ children }) {
     // Funciones para moderación de vendedores
     const approveProduct = async (productId) => {
         setPendingProducts(prev => prev.filter(p => String(p.id) !== String(productId)));
-        // Optimistically add to main products array would theoretically go here, 
-        // but normally we just refetch logic.
 
         try {
             await fetch(`http://localhost:8081/api/products/${productId}/moderate`, {
@@ -392,7 +383,7 @@ export function MetricsProvider({ children }) {
                     ...user,
                     suspended: !user.suspended,
                     suspensionReason: !user.suspended ? reason : null,
-                    active: user.suspended // Si estaba suspendido, activar; si no, desactivar
+                    active: user.suspended
                 };
             }
             return user;
@@ -401,7 +392,9 @@ export function MetricsProvider({ children }) {
 
     // Funciones para cupones
     const createCoupon = async (newCoupon) => {
-        const maxId = Math.max(...coupons.map(c => c.id), 0);
+        const maxId = coupons.length > 0
+            ? Math.max(...coupons.map(c => c.id), 0)
+            : 0;
         const couponObj = {
             ...newCoupon,
             id: maxId + 1,
@@ -410,7 +403,6 @@ export function MetricsProvider({ children }) {
             createdAt: new Date().toISOString().split('T')[0]
         };
         
-        // Update optimistically
         setCoupons(prev => [...prev, couponObj]);
 
         try {
@@ -419,7 +411,6 @@ export function MetricsProvider({ children }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(couponObj)
             });
-            // Re-fetch could be done here to get DB id instead of maxId + 1, but this suffices.
         } catch (e) {
             console.error('Error creando cupón', e);
         }
@@ -447,15 +438,15 @@ export function MetricsProvider({ children }) {
         const expiryDate = new Date(coupon.expiresAt);
         if (now > expiryDate) return { valid: false, message: 'Cupón expirado' };
 
-        if (coupon.rules.minPurchase && cartTotal < coupon.rules.minPurchase) {
+        if (coupon.rules && coupon.rules.minPurchase && cartTotal < coupon.rules.minPurchase) {
             return { valid: false, message: `Compra mínima de $${coupon.rules.minPurchase.toLocaleString()}` };
         }
 
-        if (coupon.rules.firstTimeOnly && userOrders.length > 0) {
+        if (coupon.rules && coupon.rules.firstTimeOnly && userOrders.length > 0) {
             return { valid: false, message: 'Este cupón es solo para primera compra' };
         }
 
-        if (coupon.rules.maxUses && coupon.usageCount >= coupon.rules.maxUses) {
+        if (coupon.rules && coupon.rules.maxUses && coupon.usageCount >= coupon.rules.maxUses) {
             return { valid: false, message: 'Cupón agotado' };
         }
 
@@ -464,7 +455,9 @@ export function MetricsProvider({ children }) {
 
     // Funciones para tickets de soporte
     const createTicket = async (newTicket) => {
-        const maxId = Math.max(...supportTickets.map(t => t.id), 0);
+        const maxId = supportTickets.length > 0
+            ? Math.max(...supportTickets.map(t => t.id), 0)
+            : 0;
         const ticketObj = {
             ...newTicket,
             id: maxId + 1,
@@ -518,7 +511,7 @@ export function MetricsProvider({ children }) {
 
     const value = {
         // Datos
-        dataSource,
+        loading,
         users,
         orders,
         salesData,

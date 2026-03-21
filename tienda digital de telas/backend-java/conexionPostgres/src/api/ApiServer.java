@@ -49,6 +49,13 @@ public class ApiServer {
         server.createContext("/api/coupons", new CouponsHandler());
         server.createContext("/api/config", new ConfigHandler());
         server.createContext("/api/support", new SupportHandler());
+        
+        // Context for Cart and Inventory (New Tables)
+        server.createContext("/api/cart", new CartHandler());
+        server.createContext("/api/inventory", new InventoryHandler());
+        server.createContext("/api/metrics", new InventoryHandler());
+        server.createContext("/api/activity", new InventoryHandler());
+        server.createContext("/api/banner", new InventoryHandler());
 
         // Context for Static Images/Files
         server.createContext("/uploads", new StaticFileHandler());

@@ -39,15 +39,7 @@ public class AuthDAO {
                 if (rs.next()) {
                     String storedHash = rs.getString("password_hash");
                     
-                    // Allow login if hash matches OR if it's the default development mock setup
-                    // (To avoid locking out the developer before registering real accounts)
-                    boolean passwordMatches = false;
-                    if (storedHash != null && storedHash.equals(hashPassword(password))) {
-                        passwordMatches = true;
-                    } else if (password.length() >= 6 && storedHash == null) {
-                        // Temp fallback for old users without hash
-                        passwordMatches = true;
-                    }
+                    boolean passwordMatches = storedHash != null && storedHash.equals(hashPassword(password));
 
                     if (passwordMatches) {
                         User user = new User();

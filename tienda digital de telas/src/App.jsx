@@ -75,7 +75,6 @@ import CouponCreation from './pages/admin/Support/CouponCreation';
 
 // Reports
 import BugReport from './pages/BugReport';
-import LoaderDemo from './pages/LoaderDemo';
 
 // Payment
 import Payment from './pages/payment/Payment';
@@ -96,7 +95,7 @@ function AppRoutes() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/registro" element={<Register />} />
                     <Route path="/reportar-fallo" element={<BugReport />} />
-                    <Route path="/loader-demo" element={<LoaderDemo />} />
+
 
                     {/* Payment */}
                     <Route

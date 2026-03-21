@@ -8,7 +8,7 @@ public class Conexion {
     // Patrón Singleton para una única conexión (opcional pero buena práctica)
     private static Connection connection = null;
 
-    // Use environment variables with fallback to defaults
+    // Variables de entorno para conexión (se deben configurar antes de ejecutar)
     private static final String URL = System.getenv("DB_URL") != null 
         ? System.getenv("DB_URL") 
         : "jdbc:postgresql://localhost:5432/tienda_digital_textiles_db";
@@ -17,7 +17,7 @@ public class Conexion {
         : "postgres";
     private static final String PASSWORD = System.getenv("DB_PASSWORD") != null 
         ? System.getenv("DB_PASSWORD") 
-        : "Mp.1025889078";
+        : "";
 
     // Constructor privado
     private Conexion() {}

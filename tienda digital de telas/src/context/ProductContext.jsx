@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import fallbackProducts from '../data/products.json';
 
 const ProductContext = createContext();
 
@@ -12,7 +11,7 @@ export function useProducts() {
 }
 
 export function ProductProvider({ children }) {
-    const [products, setProducts] = useState(fallbackProducts);
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -20,7 +19,6 @@ export function ProductProvider({ children }) {
         try {
             setLoading(true);
             setError(null);
-            // Fetch products from the new Java Backend API
             const response = await fetch('http://localhost:8081/api/products');
             if (!response.ok) {
                 throw new Error('Error al cargar los productos');
@@ -30,11 +28,9 @@ export function ProductProvider({ children }) {
         } catch (err) {
             console.error("Error fetching products from API:", err);
             const errorMsg = err.message?.includes('Failed to fetch')
-                ? 'No se puede conectar con el servidor. Usando datos locales.'
+                ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : err.message;
             setError(errorMsg);
-            // Fall back to static JSON — DO NOT clear products
-            setProducts(prev => prev.length > 0 ? prev : fallbackProducts);
         } finally {
             setLoading(false);
         }
