@@ -1,4 +1,5 @@
-# D&D Textiles - Tienda Digital
+# 🧵 D&D Textiles - Tienda Digital
+
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=00b4d8&height=200&section=header&text=Jhon%20Moreno&fontSize=70&animation=fadeIn" />
 </p>
@@ -11,30 +12,52 @@
 
 ---
 
-## Mi Actividad en GitHub
+## 🚀 Descripción
+Tienda digital realizada en el entorno SENA, enfocada en la venta de textiles. Ofrece un flujo completo de compra, catálogo organizado, diseño moderno y experiencia atractiva para el usuario.
 
-<p align="center">
-  <img src="https://github-readme-stats-sigma-five.vercel.app/api?username=Jhonmoreno000&show_icons=true&theme=tokyonight" alt="GitHub Stats" />
-</p>
+## 🛠️ Instalación rápida
+```bash
+# Clona el repositorio
+ git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
+ cd PROYECTO-SENA-TIENDA-TEXTIL-
 
-<p align="center">
-  <img src="https://github-readme-stats-sigma-five.vercel.app/api/top-langs/?username=Jhonmoreno000&layout=compact&theme=tokyonight" alt="Top Langs" />
-</p>
+# Instala las dependencias
+npm install
 
----
+# (Opcional) Si tienes backend en Java/Postgres:
+cd backend-java/conexionPostgres
+java -cp "bin;lib/gson-2.10.1.jar;lib/postgresql-42.7.3.jar" App
 
-## Habilidades Técnicas
-* **Frontend:** React.js, Vite, Tailwind CSS
-* **Lógica:** JavaScript (ES6+), React Hooks
-* **Herramientas:** Git, GitHub, Metodologías Ágiles
+# Inicia la aplicación frontend
+npm run dev
+```
+Accede en tu navegador a `http://localhost:3000`.
 
----
+## 🧩 Estructura del Proyecto
+```text
+src/
+├── components/
+├── pages/
+├── context/
+├── hooks/
+├── utils/
+├── data/
+├── App.jsx
+├── main.jsx
+└── index.css
+```
 
-## Conéctate conmigo
-<p align="left">
-<a href="https://github.com/Jhonmoreno000"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white"></a>
-<a href="mailto:tu-correo@sena.edu.co"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white"></a>
-</p>
+## ✨ Funcionalidades principales
+- Catálogo visual y filtros
+- Carrito de compras
+- Checkout simulado y persistencia local
+- Interfaz responsiva
+
+## 🎨 Personalización
+Colores y estilos modificables en el archivo `tailwind.config.js`.
+
+## 👤 Contacto
+Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) o al correo institucional: tu-correo@sena.edu.co
 
 ---
 **Desarrollado con ❤️ para ADSO - SENA**
