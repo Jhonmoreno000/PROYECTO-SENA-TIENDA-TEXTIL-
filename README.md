@@ -15,7 +15,7 @@
 ## Descripción
 Tienda digital realizada en el entorno SENA, enfocada en la venta de textiles. Ofrece un flujo completo de compra, catálogo organizado, diseño moderno y experiencia atractiva para el usuario.
 
-## 🛠️ Instalación rápida
+## Instalación rápida
 ```bash
 # Clona el repositorio
  git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
