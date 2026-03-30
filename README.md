@@ -56,7 +56,7 @@ src/
 ## Personalización
 Colores y estilos modificables en el archivo `tailwind.config.js`.
 
-# Documentacion de D&D Textil - Guia Completa
+# Documentacion de D&D Textil 
 
 **D&D Textil** es una tienda en linea especializada en la venta de telas por metraje. Fue construida para que cualquier persona, empresa o costurera pueda comprar sus materiales de forma facil, ver el catalogo completo y calcular cuanta tela necesita para su proyecto - todo desde su computador o celular.
 
