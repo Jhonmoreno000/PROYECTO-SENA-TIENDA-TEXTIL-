@@ -59,7 +59,7 @@ function VendorPerformance() {
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Vendedores Activos</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {sellers.filter(s => !s.suspended).length}
                     </p>
                 </div>
@@ -159,7 +159,7 @@ function VendorPerformance() {
                                                         setEditingCommission(seller.id);
                                                         setTempCommission(seller.commissionRate?.toString() || '0');
                                                     }}
-                                                    className="font-mono text-xl font-bold text-green-600 hover:text-green-700 cursor-pointer"
+                                                    className="font-mono text-xl font-bold text-gray-800 dark:text-gray-200 hover:text-green-700 cursor-pointer"
                                                 >
                                                     {seller.commissionRate || 0}%
                                                 </button>
@@ -168,7 +168,7 @@ function VendorPerformance() {
                                         <td className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 {sellerBugs.length > 0 && (
-                                                    <FiAlertCircle className={`w-5 h-5 ${sellerBugs.length > 3 ? 'text-red-600' : 'text-yellow-600'}`} />
+                                                    <FiAlertCircle className={`w-5 h-5 ${sellerBugs.length > 3 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`} />
                                                 )}
                                                 <span className="font-bold">{sellerBugs.length}</span>
                                             </div>
@@ -192,8 +192,8 @@ function VendorPerformance() {
                                         <td className="px-6 py-4 text-center">
                                             <button
                                                 onClick={() => handleToggleSuspension(seller)}
-                                                className={`p-2 rounded-lg transition-colors ${seller.suspended
-                                                    ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400'
+                                                className={`p-2 rounded-none transition-colors ${seller.suspended
+                                                    ? 'bg-green-100 text-gray-800 dark:text-gray-200 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400'
                                                     : 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
                                                     }`}
                                                 title={seller.suspended ? 'Reactivar' : 'Suspender'}
@@ -212,7 +212,7 @@ function VendorPerformance() {
             {/* Suspension Modal */}
             {showSuspendModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-none p-6 max-w-md w-full mx-4">
                         <h3 className="text-xl font-bold mb-4 text-red-600">⚠️ Suspender Vendedor</h3>
                         <p className="text-gray-600 dark:text-gray-400 mb-4">
                             Vas a suspender a <strong>{showSuspendModal.name}</strong>. Por favor especifica la razón:
@@ -221,14 +221,14 @@ function VendorPerformance() {
                             value={suspensionReason}
                             onChange={(e) => setSuspensionReason(e.target.value)}
                             placeholder="Ej: Múltiples reportes de calidad de productos..."
-                            className="w-full px-4 py-2 border rounded-lg mb-4"
+                            className="w-full px-4 py-2 border rounded-none mb-4"
                             rows="4"
                         />
                         <div className="flex gap-3">
                             <button
                                 onClick={() => confirmSuspension(showSuspendModal.id)}
                                 disabled={!suspensionReason.trim()}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-none hover:bg-red-700 disabled:opacity-50"
                             >
                                 Confirmar Suspensión
                             </button>
@@ -237,7 +237,7 @@ function VendorPerformance() {
                                     setShowSuspendModal(null);
                                     setSuspensionReason('');
                                 }}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-none hover:bg-gray-300"
                             >
                                 Cancelar
                             </button>

@@ -66,7 +66,7 @@ function WasteCalculator() {
 
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-none hover:bg-primary-700 transition-colors"
                 >
                     <FiPlus className="w-5 h-5" />
                     Registrar Merma
@@ -88,7 +88,7 @@ function WasteCalculator() {
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Promedio por Evento</p>
-                    <p className="text-3xl font-bold text-orange-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {(totalWaste / wasteEvents.length || 0).toFixed(1)}m
                     </p>
                 </div>
@@ -188,7 +188,7 @@ function WasteCalculator() {
             {/* Add Waste Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-none p-6 max-w-md w-full mx-4">
                         <h3 className="text-xl font-bold mb-4">Registrar Merma</h3>
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-4">
@@ -197,7 +197,7 @@ function WasteCalculator() {
                                     <select
                                         value={formData.rollId}
                                         onChange={(e) => setFormData({ ...formData, rollId: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                         required
                                     >
                                         <option value="">Seleccionar rollo...</option>
@@ -216,7 +216,7 @@ function WasteCalculator() {
                                         step="0.1"
                                         value={formData.meters}
                                         onChange={(e) => setFormData({ ...formData, meters: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                         required
                                     />
                                 </div>
@@ -226,7 +226,7 @@ function WasteCalculator() {
                                     <select
                                         value={formData.reason}
                                         onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                     >
                                         <option value="factory_defect">Defecto de Fábrica</option>
                                         <option value="cutting_error">Error de Corte</option>
@@ -240,7 +240,7 @@ function WasteCalculator() {
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                         rows="3"
                                         required
                                     />
@@ -252,7 +252,7 @@ function WasteCalculator() {
                                         type="text"
                                         value={formData.responsible}
                                         onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                         placeholder="Nombre del responsable o N/A"
                                         required
                                     />
@@ -262,14 +262,14 @@ function WasteCalculator() {
                             <div className="flex gap-3 mt-6">
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-none hover:bg-primary-700"
                                 >
                                     Registrar
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-none hover:bg-gray-300"
                                 >
                                     Cancelar
                                 </button>

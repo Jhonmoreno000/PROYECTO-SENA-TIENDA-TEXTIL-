@@ -4,12 +4,14 @@ import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import BarChart from '../../components/dashboard/BarChart';
 import { useMetrics } from '../../context/MetricsContext';
+import { useProducts } from '../../context/ProductContext';
 import { getAllSellersMetrics } from '../../utils/metricsUtils';
 import { formatCurrency } from '../../utils/formatters';
 import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 function SellerMetrics() {
     const { users, orders, bugReports } = useMetrics();
+    const { refreshProducts } = useProducts();
     const [selectedSeller, setSelectedSeller] = useState(null);
     const sellers = users.filter(u => u.role === 'seller');
     const sellersWithMetrics = getAllSellersMetrics(sellers, orders, bugReports);
@@ -46,7 +48,7 @@ function SellerMetrics() {
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs text-gray-500 uppercase font-bold text-left">
+                        <thead className="bg-gray-50/50 dark:bg-slate-800/20 text-xs text-gray-400 uppercase font-bold text-left tracking-wider">
                             <tr>
                                 <th className="px-6 py-4">Vendedor</th>
                                 <th className="px-6 py-4">Ventas Totales</th>
@@ -61,11 +63,11 @@ function SellerMetrics() {
                                 <React.Fragment key={seller.id}>
                                     <tr
                                         onClick={() => handleSellerClick(seller)}
-                                        className="hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                                        className="hover:bg-gray-50/80 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group"
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold">
+                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 flex items-center justify-center text-white font-bold">
                                                     {seller.name.charAt(0)}
                                                 </div>
                                                 <div>
@@ -115,9 +117,9 @@ function SellerMetrics() {
                                         <tr>
                                             <td colSpan="6" className="px-6 py-6 bg-gray-50 dark:bg-slate-800/30">
                                                 <div className="grid md:grid-cols-4 gap-4">
-                                                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                                                    <div className="card p-4">
                                                         <div className="flex items-center gap-3 mb-2">
-                                                            <FiDollarSign className="w-5 h-5 text-green-600" />
+                                                            <FiDollarSign className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                                                             <span className="text-sm font-medium text-gray-500">Ingresos Generados</span>
                                                         </div>
                                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -125,9 +127,9 @@ function SellerMetrics() {
                                                         </p>
                                                     </div>
 
-                                                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                                                    <div className="card p-4">
                                                         <div className="flex items-center gap-3 mb-2">
-                                                            <FiShoppingBag className="w-5 h-5 text-blue-600" />
+                                                            <FiShoppingBag className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                                                             <span className="text-sm font-medium text-gray-500">Pedidos Completados</span>
                                                         </div>
                                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -138,9 +140,9 @@ function SellerMetrics() {
                                                         </p>
                                                     </div>
 
-                                                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                                                    <div className="card p-4">
                                                         <div className="flex items-center gap-3 mb-2">
-                                                            <FiPackage className="w-5 h-5 text-orange-600" />
+                                                            <FiPackage className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                                                             <span className="text-sm font-medium text-gray-500">Ticket Promedio</span>
                                                         </div>
                                                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -148,7 +150,7 @@ function SellerMetrics() {
                                                         </p>
                                                     </div>
 
-                                                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                                                    <div className="card p-4">
                                                         <div className="flex items-center gap-3 mb-2">
                                                             <FiAlertCircle className="w-5 h-5 text-red-600" />
                                                             <span className="text-sm font-medium text-gray-500">Reportes Recibidos</span>

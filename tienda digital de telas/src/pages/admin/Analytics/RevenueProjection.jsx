@@ -70,64 +70,92 @@ function RevenueProjection() {
         <DashboardLayout title="Proyección de Ingresos" links={adminDashboardLinks}>
             <BackButton />
             {/* Config */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Proyecciones Financieras</h2>
-                    <p className="text-gray-500 mt-1">Estimaciones basadas en tendencias históricas</p>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Proyecciones Financieras</h2>
+                    <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">Estimaciones basadas en tendencias históricas</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Proyectar:</label>
-                    <select
-                        value={months}
-                        onChange={(e) => setMonths(parseInt(e.target.value))}
-                        className="px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                    >
-                        <option value={3}>3 meses</option>
-                        <option value={6}>6 meses</option>
-                        <option value={12}>12 meses</option>
-                    </select>
+                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
+                    <label className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest pl-2">Proyectar:</label>
+                    <div className="relative">
+                        <select
+                            value={months}
+                            onChange={(e) => setMonths(parseInt(e.target.value))}
+                            className="pl-4 pr-10 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary-500 appearance-none outline-none cursor-pointer text-gray-900 dark:text-white"
+                        >
+                            <option value={3}>3 meses</option>
+                            <option value={6}>6 meses</option>
+                            <option value={12}>12 meses</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <div className="card p-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <FiTrendingUp className="w-5 h-5 text-green-600" />
-                        <span className="text-sm font-medium text-gray-500">Crecimiento Esperado</span>
+                <div className="card p-6 border-emerald-50 dark:border-slate-700/50">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                            <FiTrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Crecimiento Esperado</span>
                     </div>
-                    <p className="text-3xl font-bold text-green-600">{growthRate.toFixed(1)}%</p>
-                    <p className="text-xs text-gray-500 mt-1">mensual</p>
-                </div>
-                <div className="card p-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <FiDollarSign className="w-5 h-5 text-primary-600" />
-                        <span className="text-sm font-medium text-gray-500">Proyección {months} meses</span>
+                    <div>
+                        <p className="text-3xl font-black text-gray-900 dark:text-white leading-none">{growthRate.toFixed(1)}%</p>
+                        <p className="text-xs font-bold text-emerald-500 mt-2 uppercase tracking-wide">Mensual Estable</p>
                     </div>
-                    <p className="text-2xl font-bold text-primary-600">
-                        {formatCurrency(lastProjection.projected)}
-                    </p>
                 </div>
-                <div className="card p-6">
-                    <p className="text-sm text-gray-500 mb-2">Escenario Conservador</p>
-                    <p className="text-xl font-bold text-orange-600">
-                        {formatCurrency(lastProjection.conservative)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">-15% del proyectado</p>
+                
+                <div className="card p-6 border-indigo-50 dark:border-slate-700/50">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                            <FiDollarSign className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Proyección {months} meses</span>
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 leading-none">
+                            {formatCurrency(lastProjection.projected)}
+                        </p>
+                        <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-2 uppercase tracking-wide">Escenario Base</p>
+                    </div>
                 </div>
-                <div className="card p-6">
-                    <p className="text-sm text-gray-500 mb-2">Escenario Optimista</p>
-                    <p className="text-xl font-bold text-green-600">
-                        {formatCurrency(lastProjection.optimistic)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">+20% del proyectado</p>
+
+                <div className="card p-6 border-amber-50 dark:border-slate-700/50 rounded-2xl">
+                    <div className="flex flex-col h-full justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Escenario Conservador</span>
+                        <div>
+                            <p className="text-xl font-black text-gray-900 dark:text-white leading-none">
+                                {formatCurrency(lastProjection.conservative)}
+                            </p>
+                            <p className="text-[10px] font-bold text-amber-500 mt-2 uppercase tracking-widest">-15% del proyectado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card p-6 border-emerald-50 dark:border-slate-700/50 rounded-2xl">
+                    <div className="flex flex-col h-full justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Escenario Optimista</span>
+                        <div>
+                            <p className="text-xl font-black text-gray-900 dark:text-white leading-none">
+                                {formatCurrency(lastProjection.optimistic)}
+                            </p>
+                            <p className="text-[10px] font-bold text-emerald-500 mt-2 uppercase tracking-widest">+20% del proyectado</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Projection Chart */}
-            <div className="card p-6 mb-8">
-                <h3 className="font-bold text-lg mb-4">Proyección de Ingresos (Millones COP)</h3>
+            <div className="card p-8 mb-8 border-indigo-50 dark:border-slate-800/50 shadow-xl shadow-indigo-500/5">
+                <div className="flex flex-col mb-8">
+                    <h3 className="font-black text-xl text-gray-900 dark:text-white leading-tight">Curva de Proyección</h3>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">Ingresos en Millones COP</p>
+                </div>
                 {projectionData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={400}>
                         <AreaChart data={projectionData}>
@@ -184,44 +212,52 @@ function RevenueProjection() {
             </div>
 
             {/* Projected Table */}
-            <div className="card overflow-hidden">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-                    <h3 className="font-bold text-lg">Detalle de Proyecciones Mensuales</h3>
+            <div className="card border-blue-50 dark:border-slate-800/50 overflow-hidden shadow-xl shadow-blue-500/5">
+                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3 bg-blue-50/10 dark:bg-blue-900/10">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                        <FiCalendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-gray-900 dark:text-white tracking-tight leading-none">Detalle Mensual</h3>
+                        <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">Desglose de proyecciones por mes</p>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs text-gray-500 uppercase font-bold">
-                            <tr>
-                                <th className="px-6 py-4 text-left">Mes</th>
-                                <th className="px-6 py-4 text-right">Conservador</th>
-                                <th className="px-6 py-4 text-right">Proyectado</th>
-                                <th className="px-6 py-4 text-right">Optimista</th>
-                                <th className="px-6 py-4 text-right">Rango</th>
+                        <thead>
+                            <tr className="bg-gray-50/30 dark:bg-slate-900/50 border-b border-gray-100 dark:border-slate-800">
+                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Mes</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Conservador</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Proyectado</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Optimista</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Rango (±)</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                        <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
                             {projection.map((data, index) => {
                                 const range = data.optimistic - data.conservative;
                                 return (
-                                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <FiCalendar className="w-4 h-4 text-gray-400" />
-                                                <span className="font-medium">{data.month}</span>
+                                    <tr key={index} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-colors group">
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-500">
+                                                    <FiCalendar className="w-4 h-4" />
+                                                </div>
+                                                <span className="font-bold text-gray-900 dark:text-white">{data.month}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right font-mono text-orange-600">
+                                        <td className="p-4 text-right font-bold text-gray-500 dark:text-gray-400">
                                             {formatCurrency(data.conservative)}
                                         </td>
-                                        <td className="px-6 py-4 text-right font-bold text-primary-600">
+                                        <td className="p-4 text-right font-black text-indigo-600 dark:text-indigo-400">
                                             {formatCurrency(data.projected)}
                                         </td>
-                                        <td className="px-6 py-4 text-right font-mono text-green-600">
+                                        <td className="p-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
                                             {formatCurrency(data.optimistic)}
                                         </td>
-                                        <td className="px-6 py-4 text-right text-sm text-gray-500">
-                                            ±{formatCurrency(range / 2)}
+                                        <td className="p-4 text-right text-xs font-bold text-gray-400">
+                                            {formatCurrency(range / 2)}
                                         </td>
                                     </tr>
                                 );

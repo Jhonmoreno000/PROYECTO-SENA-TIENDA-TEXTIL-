@@ -26,15 +26,15 @@ function StockSettings() {
             <div className="grid lg:grid-cols-3 gap-6 mb-8">
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiBell className="w-5 h-5 text-orange-600" />
+                        <FiBell className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Alertas Activas</span>
                     </div>
-                    <p className="text-3xl font-bold text-orange-600">{activeAlerts.length}</p>
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">{activeAlerts.length}</p>
                 </div>
 
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiMail className="w-5 h-5 text-blue-600" />
+                        <FiMail className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Notificaciones Email</span>
                     </div>
                     <label className="inline-flex items-center cursor-pointer mt-2">
@@ -157,7 +157,7 @@ function StockSettings() {
                             {activeAlerts.map((alert, index) => (
                                 <div
                                     key={index}
-                                    className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-l-4 border-red-500 rounded-lg shadow-sm"
+                                    className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-l-4 border-red-500 rounded-none shadow-sm"
                                 >
                                     <div>
                                         <p className="font-bold text-gray-900 dark:text-white">

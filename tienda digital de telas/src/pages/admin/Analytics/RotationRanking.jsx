@@ -21,90 +21,101 @@ function RotationRanking() {
             <BackButton />
             {/* Summary Cards */}
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <div className="card p-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <FiZap className="w-5 h-5 text-green-600" />
-                        <span className="text-sm font-medium text-gray-500">Bestsellers</span>
+                <div className="card p-6 border-amber-50 dark:border-slate-700/50">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                            <FiZap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Bestsellers</span>
                     </div>
-                    <p className="text-3xl font-bold text-green-600">{bestsellers.length}</p>
+                    <p className="text-3xl font-black text-gray-900 dark:text-white leading-none">{bestsellers.length}</p>
                 </div>
-                <div className="card p-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <FiClock className="w-5 h-5 text-red-600" />
-                        <span className="text-sm font-medium text-gray-500">Stock Muerto</span>
+                <div className="card p-6 border-red-50 dark:border-slate-700/50">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                            <FiClock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Stock Muerto</span>
                     </div>
-                    <p className="text-3xl font-bold text-red-600">{deadStock.length}</p>
+                    <p className="text-3xl font-black text-red-600 dark:text-red-400 leading-none">{deadStock.length}</p>
                 </div>
-                <div className="card p-6">
-                    <p className="text-sm text-gray-500 mb-2">Total Productos</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{products.length}</p>
+                <div className="card p-6 border-indigo-50 dark:border-slate-700/50 rounded-2xl">
+                    <div className="flex flex-col h-full justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Total Productos</span>
+                        <p className="text-3xl font-black text-gray-900 dark:text-white leading-none">{products.length}</p>
+                    </div>
                 </div>
-                <div className="card p-6">
-                    <p className="text-sm text-gray-500 mb-2">Umbral Actual</p>
+                <div className="card p-6 border-gray-100 dark:border-slate-700/50 rounded-2xl flex flex-col justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Umbral Actual</span>
                     <div className="flex items-center gap-2">
                         <input
                             type="number"
                             value={deadStockThreshold}
                             onChange={(e) => setDeadStockThreshold(parseInt(e.target.value))}
-                            className="w-16 px-2 py-1 border rounded text-center"
+                            className="w-16 px-2 py-1.5 border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 rounded-lg text-center font-bold font-mono focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                         />
-                        <span className="text-sm">días</span>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">días</span>
                     </div>
                 </div>
             </div>
 
             {/* Bestsellers */}
-            <div className="card mb-8">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-                    <h3 className="font-bold text-lg text-green-600">⚡ Top 10 Bestsellers</h3>
-                    <p className="text-sm text-gray-500 mt-1">Productos con mejor rotación</p>
+            <div className="card border-amber-50 dark:border-slate-800/50 overflow-hidden shadow-xl shadow-amber-500/5 mb-8">
+                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3 bg-amber-50/10 dark:bg-amber-900/10">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                        <FiZap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-gray-900 dark:text-white tracking-tight leading-none">Top 10 Bestsellers</h3>
+                        <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">Productos con mejor rotación</p>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs text-gray-500 uppercase font-bold">
-                            <tr>
-                                <th className="px-6 py-4 text-left">Ranking</th>
-                                <th className="px-6 py-4 text-left">Producto</th>
-                                <th className="px-6 py-4 text-right">Ventas</th>
-                                <th className="px-6 py-4 text-right">Ingresos</th>
-                                <th className="px-6 py-4 text-right">Velocidad</th>
-                                <th className="px-6 py-4 text-left">Categoría</th>
+                        <thead>
+                            <tr className="bg-gray-50/30 dark:bg-slate-900/50 border-b border-gray-100 dark:border-slate-800">
+                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Ranking</th>
+                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Producto</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Ventas</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Ingresos</th>
+                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Velocidad</th>
+                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Categoría</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                        <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
                             {bestsellers.map((product, index) => (
-                                <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                    <td className="px-6 py-4">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${index < 3
+                                <tr key={product.id} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/5 transition-colors group">
+                                    <td className="p-4">
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${index < 3
                                             ? index === 0
-                                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30'
                                                 : index === 1
-                                                    ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                            : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-400'
+                                                    ? 'bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-gray-300'
+                                                    : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30'
+                                            : 'bg-gray-50 text-gray-400 dark:bg-slate-800/50'
                                             }`}>
-                                            {index + 1}
+                                            0{index + 1}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <p className="font-medium text-gray-900 dark:text-white">{product.name}</p>
-                                        <p className="text-xs text-gray-500">ID: {product.id}</p>
+                                    <td className="p-4">
+                                        <p className="font-bold text-gray-900 dark:text-white leading-tight">{product.name}</p>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">ID: {String(product.id).padStart(4, '0')}</p>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                            {product.salesCount} unidades
+                                    <td className="p-4 text-right">
+                                        <span className="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                            {product.salesCount} UND
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
+                                    <td className="p-4 text-right font-black text-indigo-600 dark:text-indigo-400">
                                         {formatCurrency(product.revenue)}
                                     </td>
-                                    <td className="px-6 py-4 text-right font-mono text-green-600">
-                                        {product.velocity.toFixed(2)} /día
+                                    <td className="p-4 text-right font-bold text-gray-500 dark:text-gray-400">
+                                        {product.velocity.toFixed(2)} /DÍA
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                            {product.category}
+                                    <td className="p-4">
+                                        <span className="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                                            {product.category || 'N/A'}
                                         </span>
                                     </td>
                                 </tr>
@@ -115,53 +126,60 @@ function RotationRanking() {
             </div>
 
             {/* Dead Stock */}
-            <div className="card">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-red-50 dark:bg-red-900/10">
-                    <h3 className="font-bold text-lg text-red-600">⚠️ Stock Muerto (Sin ventas en {deadStockThreshold} días)</h3>
-                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">Productos que requieren atención inmediata</p>
+            <div className="card border-red-50 dark:border-slate-800/50 overflow-hidden shadow-xl shadow-red-500/5">
+                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3 bg-red-50/20 dark:bg-red-900/10">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                        <FiClock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-gray-900 dark:text-white tracking-tight leading-none">Alerta de Stock Muerto</h3>
+                        <p className="text-[11px] font-bold text-red-500 dark:text-red-400 mt-1 uppercase tracking-widest">Sin ventas en {deadStockThreshold} días</p>
+                    </div>
                 </div>
 
                 {deadStock.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <FiZap className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">¡Excelente rotación!</p>
-                        <p className="text-gray-500">No hay productos con stock muerto</p>
+                    <div className="p-16 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
+                            <FiZap className="w-8 h-8 text-emerald-500" />
+                        </div>
+                        <p className="text-xl font-black text-gray-900 dark:text-white">¡Rotación Saludable!</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mt-2">No hay inventario estancado detectado</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs text-gray-500 uppercase font-bold">
-                                <tr>
-                                    <th className="px-6 py-4 text-left">Producto</th>
-                                    <th className="px-6 py-4 text-left">Categoría</th>
-                                    <th className="px-6 py-4 text-right">Días Sin Venta</th>
-                                    <th className="px-6 py-4 text-right">Precio</th>
-                                    <th className="px-6 py-4 text-left">Recomendación</th>
+                            <thead>
+                                <tr className="bg-gray-50/30 dark:bg-slate-900/50 border-b border-gray-100 dark:border-slate-800">
+                                    <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Producto</th>
+                                    <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Categoría</th>
+                                    <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Inactividad</th>
+                                    <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Precio</th>
+                                    <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Acción Sugerida</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                            <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
                                 {deadStock.map(product => (
-                                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                        <td className="px-6 py-4">
-                                            <p className="font-medium text-gray-900 dark:text-white">{product.name}</p>
-                                            <p className="text-xs text-gray-500">ID: {product.id}</p>
+                                    <tr key={product.id} className="hover:bg-red-50/20 dark:hover:bg-red-900/5 transition-colors group">
+                                        <td className="p-4">
+                                            <p className="font-bold text-gray-900 dark:text-white leading-tight">{product.name}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">ID: {String(product.id).padStart(4, '0')}</p>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                                                {product.category}
+                                        <td className="p-4">
+                                            <span className="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">
+                                                {product.category || 'N/A'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className="font-bold text-red-600">
-                                                {product.daysWithoutSale} días
+                                        <td className="p-4 text-right">
+                                            <span className="font-black text-red-600 dark:text-red-400">
+                                                {product.daysWithoutSale} DÍAS
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right font-mono">
+                                        <td className="p-4 text-right font-black text-gray-900 dark:text-white">
                                             {formatCurrency(product.price)}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                                                💡 {product.recommendation}
+                                        <td className="p-4">
+                                            <span className="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
+                                                 {product.recommendation}
                                             </span>
                                         </td>
                                     </tr>

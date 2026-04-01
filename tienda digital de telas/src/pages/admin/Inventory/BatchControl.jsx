@@ -37,7 +37,7 @@ function BatchControl() {
                 <div className="flex gap-2">
                     <button
                         onClick={() => setFilterType('all')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'all'
+                        className={`px-4 py-2 rounded-none font-medium transition-colors ${filterType === 'all'
                             ? 'bg-primary-600 text-white'
                             : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300'
                             }`}
@@ -46,7 +46,7 @@ function BatchControl() {
                     </button>
                     <button
                         onClick={() => setFilterType('active')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'active'
+                        className={`px-4 py-2 rounded-none font-medium transition-colors ${filterType === 'active'
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300'
                             }`}
@@ -55,7 +55,7 @@ function BatchControl() {
                     </button>
                     <button
                         onClick={() => setFilterType('low')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'low'
+                        className={`px-4 py-2 rounded-none font-medium transition-colors ${filterType === 'low'
                             ? 'bg-yellow-600 text-white'
                             : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300'
                             }`}
@@ -64,7 +64,7 @@ function BatchControl() {
                     </button>
                     <button
                         onClick={() => setFilterType('critical')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'critical'
+                        className={`px-4 py-2 rounded-none font-medium transition-colors ${filterType === 'critical'
                             ? 'bg-red-600 text-white'
                             : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300'
                             }`}
@@ -75,7 +75,7 @@ function BatchControl() {
 
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-none hover:bg-primary-700 transition-colors"
                 >
                     <FiPlus className="w-5 h-5" />
                     Agregar Lote
@@ -181,13 +181,13 @@ function BatchControl() {
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Lotes Activos</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {inventoryBatches.filter(b => b.status === 'active').length}
                     </p>
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Stock Bajo</p>
-                    <p className="text-3xl font-bold text-yellow-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {inventoryBatches.filter(b => b.status === 'low').length}
                     </p>
                 </div>

@@ -224,7 +224,7 @@ function SystemConfig() {
                         {config.globalBanner.enabled && (
                             <div className="mt-4">
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vista Previa:</p>
-                                <div className={`p-3 rounded-lg text-center font-medium ${config.globalBanner.type === 'info' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                                <div className={`p-3 rounded-none text-center font-medium ${config.globalBanner.type === 'info' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
                                     config.globalBanner.type === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                                         'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                                     }`}>

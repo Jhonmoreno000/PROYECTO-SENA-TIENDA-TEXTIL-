@@ -77,7 +77,7 @@ function ManageCarousel() {
                 </div>
 
                 {isAdding && (
-                    <div className="mb-8 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-primary-200">
+                    <div className="mb-8 p-4 bg-gray-50 dark:bg-slate-800 rounded-none border border-primary-200">
                         <h3 className="font-bold mb-3">Nuevo Slide</h3>
                         <div className="grid gap-3">
                             <input
@@ -106,7 +106,7 @@ function ManageCarousel() {
 
                 <div className="space-y-4">
                     {carouselSlides.map((slide) => (
-                        <div key={slide.id} className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden flex flex-col md:flex-row">
+                        <div key={slide.id} className="border border-gray-200 dark:border-slate-700 rounded-none overflow-hidden flex flex-col md:flex-row">
                             <div className="w-full md:w-48 h-32 relative group shrink-0">
                                 <img src={slide.image} alt="" className="w-full h-full object-cover" />
                             </div>
@@ -145,19 +145,19 @@ function ManageCarousel() {
                             <div className="p-4 flex items-center gap-2 border-t md:border-t-0 md:border-l border-gray-100 dark:border-slate-700">
                                 {isEditing === slide.id ? (
                                     <>
-                                        <button onClick={handleSaveEdit} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="Guardar">
+                                        <button onClick={handleSaveEdit} className="p-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-none" title="Guardar">
                                             <FiSave className="w-5 h-5" />
                                         </button>
-                                        <button onClick={() => setIsEditing(null)} className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg" title="Cancelar">
+                                        <button onClick={() => setIsEditing(null)} className="p-2 text-gray-500 hover:bg-gray-50 rounded-none" title="Cancelar">
                                             <FiX className="w-5 h-5" />
                                         </button>
                                     </>
                                 ) : (
                                     <>
-                                        <button onClick={() => handleEditClick(slide)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="Editar">
+                                        <button onClick={() => handleEditClick(slide)} className="p-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-none" title="Editar">
                                             <FiEdit className="w-5 h-5" />
                                         </button>
-                                        <button onClick={() => handleDelete(slide.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Eliminar">
+                                        <button onClick={() => handleDelete(slide.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-none" title="Eliminar">
                                             <FiTrash2 className="w-5 h-5" />
                                         </button>
                                     </>

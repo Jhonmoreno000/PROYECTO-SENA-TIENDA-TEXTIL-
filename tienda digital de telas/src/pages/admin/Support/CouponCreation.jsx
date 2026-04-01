@@ -56,7 +56,7 @@ function CouponCreation() {
 
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-none hover:bg-primary-700 transition-colors"
                 >
                     <FiPlus className="w-5 h-5" />
                     Crear Cupón
@@ -74,19 +74,19 @@ function CouponCreation() {
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Activos</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {coupons.filter(c => c.active).length}
                     </p>
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Usados Hoy</p>
-                    <p className="text-3xl font-bold text-blue-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {coupons.reduce((sum, c) => sum + (c.usageCount || 0), 0)}
                     </p>
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Expiran Pronto</p>
-                    <p className="text-3xl font-bold text-orange-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {coupons.filter(c => {
                             const daysUntilExpiry = Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
                             return c.active && daysUntilExpiry <= 7 && daysUntilExpiry > 0;
@@ -146,7 +146,7 @@ function CouponCreation() {
                                                     </p>
                                                 )}
                                                 {coupon.rules.firstTimeOnly && (
-                                                    <p className="text-blue-600">Solo nuevos clientes</p>
+                                                    <p className="text-gray-800 dark:text-gray-200">Solo nuevos clientes</p>
                                                 )}
                                                 {!coupon.rules.minPurchase && !coupon.rules.firstTimeOnly && (
                                                     <p className="text-gray-500">Sin restricciones</p>
@@ -155,11 +155,11 @@ function CouponCreation() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div>
-                                                <p className={`text-sm ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : 'text-gray-600'}`}>
+                                                <p className={`text-sm ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-gray-800 dark:text-gray-200' : 'text-gray-600'}`}>
                                                     {new Date(coupon.expiresAt).toLocaleDateString('es-CO')}
                                                 </p>
                                                 {isExpiringSoon && !isExpired && (
-                                                    <p className="text-xs text-orange-600 font-bold">⚠️ {daysUntilExpiry} días</p>
+                                                    <p className="text-xs text-gray-800 dark:text-gray-200 font-bold">⚠️ {daysUntilExpiry} días</p>
                                                 )}
                                                 {isExpired && (
                                                     <p className="text-xs text-red-600 font-bold">Expirado</p>
@@ -185,7 +185,7 @@ function CouponCreation() {
                                             {coupon.active && !isExpired && (
                                                 <button
                                                     onClick={() => deactivateCoupon(coupon.id)}
-                                                    className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+                                                    className="px-4 py-2 bg-red-100 text-red-700 rounded-none hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
                                                 >
                                                     Desactivar
                                                 </button>
@@ -202,7 +202,7 @@ function CouponCreation() {
             {/* Create Coupon Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-800 rounded-none p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
                         <h3 className="text-2xl font-bold mb-6">Crear Nuevo Cupón</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
@@ -212,7 +212,7 @@ function CouponCreation() {
                                     value={formData.code}
                                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                                     placeholder="Ej: VERANO2024"
-                                    className="w-full px-4 py-2 border rounded-lg font-mono"
+                                    className="w-full px-4 py-2 border rounded-none font-mono"
                                     required
                                 />
                             </div>
@@ -223,7 +223,7 @@ function CouponCreation() {
                                     <select
                                         value={formData.discountType}
                                         onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                     >
                                         <option value="percentage">Porcentaje (%)</option>
                                         <option value="fixed">Valor Fijo ($)</option>
@@ -236,7 +236,7 @@ function CouponCreation() {
                                         value={formData.discountValue}
                                         onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
                                         placeholder={formData.discountType === 'percentage' ? '10' : '50000'}
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                         required
                                     />
                                 </div>
@@ -248,7 +248,7 @@ function CouponCreation() {
                                     type="date"
                                     value={formData.expiresAt}
                                     onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded-lg"
+                                    className="w-full px-4 py-2 border rounded-none"
                                     required
                                 />
                             </div>
@@ -264,7 +264,7 @@ function CouponCreation() {
                                             rules: { ...formData.rules, minPurchase: e.target.value }
                                         })}
                                         placeholder="100000"
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                     />
                                 </div>
                                 <div>
@@ -277,7 +277,7 @@ function CouponCreation() {
                                             rules: { ...formData.rules, maxUses: e.target.value }
                                         })}
                                         placeholder="100"
-                                        className="w-full px-4 py-2 border rounded-lg"
+                                        className="w-full px-4 py-2 border rounded-none"
                                     />
                                 </div>
                             </div>
@@ -300,14 +300,14 @@ function CouponCreation() {
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+                                    className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-none hover:bg-primary-700 font-medium"
                                 >
                                     Crear Cupón
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                                    className="px-4 py-3 bg-gray-200 text-gray-700 rounded-none hover:bg-gray-300"
                                 >
                                     Cancelar
                                 </button>

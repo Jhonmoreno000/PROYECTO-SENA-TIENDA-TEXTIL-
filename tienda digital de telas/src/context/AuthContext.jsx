@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNotification } from './NotificationContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import LogoutLoader from '../components/common/LogoutLoader';
 
 const AuthContext = createContext();
 
@@ -14,6 +15,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useLocalStorage('authUser', null);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const { showNotification } = useNotification();
 
     // Roles: 'client', 'seller', 'admin'
@@ -105,8 +107,12 @@ export function AuthProvider({ children }) {
     };
 
     const logout = () => {
-        setUser(null);
-        showNotification('info', 'Has cerrado sesión');
+        setIsLoggingOut(true);
+        setTimeout(() => {
+            setUser(null);
+            setIsLoggingOut(false);
+            showNotification('info', 'Has cerrado sesión');
+        }, 2500); // 2.5 segundos de animación del Loader
     };
 
     const hasRole = (roles) => {
@@ -126,5 +132,11 @@ export function AuthProvider({ children }) {
         hasRole
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            <LogoutLoader isLoggingOut={isLoggingOut}>
+                {children}
+            </LogoutLoader>
+        </AuthContext.Provider>
+    );
 }

@@ -53,25 +53,25 @@ function MovementHistory() {
                     placeholder="Buscar por rollo, usuario o tela..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 min-w-[300px] px-4 py-2 border rounded-lg"
+                    className="flex-1 min-w-[300px] px-4 py-2 border rounded-none"
                 />
 
                 <div className="flex gap-2">
                     <button
                         onClick={() => setFilterType('all')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterType === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterType === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}
                     >
                         Todos
                     </button>
                     <button
                         onClick={() => setFilterType('waste')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterType === 'waste' ? 'bg-red-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterType === 'waste' ? 'bg-red-600 text-white' : 'bg-gray-100'}`}
                     >
                         Merma
                     </button>
                     <button
                         onClick={() => setFilterType('sale')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterType === 'sale' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterType === 'sale' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}
                     >
                         Ventas
                     </button>
@@ -79,7 +79,7 @@ function MovementHistory() {
 
                 <button
                     onClick={exportToCSV}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-none hover:bg-blue-700"
                 >
                     <FiDownload className="w-5 h-5" />
                     Exportar CSV
@@ -90,7 +90,7 @@ function MovementHistory() {
             <div className="grid md:grid-cols-3 gap-6 mb-8">
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiClock className="w-5 h-5 text-blue-600" />
+                        <FiClock className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Total Movimientos</span>
                     </div>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{movements.length}</p>
@@ -103,7 +103,7 @@ function MovementHistory() {
                 </div>
                 <div className="card p-6">
                     <p className="text-sm text-gray-500 mb-2">Movimientos por Venta</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {movements.filter(m => m.type === 'sale').length}
                     </p>
                 </div>
@@ -145,7 +145,7 @@ function MovementHistory() {
                                     </td>
                                     <td className="px-6 py-4 text-sm">{movement.fabricType}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <span className={`font-mono font-bold ${movement.metersChanged < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                        <span className={`font-mono font-bold ${movement.metersChanged < 0 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
                                             {movement.metersChanged > 0 ? '+' : ''}{movement.metersChanged}m
                                         </span>
                                     </td>

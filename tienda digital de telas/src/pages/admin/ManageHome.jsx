@@ -50,7 +50,7 @@ function ManageHome() {
                 <h2 className="text-xl font-bold mb-6">Visibilidad de Secciones</h2>
                 <div className="space-y-4">
                     {sections.map(section => (
-                        <div key={section.id} className="flex items-center justify-between p-4 border border-gray-100 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <div key={section.id} className="flex items-center justify-between p-4 border border-gray-100 dark:border-slate-700 rounded-none hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                             <div>
                                 <h3 className="font-bold text-gray-900 dark:text-white">{section.name}</h3>
                                 <p className="text-sm text-gray-500">{section.description}</p>
@@ -58,7 +58,7 @@ function ManageHome() {
                             <div>
                                 <button
                                     onClick={() => toggleSection(section.id)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${section.visible
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-none font-bold transition-all ${section.visible
                                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                         : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400'
                                         }`}

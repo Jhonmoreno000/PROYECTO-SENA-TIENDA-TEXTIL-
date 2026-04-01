@@ -27,8 +27,8 @@ function TicketManagement() {
     const getPriorityColor = (priority) => {
         switch (priority) {
             case 'high': return 'text-red-600';
-            case 'medium': return 'text-yellow-600';
-            case 'low': return 'text-green-600';
+            case 'medium': return 'text-gray-800 dark:text-gray-200';
+            case 'low': return 'text-gray-800 dark:text-gray-200';
             default: return 'text-gray-600';
         }
     };
@@ -51,25 +51,25 @@ function TicketManagement() {
                 <div className="flex gap-2">
                     <button
                         onClick={() => setFilterStatus('all')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterStatus === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterStatus === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}
                     >
                         Todos ({supportTickets.length})
                     </button>
                     <button
                         onClick={() => setFilterStatus('open')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterStatus === 'open' ? 'bg-yellow-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterStatus === 'open' ? 'bg-yellow-600 text-white' : 'bg-gray-100'}`}
                     >
                         Abiertos ({supportTickets.filter(t => t.status === 'open').length})
                     </button>
                     <button
                         onClick={() => setFilterStatus('in_progress')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterStatus === 'in_progress' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterStatus === 'in_progress' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
                     >
                         En Progreso ({supportTickets.filter(t => t.status === 'in_progress').length})
                     </button>
                     <button
                         onClick={() => setFilterStatus('resolved')}
-                        className={`px-4 py-2 rounded-lg font-medium ${filterStatus === 'resolved' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}
+                        className={`px-4 py-2 rounded-none font-medium ${filterStatus === 'resolved' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}
                     >
                         Resueltos ({supportTickets.filter(t => t.status === 'resolved').length})
                     </button>
@@ -80,26 +80,26 @@ function TicketManagement() {
             <div className="grid md:grid-cols-4 gap-6 mb-8">
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiMessageSquare className="w-5 h-5 text-blue-600" />
+                        <FiMessageSquare className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Total Tickets</span>
                     </div>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{supportTickets.length}</p>
                 </div>
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiClock className="w-5 h-5 text-yellow-600" />
+                        <FiClock className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Pendientes</span>
                     </div>
-                    <p className="text-3xl font-bold text-yellow-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length}
                     </p>
                 </div>
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiCheck className="w-5 h-5 text-green-600" />
+                        <FiCheck className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Resueltos Hoy</span>
                     </div>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                         {supportTickets.filter(t =>
                             t.status === 'resolved' &&
                             new Date(t.resolvedAt).toDateString() === new Date().toDateString()
@@ -121,7 +121,7 @@ function TicketManagement() {
             <div className="grid gap-4">
                 {filteredTickets.length === 0 ? (
                     <div className="card p-12 text-center">
-                        <FiCheck className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                        <FiCheck className="w-16 h-16 text-gray-800 dark:text-gray-200 mx-auto mb-4" />
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                             ¡Todo resuelto!
                         </h3>
@@ -171,7 +171,7 @@ function TicketManagement() {
 
                                 <button
                                     onClick={() => setSelectedTicket(ticket)}
-                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                                    className="px-4 py-2 bg-primary-600 text-white rounded-none hover:bg-primary-700 transition-colors"
                                 >
                                     Ver Detalles
                                 </button>
@@ -181,7 +181,7 @@ function TicketManagement() {
                                 <select
                                     value={ticket.status}
                                     onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
-                                    className="px-3 py-2 border rounded-lg text-sm"
+                                    className="px-3 py-2 border rounded-none text-sm"
                                 >
                                     <option value="open">Abierto</option>
                                     <option value="in_progress">En Progreso</option>
@@ -201,7 +201,7 @@ function TicketManagement() {
                                                 handleAssignTicket(ticket.id);
                                             }
                                         }}
-                                        className="px-3 py-2 border rounded-lg text-sm"
+                                        className="px-3 py-2 border rounded-none text-sm"
                                     >
                                         <option value="">Seleccionar...</option>
                                         {users.filter(u => u.role === 'admin').map(user => (
@@ -224,7 +224,7 @@ function TicketManagement() {
             {/* Ticket Detail Modal */}
             {selectedTicket && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-800 rounded-none max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
@@ -252,7 +252,7 @@ function TicketManagement() {
                                 <p className="text-gray-600 dark:text-gray-400">{selectedTicket.description}</p>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                            <div className="grid md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-none">
                                 <div>
                                     <p className="text-sm text-gray-500">Cliente</p>
                                     <p className="font-medium">{selectedTicket.customerName}</p>
@@ -281,7 +281,7 @@ function TicketManagement() {
                                         updateTicketStatus(selectedTicket.id, 'in_progress');
                                         setSelectedTicket(null);
                                     }}
-                                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-none hover:bg-blue-700 font-medium"
                                 >
                                     Marcar en Progreso
                                 </button>
@@ -290,7 +290,7 @@ function TicketManagement() {
                                         updateTicketStatus(selectedTicket.id, 'resolved');
                                         setSelectedTicket(null);
                                     }}
-                                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-none hover:bg-green-700 font-medium"
                                 >
                                     Marcar como Resuelto
                                 </button>

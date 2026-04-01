@@ -30,7 +30,7 @@ function ClientMetrics() {
                             </h3>
                             <p className="text-xs text-gray-500 mt-1">Más de $1.000.000</p>
                         </div>
-                        <div className="p-4 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                        <div className="p-4 rounded-full bg-purple-100 text-gray-800 dark:text-gray-200 dark:bg-purple-900/30 dark:text-purple-400">
                             <FiAward className="w-8 h-8" />
                         </div>
                     </div>
@@ -48,7 +48,7 @@ function ClientMetrics() {
                             </h3>
                             <p className="text-xs text-gray-500 mt-1">$300.000 - $1.000.000</p>
                         </div>
-                        <div className="p-4 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                        <div className="p-4 rounded-full bg-blue-100 text-gray-800 dark:text-gray-200 dark:bg-blue-900/30 dark:text-blue-400">
                             <FiUsers className="w-8 h-8" />
                         </div>
                     </div>
@@ -66,7 +66,7 @@ function ClientMetrics() {
                             </h3>
                             <p className="text-xs text-gray-500 mt-1">Menos de $300.000</p>
                         </div>
-                        <div className="p-4 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                        <div className="p-4 rounded-full bg-green-100 text-gray-800 dark:text-gray-200 dark:bg-green-900/30 dark:text-green-400">
                             <FiTrendingUp className="w-8 h-8" />
                         </div>
                     </div>
@@ -151,7 +151,7 @@ function ClientMetrics() {
             <div className="grid md:grid-cols-4 gap-6 mt-8">
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiDollarSign className="w-5 h-5 text-green-600" />
+                        <FiDollarSign className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Valor Promedio Cliente</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -163,7 +163,7 @@ function ClientMetrics() {
 
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiShoppingBag className="w-5 h-5 text-blue-600" />
+                        <FiShoppingBag className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Compras Promedio</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -174,7 +174,7 @@ function ClientMetrics() {
 
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiAward className="w-5 h-5 text-purple-600" />
+                        <FiAward className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Mejor Cliente</span>
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-white truncate">
@@ -187,7 +187,7 @@ function ClientMetrics() {
 
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <FiTrendingUp className="w-5 h-5 text-orange-600" />
+                        <FiTrendingUp className="w-5 h-5 text-gray-800 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-500">Ticket Promedio</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">

@@ -17,11 +17,11 @@ function TenantSelector({ isRailMode }) {
         <div className="relative p-4 border-b border-gray-200 dark:border-slate-700">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full flex items-center justify-between p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${isRailMode ? 'justify-center' : ''
+                className={`w-full flex items-center justify-between p-2 rounded-none hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${isRailMode ? 'justify-center' : ''
                     }`}
             >
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white font-bold shrink-0 shadow-md">
+                    <div className="w-9 h-9 rounded-none flex items-center justify-center text-white bg-primary-600 font-bold shrink-0 border border-primary-700">
                         {selectedTenant.charAt(0)}
                     </div>
                     {!isRailMode && (
@@ -43,7 +43,7 @@ function TenantSelector({ isRailMode }) {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="absolute top-full left-4 right-4 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden"
+                        className="absolute top-full left-4 right-4 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-none shadow-xl z-50 overflow-hidden"
                     >
                         <div className="py-2">
                             {tenants.map(tenant => (
@@ -72,34 +72,20 @@ function TenantSelector({ isRailMode }) {
    ────────────────────────────────────────────── */
 function NavLeafNode({ link, isActive, indent = false, isRailMode, onPinToggle, isPinned }) {
     const Icon = link.icon;
-    const [isHovered, setIsHovered] = useState(false);
 
     return (
-        <div
-            className="group relative flex items-center"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-            {/* Active Indicator Line */}
-            {isActive && (
-                <motion.div
-                    layoutId={`activeIndicator-${isRailMode}`}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="absolute left-0 top-1 bottom-1 w-[4px] bg-primary-600 rounded-r-full z-10"
-                />
-            )}
-
+        <div className="relative mx-2 my-0.5 group/navitem">
             <Link
                 to={link.path}
-                className={`flex-1 flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-xl transition-all duration-300 ${indent && !isRailMode ? 'pl-9' : ''
-                    } ${isRailMode ? 'justify-center mx-1 px-0 py-3' : ''} ${isActive
-                        ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800'
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-none transition-all duration-300 ${indent && !isRailMode ? 'pl-9' : ''
+                    } ${isRailMode ? 'justify-center px-0 py-3' : ''} ${isActive
+                        ? 'text-white font-bold bg-primary-600 dark:bg-primary-700 shadow-none'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                 title={isRailMode ? link.label : undefined}
             >
                 <div className="relative flex items-center justify-center shrink-0">
-                    {Icon && <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 drop-shadow-sm text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'}`} />}
+                    {Icon && <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 text-white' : 'text-gray-500 dark:text-gray-400'}`} />}
                     {/* Badge on icon for Rail Mode */}
                     {isRailMode && link.badge && (
                         <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 border-none">
@@ -111,29 +97,34 @@ function NavLeafNode({ link, isActive, indent = false, isRailMode, onPinToggle, 
                 {!isRailMode && (
                     <>
                         <span className="text-sm flex-1 truncate">{link.label}</span>
-                        {/* Standard Badge */}
-                        {link.badge && (
-                            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20 px-1.5 text-xs font-bold text-red-600 dark:text-red-400">
-                                {link.badge}
-                            </span>
-                        )}
+                        
+                        {/* Right side container for Badge / Pin */}
+                        <div className="flex items-center gap-1 shrink-0 relative">
+                            {/* Standard Badge */}
+                            {link.badge && (
+                                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20 px-1.5 text-xs font-bold text-red-600 dark:text-red-400 transition-all duration-200 ${onPinToggle ? 'group-hover/navitem:opacity-0 group-hover/navitem:scale-75' : ''}`}>
+                                    {link.badge}
+                                </span>
+                            )}
+                            
+                            {/* Pin button inside Link */}
+                            {onPinToggle && (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        onPinToggle(link);
+                                    }}
+                                    className={`absolute right-0 p-1 rounded-md transition-all duration-200 opacity-0 scale-75 group-hover/navitem:opacity-100 group-hover/navitem:scale-100 ${isActive ? 'text-white/80 hover:text-white hover:bg-white/20' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-slate-700 dark:hover:text-gray-200'}`}
+                                    title={isPinned ? "Desfijar" : "Fijar a Favoritos"}
+                                    aria-label="Fijar"
+                                >
+                                    <MdPushPin className={`w-4 h-4 ${isPinned ? (isActive ? 'text-white' : 'text-primary-500') : ''}`} />
+                                </button>
+                            )}
+                        </div>
                     </>
                 )}
             </Link>
-
-            {/* Pin action button on hover */}
-            {!isRailMode && isHovered && onPinToggle && (
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        onPinToggle(link);
-                    }}
-                    className="absolute right-3 p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors tooltip"
-                    title={isPinned ? "Desfijar" : "Fijar a Favoritos"}
-                >
-                    <MdPushPin className={`w-4 h-4 ${isPinned ? 'text-primary-500' : ''}`} />
-                </button>
-            )}
         </div>
     );
 }
@@ -152,15 +143,15 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
         <div className="my-[2px] relative group/parent">
             {/* Active Indicator Line for Parent */}
             {hasActiveChild && (
-                <div className="absolute left-0 top-1 bottom-1 w-[4px] bg-primary-600/30 rounded-r-full" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-3/5 w-[3px] bg-gray-200 dark:bg-slate-700 rounded-r-full" />
             )}
 
             <button
                 onClick={onToggle}
-                className={`w-full flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-xl transition-all duration-300 group hover:shadow-sm ${isRailMode ? 'justify-center mx-1 px-0 py-3' : ''
+                className={`w-full flex items-center gap-3 mx-2 my-0.5 px-3 py-2.5 rounded-none transition-all duration-300 group ${isRailMode ? 'justify-center mx-1 px-0 py-3' : ''
                     } ${hasActiveChild
-                        ? 'bg-primary-50/70 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-semibold'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                        ? 'text-primary-600 dark:text-primary-400 font-semibold bg-transparent'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                 title={isRailMode ? link.label : undefined}
             >
@@ -226,20 +217,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    const handleLogout = async () => {
-        setIsLoggingOut(true);
-        await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate delay for the loader
-        
-        // Navigate manually before killing the session to prevent ProtectedRoute from instantly unmounting the tree and showing a blank screen
-        navigate('/login', { replace: true });
-        
-        // Wait a small tick before completely destroying the auth context so the transition completes cleanly
-        setTimeout(() => {
-            logout();
-        }, 50);
-    };
 
     // Feature: Rail mode state
     const [isRailMode, setIsRailMode] = useState(false);
@@ -334,7 +312,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
                 <div className="px-3 py-3 border-b border-gray-200 dark:border-slate-800">
                     <button
                         onClick={() => setCmdOpen(true)}
-                        className={`w-full flex items-center ${isRailMode ? 'justify-center p-2' : 'px-3 py-2 gap-2'} bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 rounded-xl transition-all shadow-inner border border-transparent dark:border-slate-700/50`}
+                        className={`w-full flex items-center ${isRailMode ? 'justify-center p-2' : 'px-3 py-2 gap-2'} bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 rounded-none transition-all shadow-inner border border-transparent dark:border-slate-700/50`}
                         title={isRailMode ? "Buscar (Ctrl+K)" : undefined}
                     >
                         <MdSearch className="w-5 h-5 shrink-0" />
@@ -416,8 +394,8 @@ function DashboardLayout({ children, title, links, subtitle }) {
                 {/* Footer Controls */}
                 <div className="p-3 border-t border-gray-200 dark:border-slate-800 flex flex-col gap-2 bg-gray-50/50 dark:bg-slate-900/50">
                     {/* User Profile avatar for Rail Mode, detailed for Full Mode */}
-                    <div className={`p-2 flex items-center gap-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm ${isRailMode ? 'justify-center bg-transparent border-transparent shadow-none p-0' : 'mx-1'}`}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold shrink-0 shadow-inner">
+                    <div className={`p-2 flex items-center gap-3 rounded-none border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm ${isRailMode ? 'justify-center bg-transparent border-transparent shadow-none p-0' : 'mx-1'}`}>
+                        <div className="w-10 h-10 rounded-none bg-gray-200 dark:bg-slate-800 flex items-center justify-center text-gray-900 dark:text-gray-100 font-bold shrink-0 border border-gray-300 dark:border-slate-700">
                             {user?.name?.charAt(0) || 'U'}
                         </div>
                         {!isRailMode && (
@@ -432,7 +410,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
                          {/* Back to Store Link */}
                         <Link
                             to="/"
-                            className={`flex items-center justify-center p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
+                            className={`flex items-center justify-center p-2 rounded-none text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
                             title="Volver a la Tienda"
                         >
                             <MdHome className="w-6 h-6 shrink-0 group-hover:scale-110 transition-transform" />
@@ -441,18 +419,18 @@ function DashboardLayout({ children, title, links, subtitle }) {
                         {/* Expand/Collapse Rail Mode Toggle hidden on small screens */}
                         <button
                             onClick={() => setIsRailMode(!isRailMode)}
-                            className={`hidden lg:flex items-center justify-center p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${!isRailMode && 'flex-1 mx-1'}`}
+                            className={`hidden lg:flex items-center justify-center p-2 rounded-none text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${!isRailMode && 'flex-1 mx-1'}`}
                             title={isRailMode ? "Expandir" : "Contraer Sidebar"}
                         >
                             <MdMenu className="w-6 h-6 shrink-0" />
                         </button>
 
                         <button
-                            onClick={handleLogout}
-                            className={`flex items-center justify-center p-2 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
+                            onClick={logout}
+                            className={`flex items-center justify-center p-2 rounded-none text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
                             title="Cerrar Sesión"
                         >
-                            <MdLogout className="w-6 h-6 shrink-0 group-hover:-translate-y-1 transition-transform" />
+                            <MdLogout className="w-6 h-6 shrink-0 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
                 </div>
@@ -498,20 +476,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
                 </main>
             </div>
 
-            {/* Logout Loader Overlay */}
-            <AnimatePresence>
-                {isLoggingOut && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex flex-col items-center justify-center"
-                    >
-                        <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-4"></div>
-                        <h2 className="text-xl font-bold text-white drop-shadow-md">Cerrando sesión...</h2>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
         </div>
     );
 }

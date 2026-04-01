@@ -65,7 +65,7 @@ function AdminBugReports() {
                                                 <button
                                                     onClick={() => handleStatusChange(report.id, 'closed')}
                                                     title="Marcar resuelto"
-                                                    className="p-2 text-green-500 hover:bg-green-50 rounded"
+                                                    className="p-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded"
                                                 >
                                                     <FiCheck />
                                                 </button>

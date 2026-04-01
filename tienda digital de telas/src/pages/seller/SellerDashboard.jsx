@@ -137,49 +137,67 @@ function SellerProducts() {
                         label="Mis Ventas Totales"
                         value={formatCurrency(metrics.totalSales)}
                         icon={MdAttachMoney}
-                        color="bg-emerald-100/50 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
+                        color="emerald"
                     />
                     <MetricCard
                         label="Mis Pedidos"
                         value={metrics.totalOrders}
                         icon={MdShoppingBag}
-                        color="bg-blue-100/50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+                        color="blue"
                         subtitle={`${metrics.completedOrders} completados`}
                     />
                     <MetricCard
                         label="Ticket Promedio"
                         value={formatCurrency(metrics.averageTicket)}
                         icon={MdTrendingUp}
-                        color="bg-purple-100/50 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400"
+                        color="purple"
                     />
                     <MetricCard
                         label="Reportes Recibidos"
                         value={metrics.bugReportsCount}
                         icon={MdWarningAmber}
-                        color="bg-orange-100/50 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400"
+                        color="orange"
                     />
                 </div>
 
                 {/* Gráfico de Ventas */}
-                <div className="card p-6 mb-8 shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-                <LineChart
-                    data={chartData}
-                    title="Mis Ventas - Últimos 7 Días"
-                    height={250}
-                    color="#8B5CF6"
-                />
-            </div>
+                <div className="card p-6 mb-8 border-violet-50 dark:border-slate-700/50">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                            <MdTrendingUp className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight">Rendimiento de Ventas</h3>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Últimos 7 días</p>
+                        </div>
+                    </div>
+                    <LineChart
+                        data={chartData}
+                        height={250}
+                        color="#8B5CF6"
+                    />
+                </div>
 
                 {/* Productos Más Vendidos */}
                 {topProducts.length > 0 && (
-                    <div className="card p-6 mb-8 shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-                        <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-white">Mis Productos Más Vendidos</h3>
-                        <div className="grid md:grid-cols-5 gap-5">
+                    <div className="card p-6 mb-8 border-emerald-50 dark:border-slate-700/50">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                                <MdShoppingBag className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight">Productos Estrella</h3>
+                                <p className="text-xs text-gray-400 dark:text-gray-500">Los más solicitados de tu tienda</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             {topProducts.map((product, index) => (
-                                <div key={product.id} className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800/80 dark:to-slate-700/80 border border-gray-200/50 dark:border-slate-600 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-accent-500 mb-2">#{index + 1}</div>
-                                    <div className="text-sm font-bold text-gray-900 dark:text-white pb-1 truncate leading-tight">{product.name}</div>
-                                    <div className="text-xs font-semibold text-gray-500">{product.sales} ventas</div>
+                                <div key={product.id} className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-transparent hover:border-emerald-200/50 transition-all duration-300 group">
+                                    <div className="text-2xl font-black text-emerald-600/20 dark:text-emerald-400/20 mb-1 group-hover:scale-110 transition-transform">0{index + 1}</div>
+                                    <div className="text-sm font-bold text-gray-800 dark:text-white truncate mb-1">{product.name}</div>
+                                    <div className="px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-[10px] font-black text-emerald-700 dark:text-emerald-400 inline-block uppercase tracking-wider">
+                                        {product.sales} ventas
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -187,16 +205,18 @@ function SellerProducts() {
                 )}
 
                 {/* Gestión de Productos */}
-                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
-                    <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex flex-wrap gap-4 justify-between items-center bg-gray-50/30 dark:bg-slate-800/30">
-                        <div>
-                            <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">Mi Inventario</h2>
-                            <p className="text-sm font-medium text-gray-500 flex items-center gap-2 mt-1">
-                                <MdInventory2 className="w-4 h-4 text-primary-500" />
-                                {sellerProducts.length} productos registrados
-                            </p>
+                <div className="card border-blue-50 dark:border-slate-700/50 overflow-hidden">
+                    <div className="p-6 border-b border-gray-50 dark:border-slate-700 flex flex-wrap gap-4 justify-between items-center bg-blue-50/20 dark:bg-blue-900/10">
+                        <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                                <MdInventory2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Mi Inventario</h2>
+                                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-0.5">{sellerProducts.length} productos registrados</p>
+                            </div>
                         </div>
-                        <button className="btn-primary-gradient shadow-md shadow-primary-500/30 flex items-center gap-2 hover:scale-105 transition-transform">
+                        <button className="btn-primary flex items-center gap-2 text-sm">
                             <MdAdd className="w-5 h-5" /> Nuevo Producto
                         </button>
                     </div>

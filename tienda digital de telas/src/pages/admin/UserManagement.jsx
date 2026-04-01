@@ -133,7 +133,7 @@ function UserManagement() {
                                                 </select>
                                                 <button
                                                     onClick={() => handleRoleChange(user.id)}
-                                                    className="text-green-600 hover:text-green-700 font-medium text-sm"
+                                                    className="text-gray-800 dark:text-gray-200 hover:text-green-700 font-medium text-sm"
                                                 >
                                                     Guardar
                                                 </button>
@@ -174,14 +174,14 @@ function UserManagement() {
                                                     setEditingUser(user);
                                                     setNewRole(user.role);
                                                 }}
-                                                className="text-blue-500 hover:text-blue-700 p-2"
+                                                className="text-gray-800 dark:text-gray-200 hover:text-blue-700 p-2"
                                                 title="Cambiar rol"
                                             >
                                                 <FiEdit2 className="w-5 h-5" />
                                             </button>
                                             <button
                                                 onClick={() => handleToggleActive(user.id, user.name, user.active)}
-                                                className={`p-2 ${user.active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}`}
+                                                className={`p-2 ${user.active ? 'text-red-500 hover:text-red-700' : 'text-gray-800 dark:text-gray-200 hover:text-green-700'}`}
                                                 title={user.active ? 'Desactivar' : 'Activar'}
                                             >
                                                 {user.active ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
@@ -212,7 +212,7 @@ function UserManagement() {
                                 {users.filter(u => u.role === 'admin').length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                        <div className="p-4 rounded-full bg-purple-100 text-gray-800 dark:text-gray-200 dark:bg-purple-900/30 dark:text-purple-400">
                             <FiUsers className="w-8 h-8" />
                         </div>
                     </div>
@@ -225,7 +225,7 @@ function UserManagement() {
                                 {users.filter(u => u.role === 'seller').length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                        <div className="p-4 rounded-full bg-blue-100 text-gray-800 dark:text-gray-200 dark:bg-blue-900/30 dark:text-blue-400">
                             <FiUsers className="w-8 h-8" />
                         </div>
                     </div>
@@ -238,7 +238,7 @@ function UserManagement() {
                                 {users.filter(u => u.role === 'client').length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                        <div className="p-4 rounded-full bg-green-100 text-gray-800 dark:text-gray-200 dark:bg-green-900/30 dark:text-green-400">
                             <FiUsers className="w-8 h-8" />
                         </div>
                     </div>
