@@ -1,7 +1,6 @@
-# D&D Textiles - Tienda Digital
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=00b4d8&height=200&section=header&text=Jhon%20Moreno&fontSize=70&animation=fadeIn" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=00b4d8&height=200&section=header&text=Tienda%20Digital&fontSize=70&animation=fadeIn" />
 </p>
 
 <p align="center">
@@ -12,8 +11,30 @@
 
 ---
 
-## Descripción
-Tienda digital realizada en el entorno SENA, enfocada en la venta de textiles. Ofrece un flujo completo de compra, catálogo organizado, diseño moderno y experiencia atractiva para el usuario.
+---
+ Bienvenido a la documentación técnica de D&D Textil.
+---
+
+## Visión General
+
+**D&D Textil** es una plataforma B2B/B2C (React + Java PostgreSQL) diseñada para la gestión premium de inventario, ventas y catálogo en la industria textil. La aplicación combina un diseño envolvente "Glassmorphism" y animaciones fluidas con un panel administrativo avanzado.
+
+### Funcionalidades Clave
+
+<CardGroup cols={2}>
+  <Card title="Multi-Rol Dashboard" icon="users">
+    Paneles estadísticos personalizados e interfaces independientes para Administradores, Vendedores y Clientes con métricas en tiempo real.
+  </Card>
+  <Card title="Simulador de Metraje" icon="calculator">
+    Herramienta inteligente tipo calculadora de proyectos (cortinas, faldas, muebles) para asistir al usuario en medir la cantidad requerida de tela.
+  </Card>
+  <Card title="Gestión de Tickets" icon="ticket">
+    Módulo de soporte integrado para reportar garantías y recibir atención al cliente ligada a pedidos o fallos de tela.
+  </Card>
+  <Card title="Arquitectura Modular" icon="layer-group">
+    Manejador en frontend vía Context APIs sincronizados con endpoints Java/Postgres escalables.
+  </Card>
+</CardGroup>
 
 ## Instalación rápida
 ```bash
@@ -437,6 +458,102 @@ AuthHandler authHandler = new AuthHandler(authService);
 
 ## Personalización
 Colores y estilos modificables en el archivo `tailwind.config.js`.
+
+Arquitectura Frontend
+description: "Diseño y estructura de la interfaz en React."
+---
+
+El Frontend de **D&D Textil** está estructurado bajo **React 18** y **Vite**, enfatizando el rendimiento, transiciones fluidas de página y un estado global predecible. 
+
+## Stack Tecnológico
+
+| Herramienta | Propósito |
+|---|---|
+| **Vite** | Bundler ultra-rápido de módulos ESM. |
+| **Tailwind CSS** | Motor de utilidades (JIT) para implementar el diseño *Glassmorphism*. |
+| **Framer Motion** | Motor de físicas y animaciones `AnimatedPage` y transiciones complejas SVG. |
+| **React Router v6** | Enrutamiento condicional y protección de rutas según Rol. |
+| **Material Icons** | Set estandarizado de `react-icons/md` |
+
+## Estructura de Rutas
+
+Todas las páginas encapsuladas que requieran sesión activa están resguardadas por el componente `ProtectedRoute.jsx`.
+
+```jsx
+<Route path="/admin/*" element={
+    <ProtectedRoute allowedRoles={['admin']}>
+        <AdminOverview />
+    </ProtectedRoute>
+} />
+```
+
+## Animación Transversal (`AnimatedPage`)
+
+Para dotar al sistema de movimientos orgánicos y deslumbrantes como fue requerido, virtualmente todas las páginas principales y de dashboard envuelven su JSX en: `<AnimatedPage>`.
+
+```jsx
+import { motion } from 'framer-motion';
+
+const animations = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+};
+
+// ... exporta el componente motion.div ...
+```
+
+## Sistema de Contextos (`Context API`)
+
+El sistema utiliza Contextos React descentralizados para evitar caídas de enrutamiento cascada:
+
+1. `AuthContext`: Controla tokens JWT y persistencia de sesión.
+2. `CartContext`: Maneja el arreglo subyacente de la orden de compra local de items seleccionados.
+3. `ProductContext` / `MetricsContext`: Agrupa el modelo central del Catálogo de Telas y Orquesta las consultas `fetch` a Java (Endpoint 8080).
+---
+Esquema Base de Datos
+Estructura del motor PostgreSQL
+---
+
+El proyecto utiliza **PostgreSQL 14+** para gestionar inventario, sesiones y catálogo. 
+
+## Tablas Nucleares
+
+Las migraciones de PostgreSQL requieren la configuración de dos entidades atómicas bajo la base `dyd_textil`: `users` y `products`.
+
+### Tabla Usuarios (`users`)
+Contiene los IDs predefinidos para la separación de Vendedores, Clientes y Administradores de forma encriptada bajo SHA-256.
+
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL
+);
+```
+
+### Tabla Productos (`products`)
+
+```sql
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    stock INTEGER NOT NULL,
+    description TEXT,
+    features JSONB,
+    colors JSONB,
+    seller_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    images JSONB
+);
+```
+
+## Conexion JDBC / Pool
+
+Las conexiones (`Conexion.java`) manejan un pool estático pero poseen mecanismos de resiliencia (`isValid()`) que previene conexiones "Zombie" cuando Postgres limpia procesos inactivos de la red, garantizando alta escalabilidad y estabilidad.
 
 
 ## Requisitos Previos
