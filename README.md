@@ -749,3 +749,38 @@ Siempre ejecuta en este orden:
 Puedes comunicarte vÃ­a [GitHub](https://github.com/Jhonmoreno000) 
 
 ---
+
+## Solución de Problemas Frecuentes
+
+### 1. Error de "Credenciales Incorrectas" al Iniciar Sesión (Tabla users incorrecta)
+Si al clonar el repositorio e intentar iniciar sesión (por ejemplo con dmin@ddtextil.com y clave dmin123) la página arroja **"Credenciales incorrectas"** de manera persistente, esto se debe a que PostgreSQL no importó el TIENDA DIGITAL TEXTIL.sql correctamente en tu máquina, o que utilizaste una versión muy antigua del código y tu tabla users local no tiene las columnas obligatorias del backend (ctive, suspended, last_login, commission_rate, etc).
+
+Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
+
+1. **Obtén los últimos cambios del repositorio:**
+   `ash
+   git pull origin master
+   `
+
+2. **Entra a psql y borra tu base de datos mal importada:**
+   `ash
+   psql -U postgres
+   `
+   `sql
+   DROP DATABASE tienda_digital_textiles_db;
+   CREATE DATABASE tienda_digital_textiles_db;
+   \q
+   `
+
+3. **Vuelve a importar el SQL actualizado (que ya contiene todas las columnas correctas y los hashes válidos):**
+   `ash
+   psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql"
+   `
+
+> **?? Consejo Pro (MockDataSeeder):**  
+> Alternativamente, en lugar de importar el archivo .sql, puedes usar nuestra herramienta nativa de Java para resetear y sembrar automáticamente la base de datos. Solo ve a la carpeta del backend y ejecuta el seeder:  
+> `ash
+> cd "backend-java/conexionPostgres"
+> java -cp "bin;lib/*" MockDataSeeder
+> `  
+> Esto truncará las tablas e insertará mágicamente usuarios, métricas, productos temporales y las **credenciales válidas**.
