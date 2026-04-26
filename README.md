@@ -762,7 +762,7 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
    psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql"
    ```
 
-> **💡 Consejo Pro (MockDataSeeder):**  
+> **Consejo (MockDataSeeder):**  
 > Alternativamente, en lugar de importar el archivo `.sql`, puedes usar nuestra herramienta nativa de Java para resetear y sembrar automáticamente la base de datos. Solo ve a la carpeta del backend y ejecuta el seeder:  
 > ```bash
 > cd "backend-java/conexionPostgres"
