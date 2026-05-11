@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MdShoppingCart, MdMenu, MdClose, MdLightMode, MdDarkMode, MdPerson, MdLogout, MdDashboard } from 'react-icons/md';
+import { Link, useLocation } from 'react-router-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+
+import {
+    ShoppingCart,
+    Menu,
+    X,
+    Sun,
+    Moon,
+    User,
+    LogOut,
+    LayoutDashboard,
+} from 'lucide-react';
+
 import { useCart } from '../context/CartContext';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useAuth } from '../context/AuthContext';
@@ -20,71 +32,80 @@ function Header() {
         { name: 'Contacto', path: '/contacto' },
     ];
 
+    const location = useLocation();
+    useGSAP(() => {
+        // Animación del logo
+        gsap.to('.logo-gradient-anim', {
+            backgroundPosition: '200% center',
+            duration: 3,
+            ease: "linear",
+            repeat: -1
+        });
+
+        // Entrada escalonada de los links de navegación (Escritorio)
+        gsap.from('.nav-link-item', {
+            y: -10,
+            opacity: 0,
+            stagger: 0.1,
+            duration: 0.8,
+            ease: "power3.out",
+            delay: 0.2
+        });
+    });
+
+    // Animación escalonada del menú móvil
+    useGSAP(() => {
+        if (mobileMenuOpen) {
+            gsap.from(".mobile-menu-item", {
+                x: -30,
+                opacity: 0,
+                stagger: 0.1,
+                duration: 0.5,
+                ease: "power2.out",
+                clearProps: "all"
+            });
+        }
+    }, { dependencies: [mobileMenuOpen] });
+
     return (
-        <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700 shadow-sm">
+        <header className="sticky top-0 z-50 bg-white/25 dark:bg-slate-900/25 backdrop-blur-2xl border-b border-gray-200/20 dark:border-slate-700/20 shadow-sm">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16 md:h-20">
-                    {/* Logo */}
+
+                    {/* ===== LOGO DE LA MARCA ===== */}
                     <Link to="/" className="flex items-center group">
-                        <motion.div
-                            className="relative"
-                            whileHover={{ scale: 1.05 }}
-                            transition={{ type: "spring", stiffness: 400 }}
-                        >
-                            <motion.span
-                                className="text-3xl md:text-4xl font-black tracking-tighter"
+                        <div className="relative">
+                            <span
+                                className="logo-gradient-anim text-3xl md:text-4xl font-black tracking-tighter inline-block group-hover:scale-105 transition-transform duration-300"
                                 style={{
-                                    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #fb923c 100%)',
+                                    background: 'linear-gradient(135deg, var(--theme-primary, #f97316) 0%, var(--theme-accent, #ea580c) 50%, var(--theme-primary, #fb923c) 100%)',
                                     WebkitBackgroundClip: 'text',
                                     WebkitTextFillColor: 'transparent',
                                     backgroundClip: 'text',
-                                    filter: 'drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3))',
-                                }}
-                                animate={{
-                                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                                    color: ['#f97316', '#ea580c', '#fb923c'],
-                                    filter: ['drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3))', 'drop-shadow(0 2px 4px rgba(234, 88, 12, 0.3))', 'drop-shadow(0 2px 4px rgba(251, 146, 60, 0.3))'],
-                                    WebkitBackgroundClip: ['text', 'text', 'text'],
-                                    WebkitTextFillColor: ['transparent', 'transparent', 'transparent'],
-                                    backgroundClip: ['text', 'text', 'text'],
-                                }}
-                                transition={{
-                                    duration: 3,
-                                    repeat: Infinity,
-                                    ease: "linear"
+                                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                                    backgroundSize: '200% auto'
                                 }}
                             >
                                 D&D
-                            </motion.span>
-                            <motion.div
-                                className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3 }}
-                                animate={{
-                                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                                    color: ['#f97316', '#ea580c', '#fb923c'],
-                                    filter: ['drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3))', 'drop-shadow(0 2px 4px rgba(234, 88, 12, 0.3))', 'drop-shadow(0 2px 4px rgba(251, 146, 60, 0.3))'],
-                                    WebkitBackgroundClip: ['text', 'text', 'text'],
-                                    WebkitTextFillColor: ['transparent', 'transparent', 'transparent'],
-                                    backgroundClip: ['text', 'text', 'text'],
-                                }}
+                            </span>
 
-
+                            <div
+                                className="logo-gradient-anim absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"
+                                style={{ backgroundSize: '200% auto' }}
                             />
-                        </motion.div>
+                        </div>
                         <span className="ml-2 text-sm md:text-base font-semibold text-gray-700 dark:text-gray-300">
                             Textil
                         </span>
                     </Link>
 
-                    {/* Desktop Navigation */}
+                    {/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
                     <div className="hidden md:flex items-center space-x-8">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors duration-200 relative group"
+                                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors duration-200 relative group nav-link-item"
                             >
                                 {link.name}
                                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
@@ -92,32 +113,32 @@ function Header() {
                         ))}
                     </div>
 
-                    {/* Actions */}
+                    {/* ===== BOTONES DE ACCIÓN ===== */}
                     <div className="flex items-center space-x-4">
-                        <motion.button
-                            whileTap={{ scale: 0.9 }}
+
+                        {/* Botón de toggle para modo oscuro/claro */}
+                        <button
                             onClick={toggleDarkMode}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
                             aria-label="Toggle dark mode"
                         >
                             {darkMode ? (
-                                <MdLightMode className="w-5 h-5 text-yellow-500" />
+                                <Sun className="w-5 h-5 text-yellow-500" />
                             ) : (
-                                <MdDarkMode className="w-5 h-5 text-gray-700" />
+                                <Moon className="w-5 h-5 text-gray-700" />
                             )}
-                        </motion.button>
+                        </button>
 
-                        {/* User Menu */}
+                        {/* ===== MENÚ DE USUARIO ===== */}
                         {user ? (
                             <div className="relative group/user">
-                                <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                                <button
+                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 active:scale-95"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold border border-primary-200 dark:border-primary-800">
                                         {user.name.charAt(0)}
                                     </div>
-                                </motion.button>
+                                </button>
 
                                 <div className="absolute right-0 top-full mt-0 pt-2 w-48 hidden group-hover/user:block transform origin-top-right z-50">
                                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
@@ -128,17 +149,18 @@ function Header() {
 
                                         <div className="p-1">
                                             <Link
-                                                to={user.role === 'client' ? '/cliente' : user.role === 'admin' ? '/admin' : '/vendedor/productos'}
+                                                to={(user.role === 'client' || user.role === 'cliente') ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
                                                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
                                             >
-                                                <MdDashboard className="w-4 h-4" />
+                                                <LayoutDashboard className="w-4 h-4" />
                                                 Dashboard
                                             </Link>
+
                                             <button
                                                 onClick={logout}
                                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg"
                                             >
-                                                <MdLogout className="w-4 h-4" />
+                                                <LogOut className="w-4 h-4" />
                                                 Cerrar Sesión
                                             </button>
                                         </div>
@@ -147,71 +169,64 @@ function Header() {
                             </div>
                         ) : (
                             <Link to="/login" className="flex items-center gap-2 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary-600 font-medium transition-colors">
-                                <MdPerson className="w-5 h-5" />
+                                <User className="w-5 h-5" />
                                 <span className="hidden md:block">Ingresar</span>
                             </Link>
                         )}
 
-                        {/* Cart */}
+                        {/* ===== CARRITO DE COMPRAS ===== */}
                         <Link to="/carrito" className="relative group">
-                            <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            <div
+                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group-hover:scale-105 active:scale-95"
                             >
-                                <MdShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                <ShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+
                                 {cartCount > 0 && (
-                                    <motion.span
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                                    <span
+                                        className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce"
                                     >
                                         {cartCount}
-                                    </motion.span>
+                                    </span>
                                 )}
-                            </motion.div>
+                            </div>
                         </Link>
 
+                        {/* ===== BOTÓN MENÚ MÓVIL ===== */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
                             aria-label="Toggle menu"
                         >
                             {mobileMenuOpen ? (
-                                <MdClose className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                             ) : (
-                                <MdMenu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                             )}
                         </button>
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
-                <AnimatePresence>
-                    {mobileMenuOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="md:hidden overflow-hidden"
-                        >
-                            <div className="py-4 space-y-2">
-                                {navLinks.map((link) => (
-                                    <Link
-                                        key={link.path}
-                                        to={link.path}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors"
-                                    >
-                                        {link.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* ===== MENÚ MÓVIL (Animado con GSAP) ===== */}
+                <div
+                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+                        mobileMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                >
+                    <div className="py-4 space-y-2 mobile-menu-items">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.path}
+                                to={link.path}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors mobile-menu-item"
+                            >
+                                {link.name}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
             </nav>
-        </header >
+        </header>
     );
 }
 

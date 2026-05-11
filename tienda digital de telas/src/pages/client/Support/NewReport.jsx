@@ -1,6 +1,26 @@
+/**
+ * NewReport.jsx — Formulario de "Nuevo Reporte" (Client)
+ *
+ * Permite a los clientes enviar un ticket de soporte sobre un pedido específico.
+ */
+
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MdErrorOutline, MdCameraAlt, MdClose, MdCheck, MdSend, MdUpload, MdInventory } from 'react-icons/md';
+
+// Importación de íconos desde lucide-react
+import { 
+    AlertCircle,
+    Camera,
+    X,
+    Send,
+    Upload,
+    Package,
+    MessageSquare,
+    Zap,
+    HelpCircle,
+    ChevronDown
+} from 'lucide-react';
+
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
@@ -19,6 +39,14 @@ const ISSUE_TYPES = [
     { value: 'other', label: 'Otro problema', priority: 'low' }
 ];
 
+/**
+ * Componente principal para la creación de nuevos reportes de soporte.
+ * Maneja el estado local del formulario (fotos, descripción, tipo de problema)
+ * y envía el reporte al contexto global (`MetricsContext`).
+ * 
+ * @component
+ * @returns {JSX.Element} Interfaz del formulario de reporte.
+ */
 function NewReport() {
     const { orders, addSupportTicket } = useMetrics();
     const { user } = useAuth();
@@ -31,8 +59,6 @@ function NewReport() {
     const [description, setDescription] = useState('');
     const [photos, setPhotos] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    
 
     // Filter delivered orders (only those can have issues reported)
     const deliveredOrders = orders.filter(o =>
@@ -58,7 +84,7 @@ function NewReport() {
         e.preventDefault();
 
         if (!selectedOrder || !issueType || !description.trim()) {
-            alert('Por favor completa todos los campos requeridos');
+            alert('Por favor completa todos los campos obligatorios.');
             return;
         }
 
@@ -83,11 +109,10 @@ function NewReport() {
                 responses: []
             };
 
-            // addSupportTicket(newTicket);
-            console.log('New ticket:', newTicket);
+            addSupportTicket(newTicket); // Se guarda el ticket en el contexto global
 
             setIsSubmitting(false);
-            alert('¡Reporte enviado! Te contactaremos pronto.');
+            alert('¡Reporte enviado exitosamente! Te contactaremos pronto.');
             navigate('/cliente/soporte/tickets');
         }, 1500);
     };
@@ -97,176 +122,219 @@ function NewReport() {
     return (
         <DashboardLayout title="Reportar un Problema" links={clientDashboardLinks}>
             <AnimatedPage>
-            <BackButton to="/cliente" label="Volver a Mi Panel" />
-            <div className="max-w-3xl mx-auto">
-                {/* Header Info */}
-                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
-                            <MdErrorOutline className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                                ¿Tuviste un problema con tu pedido?
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">
-                                Lamentamos los inconvenientes. Cuéntanos qué pasó y te ayudaremos a
-                                resolverlo lo antes posible. Nuestro equipo responde en menos de 24 horas.
-                            </p>
-                        </div>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div>
+                        <BackButton to="/cliente" label="Volver a Mi Panel" />
+                        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mt-4 tracking-tight flex items-center gap-3">
+                            Abrir Ticket de Soporte
+                            <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                                Asistencia
+                            </span>
+                        </h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                            Cuéntanos qué pasó y te ayudaremos a resolverlo rápidamente.
+                        </p>
                     </div>
                 </div>
 
-                {/* Report Form */}
-                <form onSubmit={handleSubmit} className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6">
-                    {/* Order Selection */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <MdInventory className="inline w-4 h-4 mr-2" />
-                            Selecciona el pedido con el problema *
-                        </label>
-                        <select
-                            value={selectedOrder}
-                            onChange={(e) => setSelectedOrder(e.target.value)}
-                            required
-                            className="w-full px-4 py-3 border rounded-lg dark:bg-slate-800 dark:border-slate-700 text-lg"
-                        >
-                            <option value="">Selecciona un pedido...</option>
-                            {deliveredOrders.map(order => (
-                                <option key={order.id} value={order.id}>
-                                    Pedido #{order.id} - {new Date(order.date).toLocaleDateString('es-CO')} - ${(order.total / 1000).toFixed(0)}k
-                                </option>
-                            ))}
-                        </select>
-                        {deliveredOrders.length === 0 && (
-                            <p className="text-sm text-gray-500 mt-2">
-                                Solo puedes reportar problemas en pedidos ya entregados
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Issue Type */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            ¿Qué tipo de problema tuviste? *
-                        </label>
-                        <div className="grid md:grid-cols-2 gap-3">
-                            {ISSUE_TYPES.map(issue => (
-                                <button
-                                    key={issue.value}
-                                    type="button"
-                                    onClick={() => setIssueType(issue.value)}
-                                    className={`p-4 rounded-lg text-left transition-all ${issueType === issue.value
-                                            ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500'
-                                            : 'bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700'
-                                        }`}
-                                >
-                                    <span className="text-lg">{issue.label}</span>
-                                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${issue.priority === 'high'
-                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                            : issue.priority === 'medium'
-                                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-400'
-                                        }`}>
-                                        {issue.priority === 'high' ? 'Urgente' : issue.priority === 'medium' ? 'Normal' : 'Bajo'}
-                                    </span>
-                                </button>
-                            ))}
+                <div className="max-w-3xl">
+                    {/* ================================================================
+                        ENCABEZADO INFORMATIVO
+                    ================================================================ */}
+                    <div className="card p-6 md:p-8 mb-8 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-100 dark:border-orange-800/30 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                            <MessageSquare className="w-32 h-32 text-orange-600" />
+                        </div>
+                        <div className="flex items-start gap-5 relative z-10">
+                            <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center flex-shrink-0 shadow-inner">
+                                <AlertCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <div>
+                                <h3 className="font-extrabold text-xl text-orange-900 dark:text-orange-300 mb-2 tracking-tight">
+                                    ¿Tuviste algún inconveniente?
+                                </h3>
+                                <p className="text-orange-800/80 dark:text-orange-200/80 font-medium leading-relaxed max-w-xl">
+                                    Lamentamos la situación. Por favor, proporciona todos los detalles posibles y adjunta fotografías para que nuestro equipo de calidad pueda darte una solución en menos de 24 horas.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Description */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Describe el problema con detalle *
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            required
-                            rows="5"
-                            placeholder="Cuéntanos qué pasó. Entre más detalles nos des, más rápido podremos ayudarte. Por ejemplo: 'La tela llegó con una mancha café de aproximadamente 10cm en una esquina...'"
-                            className="w-full px-4 py-3 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            {description.length}/500 caracteres
-                        </p>
-                    </div>
-
-                    {/* Photo Upload */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Sube fotos del problema (opcional, máx. 5)
-                        </label>
-
-                        <div className="grid grid-cols-5 gap-3 mb-3">
-                            {photos.map(photo => (
-                                <div key={photo.id} className="relative aspect-square">
-                                    <img
-                                        src={photo.preview}
-                                        alt={photo.name}
-                                        className="w-full h-full object-cover rounded-lg"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => removePhoto(photo.id)}
-                                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                                    >
-                                        <MdClose className="w-4 h-4" />
-                                    </button>
+                    {/* ================================================================
+                        FORMULARIO
+                    ================================================================ */}
+                    <form onSubmit={handleSubmit} className="card p-6 md:p-8 space-y-8">
+                        
+                        {/* Selección de Pedido */}
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                <Package className="w-4 h-4 text-orange-500" />
+                                1. Pedido Afectado
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={selectedOrder}
+                                    onChange={(e) => setSelectedOrder(e.target.value)}
+                                    required
+                                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all font-medium text-gray-900 dark:text-white appearance-none"
+                                >
+                                    <option value="" disabled>Selecciona un pedido de la lista...</option>
+                                    {deliveredOrders.map(order => (
+                                        <option key={order.id} value={order.id}>
+                                            Pedido #{String(order.id).padStart(4, '0')} — Entregado el {new Date(order.date).toLocaleDateString('es-CO')}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <ChevronDown className="w-5 h-5 text-gray-400" />
                                 </div>
-                            ))}
-
-                            {photos.length < 5 && (
-                                <label className="aspect-square border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
-                                    <MdUpload className="w-6 h-6 text-gray-400" />
-                                    <span className="text-xs text-gray-500 mt-1">Subir</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handlePhotoUpload}
-                                        className="hidden"
-                                    />
-                                </label>
+                            </div>
+                            {deliveredOrders.length === 0 && (
+                                <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1.5">
+                                    <AlertCircle className="w-4 h-4" />
+                                    No tienes pedidos entregados recientemente para reportar.
+                                </p>
                             )}
                         </div>
 
-                        <p className="text-xs text-gray-500">
-                            Las fotos ayudan a resolver tu caso más rápido
-                        </p>
-                    </div>
-
-                    {/* Priority Info */}
-                    {selectedIssue && selectedIssue.priority === 'high' && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                            <p className="text-red-800 dark:text-red-200 text-sm">
-                                <strong>⚡ Caso prioritario:</strong> Este tipo de problema se tratará con
-                                urgencia. Recibirás una respuesta en las próximas horas.
-                            </p>
+                        {/* Tipo de Problema */}
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                <HelpCircle className="w-4 h-4 text-orange-500" />
+                                2. Tipo de Problema
+                            </label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {ISSUE_TYPES.map(issue => (
+                                    <button
+                                        key={issue.value}
+                                        type="button"
+                                        onClick={() => setIssueType(issue.value)}
+                                        className={`flex items-center justify-between p-4 rounded-xl text-left transition-all duration-300 border-2 ${
+                                            issueType === issue.value
+                                                ? 'bg-orange-50 border-orange-500 dark:bg-orange-900/20 dark:border-orange-500 shadow-sm'
+                                                : 'bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 hover:border-orange-300 dark:hover:border-slate-500'
+                                        }`}
+                                    >
+                                        <span className={`font-bold ${issueType === issue.value ? 'text-orange-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            {issue.label}
+                                        </span>
+                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                            issue.priority === 'high'
+                                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                                : issue.priority === 'medium'
+                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                                        }`}>
+                                            {issue.priority === 'high' ? 'Prioridad' : issue.priority === 'medium' ? 'Normal' : 'Menor'}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    )}
 
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || !selectedOrder || !issueType || !description.trim()}
-                        className="w-full flex items-center justify-center gap-2 py-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Enviando reporte...
-                            </>
-                        ) : (
-                            <>
-                                <MdSend className="w-5 h-5" />
-                                Enviar Reporte
-                            </>
+                        {/* Descripción Detallada */}
+                        <div className="space-y-3">
+                            <label className="flex items-center justify-between text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4 text-orange-500" />
+                                    3. Detalles del Inconveniente
+                                </span>
+                                <span className="text-xs font-medium text-gray-400 normal-case">
+                                    {description.length}/500 caracteres
+                                </span>
+                            </label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+                                required
+                                rows="5"
+                                placeholder="Por favor, describe exactamente qué encontraste en la tela (ubicación de manchas, medidas exactas del faltante, etc.). Esto agilizará la resolución."
+                                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all font-medium resize-none text-gray-900 dark:text-white"
+                            />
+                        </div>
+
+                        {/* Fotos */}
+                        <div className="space-y-3">
+                            <label className="flex items-center justify-between text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <Camera className="w-4 h-4 text-orange-500" />
+                                    4. Evidencia Fotográfica (Opcional)
+                                </span>
+                                <span className="text-xs font-medium text-gray-400 normal-case">
+                                    Máx. 5 fotos
+                                </span>
+                            </label>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                                {photos.map(photo => (
+                                    <div key={photo.id} className="relative aspect-square group">
+                                        <img
+                                            src={photo.preview}
+                                            alt={photo.name}
+                                            className="w-full h-full object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => removePhoto(photo.id)}
+                                                className="w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 hover:scale-110 transition-all shadow-lg"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {photos.length < 5 && (
+                                    <label className="aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/10 hover:text-orange-500 transition-all text-slate-400 group bg-slate-50 dark:bg-slate-800/50">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm mb-2 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50 transition-colors">
+                                            <Upload className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-xs font-bold uppercase tracking-wider">Subir Foto</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handlePhotoUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Aviso de Prioridad */}
+                        {selectedIssue && selectedIssue.priority === 'high' && (
+                            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100 dark:border-rose-900/30 flex items-start gap-3">
+                                <Zap className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                                <p className="text-rose-800 dark:text-rose-200 text-sm font-medium leading-relaxed">
+                                    <strong className="block font-bold mb-0.5 text-rose-900 dark:text-rose-100">Atención Prioritaria Activada:</strong> 
+                                    Hemos clasificado este problema como urgente. Al enviar el reporte, tu caso pasará directamente a la parte superior de nuestra cola de revisión.
+                                </p>
+                            </div>
                         )}
-                    </button>
-                </form>
-            </div>
+
+                        {/* Botón de Envío */}
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || !selectedOrder || !issueType || !description.trim()}
+                                className="w-full md:w-auto md:ml-auto flex items-center justify-center gap-3 px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-xl shadow-gray-900/10 dark:shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 text-lg"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        Procesando...
+                                    </>
+                                ) : (
+                                    <>
+                                        Enviar Reporte a Soporte <Send className="w-5 h-5" />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </AnimatedPage>
         </DashboardLayout>
     );

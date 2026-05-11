@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { FiTrendingUp, FiDollarSign, FiShoppingBag, FiAlertCircle, FiPackage } from 'react-icons/fi';
+import React, { useState, useRef } from 'react';
+import { TrendingUp, DollarSign, ShoppingBag, AlertCircle, Package, ChevronDown, ChevronUp } from 'lucide-react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import BarChart from '../../components/dashboard/BarChart';
@@ -9,200 +11,176 @@ import { getAllSellersMetrics } from '../../utils/metricsUtils';
 import { formatCurrency } from '../../utils/formatters';
 import adminDashboardLinks from '../../data/adminDashboardLinks';
 
+const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
+
 function SellerMetrics() {
     const { users, orders, bugReports } = useMetrics();
     const { refreshProducts } = useProducts();
     const [selectedSeller, setSelectedSeller] = useState(null);
-    const sellers = users.filter(u => u.role === 'seller');
+    const sellers = users.filter(u => u.role === 'seller' || u.role === 'vendedor');
     const sellersWithMetrics = getAllSellersMetrics(sellers, orders, bugReports);
 
-    // Datos para el gráfico de comparación
-    const chartData = sellersWithMetrics.map(seller => ({
-        name: seller.name.split(' ')[0], // Solo primer nombre
-        value: seller.metrics.totalSales
-    }));
+    const containerRef = useRef(null);
+    const detailRefs = useRef({});
 
+    const chartData = sellersWithMetrics.map(s => ({ name: s.name.split(' ')[0], value: s.metrics.totalSales }));
+    
     const handleSellerClick = (seller) => {
-        setSelectedSeller(selectedSeller?.id === seller.id ? null : seller);
+        const isOpening = selectedSeller?.id !== seller.id;
+
+        // Close current if any
+        if (selectedSeller) {
+            const currentRef = detailRefs.current[selectedSeller.id];
+            if (currentRef) {
+                gsap.to(currentRef, { height: 0, opacity: 0, duration: 0.3, ease: "power2.inOut" });
+            }
+        }
+
+        if (isOpening) {
+            setSelectedSeller(seller);
+            const targetRef = detailRefs.current[seller.id];
+            if (targetRef) {
+                gsap.fromTo(targetRef, 
+                    { height: 0, opacity: 0 }, 
+                    { height: 'auto', opacity: 1, duration: 0.4, ease: "power2.out" }
+                );
+            }
+        } else {
+            setSelectedSeller(null);
+        }
     };
 
+    useGSAP(() => {
+        gsap.fromTo('.kpi-card', 
+            { opacity: 0, y: 20 }, 
+            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
+        );
+        gsap.fromTo('.chart-container', 
+            { opacity: 0, y: 20 }, 
+            { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: "power2.out" }
+        );
+        gsap.fromTo('.table-container', 
+            { opacity: 0, y: 20 }, 
+            { opacity: 1, y: 0, duration: 0.5, delay: 0.4, ease: "power2.out" }
+        );
+    }, { scope: containerRef });
+
+    const totalVentas = sellersWithMetrics.reduce((s, v) => s + v.metrics.totalSales, 0);
+    const avgVentas = totalVentas / (sellersWithMetrics.length || 1);
+    const totalReportes = sellersWithMetrics.reduce((s, v) => s + v.metrics.bugReportsCount, 0);
+
     return (
-        <DashboardLayout title="Métricas por Vendedor" links={adminDashboardLinks}>
-            <BackButton />
-            {/* Gráfico de comparación */}
-            <div className="card p-6 mb-8">
-                <BarChart
-                    data={chartData}
-                    title="Comparación de Ventas por Vendedor"
-                    height={300}
-                    color="#3B82F6"
-                />
-            </div>
+        <DashboardLayout title="" links={adminDashboardLinks}>
+            <div ref={containerRef} className="-m-6 p-6 min-h-screen">
+                <div className="relative z-10">
+                    <BackButton />
+                    <div className="mb-8 mt-4">
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Métricas de Vendedores</h1>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">Comparativa de ventas, pedidos y reportes por vendedor.</p>
+                    </div>
 
-            {/* Tabla de vendedores */}
-            <div className="card">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold">Desempeño de Vendedores</h2>
-                    <p className="text-sm text-gray-500 mt-1">Haz clic en un vendedor para ver detalles</p>
-                </div>
+                    {/* Resumen KPI */}
+                    <div className="grid md:grid-cols-3 gap-6 mb-8">
+                        {[
+                            { label: 'Mejor Vendedor', value: sellersWithMetrics[0]?.name || 'N/A', sub: sellersWithMetrics[0] ? formatCurrency(sellersWithMetrics[0].metrics.totalSales) : '$0', icon: TrendingUp, color: 'indigo' },
+                            { label: 'Ventas Promedio', value: formatCurrency(avgVentas), sub: 'por vendedor', icon: DollarSign, color: 'emerald' },
+                            { label: 'Total Reportes', value: totalReportes, sub: 'en todos los vendedores', icon: AlertCircle, color: totalReportes > 5 ? 'rose' : 'slate' },
+                        ].map(({ label, value, sub, icon: Icon, color }) => (
+                            <div key={label} className={`kpi-card ${glassCard} p-6 overflow-hidden relative group hover:-translate-y-1 transition-all duration-300`}>
+                                <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${color}-50 rounded-full opacity-40 group-hover:scale-150 transition-transform duration-500`} />
+                                <div className="flex items-center justify-between mb-4 relative z-10">
+                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</span>
+                                    <div className={`p-2.5 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={18} /></div>
+                                </div>
+                                <p className="text-2xl font-black text-slate-900 dark:text-white truncate relative z-10">{value}</p>
+                                {sub && <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1 relative z-10">{sub}</p>}
+                            </div>
+                        ))}
+                    </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50/50 dark:bg-slate-800/20 text-xs text-gray-400 uppercase font-bold text-left tracking-wider">
-                            <tr>
-                                <th className="px-6 py-4">Vendedor</th>
-                                <th className="px-6 py-4">Ventas Totales</th>
-                                <th className="px-6 py-4">Pedidos</th>
-                                <th className="px-6 py-4">Ticket Promedio</th>
-                                <th className="px-6 py-4">Reportes</th>
-                                <th className="px-6 py-4">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                            {sellersWithMetrics.map((seller) => (
-                                <React.Fragment key={seller.id}>
-                                    <tr
-                                        onClick={() => handleSellerClick(seller)}
-                                        className="hover:bg-gray-50/80 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 flex items-center justify-center text-white font-bold">
-                                                    {seller.name.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-gray-900 dark:text-white">{seller.name}</div>
-                                                    <div className="text-sm text-gray-500">{seller.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-bold text-gray-900 dark:text-white">
-                                                {formatCurrency(seller.metrics.totalSales)}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-gray-900 dark:text-white">
-                                                {seller.metrics.totalOrders}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {seller.metrics.completedOrders} completados
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 font-mono text-sm">
-                                            {formatCurrency(seller.metrics.averageTicket)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${seller.metrics.bugReportsCount === 0
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                : seller.metrics.bugReportsCount <= 2
-                                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                }`}>
-                                                {seller.metrics.bugReportsCount}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${seller.active
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-                                                }`}>
-                                                {seller.active ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                    </tr>
+                    {/* Gráfico */}
+                    <div className={`chart-container ${glassCard} p-6 mb-8`}>
+                        <BarChart data={chartData} title="Comparación de Ventas por Vendedor" height={300} color="#6366f1" />
+                    </div>
 
-                                    {/* Detalles expandidos */}
-                                    {selectedSeller?.id === seller.id && (
-                                        <tr>
-                                            <td colSpan="6" className="px-6 py-6 bg-gray-50 dark:bg-slate-800/30">
-                                                <div className="grid md:grid-cols-4 gap-4">
-                                                    <div className="card p-4">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <FiDollarSign className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-                                                            <span className="text-sm font-medium text-gray-500">Ingresos Generados</span>
+                    {/* Tabla vendedores */}
+                    <div className={`table-container ${glassCard} overflow-hidden`}>
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white">Desempeño de Vendedores</h2>
+                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">Haz clic en un vendedor para ver detalles</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>{['Vendedor', 'Ventas Totales', 'Pedidos', 'Ticket Prom.', 'Reportes', 'Estado', ''].map(h => <th key={h} className="px-6 py-5">{h}</th>)}</tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {sellersWithMetrics.map(seller => (
+                                        <React.Fragment key={seller.id}>
+                                            <tr onClick={() => handleSellerClick(seller)} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer group">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 shadow-sm">{seller.name.charAt(0)}</div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-[#f97316] transition-colors">{seller.name}</p>
+                                                            <p className="text-xs text-slate-400 dark:text-slate-500">{seller.email}</p>
                                                         </div>
-                                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                            {formatCurrency(seller.metrics.totalSales)}
-                                                        </p>
                                                     </div>
-
-                                                    <div className="card p-4">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <FiShoppingBag className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-                                                            <span className="text-sm font-medium text-gray-500">Pedidos Completados</span>
+                                                </td>
+                                                <td className="px-6 py-4 font-black text-slate-900 dark:text-white">{formatCurrency(seller.metrics.totalSales)}</td>
+                                                <td className="px-6 py-4">
+                                                    <p className="font-bold text-slate-900 dark:text-white">{seller.metrics.totalOrders}</p>
+                                                    <p className="text-xs text-slate-400 dark:text-slate-500">{seller.metrics.completedOrders} complet.</p>
+                                                </td>
+                                                <td className="px-6 py-4 font-mono text-sm font-bold text-slate-700 dark:text-slate-300">{formatCurrency(seller.metrics.averageTicket)}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border w-fit ${seller.metrics.bugReportsCount === 0 ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : seller.metrics.bugReportsCount <= 2 ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'}`}>
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${seller.metrics.bugReportsCount === 0 ? 'bg-emerald-500' : seller.metrics.bugReportsCount <= 2 ? 'bg-amber-500' : 'bg-rose-500 animate-pulse'}`} />
+                                                        {seller.metrics.bugReportsCount} reps
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border w-fit ${seller.active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-slate-50 dark:bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${seller.active ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]' : 'bg-slate-400'}`} />
+                                                        {seller.active ? 'Activo' : 'Inactivo'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-400 dark:text-slate-500">{selectedSeller?.id === seller.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</td>
+                                            </tr>
+                                            {/* Fila expandida */}
+                                            <tr>
+                                                <td colSpan={7} className="p-0 border-none">
+                                                    <div 
+                                                        ref={el => detailRefs.current[seller.id] = el}
+                                                        className="overflow-hidden"
+                                                        style={{ height: 0, opacity: 0 }}
+                                                    >
+                                                        <div className="px-6 py-6 bg-slate-50 dark:bg-slate-800/50 grid md:grid-cols-4 gap-4">
+                                                            {[
+                                                                { label: 'Ingresos Generados', value: formatCurrency(seller.metrics.totalSales), icon: DollarSign, color: 'emerald' },
+                                                                { label: 'Pedidos Completados', value: seller.metrics.completedOrders, sub: `${seller.metrics.pendingOrders} pendientes`, icon: ShoppingBag, color: 'blue' },
+                                                                { label: 'Ticket Promedio', value: formatCurrency(seller.metrics.averageTicket), icon: Package, color: 'indigo' },
+                                                                { label: 'Reportes Recibidos', value: seller.metrics.bugReportsCount, sub: `Tasa: ${seller.metrics.totalOrders > 0 ? ((seller.metrics.bugReportsCount / seller.metrics.totalOrders) * 100).toFixed(1) : 0}%`, icon: AlertCircle, color: 'rose' },
+                                                            ].map(({ label, value, sub, icon: Icon, color }) => (
+                                                                <div key={label} className={`${glassCard} p-5`}>
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <div className={`p-2 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={15} /></div>
+                                                                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}</span>
+                                                                    </div>
+                                                                    <p className="text-2xl font-black text-slate-900 dark:text-white">{value}</p>
+                                                                    {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{sub}</p>}
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                            {seller.metrics.completedOrders}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {seller.metrics.pendingOrders} pendientes
-                                                        </p>
                                                     </div>
-
-                                                    <div className="card p-4">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <FiPackage className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-                                                            <span className="text-sm font-medium text-gray-500">Ticket Promedio</span>
-                                                        </div>
-                                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                            {formatCurrency(seller.metrics.averageTicket)}
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="card p-4">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <FiAlertCircle className="w-5 h-5 text-red-600" />
-                                                            <span className="text-sm font-medium text-gray-500">Reportes Recibidos</span>
-                                                        </div>
-                                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                            {seller.metrics.bugReportsCount}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            Tasa: {seller.metrics.totalOrders > 0
-                                                                ? ((seller.metrics.bugReportsCount / seller.metrics.totalOrders) * 100).toFixed(1)
-                                                                : 0}%
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Resumen general */}
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
-                <div className="card p-6">
-                    <p className="text-gray-500 text-sm font-bold uppercase mb-2">Mejor Vendedor</p>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                        {sellersWithMetrics[0]?.name || 'N/A'}
-                    </h3>
-                    <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">
-                        {sellersWithMetrics[0] ? formatCurrency(sellersWithMetrics[0].metrics.totalSales) : '$0'}
-                    </p>
-                </div>
-
-                <div className="card p-6">
-                    <p className="text-gray-500 text-sm font-bold uppercase mb-2">Ventas Promedio</p>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                        {formatCurrency(
-                            sellersWithMetrics.reduce((sum, s) => sum + s.metrics.totalSales, 0) / sellersWithMetrics.length || 0
-                        )}
-                    </h3>
-                    <p className="text-sm text-gray-500">por vendedor</p>
-                </div>
-
-                <div className="card p-6">
-                    <p className="text-gray-500 text-sm font-bold uppercase mb-2">Total Reportes</p>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                        {sellersWithMetrics.reduce((sum, s) => sum + s.metrics.bugReportsCount, 0)}
-                    </h3>
-                    <p className="text-sm text-gray-500">en todos los vendedores</p>
+                                                </td>
+                                            </tr>
+                                        </React.Fragment>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </DashboardLayout>
@@ -210,4 +188,3 @@ function SellerMetrics() {
 }
 
 export default SellerMetrics;
-

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDarkMode } from '../../hooks/useDarkMode';
 
 function LineChart({ data, dataKey = 'value', xKey = 'name', title, height = 300, color = '#8B5CF6' }) {

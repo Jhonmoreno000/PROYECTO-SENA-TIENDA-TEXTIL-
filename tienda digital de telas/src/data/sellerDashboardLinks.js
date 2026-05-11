@@ -1,14 +1,14 @@
-import { MdInventory2, MdShoppingBag, MdWarningAmber, MdTrendingUp, MdSettings } from 'react-icons/md';
+import { Package, ShoppingBag, TrendingUp, Settings } from 'lucide-react';
 
 const sellerDashboardLinks = [
     {
         label: 'Panel Principal',
         path: '/vendedor',
-        icon: MdTrendingUp
+        icon: TrendingUp
     },
     {
         label: 'Inventario',
-        icon: MdInventory2,
+        icon: Package,
         badge: 2,
         children: [
             { label: 'Mis Productos', path: '/vendedor/productos' },
@@ -17,7 +17,7 @@ const sellerDashboardLinks = [
     },
     {
         label: 'Ventas',
-        icon: MdShoppingBag,
+        icon: ShoppingBag,
         badge: 5,
         children: [
             { label: 'Gestión de Pedidos', path: '/vendedor/pedidos', badge: 5 },
@@ -25,7 +25,7 @@ const sellerDashboardLinks = [
     },
     {
         label: 'Configuración',
-        icon: MdSettings,
+        icon: Settings,
         path: '/vendedor/configuracion'
     }
 ];

@@ -45,6 +45,12 @@ public class InventoryHandler implements HttpHandler {
                     sendResponse(exchange, 200, gson.toJson(dao.getDailySales()));
                 } else if (path.equals("/api/metrics/regions")) {
                     sendResponse(exchange, 200, gson.toJson(dao.getRegionSales()));
+                } else if (path.equals("/api/metrics/erp-sales")) {
+                    sendResponse(exchange, 200, gson.toJson(dao.getErpSalesMetrics()));
+                } else if (path.equals("/api/metrics/notifications")) {
+                    sendResponse(exchange, 200, gson.toJson(dao.getErpNotifications()));
+                } else if (path.equals("/api/metrics/fabric-inventory")) {
+                    sendResponse(exchange, 200, gson.toJson(dao.getErpFabricInventory()));
                 } else if (path.equals("/api/activity")) {
                     sendResponse(exchange, 200, gson.toJson(dao.getRecentActivity()));
                 } else if (path.equals("/api/banner")) {
@@ -52,6 +58,7 @@ public class InventoryHandler implements HttpHandler {
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Not found\"}");
                 }
+
             } else if ("POST".equals(method)) {
                 InputStream is = exchange.getRequestBody();
                 String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);

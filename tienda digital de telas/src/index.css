@@ -42,12 +42,12 @@
   }
 
   .card {
-    @apply rounded-2xl bg-white dark:bg-slate-800/80 border border-gray-100/50 dark:border-slate-700/50 shadow-sm;
-    @apply hover:shadow-md transition-all duration-300 ease-out;
+    @apply rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm;
+    @apply transition-colors duration-200;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 outline-none transition-all duration-200;
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-200 outline-none transition-all duration-200;
   }
 
   .input-field-premium {

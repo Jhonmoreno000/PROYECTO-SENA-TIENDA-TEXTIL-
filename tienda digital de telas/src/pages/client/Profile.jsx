@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { MdEdit, MdSave } from 'react-icons/md';
+import { Edit2, Save } from 'lucide-react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import AnimatedPage from '../../components/AnimatedPage';
 import clientDashboardLinks from '../../data/clientDashboardLinks';
@@ -39,10 +38,10 @@ function ClientProfile() {
         <DashboardLayout title="Mi Perfil" links={clientDashboardLinks}>
             <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
-            <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 md:p-8 max-w-2xl mb-8">
+            <div className="card shadow-sm border border-slate-200 bg-white p-6 md:p-8 max-w-2xl mb-8">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-2xl font-bold text-primary-600">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500 dark:bg-slate-800 dark:border-slate-700">
                             {profile.name.charAt(0)}
                         </div>
                         <div>
@@ -53,12 +52,12 @@ function ClientProfile() {
 
                     <button
                         onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-bold ${isEditing
-                            ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/30'
-                            : 'bg-primary-600 hover:bg-primary-700 text-white shadow-md shadow-primary-600/30'
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm shadow-sm ${isEditing
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'bg-primary-600 hover:bg-primary-700 text-white'
                             }`}
                     >
-                        {isEditing ? <><MdSave className="w-5 h-5" /> Guardar</> : <><MdEdit className="w-5 h-5"/> Editar</>}
+                        {isEditing ? <><Save className="w-4 h-4" /> Guardar</> : <><Edit2 className="w-4 h-4"/> Editar</>}
                     </button>
                 </div>
 

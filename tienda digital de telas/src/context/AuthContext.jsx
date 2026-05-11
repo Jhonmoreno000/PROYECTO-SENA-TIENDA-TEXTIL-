@@ -1,10 +1,38 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNotification } from './NotificationContext';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import LogoutLoader from '../components/common/LogoutLoader';
+/**
+ * AuthContext.jsx — Contexto de Autenticación
+ * =============================================
+ * Este archivo maneja todo lo relacionado con el inicio y cierre de sesión.
+ * Guarda la información del usuario que está conectado y la comparte con
+ * toda la aplicación para que cualquier pantalla pueda saber si hay una
+ * sesión activa y qué rol tiene el usuario (cliente, vendedor o admin).
+ *
+ * ¿Cómo funciona?
+ *  1. Cuando el usuario escribe su correo y contraseña, llamamos a la API
+ *     del backend Java (POST /api/login) para verificar que son correctos.
+ *  2. Si el login es exitoso, guardamos los datos del usuario en localStorage
+ *     (la memoria del navegador) para que no se pierdan al recargar la página.
+ *  3. Los datos del usuario están disponibles en toda la app a través del hook
+ *     useAuth(), que devuelve: { user, isAuthenticated, login, register, logout, hasRole }
+ *
+ * Roles del sistema:
+ *  - 'client'  → cliente que compra telas
+ *  - 'seller'  → vendedor que publica productos
+ *  - 'admin'   → administrador del sistema
+ */
 
+import React, { createContext, useContext, useState } from 'react';
+import { useNotification } from './NotificationContext'; // Para mostrar mensajes de éxito o error
+import { useLocalStorage } from '../hooks/useLocalStorage'; // Hook que guarda datos en el navegador
+import LogoutLoader from '../components/common/LogoutLoader'; // Animación de carga al cerrar sesión
+
+// Creamos el contexto que va a compartir los datos de sesión con toda la app
 const AuthContext = createContext();
 
+/**
+ * useAuth — Hook para usar el contexto de autenticación
+ * Cualquier componente que necesite saber si hay sesión activa usa este hook.
+ * Ejemplo: const { user, logout } = useAuth();
+ */
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) {
@@ -13,13 +41,23 @@ export function useAuth() {
     return context;
 }
 
+/**
+ * AuthProvider — Proveedor del contexto
+ * Envuelve toda la aplicación para que los datos de sesión estén disponibles globalmente.
+ */
 export function AuthProvider({ children }) {
+    // 'user' se guarda en localStorage para no perderlo al recargar la página
     const [user, setUser] = useLocalStorage('authUser', null);
+    // Estado para mostrar la animación de carga mientras se cierra la sesión
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    // Función para mostrar mensajes tipo toast (ej: "¡Bienvenido!")
     const { showNotification } = useNotification();
 
-    // Roles: 'client', 'seller', 'admin'
-
+    /**
+     * login — Inicia sesión enviando correo y contraseña al backend
+     * El backend verifica las credenciales contra la base de datos PostgreSQL
+     * y devuelve los datos del usuario si son correctas.
+     */
     const login = async (email, password) => {
         try {
             const response = await fetch('http://localhost:8081/api/login', {
@@ -27,29 +65,30 @@ export function AuthProvider({ children }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
-            
-            // Guard against non-JSON responses (e.g. backend returning HTML error pages)
+
+            // Protección: el backend a veces devuelve HTML en lugar de JSON si hay un error grave
             let data;
             try {
                 data = await response.json();
             } catch (jsonError) {
-                console.error('Response was not valid JSON:', jsonError);
+                console.error('La respuesta del servidor no es JSON válido:', jsonError);
                 showNotification('error', 'El servidor respondió con un formato inesperado');
                 return { success: false, message: 'Respuesta inválida del servidor' };
             }
-            
+
             if (response.ok && data.success) {
-                // Normalize roles for frontend app logic
+                // Normalizamos los roles que vienen del backend en español a los que usa el frontend
+                // Ejemplo: 'administrador' → 'admin', 'vendedor' → 'seller', 'cliente' → 'client'
                 let normalizedRole = data.user.role;
                 if (normalizedRole === 'administrador' || normalizedRole === 'admin') normalizedRole = 'admin';
                 else if (normalizedRole === 'vendedor') normalizedRole = 'seller';
                 else if (normalizedRole === 'cliente') normalizedRole = 'client';
-                
+
                 const loggedInUser = { ...data.user, role: normalizedRole };
-                
-                // Keep password_hash out of local storage
+
+                // Por seguridad, nunca guardamos el hash de la contraseña en el navegador
                 delete loggedInUser.password_hash;
-                
+
                 setUser(loggedInUser);
                 showNotification('success', `¡Bienvenido ${loggedInUser.name}!`);
                 return { success: true };
@@ -58,8 +97,8 @@ export function AuthProvider({ children }) {
                 return { success: false, message: data.error };
             }
         } catch (error) {
-            console.error('Login error:', error);
-            // Distinguish between network errors (backend down) and other errors
+            console.error('Error al iniciar sesión:', error);
+            // Si el error es de red (backend apagado), mostramos un mensaje específico
             const msg = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')
                 ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : 'Error al conectar con el servidor';
@@ -68,6 +107,10 @@ export function AuthProvider({ children }) {
         }
     };
 
+    /**
+     * register — Registra un nuevo usuario en la base de datos
+     * Después del registro exitoso, inicia sesión automáticamente.
+     */
     const register = async (userData) => {
         try {
             const response = await fetch('http://localhost:8081/api/register', {
@@ -79,25 +122,25 @@ export function AuthProvider({ children }) {
                     password: userData.password
                 })
             });
-            
+
             let data;
             try {
                 data = await response.json();
             } catch (jsonError) {
-                console.error('Register response was not valid JSON:', jsonError);
+                console.error('La respuesta de registro no es JSON válido:', jsonError);
                 showNotification('error', 'El servidor respondió con un formato inesperado');
                 return { success: false, message: 'Respuesta inválida del servidor' };
             }
-            
+
             if (response.ok && data.success) {
-                // Auto login after complete
+                // Si el registro fue exitoso, iniciamos sesión automáticamente
                 return await login(userData.email, userData.password);
             } else {
                 showNotification('error', data.error || 'No se pudo crear la cuenta');
                 return { success: false, message: data.error };
             }
         } catch (error) {
-            console.error('Register error:', error);
+            console.error('Error al registrar usuario:', error);
             const msg = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')
                 ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : 'Error al conectar con el servidor';
@@ -106,15 +149,24 @@ export function AuthProvider({ children }) {
         }
     };
 
+    /**
+     * logout — Cierra la sesión del usuario
+     * Muestra una animación de 2.5 segundos antes de limpiar los datos de sesión.
+     */
     const logout = () => {
         setIsLoggingOut(true);
         setTimeout(() => {
-            setUser(null);
-            setIsLoggingOut(false);
+            setUser(null);           // Borramos el usuario del estado y del localStorage
+            setIsLoggingOut(false);  // Ocultamos la animación de logout
             showNotification('info', 'Has cerrado sesión');
-        }, 2500); // 2.5 segundos de animación del Loader
+        }, 2500); // Esperamos 2.5 segundos para que se vea la animación
     };
 
+    /**
+     * hasRole — Verifica si el usuario tiene uno de los roles especificados
+     * Ejemplo: hasRole('admin') → true si el usuario es administrador
+     * Ejemplo: hasRole(['admin', 'seller']) → true si es admin O vendedor
+     */
     const hasRole = (roles) => {
         if (!user) return false;
         if (Array.isArray(roles)) {
@@ -123,17 +175,19 @@ export function AuthProvider({ children }) {
         return user.role === roles;
     };
 
+    // Todos los datos y funciones que estarán disponibles en la app
     const value = {
-        user,
-        isAuthenticated: !!user,
-        login,
-        register,
-        logout,
-        hasRole
+        user,                        // Objeto con los datos del usuario conectado (o null)
+        isAuthenticated: !!user,     // true si hay sesión activa, false si no
+        login,                       // Función para iniciar sesión
+        register,                    // Función para crear una cuenta
+        logout,                      // Función para cerrar sesión
+        hasRole                      // Función para verificar permisos
     };
 
     return (
         <AuthContext.Provider value={value}>
+            {/* LogoutLoader muestra una pantalla de carga animada al cerrar sesión */}
             <LogoutLoader isLoggingOut={isLoggingOut}>
                 {children}
             </LogoutLoader>

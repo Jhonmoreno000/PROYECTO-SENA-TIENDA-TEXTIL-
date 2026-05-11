@@ -1,35 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useSpring, useTransform, useInView } from 'framer-motion';
+import React, { useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 function Counter({ value, suffix = "", delay = 0 }) {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-50px" });
     const numericValue = typeof value === 'string' ? parseFloat(value) : value;
-    
-    const spring = useSpring(0, {
-        stiffness: 40,
-        damping: 20,
-        restDelta: 0.001
-    });
-    
-    const display = useTransform(spring, (current) => {
-        const val = numericValue % 1 === 0 ? Math.floor(current) : current.toFixed(1);
-        return val.toLocaleString() + suffix;
-    });
 
-    useEffect(() => {
-        if (isInView) {
-            const timer = setTimeout(() => {
-                spring.set(numericValue);
-            }, delay * 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [isInView, spring, numericValue, delay]);
+    useGSAP(() => {
+        const obj = { val: 0 };
+        gsap.to(obj, {
+            val: numericValue,
+            duration: 2,
+            delay: delay,
+            ease: "power3.out",
+            scrollTrigger: {
+                trigger: ref.current,
+                start: "top 90%",
+                once: true
+            },
+            onUpdate: () => {
+                if (ref.current) {
+                    const currentVal = numericValue % 1 === 0 ? Math.floor(obj.val) : obj.val.toFixed(1);
+                    ref.current.textContent = currentVal.toLocaleString() + suffix;
+                }
+            }
+        });
+    }, { scope: ref });
 
     return (
-        <motion.span ref={ref} className="tabular-nums inline-block">
-            {display}
-        </motion.span>
+        <span ref={ref} className="tabular-nums inline-block">
+            0{suffix}
+        </span>
     );
 }
 

@@ -1,14 +1,14 @@
-import { MdPerson, MdShoppingBag, MdFavorite, MdContentCut, MdSupportAgent, MdSettings } from 'react-icons/md';
+import { User, ShoppingBag, Heart, LifeBuoy, Settings } from 'lucide-react';
 
 const clientDashboardLinks = [
     {
         label: 'Mi Resumen',
         path: '/cliente',
-        icon: MdPerson
+        icon: User
     },
     {
         label: 'Compras',
-        icon: MdShoppingBag,
+        icon: ShoppingBag,
         children: [
             { label: 'Historial de Pedidos', path: '/cliente/pedidos' },
             { label: 'Rastrear Envío', path: '/cliente/pedidos/rastreo' },
@@ -16,7 +16,7 @@ const clientDashboardLinks = [
     },
     {
         label: 'Mi Colección',
-        icon: MdFavorite,
+        icon: Heart,
         children: [
             { label: 'Lista de Deseos', path: '/cliente/coleccion' },
             { label: 'Calculadora de Metraje', path: '/cliente/coleccion/calculadora' },
@@ -24,7 +24,7 @@ const clientDashboardLinks = [
     },
     {
         label: 'Ayuda',
-        icon: MdSupportAgent,
+        icon: LifeBuoy,
         badge: 1,
         children: [
             { label: 'Mis Tickets', path: '/cliente/soporte/tickets', badge: 1 },
@@ -33,7 +33,7 @@ const clientDashboardLinks = [
     },
     {
         label: 'Ajustes',
-        icon: MdSettings,
+        icon: Settings,
         children: [
             { label: 'Mi Perfil', path: '/cliente/configuracion' },
             { label: 'Libreta de Direcciones', path: '/cliente/configuracion/direcciones' },

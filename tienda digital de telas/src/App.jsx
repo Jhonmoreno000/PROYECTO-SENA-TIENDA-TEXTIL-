@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { AppProviders } from './components/AppProviders';
 import { ProtectedRoute, ScrollToTop } from './components';
+import SpotlightCursor from './components/SpotlightCursor';
 
 // Pages
 import Home from './pages/Home';
@@ -51,6 +51,7 @@ import ManageCarousel from './pages/admin/ManageCarousel';
 import ManageHome from './pages/admin/ManageHome';
 import AdminBugReports from './pages/admin/AdminBugReports';
 import AdminProducts from './pages/admin/AdminProducts';
+import AdminActivity from './pages/admin/AdminActivity';
 
 // Admin - Inventory Management
 import BatchControl from './pages/admin/Inventory/BatchControl';
@@ -83,10 +84,9 @@ function AppRoutes() {
     const location = useLocation();
     
     return (
-        <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
+        <Routes location={location} key={location.pathname}>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
                     <Route path="/catalogo" element={<Catalog />} />
                     <Route path="/producto/:id" element={<ProductDetail />} />
                     <Route path="/carrito" element={<Cart />} />
@@ -330,6 +330,14 @@ function AppRoutes() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route
+                        path="/admin/actividad"
+                        element={
+                            <ProtectedRoute roles="admin">
+                                <AdminActivity />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* Admin - Inventory Management */}
                     <Route
@@ -444,7 +452,6 @@ function AppRoutes() {
                         }
                     />
             </Routes>
-        </AnimatePresence>
     );
 }
 
@@ -453,6 +460,7 @@ function App() {
         <AppProviders>
             <Router>
                 <ScrollToTop />
+                <SpotlightCursor />
                 <AppRoutes />
             </Router>
         </AppProviders>

@@ -1,79 +1,95 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { MdStar, MdGroup, MdTrendingUp, MdFavorite, MdWorkspacePremium, MdHandshake, MdRocketLaunch, MdEco } from 'react-icons/md';
+import React, { useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Star, Users, TrendingUp, Heart, Award, Handshake, Rocket, Leaf } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AnimatedPage from '../components/AnimatedPage';
 
+gsap.registerPlugin(useGSAP, ScrollTrigger);
+
 function About() {
+    const containerRef = useRef(null);
+
     const stats = [
-        { icon: MdStar, value: '15+', label: 'Años de Experiencia' },
-        { icon: MdGroup, value: '10,000+', label: 'Clientes Satisfechos' },
-        { icon: MdTrendingUp, value: '500+', label: 'Productos Premium' },
-        { icon: MdFavorite, value: '100%', label: 'Calidad Garantizada' },
+        { icon: Star, value: '15+', label: 'Años de Experiencia' },
+        { icon: Users, value: '10,000+', label: 'Clientes Satisfechos' },
+        { icon: TrendingUp, value: '500+', label: 'Productos Premium' },
+        { icon: Heart, value: '100%', label: 'Calidad Garantizada' },
     ];
 
     const values = [
         {
             title: 'Calidad Premium',
             description: 'Seleccionamos cuidadosamente cada tela para garantizar la más alta calidad en todos nuestros productos.',
-            icon: MdWorkspacePremium,
+            icon: Award,
         },
         {
             title: 'Compromiso',
             description: 'Nos comprometemos con la satisfacción de nuestros clientes, ofreciendo productos excepcionales y servicio personalizado.',
-            icon: MdHandshake,
+            icon: Handshake,
         },
         {
             title: 'Innovación',
             description: 'Constantemente buscamos las últimas tendencias y tecnologías en textiles para ofrecer lo mejor del mercado.',
-            icon: MdRocketLaunch,
+            icon: Rocket,
         },
         {
             title: 'Sostenibilidad',
             description: 'Trabajamos con proveedores responsables y promovemos prácticas sostenibles en toda nuestra cadena de suministro.',
-            icon: MdEco,
+            icon: Leaf,
         },
     ];
 
+    useGSAP(() => {
+        gsap.fromTo('.about-hero-text', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" });
+
+        gsap.fromTo('.about-stat',
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power2.out",
+                scrollTrigger: { trigger: '.about-stats', start: "top 80%", once: true } }
+        );
+
+        gsap.fromTo('.about-story-left', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power2.out",
+            scrollTrigger: { trigger: '.about-story', start: "top 80%", once: true } });
+        gsap.fromTo('.about-story-right', { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power2.out",
+            scrollTrigger: { trigger: '.about-story', start: "top 80%", once: true } });
+
+        gsap.fromTo('.about-value',
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out",
+                scrollTrigger: { trigger: '.about-values', start: "top 80%", once: true } }
+        );
+    }, { scope: containerRef });
+
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col" ref={containerRef}>
             <Header />
 
             <AnimatedPage className="flex-1">
                 {/* Hero Section */}
                 <section className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center"
-                        >
+                        <div className="about-hero-text text-center">
                             <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
                                 Sobre D&D Textil
                             </h1>
                             <p className="text-xl text-white/90 max-w-3xl mx-auto">
                                 Somos una empresa familiar con más de 15 años de experiencia en la importación y distribución de telas de alta calidad para el mercado colombiano.
                             </p>
-                        </motion.div>
+                        </div>
                     </div>
                 </section>
 
                 {/* Stats Section */}
-                <section className="py-16 bg-white dark:bg-slate-900">
+                <section className="py-16 bg-white dark:bg-slate-900 about-stats">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                             {stats.map((stat, index) => {
                                 const Icon = stat.icon;
                                 return (
-                                    <motion.div
-                                        key={index}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className="text-center"
-                                    >
+                                    <div key={index} className="about-stat text-center">
                                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 mb-4">
                                             <Icon className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                                         </div>
@@ -81,7 +97,7 @@ function About() {
                                             {stat.value}
                                         </div>
                                         <div className="text-gray-600 dark:text-gray-400">{stat.label}</div>
-                                    </motion.div>
+                                    </div>
                                 );
                             })}
                         </div>
@@ -89,13 +105,9 @@ function About() {
                 </section>
 
                 {/* Story Section */}
-                <section className="section-container">
+                <section className="section-container about-story">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                        >
+                        <div className="about-story-left">
                             <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
                                 Nuestra Historia
                             </h2>
@@ -110,14 +122,9 @@ function About() {
                                     Trabajamos directamente con fabricantes en Italia, Francia, España y Asia, garantizando autenticidad, calidad y los mejores precios del mercado.
                                 </p>
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            className="relative"
-                        >
+                        <div className="about-story-right relative">
                             <img
                                 src="https://images.unsplash.com/photo-1558769132-cb1aea3c8565?w=600&h=400&fit=crop"
                                 alt="Nuestra tienda"
@@ -125,7 +132,7 @@ function About() {
                             />
                             <div className="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-xs border border-gray-100 dark:border-slate-700">
                                 <div className="text-primary-600 dark:text-primary-400 mb-2">
-                                    <MdWorkspacePremium className="w-10 h-10" />
+                                    <Award className="w-10 h-10" />
                                 </div>
                                 <div className="font-bold text-gray-900 dark:text-white">
                                     Reconocidos por la excelencia
@@ -134,12 +141,12 @@ function About() {
                                     Premio a la mejor distribuidora 2023
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
                 </section>
 
                 {/* Values Section */}
-                <section className="section-container bg-gray-50 dark:bg-slate-800">
+                <section className="section-container bg-gray-50 dark:bg-slate-800 about-values">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
                             Nuestros Valores
@@ -153,14 +160,9 @@ function About() {
                         {values.map((value, index) => {
                             const Icon = value.icon;
                             return (
-                                <motion.div
+                                <div
                                     key={index}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                                    className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm transition-all"
+                                    className="about-value bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
                                 >
                                     <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary-50 dark:bg-primary-900/40 mb-6">
                                         <Icon className="w-7 h-7 text-primary-600 dark:text-primary-400" />
@@ -169,7 +171,7 @@ function About() {
                                     <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                                         {value.description}
                                     </p>
-                                </motion.div>
+                                </div>
                             );
                         })}
                     </div>
@@ -186,7 +188,7 @@ function About() {
                         </p>
                         <a
                             href="/catalogo"
-                            className="inline-block bg-white text-primary-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
+                            className="inline-block bg-white text-primary-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg hover:scale-105 active:scale-95"
                         >
                             Ver Catálogo
                         </a>

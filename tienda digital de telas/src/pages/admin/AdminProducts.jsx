@@ -1,266 +1,575 @@
-import React, { useState } from 'react';
-import { FiPackage, FiEdit, FiTrash2, FiSearch, FiFilter, FiDollarSign, FiShoppingBag, FiAlertCircle } from 'react-icons/fi';
-import DashboardLayout from '../../components/layouts/DashboardLayout';
-import adminDashboardLinks from '../../data/adminDashboardLinks';
-import MetricCard from '../../components/dashboard/MetricCard';
-import { formatCurrency } from '../../utils/formatters';
-import { useMetrics } from '../../context/MetricsContext';
-import { useProducts } from '../../context/ProductContext';
-import { useNotification } from '../../context/NotificationContext';
-import { calculateStockMetrics } from '../../utils/metricsUtils';
-import { motion } from 'framer-motion';
+/**
+ * AdminProducts.jsx — Catálogo de Textiles del Administrador
+ * ===========================================================
+ * Esta pantalla le permite al administrador ver y gestionar todos los
+ * productos (telas) que están publicados en la tienda.
+ *
+ * ¿Qué puede hacer el administrador aquí?
+ *  - Ver todos los productos de todos los vendedores en una lista limpia
+ *  - Filtrar productos por categoría (Algodón, Seda, Lino, etc.)
+ *  - Buscar un producto específico por nombre
+ *  - Editar el nombre, precio, stock e imagen de cualquier producto
+ *  - Eliminar un producto de la tienda
+ *
+ * ¿De dónde vienen los datos?
+ *  - useProducts() → se conecta al backend Java (http://localhost:8081/api/products)
+ *    y trae todos los productos que están en la base de datos PostgreSQL
+ *  - useNotification() → para mostrar mensajes de "Guardado exitosamente" o errores
+ *
+ * Tecnologías usadas:
+ *  - GSAP: para las animaciones suaves de entrada de las tarjetas
+ *  - useMemo: para que los filtros no calculen todo de nuevo en cada render
+ *  - lucide-react: para los íconos del panel (Search, Edit2, Trash2, etc.)
+ */
 
-function AdminProducts() {
-    const { showNotification } = useNotification();
-    const { products, deleteProduct, updateProduct } = useMetrics();
-    const { refreshProducts } = useProducts();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterCategory, setFilterCategory] = useState('all');
-    const [editingId, setEditingId] = useState(null);
-    const [editForm, setEditForm] = useState({});
+// Herramientas de React que usamos:
+// - useState: guardar valores que pueden cambiar (el texto de búsqueda, qué producto se edita)
+// - useRef: guardar referencias a elementos HTML para poder animarlos con GSAP
+// - useMemo: calcular listas filtradas sin repetir el cálculo innecesariamente
+import React, { useState, useRef, useMemo } from 'react';
 
-    // Métricas de stock
-    const stockMetrics = calculateStockMetrics(products);
+// Íconos visuales del panel (librería lucide-react)
+import {
+  Package,        // Ícono de caja (productos)
+  Search,         // Lupa para buscar
+  Edit2,          // Lápiz para editar
+  Trash2,         // Basurero para eliminar
+  Save,           // Diskette para guardar
+  X as XIcon,     // X para cerrar o indicar "agotado"
+  Plus,           // Botón de crear nuevo
+  Filter,         // Ícono de filtros
+  Star,           // Estrella para "más vendidos"
+  AlertTriangle,  // Triángulo de advertencia para stock bajo
+  Image as ImageIcon, // Ícono de imagen cuando no hay foto
+} from 'lucide-react';
 
-    // Categorías únicas
-    const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+// GSAP: librería de animaciones profesionales
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
-    // Filtrar productos
-    const filteredProducts = products.filter(p => {
-        const matchSearch = !searchTerm || 
-            (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()));
-        const matchCategory = filterCategory === 'all' || p.category === filterCategory;
-        return matchSearch && matchCategory;
+// Componentes compartidos del proyecto
+import DashboardLayout from '../../components/layouts/DashboardLayout'; // Marco del panel con el menú lateral
+import adminDashboardLinks from '../../data/adminDashboardLinks';       // Links del menú del administrador
+import { formatCurrency } from '../../utils/formatters';               // Convierte 25000 → "$25.000"
+import { useProducts } from '../../context/ProductContext';            // Trae los productos de la API
+import { useNotification } from '../../context/NotificationContext';   // Muestra notificaciones en pantalla
+import BackButton from '../../components/dashboard/BackButton';         // Botón "← Volver"
+
+// ── Estilos reutilizables de las tarjetas (fondo blanco con borde sutil) ─────
+// Usamos cadenas de texto de clases CSS para no repetirlas en cada elemento
+const glassCard = [
+  'bg-white dark:bg-slate-800',                       // fondo blanco (modo claro) o gris oscuro (modo oscuro)
+  'border border-slate-200 dark:border-slate-700',    // borde gris delgado
+  'shadow-sm rounded-2xl',                            // sombra suave y bordes redondeados
+].join(' ');
+
+// ── Estilos reutilizables de los campos de formulario ────────────────────────
+const glassInput = [
+  'bg-slate-50 dark:bg-slate-900',
+  'border border-slate-200 dark:border-slate-700',
+  'focus:border-indigo-500 rounded-xl',
+  'text-slate-900 dark:text-white outline-none',
+  'focus:ring-2 focus:ring-indigo-500/20 transition-all',
+  'placeholder-slate-400',
+].join(' ');
+
+// =============================================================================
+// COMPONENTE PRINCIPAL
+// =============================================================================
+export default function AdminProducts() {
+  // Función para mostrar notificaciones (ej: "Producto eliminado")
+  const { showNotification } = useNotification();
+
+  // Datos de productos:
+  // - products: lista de todos los productos de la base de datos
+  // - loading: true mientras están cargando (muestra el "skeleton")
+  // - deleteProduct / updateProduct: funciones para guardar cambios en la API
+  const { products, loading: productsLoading, deleteProduct, updateProduct, refreshProducts } = useProducts();
+
+
+  // ── Estado local ──────────────────────────────────────────────────────────
+  const [searchTerm,      setSearchTerm]      = useState('');
+  const [filterCategory,  setFilterCategory]  = useState('all');
+  const [editingProduct,  setEditingProduct]  = useState(null);
+  const [editForm,        setEditForm]        = useState({});
+
+  const containerRef = useRef(null);
+  const modalRef     = useRef(null);
+
+  // ── Categorías únicas (memoizadas) ────────────────────────────────────────
+  const categories = useMemo(
+    () => [...new Set(products.map(p => p.category).filter(Boolean))],
+    [products]
+  );
+
+  // ── Lista filtrada — DEBE definirse ANTES de cualquier hook que la use ────
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchSearch =
+        !searchTerm ||
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchCategory = filterCategory === 'all' || p.category === filterCategory;
+      return matchSearch && matchCategory;
     });
+  }, [products, searchTerm, filterCategory]);
 
-    const handleEdit = (product) => {
-        setEditingId(product.id);
-        setEditForm({ price: product.price, stock: product.stock });
-        refreshProducts();
-    };
+  // ── KPI helpers ───────────────────────────────────────────────────────────
+  const totalProducts = products.length;
+  const outOfStock    = products.filter(p => (p.stock ?? 0) <= 0).length;
+  const lowStock      = products.filter(p => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= 15).length;
+  const bestsellers   = products.filter(p => p.salesCount > 50 || p.featured).length;
 
-    const handleSave = async (productId) => {
-        updateProduct(productId, editForm);
-        setEditingId(null);
-        showNotification('success', 'Producto actualizado');
-        refreshProducts();
-    };
-
-    const handleDelete = (productId) => {
-        if (window.confirm('¿Estás seguro de eliminar este producto?')) {
-            deleteProduct(productId);
-            showNotification('success', 'Producto eliminado');
-            refreshProducts();
-        }
-    };
-
-    return (
-        <DashboardLayout
-            links={adminDashboardLinks}
-            title="Gestión de Productos"
-            subtitle={`${products.length} productos en catálogo`}
-            refreshProducts={refreshProducts}
-        >
-            {/* Tarjetas de métricas de stock */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <MetricCard
-                    label="Total Productos"
-                    value={stockMetrics.totalProducts}
-                    icon={FiPackage}
-                    color="blue"
-                />
-                <MetricCard
-                    label="En Stock"
-                    value={stockMetrics.inStock}
-                    icon={FiShoppingBag}
-                    color="green"
-                />
-                <MetricCard
-                    label="Stock Bajo"
-                    value={stockMetrics.lowStock}
-                    icon={FiAlertCircle}
-                    color="yellow"
-                />
-                <MetricCard
-                    label="Agotados"
-                    value={stockMetrics.outOfStock}
-                    icon={FiAlertCircle}
-                    color="red"
-                />
-            </div>
-
-            {/* Barra de búsqueda y filtro */}
-            <div className="flex flex-col md:flex-row gap-4 mb-8">
-                <div className="relative flex-1 group">
-                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Buscar productos por nombre o categoría..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input-field pl-12 w-full py-3.5 bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm focus:shadow-md transition-all font-medium"
-                    />
-                </div>
-                <div className="relative min-w-[220px]">
-                    <FiFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="input-field pl-12 w-full py-3.5 bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 shadow-sm focus:shadow-md transition-all font-bold appearance-none"
-                    >
-                        <option value="all">Todas las categorías</option>
-                        {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                </div>
-            </div>
-
-            {/* Tabla de productos */}
-            <div className="card border-blue-50 dark:border-slate-800/50 overflow-hidden shadow-xl shadow-blue-500/5">
-                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3 bg-blue-50/10 dark:bg-blue-900/10">
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                        <FiPackage className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                        <h3 className="font-black text-gray-900 dark:text-white tracking-tight leading-none">Inventario Maestro</h3>
-                        <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">Control de existencias y precios</p>
-                    </div>
-                </div>
-                
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-gray-50/30 dark:bg-slate-900/50 border-b border-gray-100 dark:border-slate-800">
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Detalle del Producto</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400 hidden md:table-cell">Categoría</th>
-                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Precio</th>
-                                <th className="text-right p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Stock</th>
-                                <th className="text-center p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Gestión</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-                            {filteredProducts.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <FiSearch className="w-12 h-12 text-gray-200 dark:text-slate-800" />
-                                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">No se encontraron productos</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredProducts.map(product => (
-                                    <motion.tr
-                                        key={product.id}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-colors group"
-                                    >
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-4">
-                                                {product.images && product.images[0] ? (
-                                                    <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700 bg-white">
-                                                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400">
-                                                        <FiPackage className="w-6 h-6" />
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <p className="font-bold text-gray-900 dark:text-white leading-tight">{product.name}</p>
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">ID: {product.id.slice(-6).toUpperCase()}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 hidden md:table-cell">
-                                            <span className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                {product.category || 'Sin categoría'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            {editingId === product.id ? (
-                                                <input
-                                                    type="number"
-                                                    value={editForm.price}
-                                                    onChange={(e) => setEditForm({...editForm, price: Number(e.target.value)})}
-                                                    className="w-24 px-2 py-1.5 rounded-lg border border-primary-200 dark:border-primary-900 bg-primary-50/30 dark:bg-primary-900/10 text-right font-bold focus:ring-2 focus:ring-primary-500 transition-all outline-none"
-                                                />
-                                            ) : (
-                                                <p className="font-black text-gray-900 dark:text-white">{formatCurrency(product.price)}</p>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            {editingId === product.id ? (
-                                                <input
-                                                    type="number"
-                                                    value={editForm.stock}
-                                                    onChange={(e) => setEditForm({...editForm, stock: Number(e.target.value)})}
-                                                    className="w-20 px-2 py-1.5 rounded-lg border border-primary-200 dark:border-primary-900 bg-primary-50/30 dark:bg-primary-900/10 text-right font-bold focus:ring-2 focus:ring-primary-500 transition-all outline-none"
-                                                />
-                                            ) : (
-                                                <div className="flex flex-col items-end">
-                                                    <p className={`font-black ${product.stock <= 5 ? 'text-red-500' : product.stock <= 20 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                                        {product.stock ?? 0}
-                                                    </p>
-                                                    <div className="w-12 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full mt-1 overflow-hidden">
-                                                        <div 
-                                                            className={`h-full rounded-full ${product.stock <= 5 ? 'bg-red-500' : product.stock <= 20 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                                                            style={{ width: `${Math.min(100, ((product.stock ?? 0) / 100) * 100)}%` }}
-                                                        ></div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center justify-center gap-2">
-                                                {editingId === product.id ? (
-                                                    <div className="flex gap-1">
-                                                        <button
-                                                            onClick={() => handleSave(product.id)}
-                                                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all hover:scale-110 active:scale-95"
-                                                        >
-                                                            <FiDollarSign className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setEditingId(null)}
-                                                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-400 hover:bg-red-500 hover:text-white transition-all hover:scale-110 active:scale-95"
-                                                        >
-                                                            ✕
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleEdit(product)}
-                                                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all hover:scale-110 active:scale-95"
-                                                        >
-                                                            <FiEdit size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(product.id)}
-                                                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all hover:scale-110 active:scale-95"
-                                                        >
-                                                            <FiTrash2 size={16} />
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </motion.tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </DashboardLayout>
+  // ── Animaciones GSAP (después de todos los cálculos) ─────────────────────
+  useGSAP(() => {
+    if (productsLoading || filteredProducts.length === 0) return;
+    gsap.fromTo(
+      '.kpi-card',
+      { opacity: 0, y: 20, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.08, ease: 'back.out(1.4)' }
     );
-}
+    gsap.fromTo(
+      '.product-item',
+      { opacity: 0, x: -15 },
+      { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out', delay: 0.2 }
+    );
+  }, { scope: containerRef, dependencies: [productsLoading, filteredProducts.length] });
 
-export default AdminProducts;
+  useGSAP(() => {
+    if (editingProduct && modalRef.current) {
+      gsap.fromTo(
+        modalRef.current,
+        { opacity: 0, scale: 0.95, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: 'back.out(1.2)' }
+      );
+    }
+  }, { dependencies: [editingProduct] });
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    setEditForm({
+      name:     product.name,
+      price:    product.price,
+      stock:    product.stock,
+      images:   product.images,
+      category: product.category,
+    });
+  };
+
+  const closeEditModal = () => {
+    if (modalRef.current) {
+      gsap.to(modalRef.current, {
+        opacity: 0, scale: 0.95, y: 20, duration: 0.25,
+        onComplete: () => { setEditingProduct(null); setEditForm({}); },
+      });
+    } else {
+      setEditingProduct(null);
+      setEditForm({});
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const updatedForm = { ...editForm };
+
+    // Si hay imagen nueva en base64, súbela primero
+    if (updatedForm.images?.[0]?.startsWith('data:')) {
+      try {
+        const res = await fetch(
+          `http://localhost:8081/api/products/${editingProduct.id}/image`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: updatedForm.images[0] }),
+          }
+        );
+        if (res.ok) {
+          const d = await res.json();
+          updatedForm.images = [d.url];
+        }
+      } catch (err) {
+        console.error('Error subiendo imagen:', err);
+      }
+    }
+
+    await updateProduct({ ...updatedForm, id: editingProduct.id });
+    closeEditModal();
+    showNotification('success', 'Producto actualizado correctamente');
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setEditForm(prev => ({ ...prev, images: [reader.result] }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+      deleteProduct(id);
+      showNotification('success', 'Producto eliminado exitosamente');
+    }
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <DashboardLayout links={adminDashboardLinks} title="" refreshProducts={refreshProducts}>
+      <div ref={containerRef} className="-m-6 p-6 min-h-screen">
+        <div className="relative z-10">
+          <BackButton />
+
+          {/* ── HEADER ─────────────────────────────────────────────────── */}
+          <div className="mb-8 mt-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Catálogo de Textiles
+              </h1>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">
+                {totalProducts} productos registrados · Gestión y control del inventario publicado.
+              </p>
+            </div>
+            <button
+              onClick={() => showNotification('info', 'Módulo de creación en desarrollo')}
+              className="flex items-center gap-2 px-6 py-3 text-sm font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95"
+            >
+              <Plus className="w-4 h-4" /> Nuevo Textil
+            </button>
+          </div>
+
+          {/* ── KPI CARDS ──────────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+              { label: 'Total Productos',  value: totalProducts, icon: Package,       color: 'indigo' },
+              { label: 'Destacados',       value: bestsellers,   icon: Star,          color: 'amber'  },
+              { label: 'Stock Bajo',       value: lowStock,      icon: AlertTriangle, color: 'orange' },
+              { label: 'Agotados',         value: outOfStock,    icon: XIcon,         color: 'rose'   },
+            ].map(({ label, value, icon: Icon, color }) => (
+              <div
+                key={label}
+                className={`kpi-card ${glassCard} p-5 overflow-hidden relative group hover:-translate-y-1 transition-transform duration-300`}
+              >
+                <div
+                  className={`absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-40 transition-transform duration-500 group-hover:scale-150`}
+                  style={{ background: `var(--color-${color}-100, #f1f5f9)` }}
+                />
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    {label}
+                  </span>
+                  <div className={`p-2 rounded-xl border bg-${color}-50 dark:bg-${color}-500/10 border-${color}-100 dark:border-${color}-500/20 text-${color}-600 dark:text-${color}-400`}>
+                    <Icon size={16} />
+                  </div>
+                </div>
+                <p className={`text-4xl font-black text-${color}-600 dark:text-${color}-400 relative z-10`}>
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* ── FILTROS Y BÚSQUEDA ─────────────────────────────────────── */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full md:w-auto">
+              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 shrink-0 px-1">
+                <Filter size={14} />
+                <span className="text-[11px] font-bold uppercase tracking-widest">Filtrar:</span>
+              </div>
+              {['all', ...categories].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-sm border ${
+                    filterCategory === cat
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
+                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {cat === 'all' ? 'Todos' : cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full md:w-72 shrink-0">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre o categoría..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className={`w-full pl-11 pr-4 py-3 text-sm ${glassInput}`}
+              />
+            </div>
+          </div>
+
+          {/* ── LISTA DE PRODUCTOS ─────────────────────────────────────── */}
+          <div className="space-y-3">
+            {productsLoading ? (
+              // Skeleton loader
+              [...Array(6)].map((_, i) => (
+                <div key={i} className={`${glassCard} h-24 animate-pulse bg-slate-100/50 dark:bg-slate-700/30`} />
+              ))
+            ) : filteredProducts.length === 0 ? (
+              // Estado vacío
+              <div className={`${glassCard} flex flex-col items-center justify-center py-24 text-center`}>
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-600">
+                  <Package className="w-10 h-10 text-slate-300 dark:text-slate-500" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Sin resultados</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {searchTerm || filterCategory !== 'all'
+                    ? 'Ajusta los filtros de búsqueda.'
+                    : 'El backend no está respondiendo o no hay productos registrados.'}
+                </p>
+                {(searchTerm || filterCategory !== 'all') && (
+                  <button
+                    onClick={() => { setSearchTerm(''); setFilterCategory('all'); }}
+                    className="mt-4 px-5 py-2 text-sm font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            ) : (
+              filteredProducts.map(product => {
+                const stock       = product.stock ?? 0;
+                const isOutOfStock = stock <= 0;
+                const isLowStock   = stock > 0 && stock <= 15;
+                const isBestseller = product.salesCount > 50 || product.featured;
+
+                const stockBadge = isOutOfStock
+                  ? { bg: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20', dot: 'bg-rose-500 animate-pulse', label: 'Agotado' }
+                  : isLowStock
+                  ? { bg: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20', dot: 'bg-amber-500', label: `Stock bajo: ${stock}` }
+                  : { bg: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', dot: 'bg-emerald-500', label: `${stock} mts` };
+
+                return (
+                  <div
+                    key={String(product.id)}
+                    className={`product-item ${glassCard} p-4 sm:p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}
+                  >
+                    {/* Columna izquierda: imagen + detalles */}
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {/* Thumbnail */}
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden flex-shrink-0 relative border border-slate-200 dark:border-slate-600">
+                        {product.images?.[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            onError={e => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon size={20} className="text-slate-400 dark:text-slate-500" />
+                          </div>
+                        )}
+                        {isBestseller && (
+                          <div className="absolute top-0 right-0 bg-amber-500 text-white p-1 rounded-bl-lg">
+                            <Star size={9} fill="currentColor" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Detalles del producto */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-xs">
+                            {product.name}
+                          </h3>
+                          {product.category && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-widest uppercase border bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600">
+                              {product.category}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs font-mono text-slate-400 dark:text-slate-500 mb-1.5">
+                          #{String(product.id).padStart(6, '0')}
+                        </p>
+
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border ${stockBadge.bg}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${stockBadge.dot}`} />
+                          {stockBadge.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Columna derecha: precio + acciones */}
+                    <div className="flex items-center gap-6 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 dark:border-slate-700/60">
+                      <div className="text-left sm:text-right">
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
+                          Precio / mt
+                        </p>
+                        <p className="text-lg font-black text-slate-900 dark:text-white">
+                          {formatCurrency(product.price)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="p-2.5 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-xl transition-colors"
+                          title="Editar Producto"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="p-2.5 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-xl transition-colors"
+                          title="Eliminar Producto"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── MODAL DE EDICIÓN ────────────────────────────────────────────────── */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div onClick={closeEditModal} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+          <div
+            ref={modalRef}
+            className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+          >
+            {/* Header modal */}
+            <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/60">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Edit2 size={18} />
+                </div>
+                Editar: {editingProduct.name}
+              </h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-full transition-colors"
+              >
+                <XIcon size={22} />
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleSave} className="p-6 sm:p-8">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Zona de imagen */}
+                <div className="w-full md:w-1/3">
+                  <div className="aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 relative group cursor-pointer">
+                    {editForm.images?.[0] ? (
+                      <img src={editForm.images[0]} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
+                        <ImageIcon size={28} />
+                        <span className="text-xs font-bold">Sin imagen</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 bg-white/20 rounded-xl border border-white/30 backdrop-blur-sm">
+                        Cambiar
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Campos del formulario */}
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Nombre del Textil
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.name || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Categoría
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.category || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Precio / metro
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                      <input
+                        type="number"
+                        value={editForm.price || ''}
+                        onChange={e => setEditForm(prev => ({ ...prev, price: Number(e.target.value) }))}
+                        className={`w-full pl-8 pr-4 py-3 font-black ${glassInput}`}
+                        required
+                        min={0}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Stock (metros)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={editForm.stock ?? ''}
+                        onChange={e => setEditForm(prev => ({ ...prev, stock: Number(e.target.value) }))}
+                        className={`w-full pl-4 pr-14 py-3 font-black ${glassInput}`}
+                        required
+                        min={0}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs uppercase">
+                        mts
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3 mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/60">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="flex-1 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-[2] py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2 shadow-md"
+                >
+                  <Save size={17} /> Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </DashboardLayout>
+  );
+}

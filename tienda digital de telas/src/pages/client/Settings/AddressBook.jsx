@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import { MdLocationOn, MdAdd, MdEdit, MdDelete, MdCheck, MdClose, MdHome, MdBuild, MdWork } from 'react-icons/md';
+import { 
+    MapPin, 
+    Plus, 
+    Edit2, 
+    Trash2, 
+    Check, 
+    X, 
+    Home, 
+    Wrench, 
+    Briefcase,
+    Building2,
+    Phone,
+    Map
+} from 'lucide-react';
+
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
@@ -14,10 +28,10 @@ const COLOMBIA_DEPARTMENTS = [
 ];
 
 const ADDRESS_LABELS = [
-    { value: 'home', label: 'Casa', icon: MdHome },
-    { value: 'workshop', label: 'Taller', icon: MdBuild },
-    { value: 'office', label: 'Oficina', icon: MdWork },
-    { value: 'other', label: 'Otro', icon: MdLocationOn }
+    { value: 'home', label: 'Casa', icon: Home },
+    { value: 'workshop', label: 'Taller', icon: Wrench },
+    { value: 'office', label: 'Oficina', icon: Briefcase },
+    { value: 'other', label: 'Otro', icon: Building2 }
 ];
 
 function AddressBook() {
@@ -62,8 +76,6 @@ function AddressBook() {
         isDefault: false
     });
 
-    
-
     const resetForm = () => {
         setFormData({
             label: 'home',
@@ -84,10 +96,11 @@ function AddressBook() {
         setFormData(address);
         setEditingId(address.id);
         setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = (id) => {
-        if (confirm('¿Eliminar esta dirección?')) {
+        if (confirm('¿Eliminar esta dirección de forma permanente?')) {
             setAddresses(prev => prev.filter(a => a.id !== id));
         }
     };
@@ -103,7 +116,7 @@ function AddressBook() {
         e.preventDefault();
 
         if (!formData.fullName || !formData.phone || !formData.department || !formData.city || !formData.address) {
-            alert('Por favor completa todos los campos requeridos');
+            alert('Por favor completa todos los campos requeridos (*).');
             return;
         }
 
@@ -137,301 +150,362 @@ function AddressBook() {
     return (
         <DashboardLayout title="Libreta de Direcciones" links={clientDashboardLinks}>
             <AnimatedPage>
-            <BackButton to="/cliente" label="Volver a Mi Panel" />
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <p className="text-gray-500">Gestiona tus direcciones de envío en Colombia</p>
-                </div>
-                {!showForm && (
-                    <button
-                        onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                    >
-                        <MdAdd className="w-4 h-4" />
-                        Nueva Dirección
-                    </button>
-                )}
-            </div>
-
-            {/* Address Form */}
-            {showForm && (
-                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                            {editingId ? 'Editar Dirección' : 'Nueva Dirección'}
-                        </h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div>
+                        <BackButton to="/cliente/configuracion" label="Volver a Configuración" />
+                        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mt-4 tracking-tight flex items-center gap-3">
+                            Libreta de Direcciones
+                            <span className="bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                                Envíos
+                            </span>
+                        </h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                            Gestiona tus ubicaciones frecuentes para facilitar tus compras.
+                        </p>
+                    </div>
+                    
+                    {!showForm && (
                         <button
-                            onClick={resetForm}
-                            className="text-gray-400 hover:text-gray-600"
+                            onClick={() => setShowForm(true)}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg shadow-gray-900/10 dark:shadow-white/10 hover:-translate-y-0.5"
                         >
-                            <MdClose className="w-6 h-6" />
+                            <Plus className="w-5 h-5" />
+                            Agregar Nueva Dirección
+                        </button>
+                    )}
+                </div>
+
+                {/* ================================================================
+                    FORMULARIO
+                ================================================================ */}
+                {showForm && (
+                    <div className="card p-6 md:p-8 mb-8 border-2 border-sky-500 shadow-xl shadow-sky-500/10">
+                        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-slate-800">
+                            <h3 className="font-extrabold text-2xl text-gray-900 dark:text-white flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center">
+                                    <MapPin className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+                                </div>
+                                {editingId ? 'Editar Dirección Existente' : 'Registrar Nueva Dirección'}
+                            </h3>
+                            <button
+                                onClick={resetForm}
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Etiqueta */}
+                            <div className="space-y-3">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                    Identifica esta ubicación
+                                </label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {ADDRESS_LABELS.map(labelOption => {
+                                        const Icon = labelOption.icon;
+                                        return (
+                                            <button
+                                                key={labelOption.value}
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, label: labelOption.value }))}
+                                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all duration-300 border-2 ${
+                                                    formData.label === labelOption.value
+                                                        ? 'bg-sky-50 border-sky-500 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300 shadow-sm'
+                                                        : 'bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-500 hover:border-sky-300 dark:hover:border-slate-500'
+                                                }`}
+                                            >
+                                                <Icon className={`w-6 h-6 ${formData.label === labelOption.value ? 'text-sky-500' : ''}`} />
+                                                <span className="font-bold text-sm">{labelOption.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Nombre */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        Nombre de quien recibe *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.fullName}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                                        placeholder="Ej: María García"
+                                        required
+                                        className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                {/* Teléfono */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        Número de Contacto *
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                        placeholder="Ej: 300 123 4567"
+                                        required
+                                        className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Departamento */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        Departamento *
+                                    </label>
+                                    <select
+                                        value={formData.department}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                                        required
+                                        className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium appearance-none"
+                                    >
+                                        <option value="" disabled>Selecciona tu departamento...</option>
+                                        {COLOMBIA_DEPARTMENTS.map(dept => (
+                                            <option key={dept} value={dept}>{dept}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {/* Ciudad */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        Ciudad o Municipio *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.city}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                                        placeholder="Ej: Bogotá"
+                                        required
+                                        className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Dirección */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        Dirección Principal *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.address}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                                        placeholder="Ej: Cra 7 #45-23"
+                                        required
+                                        className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                {/* Barrio */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        Barrio o Localidad
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.neighborhood}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+                                        placeholder="Ej: Chapinero"
+                                        className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Info Adicional */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                    Información adicional de entrega (Opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.additionalInfo}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, additionalInfo: e.target.value }))}
+                                    placeholder="Ej: Apto 502, Torre B, Dejar en portería..."
+                                    className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all font-medium"
+                                />
+                            </div>
+
+                            {/* Predeterminada */}
+                            <label className="flex items-center gap-4 p-5 bg-sky-50 dark:bg-sky-900/10 rounded-xl border border-sky-100 dark:border-sky-900/30 cursor-pointer group hover:bg-sky-100 dark:hover:bg-sky-900/20 transition-colors">
+                                <div className="relative flex items-center justify-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isDefault}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="w-6 h-6 border-2 border-sky-300 dark:border-sky-700 rounded-md peer-checked:bg-sky-500 peer-checked:border-sky-500 transition-colors flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="font-bold text-gray-900 dark:text-white block">
+                                        Definir como dirección principal
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-500">
+                                        Usaremos esta dirección por defecto en tus próximos pedidos.
+                                    </span>
+                                </div>
+                            </label>
+
+                            {/* Botones */}
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <button
+                                    type="submit"
+                                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-sky-600 text-white rounded-xl hover:bg-sky-700 transition-all font-bold text-lg shadow-lg shadow-sky-500/30 hover:-translate-y-0.5"
+                                >
+                                    <Check className="w-5 h-5" />
+                                    {editingId ? 'Guardar Cambios' : 'Confirmar Dirección'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={resetForm}
+                                    className="flex-1 py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-bold text-lg"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                {/* ================================================================
+                    LISTADO DE DIRECCIONES
+                ================================================================ */}
+                {!showForm && addresses.length === 0 ? (
+                    <div className="card p-16 text-center border-dashed border-2 flex flex-col items-center justify-center">
+                        <div className="w-20 h-20 rounded-full bg-sky-50 dark:bg-sky-900/10 flex items-center justify-center mb-6">
+                            <MapPin className="w-10 h-10 text-sky-400 dark:text-sky-500" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                            Aún no tienes direcciones
+                        </h3>
+                        <p className="text-gray-500 font-medium mb-6">
+                            Guarda una dirección para que tus próximas compras en D&D Textil sean más rápidas.
+                        </p>
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-500/30 hover:-translate-y-0.5"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Agregar mi primera dirección
                         </button>
                     </div>
+                ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {addresses.map(address => {
+                            const labelInfo = getLabelInfo(address.label);
+                            const LabelIcon = labelInfo.icon;
 
-                    <form onSubmit={handleSubmit}>
-                        {/* Label Selection */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                Tipo de dirección
-                            </label>
-                            <div className="flex gap-3">
-                                {ADDRESS_LABELS.map(labelOption => {
-                                    const Icon = labelOption.icon;
-                                    return (
-                                        <button
-                                            key={labelOption.value}
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, label: labelOption.value }))}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${formData.label === labelOption.value
-                                                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 ring-2 ring-primary-500'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300'
-                                                }`}
-                                        >
-                                            <Icon className="w-4 h-4" />
-                                            {labelOption.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Name and Phone */}
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Nombre del destinatario *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.fullName}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                                    placeholder="María García"
-                                    required
-                                    className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Teléfono *
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                    placeholder="300 123 4567"
-                                    required
-                                    className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Department and City */}
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Departamento *
-                                </label>
-                                <select
-                                    value={formData.department}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                                    required
-                                    className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                                >
-                                    <option value="">Selecciona...</option>
-                                    {COLOMBIA_DEPARTMENTS.map(dept => (
-                                        <option key={dept} value={dept}>{dept}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Ciudad *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.city}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                                    placeholder="Bogotá"
-                                    required
-                                    className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Neighborhood and Address */}
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Barrio
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.neighborhood}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
-                                    placeholder="Chapinero"
-                                    className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Dirección *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.address}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                                    placeholder="Cra 7 #45-23"
-                                    required
-                                    className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Additional Info */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Información adicional
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.additionalInfo}
-                                onChange={(e) => setFormData(prev => ({ ...prev, additionalInfo: e.target.value }))}
-                                placeholder="Apto 502, Torre B, Entrada por la calle 45..."
-                                className="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
-                            />
-                        </div>
-
-                        {/* Default Checkbox */}
-                        <label className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg cursor-pointer mb-6">
-                            <input
-                                type="checkbox"
-                                checked={formData.isDefault}
-                                onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
-                                className="w-5 h-5 text-primary-600 rounded"
-                            />
-                            <span className="font-medium text-gray-900 dark:text-white">
-                                Usar como dirección predeterminada
-                            </span>
-                        </label>
-
-                        {/* Form Actions */}
-                        <div className="flex gap-3">
-                            <button
-                                type="submit"
-                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-                            >
-                                <MdCheck className="w-5 h-5" />
-                                {editingId ? 'Guardar Cambios' : 'Agregar Dirección'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={resetForm}
-                                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {/* Addresses List */}
-            {addresses.length === 0 ? (
-                <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-12 text-center">
-                    <MdLocationOn className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        Sin direcciones guardadas
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                        Agrega una dirección para tus envíos
-                    </p>
-                    <button
-                        onClick={() => setShowForm(true)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                    >
-                        <MdAdd className="w-5 h-5" />
-                        Agregar Dirección
-                    </button>
-                </div>
-            ) : (
-                <div className="grid md:grid-cols-2 gap-6">
-                    {addresses.map(address => {
-                        const labelInfo = getLabelInfo(address.label);
-                        const LabelIcon = labelInfo.icon;
-
-                        return (
-                            <div
-                                key={address.id}
-                                className={`card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 relative ${address.isDefault
-                                        ? 'ring-2 ring-primary-500'
-                                        : ''
+                            return (
+                                <div
+                                    key={address.id}
+                                    className={`card overflow-hidden transition-all duration-300 flex flex-col ${
+                                        address.isDefault
+                                            ? 'ring-2 ring-sky-500 shadow-xl shadow-sky-500/5'
+                                            : 'hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600'
                                     }`}
-                            >
-                                {address.isDefault && (
-                                    <div className="absolute -top-2 -right-2 px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
-                                        Predeterminada
-                                    </div>
-                                )}
-
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-gray-100 dark:bg-slate-700 rounded-full">
-                                        <LabelIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                                                {labelInfo.label}
-                                            </h3>
+                                >
+                                    {/* Cabecera Tarjeta */}
+                                    <div className={`p-5 flex justify-between items-start border-b ${
+                                        address.isDefault 
+                                            ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-800/30' 
+                                            : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700'
+                                    }`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+                                                address.isDefault 
+                                                    ? 'bg-sky-600 text-white shadow-sky-500/30' 
+                                                    : 'bg-white dark:bg-slate-700 text-slate-500'
+                                            }`}>
+                                                <LabelIcon className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-extrabold text-lg text-gray-900 dark:text-white leading-none">
+                                                    {labelInfo.label}
+                                                </h3>
+                                                {address.isDefault && (
+                                                    <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                                                        Principal
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <p className="font-medium text-gray-900 dark:text-white">
-                                            {address.fullName}
-                                        </p>
-                                        <p className="text-gray-600 dark:text-gray-400 mt-1">
-                                            {address.address}
-                                            {address.additionalInfo && `, ${address.additionalInfo}`}
-                                        </p>
-                                        <p className="text-gray-500 text-sm">
-                                            {address.neighborhood && `${address.neighborhood}, `}
-                                            {address.city}, {address.department}
-                                        </p>
-                                        <p className="text-gray-500 text-sm mt-1">
-                                            📱 {address.phone}
-                                        </p>
+                                    </div>
 
-                                        <div className="flex gap-2 mt-4">
+                                    {/* Cuerpo Tarjeta */}
+                                    <div className="p-6 flex flex-col flex-1">
+                                        <div className="space-y-3 mb-6 flex-1">
+                                            <div>
+                                                <p className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                    {address.fullName}
+                                                </p>
+                                                <p className="text-sm font-medium text-gray-500 flex items-center gap-1.5 mt-1">
+                                                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                                    {address.phone}
+                                                </p>
+                                            </div>
+
+                                            <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                <p className="text-gray-900 dark:text-white font-medium text-sm leading-relaxed flex items-start gap-2">
+                                                    <MapPin className="w-4 h-4 text-sky-500 mt-0.5 flex-shrink-0" />
+                                                    <span>
+                                                        {address.address}
+                                                        {address.additionalInfo && <span className="block text-slate-500 mt-0.5">{address.additionalInfo}</span>}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            
+                                            <p className="text-sm text-gray-500 font-medium flex items-center gap-2">
+                                                <Map className="w-4 h-4 text-slate-400" />
+                                                <span>
+                                                    {address.neighborhood && `${address.neighborhood}, `}
+                                                    {address.city}, {address.department}
+                                                </span>
+                                            </p>
+                                        </div>
+
+                                        {/* Acciones */}
+                                        <div className="flex flex-wrap gap-2 mt-auto">
                                             <button
                                                 onClick={() => handleEdit(address)}
-                                                className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300"
+                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-bold bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                                             >
-                                                <MdEdit className="w-4 h-4" />
+                                                <Edit2 className="w-4 h-4" />
                                                 Editar
                                             </button>
+                                            
                                             {!address.isDefault && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleSetDefault(address.id)}
-                                                        className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400"
-                                                    >
-                                                        <MdCheck className="w-4 h-4" />
-                                                        Predeterminar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(address.id)}
-                                                        className="flex items-center gap-1 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
-                                                    >
-                                                        <MdDelete className="w-4 h-4" />
-                                                    </button>
-                                                </>
+                                                <button
+                                                    onClick={() => handleSetDefault(address.id)}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-bold bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 dark:bg-sky-900/30 dark:text-sky-400 dark:hover:bg-sky-900/50 transition-colors"
+                                                >
+                                                    <Check className="w-4 h-4" />
+                                                    Predeterminar
+                                                </button>
                                             )}
+                                            
+                                            <button
+                                                onClick={() => handleDelete(address.id)}
+                                                className="flex items-center justify-center w-10 px-0 py-2 text-sm font-bold bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-900/20 dark:text-rose-400 transition-colors flex-shrink-0"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                            );
+                        })}
+                    </div>
+                )}
             </AnimatedPage>
         </DashboardLayout>
     );

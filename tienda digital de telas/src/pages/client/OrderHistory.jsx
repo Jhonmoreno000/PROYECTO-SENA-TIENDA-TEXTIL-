@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MdPerson, MdInventory, MdVisibility } from 'react-icons/md';
+import { Eye } from 'lucide-react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import AnimatedPage from '../../components/AnimatedPage';
 import clientDashboardLinks from '../../data/clientDashboardLinks';
@@ -8,6 +8,14 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import OrderDetailsModal from '../../components/client/OrderDetailsModal';
 import { useNotification } from '../../context/NotificationContext';
 
+/**
+ * Componente que muestra el historial de pedidos de un cliente.
+ * Permite visualizar el estado de cada pedido, ver detalles, cancelar,
+ * solicitar reembolso o reportar un problema a través de un modal.
+ * 
+ * @component
+ * @returns {JSX.Element} Vista del historial de pedidos.
+ */
 function OrderHistory() {
     const { showNotification } = useNotification();
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -25,12 +33,12 @@ function OrderHistory() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Entregado': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-            case 'En Proceso': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-            case 'Enviado': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-            case 'Pendiente': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-            case 'Cancelado': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-            default: return 'bg-gray-100 text-gray-700';
+            case 'Entregado': return 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/10 dark:text-emerald-400';
+            case 'En Proceso': return 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/10 dark:text-blue-400';
+            case 'Enviado': return 'bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/10 dark:text-orange-400';
+            case 'Pendiente': return 'bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-400';
+            case 'Cancelado': return 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/10 dark:text-rose-400';
+            default: return 'bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-400';
         }
     };
 
@@ -53,8 +61,8 @@ function OrderHistory() {
     };
 
     const handleReportProblem = (orderId, reportText) => {
-        // Aquí iría la lógica para enviar al backend
-        console.log(`Reporte para ${orderId}: ${reportText}`);
+        // Lógica para enviar el reporte al backend (simulada)
+        // TODO: Conectar con API real
         setIsModalOpen(false);
         showNotification('info', 'Gracias por tu reporte. Nos pondremos en contacto pronto.');
     };
@@ -63,16 +71,16 @@ function OrderHistory() {
         <DashboardLayout title="Historial de Pedidos" links={clientDashboardLinks}>
             <AnimatedPage>
             <BackButton to="/cliente" label="Volver a Mi Panel" />
-            <div className="card overflow-hidden shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md mb-8">
+            <div className="card overflow-hidden mb-8">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700">
+                        <thead className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pedido</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Pedido</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -85,7 +93,7 @@ function OrderHistory() {
                                         {formatDate(order.date)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                        <span className={`px-2.5 py-1 inline-flex text-[11px] font-semibold uppercase tracking-wider rounded-md ${getStatusColor(order.status)}`}>
                                             {order.status}
                                         </span>
                                     </td>
@@ -96,10 +104,10 @@ function OrderHistory() {
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button
                                             onClick={() => handleOpenModal(order)}
-                                            className="text-gray-400 hover:text-primary-600 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full"
+                                            className="text-gray-400 hover:text-primary-600 transition-colors p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
                                             title="Ver detalles"
                                         >
-                                            <MdVisibility className="w-5 h-5" />
+                                            <Eye className="w-5 h-5" />
                                         </button>
                                     </td>
                                 </tr>

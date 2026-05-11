@@ -1,61 +1,72 @@
-import { MdGridView, MdGroup, MdAttachMoney, MdShoppingBag, MdLayers, MdDashboard, MdDescription, MdWarningAmber, MdTrendingUp, MdInventory2 } from 'react-icons/md';
+import { 
+    LayoutDashboard, 
+    Users, 
+    DollarSign, 
+    ShoppingBag, 
+    Layers, 
+    FileText, 
+    AlertTriangle, 
+    TrendingUp, 
+    Package,
+    Settings
+} from 'lucide-react';
 
 /**
  * Hierarchical navigation links for the Admin Dashboard sidebar.
  * Parent nodes have a `children` array; leaf nodes have a `path`.
  */
 const adminDashboardLinks = [
-    { label: 'Resumen', path: '/admin', icon: MdGridView },
+    { label: 'Resumen', path: '/admin', icon: LayoutDashboard },
     {
-        label: 'Usuarios', icon: MdGroup,
+        label: 'Usuarios', icon: Users,
         children: [
-            { label: 'Gestión de Usuarios', path: '/admin/usuarios', icon: MdGroup },
-            { label: 'Vendedores', path: '/admin/vendedores', icon: MdTrendingUp },
-            { label: 'Clientes', path: '/admin/clientes', icon: MdGroup },
+            { label: 'Gestión de Usuarios', path: '/admin/usuarios', icon: Users },
+            { label: 'Vendedores', path: '/admin/vendedores', icon: TrendingUp },
+            { label: 'Clientes', path: '/admin/clientes', icon: Users },
         ],
     },
     {
-        label: 'Catálogo', icon: MdShoppingBag,
+        label: 'Catálogo', icon: ShoppingBag,
         children: [
-            { label: 'Productos', path: '/admin/productos', icon: MdShoppingBag },
-            { label: 'Carrusel', path: '/admin/carrusel', icon: MdLayers },
-            { label: 'Página Inicio', path: '/admin/home', icon: MdDashboard },
+            { label: 'Productos', path: '/admin/productos', icon: ShoppingBag },
+            { label: 'Carrusel', path: '/admin/carrusel', icon: Layers },
+            { label: 'Página Inicio', path: '/admin/home', icon: LayoutDashboard },
         ],
     },
     {
-        label: 'Inventario', icon: MdInventory2,
+        label: 'Inventario', icon: Package,
         children: [
-            { label: 'Control de Lotes', path: '/admin/inventario/lotes', icon: MdInventory2 },
-            { label: 'Calculadora de Merma', path: '/admin/inventario/merma', icon: MdWarningAmber },
-            { label: 'Alertas de Stock', path: '/admin/inventario/alertas', icon: MdWarningAmber },
-            { label: 'Historial de Movimientos', path: '/admin/inventario/historial', icon: MdDescription },
+            { label: 'Control de Lotes', path: '/admin/inventario/lotes', icon: Package },
+            { label: 'Calculadora de Merma', path: '/admin/inventario/merma', icon: AlertTriangle },
+            { label: 'Alertas de Stock', path: '/admin/inventario/alertas', icon: AlertTriangle },
+            { label: 'Historial de Movimientos', path: '/admin/inventario/historial', icon: FileText },
         ],
     },
     {
-        label: 'Moderación', icon: MdTrendingUp,
+        label: 'Moderación', icon: TrendingUp,
         children: [
-            { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion', icon: MdShoppingBag, badge: 3 },
-            { label: 'Rendimiento', path: '/admin/moderacion/vendedores', icon: MdTrendingUp },
+            { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion', icon: ShoppingBag, badge: 3 },
+            { label: 'Rendimiento', path: '/admin/moderacion/vendedores', icon: TrendingUp },
         ],
     },
     {
-        label: 'Analytics', icon: MdTrendingUp,
+        label: 'Analytics', icon: TrendingUp,
         children: [
-            { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas', icon: MdGridView },
-            { label: 'Rotación de Inventario', path: '/admin/analytics/rotacion', icon: MdInventory2 },
-            { label: 'Análisis de Devoluciones', path: '/admin/analytics/devoluciones', icon: MdWarningAmber },
-            { label: 'Proyección de Ingresos', path: '/admin/analytics/proyeccion', icon: MdAttachMoney },
+            { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas', icon: LayoutDashboard },
+            { label: 'Rotación de Inventario', path: '/admin/analytics/rotacion', icon: Package },
+            { label: 'Análisis de Devoluciones', path: '/admin/analytics/devoluciones', icon: AlertTriangle },
+            { label: 'Proyección de Ingresos', path: '/admin/analytics/proyeccion', icon: DollarSign },
         ],
     },
     {
-        label: 'Soporte', icon: MdDescription,
+        label: 'Soporte', icon: FileText,
         children: [
-            { label: 'Gestión de Tickets', path: '/admin/soporte/tickets', icon: MdDescription, badge: 12 },
-            { label: 'Crear Cupones', path: '/admin/soporte/cupones', icon: MdAttachMoney },
+            { label: 'Gestión de Tickets', path: '/admin/soporte/tickets', icon: FileText, badge: 12 },
+            { label: 'Crear Cupones', path: '/admin/soporte/cupones', icon: DollarSign },
         ],
     },
-    { label: 'Reportes', path: '/admin/reportes', icon: MdDescription },
-    { label: 'Configuración', path: '/admin/configuracion', icon: MdGridView },
+    { label: 'Reportes', path: '/admin/reportes', icon: FileText },
+    { label: 'Configuración', path: '/admin/configuracion', icon: Settings },
 ];
 
 export default adminDashboardLinks;

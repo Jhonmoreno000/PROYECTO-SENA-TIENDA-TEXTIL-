@@ -1,18 +1,7 @@
-## Getting Started
+# D&D Textil - Backend Java
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+Este es el directorio del backend del proyecto D&D Textil.
 
-## Folder Structure
+> **Nota:** La documentación técnica completa del proyecto, incluyendo las instrucciones de instalación, arquitectura, base de datos y solución de problemas, se ha unificado y estructurado en el archivo principal `README.md` ubicado en la raíz del proyecto.
 
-The workspace contains two folders by default, where:
-
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
-
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
-
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
-
-## Dependency Management
-
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+Por favor, dirígete a `../../README.md` para ver la documentación completa.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDarkMode } from '../../hooks/useDarkMode';
 
 function BarChart({ data, dataKey = 'value', xKey = 'name', title, height = 300, color = '#8B5CF6' }) {

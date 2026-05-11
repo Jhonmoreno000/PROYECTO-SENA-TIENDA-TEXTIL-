@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiX, FiAlertTriangle, FiRefreshCw, FiSlash, FiCheck } from 'react-icons/fi';
+import { X, AlertTriangle, RefreshCw, Ban } from 'lucide-react';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 export default function OrderDetailsModal({ isOpen, onClose, order, onCancel, onRefund, onReport }) {
@@ -56,7 +56,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onCancel, on
                         onClick={onClose}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
                     >
-                        <FiX className="w-6 h-6 text-gray-500" />
+                        <X className="w-6 h-6 text-gray-500" />
                     </button>
                 </div>
 
@@ -108,7 +108,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onCancel, on
                                 onClick={() => onCancel(order.id)}
                                 className="flex items-center justify-center gap-2 px-4 py-3 border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors font-medium dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-400"
                             >
-                                <FiSlash /> Cancelar Pedido
+                                <Ban /> Cancelar Pedido
                             </button>
                         )}
 
@@ -118,7 +118,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onCancel, on
                                 onClick={() => onRefund(order.id)}
                                 className="flex items-center justify-center gap-2 px-4 py-3 border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors font-medium dark:bg-blue-900/20 dark:border-blue-900/50 dark:text-blue-400"
                             >
-                                <FiRefreshCw /> Solicitar Reembolso
+                                <RefreshCw /> Solicitar Reembolso
                             </button>
                         )}
 
@@ -126,7 +126,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onCancel, on
                             onClick={() => setShowReportForm(!showReportForm)}
                             className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors font-medium dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
                         >
-                            <FiAlertTriangle /> Reportar Problema
+                            <AlertTriangle /> Reportar Problema
                         </button>
                     </div>
 

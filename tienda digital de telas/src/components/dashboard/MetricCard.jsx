@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Mapa de variantes de color predefinidas para evitar parseo frágil de strings Tailwind
+// Mapa de variantes de color predefinidas para la paleta premium
 const colorVariants = {
     emerald: {
         iconBg:     'bg-emerald-100 dark:bg-emerald-900/40',
@@ -75,33 +75,43 @@ function MetricCard({ label, title, value, icon: Icon, color = 'primary', trend,
 
     // Determinar color del trendValue
     let trendColor = 'text-gray-500';
+    let trendBg = 'bg-gray-100 dark:bg-gray-800';
     if (trendValue) {
-        if (trend === 'up')   trendColor = trendValue.startsWith('-') ? 'text-red-500' : 'text-green-600';
-        if (trend === 'down') trendColor = trendValue.startsWith('-') ? 'text-green-600' : 'text-red-500';
+        if (trend === 'up') {
+            trendColor = trendValue.startsWith('-') ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400';
+            trendBg = trendValue.startsWith('-') ? 'bg-red-50 dark:bg-red-900/30' : 'bg-emerald-50 dark:bg-emerald-900/30';
+        }
+        if (trend === 'down') {
+            trendColor = trendValue.startsWith('-') ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
+            trendBg = trendValue.startsWith('-') ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-red-50 dark:bg-red-900/30';
+        }
     }
 
     return (
-        <div className="card p-5 group flex flex-col justify-between min-h-[140px] transition-all duration-300">
-            <div className="flex justify-between items-start mb-4">
-                <div className={`w-12 h-12 rounded-2xl ${iconBgClasses} flex items-center justify-center transition-transform group-hover:scale-110 duration-300`}>
+        <div className="card p-6 flex flex-col justify-between min-h-[150px] relative overflow-hidden group hover:shadow-xl hover:shadow-primary-500/5 hover:-translate-y-1 transition-all duration-300">
+            {/* Decal de fondo suave que reacciona al hover */}
+            <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${iconBgClasses.split(' ')[0]}`} />
+            
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-sm ${iconBgClasses}`}>
                     {Icon && <Icon className={`w-6 h-6 ${iconTextClasses}`} />}
                 </div>
                 {trendValue && (
-                    <div className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase flex items-center gap-1 ${trendColor} bg-white dark:bg-slate-900 shadow-sm border border-gray-50 dark:border-slate-800`}>
+                    <div className={`text-[11px] font-bold flex items-center gap-1 px-2.5 py-1 rounded-full ${trendColor} ${trendBg}`}>
                          {trend === 'up' ? '▲' : '▼'} {trendValue}
                     </div>
                 )}
             </div>
 
-            <div>
-                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 opacity-80">
-                    {displayLabel}
-                </p>
-                <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1">
+            <div className="relative z-10 mt-auto">
+                <h3 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {value}
                 </h3>
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    {displayLabel}
+                </p>
                 {subtitle && (
-                    <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 truncate mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-1">
                         {subtitle}
                     </p>
                 )}

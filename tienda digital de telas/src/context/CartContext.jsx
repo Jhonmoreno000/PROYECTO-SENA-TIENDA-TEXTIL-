@@ -1,8 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+/**
+ * CartContext.jsx — Contexto del Carrito de Compras
+ * ===================================================
+ * Este archivo gestiona el carrito de compras de la tienda.
+ * Guarda los productos que el cliente seleccionó y permite
+ * agregarlos, cambiar cantidades, quitarlos o vaciar el carrito.
+ *
+ * ¿Dónde se guardan los datos?
+ *  Los productos del carrito se guardan en localStorage (memoria del navegador),
+ *  así el cliente no pierde su carrito aunque recargue la página o cierre el navegador.
+ *
+ * ¿Cómo se usa?
+ *  Cualquier componente puede acceder al carrito con:
+ *  const { cartItems, addToCart, removeFromCart } = useCart();
+ */
 
+import React, { createContext, useContext } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage'; // Guarda datos en el navegador automáticamente
+
+// Creamos el contexto del carrito para compartirlo con toda la app
 const CartContext = createContext();
 
+/**
+ * useCart — Hook para acceder al carrito desde cualquier componente
+ */
 export function useCart() {
     const context = useContext(CartContext);
     if (!context) {
@@ -11,33 +31,51 @@ export function useCart() {
     return context;
 }
 
+/**
+ * CartProvider — Proveedor del carrito
+ * Envuelve la aplicación para que el carrito esté disponible en todas las pantallas.
+ */
 export function CartProvider({ children }) {
+    // Lista de productos en el carrito (se guarda automáticamente en el navegador)
     const [cartItems, setCartItems] = useLocalStorage('cart', []);
+    // Cupón de descuento aplicado actualmente (si hay alguno)
     const [appliedCoupon, setAppliedCoupon] = useLocalStorage('applied_coupon', null);
 
-    // Agregar producto al carrito
+    /**
+     * addToCart — Agrega un producto al carrito
+     * Si el producto ya está en el carrito, solo aumenta la cantidad.
+     * Si es nuevo, lo agrega al final de la lista.
+     * @param {Object} product  - Objeto del producto a agregar
+     * @param {number} quantity - Cantidad de metros a agregar (por defecto 1)
+     */
     const addToCart = (product, quantity = 1) => {
         setCartItems((prevItems) => {
+            // Buscamos si el producto ya está en el carrito
             const existingItem = prevItems.find((item) => item.id === product.id);
 
             if (existingItem) {
-                // Si el producto ya existe, actualizar cantidad
+                // Si ya existe, solo sumamos la nueva cantidad a la que ya tenía
                 return prevItems.map((item) =>
                     item.id === product.id
                         ? { ...item, quantity: item.quantity + quantity }
                         : item
                 );
             } else {
-                // Si es nuevo, agregarlo
+                // Si es nuevo, lo agregamos al carrito con la cantidad indicada
                 return [...prevItems, { ...product, quantity }];
             }
         });
     };
 
-    // Actualizar cantidad de un producto
+    /**
+     * updateQuantity — Cambia la cantidad de un producto en el carrito
+     * Si la nueva cantidad es 0 o menor, el producto se elimina del carrito.
+     * @param {string|number} productId - ID del producto a modificar
+     * @param {number} newQuantity      - Nueva cantidad deseada
+     */
     const updateQuantity = (productId, newQuantity) => {
         if (newQuantity <= 0) {
-            removeFromCart(productId);
+            removeFromCart(productId); // Si la cantidad llega a 0, lo quitamos del carrito
             return;
         }
 
@@ -48,50 +86,72 @@ export function CartProvider({ children }) {
         );
     };
 
-    // Eliminar producto del carrito
+    /**
+     * removeFromCart — Quita un producto del carrito completamente
+     * @param {string|number} productId - ID del producto a eliminar
+     */
     const removeFromCart = (productId) => {
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
     };
 
-    // Limpiar todo el carrito
+    /**
+     * clearCart — Vacía el carrito por completo y quita el cupón aplicado
+     * Se llama después de completar una compra.
+     */
     const clearCart = () => {
         setCartItems([]);
         setAppliedCoupon(null);
     };
 
-    // Obtener total del carrito
+    /**
+     * getCartTotal — Calcula el precio total del carrito
+     * Suma (precio × cantidad) de todos los productos.
+     * @returns {number} Total en pesos colombianos
+     */
     const getCartTotal = () => {
         return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
     };
 
-    // Obtener cantidad total de items
+    /**
+     * getCartItemCount — Cuenta cuántos artículos hay en el carrito (suma de cantidades)
+     * @returns {number} Total de unidades/metros en el carrito
+     */
     const getCartItemCount = () => {
         return cartItems.reduce((count, item) => count + item.quantity, 0);
     };
 
-    // Verificar si un producto está en el carrito
+    /**
+     * isInCart — Verifica si un producto ya está en el carrito
+     * @param {string|number} productId - ID del producto a verificar
+     * @returns {boolean} true si está en el carrito, false si no
+     */
     const isInCart = (productId) => {
         return cartItems.some((item) => item.id === productId);
     };
 
-    // Obtener cantidad de un producto específico
+    /**
+     * getProductQuantity — Obtiene la cantidad actual de un producto en el carrito
+     * @param {string|number} productId - ID del producto
+     * @returns {number} Cantidad en el carrito (0 si no está)
+     */
     const getProductQuantity = (productId) => {
         const item = cartItems.find((item) => item.id === productId);
         return item ? item.quantity : 0;
     };
 
+    // Datos y funciones disponibles para todos los componentes que usen useCart()
     const value = {
-        cartItems,
-        appliedCoupon,
-        setAppliedCoupon,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        getCartTotal,
-        getCartItemCount,
-        isInCart,
-        getProductQuantity,
+        cartItems,           // Lista de productos en el carrito
+        appliedCoupon,       // Cupón de descuento activo (o null)
+        setAppliedCoupon,    // Función para aplicar/quitar un cupón
+        addToCart,           // Agregar un producto
+        updateQuantity,      // Cambiar la cantidad de un producto
+        removeFromCart,      // Quitar un producto
+        clearCart,           // Vaciar todo el carrito
+        getCartTotal,        // Calcular el total
+        getCartItemCount,    // Contar artículos totales
+        isInCart,            // Saber si un producto ya está en el carrito
+        getProductQuantity,  // Saber la cantidad de un producto específico
     };
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -1,78 +1,59 @@
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo, useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import ProductCard from './ProductCard';
+import SmartFilter from './SmartFilter';
+
+gsap.registerPlugin(useGSAP);
 
 function ProductGrid({ products }) {
     const [selectedCategory, setSelectedCategory] = useState('Todos');
     const [sortBy, setSortBy] = useState('featured');
     const [priceRange, setPriceRange] = useState([0, 100000]);
+    const [moodTheme, setMoodTheme] = useState('bg-transparent');
+    const gridRef = useRef(null);
 
-    // Obtener categorías únicas
     const categories = useMemo(() => {
-        const cats = ['Todos', ...new Set(products.map((p) => p.category))];
-        return cats;
+        return ['Todos', ...new Set(products.map((p) => p.category))];
     }, [products]);
 
-    // Filtrar y ordenar productos
     const filteredProducts = useMemo(() => {
         let filtered = products;
-
-        // Filtrar por categoría
         if (selectedCategory !== 'Todos') {
             filtered = filtered.filter((p) => p.category === selectedCategory);
         }
-
-        // Filtrar por rango de precio
-        filtered = filtered.filter(
-            (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
-        );
-
-        // Ordenar
+        filtered = filtered.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
         switch (sortBy) {
-            case 'price-asc':
-                filtered = [...filtered].sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                filtered = [...filtered].sort((a, b) => b.price - a.price);
-                break;
-            case 'name':
-                filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-                break;
-            case 'featured':
-            default:
-                filtered = [...filtered].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-                break;
+            case 'price-asc': filtered = [...filtered].sort((a, b) => a.price - b.price); break;
+            case 'price-desc': filtered = [...filtered].sort((a, b) => b.price - a.price); break;
+            case 'name': filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name)); break;
+            case 'featured': default: filtered = [...filtered].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break;
         }
-
         return filtered;
     }, [products, selectedCategory, sortBy, priceRange]);
 
+    // Stagger animation for product cards
+    useGSAP(() => {
+        if (gridRef.current) {
+            const cards = gridRef.current.querySelectorAll('.product-card-wrapper');
+            gsap.fromTo(cards,
+                { opacity: 0, y: 20 },
+                { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "power2.out" }
+            );
+        }
+    }, { scope: gridRef, dependencies: [filteredProducts] });
+
     return (
-        <div>
+        <div className={`transition-colors duration-1000 ease-in-out ${moodTheme} -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-8 rounded-3xl`}>
             {/* Filters */}
             <div className="mb-8 space-y-6">
-                {/* Category Filter */}
-                <div>
-                    <h3 className="font-bold mb-3">Categorías</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {categories.map((category) => (
-                            <button
-                                key={category}
-                                onClick={() => setSelectedCategory(category)}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedCategory === category
-                                        ? 'bg-primary-600 text-white shadow-lg'
-                                        : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
-                                    }`}
-                            >
-                                {category}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <SmartFilter 
+                    activeCategory={selectedCategory} 
+                    onCategoryChange={setSelectedCategory} 
+                    onMoodChange={setMoodTheme} 
+                />
 
-                {/* Sort and Price Range */}
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Sort */}
                     <div className="flex-1">
                         <label className="block font-bold mb-2">Ordenar por</label>
                         <select
@@ -87,7 +68,6 @@ function ProductGrid({ products }) {
                         </select>
                     </div>
 
-                    {/* Price Range */}
                     <div className="flex-1">
                         <label className="block font-bold mb-2">
                             Rango de precio: ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
@@ -112,16 +92,11 @@ function ProductGrid({ products }) {
 
             {/* Products Grid */}
             {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredProducts.map((product, index) => (
-                        <motion.div
-                            key={product.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                        >
+                <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredProducts.map((product) => (
+                        <div key={product.id} className="product-card-wrapper">
                             <ProductCard product={product} />
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             ) : (

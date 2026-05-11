@@ -1,228 +1,161 @@
-import React from 'react';
-import { FiPackage, FiDollarSign, FiAlertCircle, FiShoppingBag } from 'react-icons/fi';
+import React, { useRef } from 'react';
+import { Package, DollarSign, AlertCircle, ShoppingBag } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
-import MetricCard from '../../../components/dashboard/MetricCard';
 import { useMetrics } from '../../../context/MetricsContext';
 import { formatCurrency } from '../../../utils/formatters';
 import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
+const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
+const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
+
 function ReturnsAnalysis() {
     const { orders, bugReports, users } = useMetrics();
-    // Calcular órdenes devueltas
     const returnedOrders = orders.filter(o => o.returned || o.status === 'returned');
     const returnRate = orders.length > 0 ? (returnedOrders.length / orders.length) * 100 : 0;
     const returnedValue = returnedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
-    // Calcular devoluciones por tipo de tela (basado en bugReports)
+    const containerRef = useRef(null);
+
     const returnsByType = {};
-    bugReports.forEach(report => {
-        const category = report.productName?.split(' ')[0] || report.category || 'Otros';
-        if (!returnsByType[category]) {
-            returnsByType[category] = { name: category, count: 0 };
-        }
-        returnsByType[category].count++;
+    bugReports.forEach(r => {
+        const cat = r.productName?.split(' ')[0] || r.category || 'Otros';
+        if (!returnsByType[cat]) returnsByType[cat] = { name: cat, count: 0 };
+        returnsByType[cat].count++;
     });
     const returnsByTypeArray = Object.values(returnsByType);
 
-    // Calcular devoluciones por vendedor
-    const sellers = users.filter(u => u.role === 'seller');
-    const returnsBySeller = sellers.map(seller => {
-        const sellerReports = bugReports.filter(r => r.sellerId === seller.id);
-        const sellerOrders = orders.filter(o => o.sellerId === seller.id);
-        return {
-            sellerId: seller.id,
-            sellerName: seller.name,
-            count: sellerReports.length,
-            totalOrders: sellerOrders.length,
-            rate: sellerOrders.length > 0 ? (sellerReports.length / sellerOrders.length) * 100 : 0
-        };
+    const returnsBySeller = users.filter(u => u.role === 'seller' || u.role === 'vendedor').map(seller => {
+        const sr = bugReports.filter(r => r.sellerId === seller.id);
+        const so = orders.filter(o => o.sellerId === seller.id);
+        return { sellerId: seller.id, sellerName: seller.name, count: sr.length, rate: so.length > 0 ? (sr.length / so.length) * 100 : 0 };
     }).filter(s => s.count > 0).sort((a, b) => b.count - a.count);
 
-    const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
+    const KPIs = [
+        { label: 'Tasa Devolución', value: `${returnRate.toFixed(2)}%`, icon: Package, color: 'rose', top: true },
+        { label: 'Total Reportes', value: bugReports.length, icon: AlertCircle, color: 'indigo' },
+        { label: 'Total Pedidos', value: orders.length, icon: ShoppingBag, color: 'slate' },
+        { label: 'Valor Afectado', value: formatCurrency(returnedValue), icon: DollarSign, color: 'amber' },
+    ];
+
+    useGSAP(() => {
+        gsap.fromTo('.kpi-card', 
+            { opacity: 0, y: 20 }, 
+            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+        );
+        gsap.fromTo('.chart-panel', 
+            { opacity: 0, scale: 0.95 }, 
+            { opacity: 1, scale: 1, duration: 0.6, stagger: 0.1, ease: "back.out(1.2)", delay: 0.3 }
+        );
+        gsap.fromTo('.table-container', 
+            { opacity: 0, y: 30 }, 
+            { opacity: 1, y: 0, duration: 0.5, delay: 0.6, ease: "power2.out" }
+        );
+    }, { scope: containerRef });
 
     return (
-        <DashboardLayout title="Análisis de Devoluciones" links={adminDashboardLinks}>
-            <BackButton />
-            {/* Summary Cards */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <MetricCard 
-                    label="Tasa de Devolución"
-                    value={`${returnRate.toFixed(2)}%`}
-                    icon={FiPackage}
-                    color="red"
-                />
-                <MetricCard 
-                    label="Total Reportes"
-                    value={bugReports.length}
-                    icon={FiAlertCircle}
-                    color="blue"
-                />
-                <MetricCard 
-                    label="Total Pedidos"
-                    value={orders.length}
-                    icon={FiShoppingBag}
-                    color="gray"
-                />
-                <MetricCard 
-                    label="Valor Afectado"
-                    value={formatCurrency(returnedValue)}
-                    icon={FiDollarSign}
-                    color="orange"
-                />
-            </div>
-
-            {/* Charts */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
-                {/* Returns by Fabric Type */}
-                <div className="card p-6 border-violet-50 dark:border-slate-700/50">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
-                            <FiPackage className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight">Reportes por Tipo de Tela</h3>
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">Distribución de devoluciones</p>
-                        </div>
+        <DashboardLayout title="" links={adminDashboardLinks}>
+            <div ref={containerRef} className="-m-6 p-6 min-h-screen">
+                <div className="relative z-10">
+                    <BackButton />
+                    <div className="mb-8 mt-4">
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Análisis de Reportes</h1>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">Trazabilidad de incidencias y su impacto en la operación comercial.</p>
                     </div>
-                    {returnsByTypeArray.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={returnsByTypeArray}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="count"
-                                >
-                                    {returnsByTypeArray.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm font-bold uppercase tracking-widest">
-                            No hay datos de reportes
-                        </div>
-                    )}
-                </div>
 
-                {/* Returns by Seller */}
-                <div className="card p-6 border-red-50 dark:border-slate-700/50">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                            <FiAlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight">Top Vendedores con Reportes</h3>
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">Mayor incidencia primero</p>
-                        </div>
-                    </div>
-                    {returnsBySeller.length > 0 ? (
-                        <div className="space-y-4">
-                            {returnsBySeller.slice(0, 5).map((seller, index) => (
-                                <div key={seller.sellerId} className="flex items-center gap-4 group hover:bg-red-50/50 dark:hover:bg-red-900/10 p-2 -mx-2 rounded-xl transition-colors">
-                                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 font-extrabold shadow-inner group-hover:scale-110 transition-transform">
-                                        0{index + 1}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-900 dark:text-white">{seller.sellerName}</p>
-                                        <div className="w-full bg-gray-100 dark:bg-slate-800 rounded-lg h-1.5 mt-1 overflow-hidden">
-                                            <div
-                                                className="bg-red-500 h-full rounded-lg"
-                                                style={{ width: `${Math.min((seller.count / (returnsBySeller[0]?.count || 1)) * 100, 100)}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-lg font-black text-red-600">{seller.count}</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{seller.rate.toFixed(1)}% tasa</p>
-                                    </div>
+                    <div className="grid md:grid-cols-4 gap-6 mb-8">
+                        {KPIs.map(({ label, value, icon: Icon, color, top }) => (
+                            <div key={label} className={`kpi-card ${glassCard} p-6 overflow-hidden relative group hover:-translate-y-1 transition-all duration-300 ${top ? 'border-t-4 border-t-rose-500' : ''}`}>
+                                <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${color}-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500`} />
+                                <div className="flex items-center justify-between mb-4 relative z-10">
+                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</span>
+                                    <div className={`p-2.5 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={18} /></div>
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm font-bold uppercase tracking-widest">
-                            No hay reportes de vendedores
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Bug Reports Table */}
-            <div className="card border-blue-50 dark:border-slate-800/50 overflow-hidden shadow-xl shadow-blue-500/5">
-                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3 bg-blue-50/10 dark:bg-blue-900/10">
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                        <FiAlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <p className={`text-3xl font-black text-${color}-600 relative z-10`}>{value}</p>
+                            </div>
+                        ))}
                     </div>
-                    <div>
-                        <h3 className="font-black text-gray-900 dark:text-white tracking-tight leading-none">Reportes de Calidad Recientes</h3>
-                        <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">Seguimiento de incidencias en productos</p>
-                    </div>
-                </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-gray-50/30 dark:bg-slate-900/50 border-b border-gray-100 dark:border-slate-800">
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">ID</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Producto</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Cliente</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Descripción</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Prioridad</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Estado</th>
-                                <th className="text-left p-4 font-black text-[10px] uppercase tracking-widest text-gray-400">Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-                            {bugReports.slice(0, 10).map(report => (
-                                <tr key={report.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-colors group">
-                                    <td className="p-4 font-bold text-primary-600 dark:text-primary-400 text-xs">
-                                        #{report.id.toString().padStart(4, '0')}
-                                    </td>
-                                    <td className="p-4 font-bold text-gray-900 dark:text-white text-sm">
-                                        {report.productName || 'N/A'}
-                                    </td>
-                                    <td className="p-4 text-xs font-bold text-gray-500 dark:text-gray-400">
-                                        {report.clientName || `Cliente ${report.clientId}`}
-                                    </td>
-                                    <td className="p-4 text-xs font-medium text-gray-500 dark:text-gray-400 max-w-[200px] truncate" title={report.description}>
-                                        {report.description}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                                            report.priority === 'high' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 
-                                            report.priority === 'medium' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' : 
-                                            'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                                        }`}>
-                                            {report.priority === 'high' ? 'Alta' : report.priority === 'medium' ? 'Media' : 'Baja'}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${
-                                                report.status === 'open' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse' : 
-                                                report.status === 'resolved' ? 'bg-emerald-500' : 'bg-gray-400'
-                                            }`}></div>
-                                            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                                {report.status === 'open' ? 'Abierto' : report.status === 'resolved' ? 'Resuelto' : 'En revisión'}
-                                            </span>
+                    <div className="grid lg:grid-cols-2 gap-6 mb-8">
+                        <div className={`chart-panel ${glassCard} p-6`}>
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">Reportes por Tipo de Tela</h3>
+                            {returnsByTypeArray.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <PieChart>
+                                        <Pie data={returnsByTypeArray} cx="50%" cy="50%" outerRadius={90} dataKey="count" label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                                            {returnsByTypeArray.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : <div className="h-64 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm font-bold uppercase tracking-widest">Sin datos</div>}
+                        </div>
+
+                        <div className={`chart-panel ${glassCard} p-6`}>
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">Top Vendedores con Reportes</h3>
+                            {returnsBySeller.length > 0 ? (
+                                <div className="space-y-5">
+                                    {returnsBySeller.slice(0, 5).map((seller, i) => (
+                                        <div key={seller.sellerId} className="flex items-center gap-4 group hover:bg-rose-50 dark:hover:bg-rose-900/20 p-2 -mx-2 rounded-xl transition-colors">
+                                            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-400 font-black shadow-sm">0{i + 1}</div>
+                                            <div className="flex-1">
+                                                <p className="font-bold text-slate-900 dark:text-white mb-1.5">{seller.sellerName}</p>
+                                                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                    <div className="bg-rose-500 h-full rounded-full" style={{ width: `${Math.min((seller.count / (returnsBySeller[0]?.count || 1)) * 100, 100)}%` }} />
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-black text-rose-600 dark:text-rose-400">{seller.count}</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{seller.rate.toFixed(1)}%</p>
+                                            </div>
                                         </div>
-                                    </td>
-                                    <td className="p-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                        {new Date(report.date).toLocaleDateString('es-CO')}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                    ))}
+                                </div>
+                            ) : <div className="h-48 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm font-bold uppercase tracking-widest">Sin reportes</div>}
+                        </div>
+                    </div>
+
+                    <div className={`table-container ${glassCard} overflow-hidden`}>
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                            <h3 className="font-black text-slate-900 dark:text-white">Reportes de Calidad Recientes</h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>{['ID', 'Producto', 'Cliente', 'Descripción', 'Prioridad', 'Estado', 'Fecha'].map(h => <th key={h} className="px-6 py-5">{h}</th>)}</tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {bugReports.slice(0, 10).map(report => (
+                                        <tr key={report.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                            <td className="px-6 py-4 font-mono font-bold text-indigo-600 dark:text-indigo-400 text-xs">#{report.id.toString().padStart(4, '0')}</td>
+                                            <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{report.productName || 'N/A'}</td>
+                                            <td className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">{report.clientName || `Cliente ${report.clientId}`}</td>
+                                            <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 max-w-[200px] truncate">{report.description}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${report.priority === 'high' ? 'bg-rose-500 animate-pulse' : report.priority === 'medium' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${report.priority === 'high' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/20' : report.priority === 'medium' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'}`}>
+                                                        {report.priority === 'high' ? 'Alta' : report.priority === 'medium' ? 'Media' : 'Baja'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${report.status === 'open' ? 'bg-indigo-500 animate-pulse' : report.status === 'resolved' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{report.status === 'open' ? 'Abierto' : report.status === 'resolved' ? 'Resuelto' : 'En revisión'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-bold text-slate-400 dark:text-slate-500">{new Date(report.date).toLocaleDateString('es-CO')}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </DashboardLayout>

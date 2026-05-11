@@ -245,4 +245,87 @@ public class InventoryDAO {
             return pst.executeUpdate() > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
+
+    // ── erp_sales_metrics ─────────────────────────────────────────────────────
+    /**
+     * Retorna las metricas de ventas ERP (ventas reales vs objetivo) de los
+     * ultimos 30 dias, ordenadas cronologicamente ascendente.
+     * @return Lista de mapas con campos: recordDate, actualSales, targetSales, profitMargin
+     */
+    public List<java.util.Map<String, Object>> getErpSalesMetrics() {
+        List<java.util.Map<String, Object>> list = new ArrayList<>();
+        String query = "SELECT record_date, actual_sales, target_sales, profit_margin FROM erp_sales_metrics ORDER BY record_date ASC LIMIT 30";
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement pst = con.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("recordDate", rs.getDate("record_date").toString());
+                row.put("actualSales", rs.getDouble("actual_sales"));
+                row.put("targetSales", rs.getDouble("target_sales"));
+                row.put("profitMargin", rs.getDouble("profit_margin"));
+                list.add(row);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ── erp_system_notifications ──────────────────────────────────────────────
+    /**
+     * Retorna las notificaciones del sistema ERP, las mas recientes primero.
+     * @return Lista de mapas con campos: id, type, title, message, isRead, createdAt
+     */
+    public List<java.util.Map<String, Object>> getErpNotifications() {
+        List<java.util.Map<String, Object>> list = new ArrayList<>();
+        String query = "SELECT id, type, title, message, is_read, created_at FROM erp_system_notifications ORDER BY created_at DESC LIMIT 20";
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement pst = con.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("id", rs.getInt("id"));
+                row.put("type", rs.getString("type"));
+                row.put("title", rs.getString("title"));
+                row.put("message", rs.getString("message"));
+                row.put("isRead", rs.getBoolean("is_read"));
+                if (rs.getTimestamp("created_at") != null)
+                    row.put("createdAt", rs.getTimestamp("created_at").toString());
+                list.add(row);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ── erp_fabric_inventory ──────────────────────────────────────────────────
+    /**
+     * Retorna el inventario de telas ERP con alertas de stock bajo.
+     * @return Lista de mapas con campos: id, sku, fabricName, category, supplier,
+     *         currentMeters, minThresholdMeters, costPerMeter, lowStock
+     */
+    public List<java.util.Map<String, Object>> getErpFabricInventory() {
+        List<java.util.Map<String, Object>> list = new ArrayList<>();
+        String query = "SELECT id, sku, fabric_name, category, supplier, current_meters, min_threshold_meters, cost_per_meter, last_restock_date FROM erp_fabric_inventory ORDER BY fabric_name ASC";
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement pst = con.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("id", rs.getInt("id"));
+                row.put("sku", rs.getString("sku"));
+                row.put("fabricName", rs.getString("fabric_name"));
+                row.put("category", rs.getString("category"));
+                row.put("supplier", rs.getString("supplier"));
+                double current = rs.getDouble("current_meters");
+                double threshold = rs.getDouble("min_threshold_meters");
+                row.put("currentMeters", current);
+                row.put("minThresholdMeters", threshold);
+                row.put("costPerMeter", rs.getDouble("cost_per_meter"));
+                row.put("lowStock", current <= threshold);
+                if (rs.getDate("last_restock_date") != null)
+                    row.put("lastRestockDate", rs.getDate("last_restock_date").toString());
+                list.add(row);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
 }

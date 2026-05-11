@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
-import { FiTag } from 'react-icons/fi';
+import { Tag } from 'lucide-react';
 
 function OrderSummary({ formData }) {
     const { cartItems, getCartTotal, getCartItemCount, appliedCoupon } = useCart();
@@ -60,7 +60,7 @@ function OrderSummary({ formData }) {
                     <div className="flex flex-col gap-2 py-2 border-y border-gray-100 dark:border-slate-700 my-2">
                         <div className="flex justify-between items-center text-green-700 dark:text-green-400">
                             <div className="flex items-center gap-2">
-                                <FiTag />
+                                <Tag className="w-4 h-4" />
                                 <span>Cupón <strong className="uppercase">{appliedCoupon.code}</strong></span>
                             </div>
                             <span className="font-medium">-{formatCurrency(discountAmount)}</span>
@@ -116,3 +116,4 @@ function OrderSummary({ formData }) {
 }
 
 export default OrderSummary;
+

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cardPaymentSchema, documentTypes } from './paymentSchema';
-import { FiCreditCard, FiUser, FiCalendar, FiLock, FiFileText, FiHash } from 'react-icons/fi';
+import { CreditCard, User, Calendar, Lock, FileText, Hash } from 'lucide-react';
 
 function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProcessing }) {
     const {
@@ -49,7 +49,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
             {/* Nombre del titular */}
             <div>
                 <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FiUser className="inline w-4 h-4 mr-2" />
+                    <User className="inline w-4 h-4 mr-2" />
                     Nombre del Titular
                 </label>
                 <input
@@ -71,7 +71,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
             {/* Número de tarjeta */}
             <div>
                 <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FiCreditCard className="inline w-4 h-4 mr-2" />
+                    <CreditCard className="inline w-4 h-4 mr-2" />
                     Número de Tarjeta
                 </label>
                 <input
@@ -96,7 +96,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <FiCalendar className="inline w-4 h-4 mr-2" />
+                        <Calendar className="inline w-4 h-4 mr-2" />
                         Vencimiento
                     </label>
                     <input
@@ -119,7 +119,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
 
                 <div>
                     <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <FiLock className="inline w-4 h-4 mr-2" />
+                        <Lock className="inline w-4 h-4 mr-2" />
                         CVV
                     </label>
                     <input
@@ -146,7 +146,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
             {/* Tipo de documento */}
             <div>
                 <label htmlFor="documentType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FiFileText className="inline w-4 h-4 mr-2" />
+                    <FileText className="inline w-4 h-4 mr-2" />
                     Tipo de Documento
                 </label>
                 <select
@@ -173,7 +173,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
             {/* Número de documento */}
             <div>
                 <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FiHash className="inline w-4 h-4 mr-2" />
+                    <Hash className="inline w-4 h-4 mr-2" />
                     Número de Documento
                 </label>
                 <input
@@ -205,7 +205,7 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
                     </>
                 ) : (
                     <>
-                        <FiLock className="w-5 h-5" />
+                        <Lock className="w-5 h-5" />
                         Pagar de forma segura
                     </>
                 )}
@@ -215,3 +215,4 @@ function PaymentForm({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isProc
 }
 
 export default PaymentForm;
+

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUI } from '../context/UIContext';
+
+gsap.registerPlugin(useGSAP);
 
 function Carousel() {
     const { carouselSlides } = useUI();
@@ -11,155 +13,149 @@ function Carousel() {
     ];
 
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [direction, setDirection] = useState(0);
+    const containerRef = useRef(null);
+    const slidesRef = useRef([]);
 
+    // Auto play
     useEffect(() => {
         const timer = setInterval(() => {
             nextSlide();
-        }, 5000);
-
+        }, 6000);
         return () => clearInterval(timer);
     }, [currentSlide]);
 
     const nextSlide = () => {
-        setDirection(1);
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        animateSlideChange(currentSlide, (currentSlide + 1) % slides.length, 1);
     };
 
     const prevSlide = () => {
-        setDirection(-1);
-        setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+        animateSlideChange(currentSlide, (currentSlide - 1 + slides.length) % slides.length, -1);
     };
 
     const goToSlide = (index) => {
-        setDirection(index > currentSlide ? 1 : -1);
-        setCurrentSlide(index);
+        if (index === currentSlide) return;
+        animateSlideChange(currentSlide, index, index > currentSlide ? 1 : -1);
     };
 
-    const slideVariants = {
-        enter: (direction) => ({
-            x: direction > 0 ? 1000 : -1000,
-            opacity: 0,
-        }),
-        center: {
-            x: 0,
+    const animateSlideChange = (oldIndex, newIndex, direction) => {
+        const oldSlide = slidesRef.current[oldIndex];
+        const newSlide = slidesRef.current[newIndex];
+        
+        if (!oldSlide || !newSlide) return;
+
+        // Preparamos el nuevo slide fuera de la vista
+        gsap.set(newSlide, { xPercent: direction * 100, opacity: 0, zIndex: 10 });
+        gsap.set(oldSlide, { zIndex: 1 });
+
+        // Preparamos los textos del nuevo slide para animarlos de abajo hacia arriba
+        const title = newSlide.querySelector('.carousel-title');
+        const subtitle = newSlide.querySelector('.carousel-subtitle');
+        const cta = newSlide.querySelector('.carousel-cta');
+        gsap.set([title, subtitle, cta], { y: 30, opacity: 0 });
+
+        const tl = gsap.timeline();
+        
+        // El slide viejo sale
+        tl.to(oldSlide, { xPercent: -direction * 50, opacity: 0, duration: 0.8, ease: "power2.inOut" }, 0);
+        
+        // El slide nuevo entra
+        tl.to(newSlide, { xPercent: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
+
+        // Animamos los textos del nuevo slide
+        tl.to([title, subtitle, cta], {
+            y: 0,
             opacity: 1,
-        },
-        exit: (direction) => ({
-            x: direction < 0 ? 1000 : -1000,
-            opacity: 0,
-        }),
+            duration: 0.6,
+            stagger: 0.15,
+            ease: "power2.out"
+        }, "-=0.3"); // Comienza un poco antes de que termine la transición del fondo
+
+        setCurrentSlide(newIndex);
     };
+
+    // Configuración inicial del primer render
+    useGSAP(() => {
+        slidesRef.current.forEach((slide, i) => {
+            if (i === currentSlide) {
+                gsap.set(slide, { xPercent: 0, opacity: 1, zIndex: 10 });
+                const title = slide.querySelector('.carousel-title');
+                const subtitle = slide.querySelector('.carousel-subtitle');
+                const cta = slide.querySelector('.carousel-cta');
+                gsap.set([title, subtitle, cta], { y: 0, opacity: 1 });
+            } else {
+                gsap.set(slide, { xPercent: 100, opacity: 0, zIndex: 1 });
+            }
+        });
+    }, { scope: containerRef });
 
     return (
-        <section className="relative w-full h-[400px] md:h-[500px] overflow-hidden bg-gray-900">
-            <AnimatePresence initial={false} custom={direction}>
-                <motion.div
-                    key={currentSlide}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    cursor-pointer
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    transition={{
-                        x: { type: 'spring', stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.2 },
-                    }}
-                    className="absolute inset-0"
+        <section ref={containerRef} className="relative w-full h-[450px] md:h-[600px] overflow-hidden bg-gray-900 group">
+            {/* Renderizamos todos los slides absolutamente superpuestos */}
+            {slides.map((slide, index) => (
+                <div
+                    key={index}
+                    ref={el => slidesRef.current[index] = el}
+                    className="absolute inset-0 w-full h-full"
+                    style={{ opacity: index === 0 ? 1 : 0 }}
                 >
-                    {/* Background Image */}
                     <div
                         className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${slides[currentSlide].image})` }}
+                        style={{ backgroundImage: `url(${slide.image})` }}
                     >
-                        <div className="absolute inset-0 bg-black/40"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent"></div>
                     </div>
 
-                    {/* Content */}
-                    <div className="relative h-full flex items-center justify-center text-center px-4">
-                        <div className="max-w-3xl">
-                            <motion.h2
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-4"
-                                cursor-pointer
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                            >
-                                {slides[currentSlide].title}
-                            </motion.h2>
-                            <motion.p
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.3 }}
-                                className="text-xl md:text-2xl text-white/90 mb-8"
-                                cursor-pointer
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                            >
-                                {slides[currentSlide].subtitle}
-                            </motion.p>
-                            <motion.button
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
-                                cursor-pointer
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.8 }}
-                            >
-                                {slides[currentSlide].cta || 'Ver Más'}
-
-                            </motion.button>
+                    <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
+                        <div className="max-w-4xl mt-12">
+                            <h2 className="carousel-title text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-4 tracking-tight drop-shadow-md">
+                                {slide.title}
+                            </h2>
+                            <p className="carousel-subtitle text-lg md:text-2xl text-gray-200 mb-10 font-light max-w-2xl mx-auto drop-shadow-sm">
+                                {slide.subtitle}
+                            </p>
+                            <div className="carousel-cta">
+                                <button
+                                    className="bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md px-10 py-3.5 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_24px_rgba(255,255,255,0.1)] hover:scale-105 active:scale-95"
+                                >
+                                    {slide.cta || 'Explorar Colección'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </motion.div>
-            </AnimatePresence>
+                </div>
+            ))}
 
-            {/* Navigation Arrows */}
-            <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all"
-                aria-label="Previous slide"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.8 }}
-                transition={{ duration: 0.1 }}
-                cursor-pointer 
-            >
-                <FiChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all"
-                aria-label="Next slide"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.1 }}
+            {/* Flechas de Navegación (Tailwind Transitions) */}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button
+                    onClick={prevSlide}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/40 backdrop-blur-xl border border-white/10 text-white p-3 md:p-4 rounded-full transition-all shadow-lg hover:scale-110 hover:-translate-x-1 active:scale-90"
+                    aria-label="Anterior slide"
+                >
+                    <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
+                </button>
 
-                cursor-pointer 
-            >
-                <FiChevronRight className="w-6 h-6" />
-            </button>
+                <button
+                    onClick={nextSlide}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/40 backdrop-blur-xl border border-white/10 text-white p-3 md:p-4 rounded-full transition-all shadow-lg hover:scale-110 hover:translate-x-1 active:scale-90"
+                    aria-label="Siguiente slide"
+                >
+                    <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
+                </button>
+            </div>
 
-            {/* Dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {/* Indicadores de Puntos */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
                 {slides.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`w-3 h-3 rounded-full transition-all ${index === currentSlide
-                            ? 'bg-white w-8'
-                            : 'bg-white/50 hover:bg-white/75'
-                            }`}
-                        aria-label={`Go to slide ${index + 1}`}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.8 }}
-                        transition={{ duration: 0.4 }}
-                        cursor-pointer 
+                        className={`h-2.5 rounded-full transition-all duration-500 ease-out hover:scale-110 ${
+                            index === currentSlide
+                                ? 'bg-white w-10 shadow-[0_0_10px_rgba(255,255,255,0.5)]'
+                                : 'bg-white/40 hover:bg-white/70 w-2.5'
+                        }`}
+                        aria-label={`Ir al slide ${index + 1}`}
                     />
                 ))}
             </div>

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import {
-    MdShoppingBag, MdDelete, MdAdd, MdRemove,
-    MdLocalOffer, MdClose, MdArrowForward, MdArrowBack,
-    MdLocalShipping, MdSecurity, MdAutorenew, MdImageNotSupported
-} from 'react-icons/md';
+    ShoppingBag, Trash2, Plus, Minus,
+    Tag, X as XIcon, ArrowRight, ArrowLeft,
+    Truck, ShieldCheck, RefreshCw, ImageOff
+} from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -13,18 +14,27 @@ import { useCart } from '../context/CartContext';
 import { useMetrics } from '../context/MetricsContext';
 import { formatCurrency } from '../utils/formatters';
 
+gsap.registerPlugin(useGSAP);
+
 /* ──────────────────────────────────────────────
    Fila de producto dentro del carrito
 ────────────────────────────────────────────── */
 function CartRow({ item, onRemove, onQuantity }) {
     const imageUrl = Array.isArray(item.images) && item.images[0] ? item.images[0] : null;
+    const rowRef = useRef(null);
+
+    useGSAP(() => {
+        if (rowRef.current) {
+            gsap.fromTo(rowRef.current,
+                { opacity: 0, y: 14 },
+                { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
+            );
+        }
+    }, { scope: rowRef });
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -60, transition: { duration: 0.18 } }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+        <div
+            ref={rowRef}
             className="flex gap-4 p-4 md:p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700"
         >
             {/* Imagen */}
@@ -38,7 +48,7 @@ function CartRow({ item, onRemove, onQuantity }) {
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                        <MdImageNotSupported size={32} />
+                        <ImageOff className="w-8 h-8" />
                     </div>
                 )}
             </div>
@@ -53,38 +63,34 @@ function CartRow({ item, onRemove, onQuantity }) {
                             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">{item.material}</p>
                         )}
                     </div>
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                    <button
                         onClick={() => onRemove(item.id)}
-                        className="flex-shrink-0 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="flex-shrink-0 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors hover:scale-110 active:scale-90"
                         aria-label="Eliminar"
                     >
-                        <MdDelete size={18} />
-                    </motion.button>
+                        <Trash2 className="w-[18px] h-[18px]" />
+                    </button>
                 </div>
 
                 {/* Cantidad + precio en una fila */}
                 <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
                     {/* Selector +/- */}
                     <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-xl p-1">
-                        <motion.button
-                            whileTap={{ scale: 0.85 }}
+                        <button
                             onClick={() => onQuantity(item.id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
                         >
-                            <MdRemove size={16} />
-                        </motion.button>
+                            <Minus className="w-4 h-4" />
+                        </button>
                         <span className="w-8 text-center font-bold text-sm tabular-nums">{item.quantity}</span>
-                        <motion.button
-                            whileTap={{ scale: 0.85 }}
+                        <button
                             onClick={() => onQuantity(item.id, item.quantity + 1)}
                             disabled={item.quantity >= (item.stock ?? 99)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
                         >
-                            <MdAdd size={16} />
-                        </motion.button>
+                            <Plus className="w-4 h-4" />
+                        </button>
                     </div>
                     <span className="text-xs text-gray-400">
                         {formatCurrency(item.price)}/m
@@ -94,7 +100,7 @@ function CartRow({ item, onRemove, onQuantity }) {
                     </span>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }
 
@@ -148,14 +154,9 @@ export default function Cart() {
             <div className="min-h-screen flex flex-col">
                 <Header />
                 <AnimatedPage className="flex-1 flex items-center justify-center section-container">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.4 }}
-                        className="text-center max-w-sm py-16"
-                    >
+                    <div className="text-center max-w-sm py-16">
                         <div className="w-28 h-28 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary-100 to-accent-100 dark:from-primary-900/30 dark:to-accent-900/30 flex items-center justify-center">
-                            <MdShoppingBag className="w-14 h-14 text-primary-400" />
+                            <ShoppingBag className="w-14 h-14 text-primary-400" />
                         </div>
                         <h2 className="text-3xl font-bold mb-3">Tu carrito está vacío</h2>
                         <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
@@ -163,10 +164,10 @@ export default function Cart() {
                             ¡Explora el catálogo y encuentra algo que te guste!
                         </p>
                         <Link to="/catalogo" className="btn-primary inline-flex items-center gap-2">
-                            <MdArrowBack size={18} />
+                            <ArrowLeft className="w-5 h-5" />
                             Ver Catálogo
                         </Link>
-                    </motion.div>
+                    </div>
                 </AnimatedPage>
                 <Footer />
             </div>
@@ -204,28 +205,26 @@ export default function Cart() {
                                 onClick={clearCart}
                                 className="text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1 transition-colors"
                             >
-                                <MdDelete size={16} />
+                                <Trash2 className="w-4 h-4" />
                                 Vaciar carrito
                             </button>
                         </div>
 
-                        <AnimatePresence mode="popLayout">
-                            {cartItems.map(item => (
-                                <CartRow
-                                    key={item.id}
-                                    item={item}
-                                    onRemove={removeFromCart}
-                                    onQuantity={updateQuantity}
-                                />
-                            ))}
-                        </AnimatePresence>
+                        {cartItems.map(item => (
+                            <CartRow
+                                key={item.id}
+                                item={item}
+                                onRemove={removeFromCart}
+                                onQuantity={updateQuantity}
+                            />
+                        ))}
 
                         {/* Seguir comprando */}
                         <Link
                             to="/catalogo"
                             className="inline-flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline mt-2"
                         >
-                            <MdArrowBack size={18} />
+                            <ArrowLeft className="w-5 h-5" />
                             Seguir comprando
                         </Link>
                     </section>
@@ -250,14 +249,14 @@ export default function Cart() {
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 rounded-xl px-3 py-2 border border-green-100 dark:border-green-800">
                                                 <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm font-bold">
-                                                    <MdLocalOffer size={16} />
+                                                    <Tag className="w-4 h-4" />
                                                     {appliedCoupon.code}
                                                 </div>
                                                 <button
                                                     onClick={() => setAppliedCoupon(null)}
                                                     className="text-green-600 hover:bg-green-100 dark:hover:bg-green-800 p-1 rounded-full transition-colors"
                                                 >
-                                                    <MdClose size={16} />
+                                                    <XIcon className="w-4 h-4" />
                                                 </button>
                                             </div>
                                             <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
@@ -296,7 +295,7 @@ export default function Cart() {
                                 {/* Envío */}
                                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                                     <span className="flex items-center gap-1.5">
-                                        <MdLocalShipping size={16} />
+                                        <Truck className="w-4 h-4" />
                                         Envío
                                     </span>
                                     {shipping === 0 ? (
@@ -329,25 +328,23 @@ export default function Cart() {
                                 </div>
 
                                 {/* Botón checkout */}
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     onClick={() => navigate('/checkout')}
-                                    className="w-full btn-primary flex items-center justify-center gap-2 py-3 text-base"
+                                    className="w-full btn-primary flex items-center justify-center gap-2 py-3 text-base hover:scale-[1.02] active:scale-[0.98] transition-transform"
                                 >
                                     Proceder al Pago
-                                    <MdArrowForward size={20} />
-                                </motion.button>
+                                    <ArrowRight className="w-5 h-5" />
+                                </button>
 
                                 {/* Badges de confianza */}
                                 <div className="pt-2 space-y-2 border-t border-gray-100 dark:border-slate-700">
                                     {[
-                                        { icon: MdSecurity, label: 'Pago 100% seguro' },
-                                        { icon: MdLocalShipping,  label: 'Envío gratis desde $100.000' },
-                                        { icon: MdAutorenew, label: 'Devoluciones fáciles' },
+                                        { icon: ShieldCheck, label: 'Pago 100% seguro' },
+                                        { icon: Truck, label: 'Envío gratis desde $100.000' },
+                                        { icon: RefreshCw, label: 'Devoluciones fáciles' },
                                     ].map(({ icon: Icon, label }) => (
                                         <div key={label} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                            <Icon size={16} className="text-green-500 flex-shrink-0" />
+                                            <Icon className="w-4 h-4 text-green-500 flex-shrink-0" />
                                             {label}
                                         </div>
                                     ))}

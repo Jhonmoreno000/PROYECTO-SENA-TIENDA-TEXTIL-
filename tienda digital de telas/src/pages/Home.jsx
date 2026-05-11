@@ -10,14 +10,47 @@ function Home() {
     ]);
 
     useEffect(() => {
-        fetch('http://localhost:8081/api/config/home_sections_config')
-            .then(res => res.ok ? res.text() : null)
-            .then(text => {
-                if (text && text !== '{}') {
-                    setSections(JSON.parse(text));
+        // Function to load settings
+        const loadConfig = () => {
+            // First check local storage for immediate sync
+            const localSettings = localStorage.getItem('home_sections_config');
+            if (localSettings) {
+                try {
+                    setSections(JSON.parse(localSettings));
+                } catch (e) {
+                    console.error('Local Config Parse Error', e);
                 }
-            })
-            .catch(console.error);
+            }
+            
+            // Still attempt to get from backend quietly
+            fetch('http://localhost:8081/api/config/home_sections_config')
+                .then(res => res.ok ? res.text() : null)
+                .then(text => {
+                    if (text && text !== '{}') {
+                        const parsed = JSON.parse(text);
+                        setSections(parsed);
+                        localStorage.setItem('home_sections_config', JSON.stringify(parsed));
+                    }
+                })
+                .catch(e => {
+                    // Fail silently, local storage already applied
+                });
+        };
+
+        loadConfig();
+
+        // Listen for storage events (allows instant update across tabs if User toggles setting in Admin panel)
+        const handleStorageChange = (e) => {
+            if (e.key === 'home_sections_config' && e.newValue) {
+                try {
+                    setSections(JSON.parse(e.newValue));
+                } catch (err) {}
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+
     }, []);
 
     const isVisible = (id) => {

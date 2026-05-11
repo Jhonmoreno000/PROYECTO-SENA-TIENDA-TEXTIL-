@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiAlertTriangle, FiSend, FiCheckCircle } from 'react-icons/fi';
+import { Send, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useNotification } from '../context/NotificationContext';
@@ -48,7 +48,7 @@ function BugReport() {
                         {submitted ? (
                             <div className="text-center py-12">
                                 <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <FiCheckCircle className="w-8 h-8" />
+                                    <CheckCircle className="w-8 h-8" />
                                 </div>
                                 <h2 className="text-2xl font-bold mb-2">¡Gracias por tu reporte!</h2>
                                 <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -127,7 +127,7 @@ function BugReport() {
                                 </div>
 
                                 <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
-                                    <FiSend /> Enviar Reporte
+                                    <Send /> Enviar Reporte
                                 </button>
                             </form>
                         )}
@@ -140,3 +140,4 @@ function BugReport() {
 }
 
 export default BugReport;
+

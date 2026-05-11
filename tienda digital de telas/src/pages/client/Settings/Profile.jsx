@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MdSave, MdCameraAlt, MdLock, MdEmail, MdPhone, MdPerson, MdNotifications, MdCheck } from 'react-icons/md';
+import { Save, Lock, Mail, Phone, User, Bell, Check } from 'lucide-react';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import AnimatedPage from '../../../components/AnimatedPage';
 import clientDashboardLinks from '../../../data/clientDashboardLinks';
@@ -109,7 +109,7 @@ function Profile() {
                         <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    <MdPerson className="inline w-4 h-4 mr-2" />
+                                    <User className="inline w-4 h-4 mr-2" />
                                     Nombre completo
                                 </label>
                                 <input
@@ -122,7 +122,7 @@ function Profile() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    <MdEmail className="inline w-4 h-4 mr-2" />
+                                    <Mail className="inline w-4 h-4 mr-2" />
                                     Correo electrónico
                                 </label>
                                 <input
@@ -135,7 +135,7 @@ function Profile() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    <MdPhone className="inline w-4 h-4 mr-2" />
+                                    <Phone className="inline w-4 h-4 mr-2" />
                                     Teléfono
                                 </label>
                                 <input
@@ -153,7 +153,7 @@ function Profile() {
                     <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                                <MdLock className="inline w-5 h-5 mr-2" />
+                                <Lock className="inline w-5 h-5 mr-2" />
                                 Seguridad
                             </h3>
                             {!showPasswordChange && (
@@ -229,7 +229,7 @@ function Profile() {
                     {/* Notification Preferences */}
                     <div className="card shadow-sm border border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 mb-6">
                         <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">
-                            <MdNotifications className="inline w-5 h-5 mr-2" />
+                            <Bell className="inline w-5 h-5 mr-2" />
                             Preferencias de Notificación
                         </h3>
 
@@ -313,12 +313,12 @@ function Profile() {
                             </>
                         ) : saveSuccess ? (
                             <>
-                                <MdCheck className="w-5 h-5" />
+                                <Check className="w-5 h-5" />
                                 ¡Cambios guardados!
                             </>
                         ) : (
                             <>
-                                <MdSave className="w-5 h-5" />
+                                <Save className="w-5 h-5" />
                                 Guardar Cambios
                             </>
                         )}

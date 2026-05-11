@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { psePaymentSchema, colombianBanks } from './paymentSchema';
-import { FiInfo, FiMail, FiUser, FiDollarSign } from 'react-icons/fi';
+import { Info, Mail, User, DollarSign } from 'lucide-react';
 
 function PSEForm({ onSubmit, isProcessing }) {
     const {
@@ -19,7 +19,7 @@ function PSEForm({ onSubmit, isProcessing }) {
             {/* Info Panel */}
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex gap-3">
-                    <FiInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
                         <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-1">
                             ¿Qué es PSE?
@@ -37,7 +37,7 @@ function PSEForm({ onSubmit, isProcessing }) {
                 {/* Selección de banco */}
                 <div>
                     <label htmlFor="bank" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <FiDollarSign className="inline w-4 h-4 mr-2" />
+                        <DollarSign className="inline w-4 h-4 mr-2" />
                         Selecciona tu Banco
                     </label>
                     <select
@@ -64,7 +64,7 @@ function PSEForm({ onSubmit, isProcessing }) {
                 {/* Tipo de persona */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        <FiUser className="inline w-4 h-4 mr-2" />
+                        <User className="inline w-4 h-4 mr-2" />
                         Tipo de Persona
                     </label>
                     <div className="grid grid-cols-2 gap-4">
@@ -101,7 +101,7 @@ function PSEForm({ onSubmit, isProcessing }) {
                 {/* Correo electrónico */}
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <FiMail className="inline w-4 h-4 mr-2" />
+                        <Mail className="inline w-4 h-4 mr-2" />
                         Correo Electrónico
                     </label>
                     <input

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiShoppingBag, FiPackage, FiTruck, FiCheck, FiClock } from 'react-icons/fi';
+import { ShoppingBag, Truck, Check, Clock } from 'lucide-react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import sellerDashboardLinks from '../../data/sellerDashboardLinks';
 import BackButton from '../../components/dashboard/BackButton';
@@ -40,20 +40,20 @@ function SellerOrders() {
 
     const getStatusColor = (status) => {
         const colors = {
-            preparing: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-            shipped: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-            delivered: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+            preparing: 'bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-400',
+            shipped: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/10 dark:text-blue-400',
+            delivered: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/10 dark:text-emerald-400'
         };
-        return colors[status] || 'bg-gray-100 text-gray-700';
+        return colors[status] || 'bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-400';
     };
 
     const getStatusIcon = (status) => {
         const icons = {
-            preparing: FiClock,
-            shipped: FiTruck,
-            delivered: FiCheck
+            preparing: Clock,
+            shipped: Truck,
+            delivered: Check
         };
-        return icons[status] || FiShoppingBag;
+        return icons[status] || ShoppingBag;
     };
 
     const getClientName = (clientId) => {
@@ -69,13 +69,13 @@ function SellerOrders() {
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 text-sm font-bold uppercase mb-1">Total Pedidos</p>
+                            <p className="text-gray-500 text-sm font-semibold mb-1">Total Pedidos</p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
                                 {sellerOrders.length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                            <FiShoppingBag className="w-8 h-8" />
+                        <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 dark:bg-slate-800 dark:border-slate-700">
+                            <ShoppingBag className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -83,13 +83,13 @@ function SellerOrders() {
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 text-sm font-bold uppercase mb-1">Preparando</p>
+                            <p className="text-gray-500 text-sm font-semibold mb-1">Preparando</p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
                                 {sellerOrders.filter(o => o.status === 'preparing').length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400">
-                            <FiClock className="w-8 h-8" />
+                        <div className="w-12 h-12 rounded-lg bg-yellow-50 border border-yellow-100 flex items-center justify-center text-yellow-500 dark:bg-yellow-900/20 dark:border-yellow-800">
+                            <Clock className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -97,13 +97,13 @@ function SellerOrders() {
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 text-sm font-bold uppercase mb-1">Enviados</p>
+                            <p className="text-gray-500 text-sm font-semibold mb-1">Enviados</p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
                                 {sellerOrders.filter(o => o.status === 'shipped').length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                            <FiTruck className="w-8 h-8" />
+                        <div className="w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500 dark:bg-blue-900/20 dark:border-blue-800">
+                            <Truck className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -111,13 +111,13 @@ function SellerOrders() {
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 text-sm font-bold uppercase mb-1">Entregados</p>
+                            <p className="text-gray-500 text-sm font-semibold mb-1">Entregados</p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
                                 {sellerOrders.filter(o => o.status === 'delivered').length}
                             </h3>
                         </div>
-                        <div className="p-4 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                            <FiCheck className="w-8 h-8" />
+                        <div className="w-12 h-12 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 dark:bg-emerald-900/20 dark:border-emerald-800">
+                            <Check className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -132,40 +132,39 @@ function SellerOrders() {
                             <p className="text-sm text-gray-500 mt-1">{filteredOrders.length} pedidos</p>
                         </div>
 
-                        {/* Filtro por estado */}
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setFilterStatus('all')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'all'
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'all'
+                                    ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-700'
                                     }`}
                             >
                                 Todos
                             </button>
                             <button
                                 onClick={() => setFilterStatus('preparing')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'preparing'
-                                    ? 'bg-yellow-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'preparing'
+                                    ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-700'
                                     }`}
                             >
                                 Preparando
                             </button>
                             <button
                                 onClick={() => setFilterStatus('shipped')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'shipped'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'shipped'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-700'
                                     }`}
                             >
                                 Enviados
                             </button>
                             <button
                                 onClick={() => setFilterStatus('delivered')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'delivered'
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'delivered'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-700'
                                     }`}
                             >
                                 Entregados
@@ -176,7 +175,7 @@ function SellerOrders() {
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs text-gray-500 uppercase font-bold text-left">
+                        <thead className="bg-slate-50/80 dark:bg-slate-800/80 text-xs text-slate-500 font-semibold uppercase tracking-wider text-left border-b border-slate-200 dark:border-slate-700">
                             <tr>
                                 <th className="px-6 py-4">Pedido</th>
                                 <th className="px-6 py-4">Cliente</th>
@@ -216,9 +215,9 @@ function SellerOrders() {
                                             {formatCurrency(order.total)}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <StatusIcon className="w-4 h-4" />
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)}`}>
+                                            <div className="flex items-center gap-1.5">
+                                                <StatusIcon className={`w-4 h-4 ${order.status === 'preparing' ? 'text-yellow-600' : order.status === 'shipped' ? 'text-blue-600' : 'text-emerald-600'}`} />
+                                                <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wider ${getStatusColor(order.status)}`}>
                                                     {getStatusLabel(order.status)}
                                                 </span>
                                             </div>
@@ -228,7 +227,7 @@ function SellerOrders() {
                                                 {order.status === 'preparing' && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'shipped')}
-                                                        className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                                        className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
                                                     >
                                                         Marcar Enviado
                                                     </button>
@@ -236,7 +235,7 @@ function SellerOrders() {
                                                 {order.status === 'shipped' && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'delivered')}
-                                                        className="px-3 py-1 text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                                                        className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold rounded-lg text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
                                                     >
                                                         Marcar Entregado
                                                     </button>
@@ -257,7 +256,7 @@ function SellerOrders() {
 
                 {filteredOrders.length === 0 && (
                     <div className="p-12 text-center">
-                        <FiShoppingBag className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <ShoppingBag className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-500 dark:text-gray-400">
                             {filterStatus === 'all'
                                 ? 'No tienes pedidos aún'
