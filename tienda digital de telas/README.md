@@ -12,11 +12,11 @@
 
 ---
 
-# 🧵 Bienvenido a la documentación técnica de D&D Textil
+# Bienvenido a la documentación técnica de D&D Textil
 
 ---
 
-## 📑 Tabla de Contenidos
+## Tabla de Contenidos
 1. [Visión General](#visión-general)
 2. [Instalación Rápida](#instalación-rápida)
 3. [Documentación de D&D Textil](#documentación-de-dd-textil)
@@ -42,11 +42,11 @@
 
 ### Funcionalidades Clave
 
-| 👥 **Multi-Rol Dashboard** | 🧮 **Simulador de Metraje** |
+|  **Multi-Rol Dashboard** |  **Simulador de Metraje** |
 | :--- | :--- |
 | Paneles estadísticos personalizados e interfaces independientes para Administradores, Vendedores y Clientes con métricas en tiempo real. | Herramienta inteligente tipo calculadora de proyectos (cortinas, faldas, muebles) para asistir al usuario en medir la cantidad requerida de tela. |
 
-| 🎫 **Gestión de Tickets** | 🏗️ **Arquitectura Modular** |
+|  **Gestión de Tickets** |  **Arquitectura Modular** |
 | :--- | :--- |
 | Módulo de soporte integrado para reportar garantías y recibir atención al cliente ligada a pedidos o fallos de tela. | Manejador en frontend vía Context APIs sincronizados con endpoints Java/Postgres escalables. |
 
