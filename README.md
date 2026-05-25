@@ -33,6 +33,7 @@
 11. [Esquema Base de Datos](#esquema-base-de-datos)
 12. [Guía de Despliegue Local](#guía-de-despliegue-local)
 13. [Solución de Problemas Frecuentes](#solución-de-problemas-frecuentes)
+14. [Novedades y Actualizaciones Recientes](#novedades-y-actualizaciones-recientes)
 
 ---
 
@@ -319,7 +320,7 @@ Todas rematan su proceso devolviendo la variable más un `+= 10%`, un salvavidas
 
 ## Cómo ingresar al sistema de Producción (Demo)
 
-Para probar la plataforma en tus navegadores en Localhost, puedes usar estas cuentas de demostración prefabricadas (cuyas contraseñas ya corrieron bajo hash en BD). Enciende primero la Base de datos, luego Java y por último Vite con el script `iniciar_todo.ps1`:
+Para probar la plataforma en tus navegadores en Localhost, puedes usar estas cuentas de demostración prefabricadas (cuyas contraseñas ya corrieron bajo hash en BD). Enciende primero la Base de datos, luego Java y por último Vite. Puedes automatizar esto usando el script `iniciar_todo windows.bat` (en Windows) o `iniciar todo linux.sh` (en Linux):
 
 | Rol | Correo | Password (Sin encriptar a ojo de User) |
 |---|---|---|
@@ -343,7 +344,7 @@ Está programado de raíz. Limitantes algorítmicas `max={producto.stock}` está
 Usa la Calculadora de Metraje del Panel.
 
 **¿Es seguro pagar en esta plataforma?**
-Sí. Tu `iniciar_todo.ps1` inyecta una variable pura del sistema (`DB_PASSWORD`) de forma de entorno en lugar de tener texto plano en strings. Esto es principio de OWASP Security top 10. Las validaciones de capa frontend corren en tiempo útil con Regex validando todo campo previo envío. Cero inyección y seguridad máxima logrando aislar variables públicas de base de datos cerrada y restringiendo con roles en UI (Routes Protector).
+Sí. Tus scripts de inicio (`iniciar_todo windows.bat` o `iniciar todo linux.sh`) inyectan una variable pura del sistema (`DB_PASSWORD`) de forma de entorno en lugar de tener texto plano en strings. Esto es principio de OWASP Security top 10. Las validaciones de capa frontend corren en tiempo útil con Regex validando todo campo previo envío. Cero inyección y seguridad máxima logrando aislar variables públicas de base de datos cerrada y restringiendo con roles en UI (Routes Protector).
 
 ---
 
@@ -771,6 +772,18 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
 > Esto truncará las tablas e insertará mágicamente usuarios, métricas, productos temporales y las **credenciales válidas**.
 
 --- 
+
+## Novedades y Actualizaciones Recientes
+
+Recientemente hemos integrado mejoras significativas orientadas a facilitar el despliegue del proyecto en múltiples sistemas operativos y mejorar la estabilidad general:
+
+- **Soporte Multiplataforma con Scripts de Inicio Rápido:** Hemos añadido scripts de automatización nativos para iniciar todo el ecosistema (Base de datos, Backend Java y Frontend React) con un solo clic:
+  - **Windows:** Integración del script `iniciar_todo windows.bat`.
+  - **Linux (Fedora/Ubuntu/etc.):** Integración del script `iniciar todo linux.sh`.
+- **Migración y Compatibilidad en Linux (Fedora):** Se ha configurado y testeado el proyecto para asegurar compatibilidad total en entornos Linux, incluyendo la instalación y configuración de Node.js, configuración nativa de PostgreSQL y la resolución de problemas de autenticación de conexión entre el backend de Java y la base de datos bajo este sistema operativo.
+- **Mejoras en la Conexión a Base de Datos:** Se han resuelto problemas de autenticación de PostgreSQL asegurando que la integración entre el backend en Vanilla Java y la base de datos sea robusta y segura tanto en entornos Windows como Linux.
+
+---
 
 ## Contacto
 Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) 
