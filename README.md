@@ -1459,4 +1459,35 @@ Actualmente solo dentro de Colombia.
 **¿Cuál es el metraje mínimo?**
 Mínimo 0.5 metros por producto.
 
+---
+
+## Stack Tecnológico Completo
+
+### Frontend Stack
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| React | 18.x | Framework UI |
+| Vite | 4.x | Build tool |
+| Tailwind CSS | 3.x | Estilos |
+| Framer Motion | 10.x | Animaciones |
+| React Router | 6.x | Enrutamiento |
+| Context API | nativa | State management |
+| React Icons | 4.x | Iconografía |
+
+### Backend Stack
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| Java | 17 LTS | Lenguaje |
+| Sun HTTP Server | nativa | Servidor |
+| JDBC | nativa | Conexión BD |
+| GSON | 2.10.1 | JSON parsing |
+| PostgreSQL Driver | 42.7.3 | Driver BD |
+
+### Database Stack
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| PostgreSQL | 14+ | Base de datos |
+| PL/pgSQL | nativa | Procedimientos |
+| PostGIS | opcional | Geolocalización |
+
 --- 
