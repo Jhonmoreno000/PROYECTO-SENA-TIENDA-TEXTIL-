@@ -54,6 +54,24 @@
 | :--- | :--- |
 | Módulo de soporte integrado para reportar garantías y recibir atención al cliente ligada a pedidos o fallos de tela. | Manejador en frontend vía Context APIs sincronizados con endpoints Java/Postgres escalables. |
 
+---
+
+## Capturas de Pantalla
+
+A continuación se muestran algunas capturas de pantalla de la plataforma D&D Textil en acción:
+
+### Interfaz Principal
+<p align="center">
+  <img src="public/images/screenshots/screenshot-1.png" alt="Pantalla Principal" width="800" />
+</p>
+
+### Dashboard de Administración
+<p align="center">
+  <img src="public/images/screenshots/screenshot-2.png" alt="Dashboard Admin" width="800" />
+</p>
+
+---
+
 ## Instalación rápida
 ```bash
 # Clona el repositorio
