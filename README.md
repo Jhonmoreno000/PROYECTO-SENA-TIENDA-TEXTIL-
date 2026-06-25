@@ -1408,4 +1408,55 @@ Ver archivo `BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql` para el schema completo.
 - `inventory_batches` - Lotes de inventario
 - `waste_events` - Eventos de desperdicio
 
+---
+
+## Changelog
+
+### v1.0.0 - Release Inicial (2026-06-01)
+- ✅ Autenticación de usuarios
+- ✅ Catálogo de productos
+- ✅ Sistema de carrito
+- ✅ Checkout y pagos simulados
+- ✅ Dashboard multi-rol
+- ✅ Calculadora de metraje
+- ✅ Sistema de soporte
+
+### v1.1.0 - Mejoras (Planeado para Q3 2026)
+- [ ] Integración de pasarelas de pago
+- [ ] Notificaciones en tiempo real
+- [ ] Sistema de reseñas
+
+---
+
+## Contacto y Soporte
+
+### Reportar Bugs
+1. Ir a [GitHub Issues](https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-)
+2. Hacer clic en "New Issue"
+3. Describir el bug detalladamente
+4. Agregar screenshots si es posible
+
+### Proponer Mejoras
+Envíar un email a: jhon.moreno@sena.edu.co
+
+### Comunidad
+- 🐦 Twitter: @DDTextil
+- 💼 LinkedIn: linkedin.com/company/dd-textil
+
+---
+
+## FAQs Adicionales
+
+**¿Cuál es el tiempo de entrega?**
+Las órdenes se procesan en 1-2 días hábiles.
+
+**¿Aceptan devoluciones?**
+Sí, dentro de 30 días si la tela está en buen estado.
+
+**¿Hacen envíos internacionales?**
+Actualmente solo dentro de Colombia.
+
+**¿Cuál es el metraje mínimo?**
+Mínimo 0.5 metros por producto.
+
 --- 
