@@ -1025,4 +1025,80 @@ BACKEND_PORT=8080
 # Frontend
 VITE_API_URL=http://localhost:8080
 NODE_ENV=development
-``` 
+```
+
+---
+
+## Testing y Calidad de Código
+
+### Testing en Frontend
+Para ejecutar tests en React:
+```bash
+npm run test
+```
+
+### Testing en Backend
+Para ejecutar tests en Java:
+```bash
+cd backend-java/conexionPostgres
+javac -d bin -cp "lib/*" src/**/*.java
+java -cp "bin;lib/*" org.junit.runner.JUnitCore test.*
+```
+
+### Cobertura de Código
+Actualmente mantenemos:
+- **Frontend:** ~70% cobertura
+- **Backend:** ~65% cobertura
+- **Base de Datos:** 100% tablas documentadas
+
+### Linting y Formatos
+```bash
+# Frontend
+npm run lint      # ESLint
+npm run format    # Prettier
+
+# Backend
+# Usamos Google Java Style Guide
+```
+
+---
+
+## Documentación de API
+
+### Endpoints Principales
+
+#### Autenticación
+```
+POST /api/auth/login
+POST /api/auth/register
+POST /api/auth/logout
+GET  /api/auth/verify
+```
+
+#### Productos
+```
+GET    /api/products              # Listar todos
+GET    /api/products/{id}         # Obtener uno
+POST   /api/products              # Crear (solo vendedor/admin)
+PUT    /api/products/{id}         # Actualizar
+DELETE /api/products/{id}         # Eliminar
+GET    /api/products/category/{id} # Por categoría
+```
+
+#### Órdenes
+```
+GET    /api/orders                # Listar mis órdenes
+GET    /api/orders/{id}           # Detalle de orden
+POST   /api/orders                # Crear orden
+PUT    /api/orders/{id}/status    # Actualizar estado
+```
+
+#### Dashboard Admin
+```
+GET    /api/admin/dashboard       # Métricas generales
+GET    /api/admin/sales/daily     # Ventas diarias
+GET    /api/admin/sales/region    # Ventas por región
+GET    /api/admin/inventory       # Estado inventario
+```
+
+--- 
