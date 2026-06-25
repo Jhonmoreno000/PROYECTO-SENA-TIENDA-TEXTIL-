@@ -1320,4 +1320,53 @@ import { Helmet } from 'react-helmet';
 </Helmet>
 ```
 
+---
+
+## Casos de Uso Comunes
+
+### Caso 1: Agregar un Nuevo Producto
+1. Iniciar sesión como vendedor
+2. Ir a "Mis Productos" → "Agregar Producto"
+3. Completar formulario con datos del producto
+4. Subir imágenes (máximo 5MB por imagen)
+5. Publicar y esperar aprobación del admin
+
+### Caso 2: Procesar una Compra
+1. Cliente navega catálogo
+2. Selecciona producto y cantidad
+3. Agrega al carrito
+4. Procede al checkout
+5. Ingresa datos de envío
+6. Confirma compra
+7. Recibe confirmación por correo
+
+### Caso 3: Resolver Reclamo de Cliente
+1. Cliente abre ticket de soporte
+2. Admin revisa y categoriza
+3. Asigna a vendedor/personal
+4. Se resuelve con reembolso o reemplazo
+5. Cliente marca como resuelto
+
+---
+
+## Troubleshooting Avanzado
+
+### Problema: "Port 8080 already in use"
+```bash
+# En Windows: Encontrar proceso usando puerto 8080
+netstat -ano | findstr :8080
+
+# Matar el proceso
+taskkill /PID [ID] /F
+
+# En Linux
+sudo lsof -i :8080
+kill -9 [PID]
+```
+
+### Problema: "PostgreSQL connection refused"
+- Verificar que PostgreSQL esté corriendo: `pg_isready`
+- Revisar credenciales en variable de entorno
+- Comprobar puerto (default 5432)
+
 --- 
