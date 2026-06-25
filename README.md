@@ -961,4 +961,68 @@ resolve: {
 - **Líneas de Código (SQL):** ~500+
 - **Tablas en Base de Datos:** 20+
 - **Endpoints API:** 40+
-- **Componentes React:** 30+ 
+- **Componentes React:** 30+
+
+---
+
+## Consideraciones de Seguridad
+
+### Autenticación y Autorización
+- ✅ Passwords encriptados con SHA-256
+- ✅ Validación de roles en backend
+- ✅ Rutas protegidas en frontend con ProtectedRoute
+- ✅ CORS configurado restrictivamente
+
+### Validación de Datos
+- ✅ Validación en lado cliente con Regex
+- ✅ Validación en lado servidor (backend Java)
+- ✅ Prepared Statements para prevenir SQL injection
+- ✅ Validación de tipos y rangos
+
+### Variables de Entorno
+- ✅ Credenciales de BD no commiteadas
+- ✅ Uso de variables de entorno del sistema
+- ✅ Archivos .env en .gitignore
+
+---
+
+## Optimizaciones de Rendimiento
+
+### Frontend
+- Lazy loading de componentes con React.lazy()
+- Compresión de imágenes y assets
+- Code splitting automático con Vite
+- Memoización de componentes costosos
+
+### Backend
+- Connection pooling a base de datos
+- Caché de consultas frecuentes
+- Índices en tablas grandes
+- Consultas optimizadas con JOINs eficientes
+
+### Base de Datos
+- Índices B-tree en claves primarias y búsquedas
+- Vistas materializadas para reportes
+- Particionamiento de tablas grandes
+- VACUUM y ANALYZE periódico
+
+---
+
+## Variables de Entorno Requeridas
+
+```bash
+# Base de Datos
+DB_PASSWORD=tu_contraseña_postgres
+DB_USER=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=tienda_digital_textiles_db
+
+# Backend
+JAVA_HOME=/ruta/a/java
+BACKEND_PORT=8080
+
+# Frontend
+VITE_API_URL=http://localhost:8080
+NODE_ENV=development
+``` 
