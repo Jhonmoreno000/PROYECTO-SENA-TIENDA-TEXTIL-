@@ -1198,4 +1198,46 @@ src/
 └── utils/                   # Utilidades
 ```
 
+---
+
+## Guía de Resolución de Conflictos de Merge
+
+Si al hacer merge de tu rama con `main` aparecen conflictos:
+
+```bash
+# Ver conflictos
+git status
+
+# Resolver manualmente en el editor
+git add archivo_resuelto.js
+
+# Completar el merge
+git commit -m "fix: resolver conflictos de merge"
+git push origin feature/tu-rama
+```
+
+---
+
+## Comandos Útiles de Git
+
+```bash
+# Ver historial de commits
+git log --oneline --graph --all
+
+# Ver cambios no confirmados
+git diff
+
+# Ver cambios en stage
+git diff --cached
+
+# Deshacer cambios locales
+git checkout -- archivo.js
+
+# Deshacer último commit (sin perder cambios)
+git reset --soft HEAD~1
+
+# Rebase interactivo (limpiar histórico)
+git rebase -i HEAD~5
+```
+
 --- 
