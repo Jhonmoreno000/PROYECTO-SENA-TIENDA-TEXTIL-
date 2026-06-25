@@ -1490,4 +1490,40 @@ Mínimo 0.5 metros por producto.
 | PL/pgSQL | nativa | Procedimientos |
 | PostGIS | opcional | Geolocalización |
 
+---
+
+## Principios de Diseño Implementados
+
+### Frontend (React)
+- **Component-Driven:** Todo es un componente reutilizable
+- **DRY (Don't Repeat Yourself):** Código modular y sin duplicación
+- **Composition over Inheritance:** Componentes pequeños combinables
+- **Responsive Design:** Mobile-first approach
+- **Accessibility First:** WCAG 2.1 AA compliance
+
+### Backend (Java)
+- **SOLID Principles:** Single Responsibility, Open/Closed, etc.
+- **Clean Architecture:** Separación de capas clara
+- **Security First:** Validación en múltiples niveles
+- **Performance:** Índices y queries optimizadas
+- **Maintainability:** Código autodocumentado
+
+### Database (PostgreSQL)
+- **Normalization:** Hasta 3NF
+- **Referential Integrity:** Foreign keys activas
+- **Indexing Strategy:** Índices en búsquedas frecuentes
+- **Query Optimization:** EXPLAIN ANALYZE en queries críticas
+- **Backup Strategy:** Backups automáticos diarios
+
+---
+
+## Links Rápidos Útiles
+
+- 📚 [Documentación React](https://react.dev)
+- 🚀 [Documentación Vite](https://vitejs.dev)
+- 🎨 [Documentación Tailwind](https://tailwindcss.com)
+- ☕ [Documentación Java](https://docs.oracle.com/en/java/)
+- 🐘 [Documentación PostgreSQL](https://www.postgresql.org/docs/)
+- 🔐 [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+
 --- 
