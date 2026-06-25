@@ -1101,4 +1101,60 @@ GET    /api/admin/sales/region    # Ventas por región
 GET    /api/admin/inventory       # Estado inventario
 ```
 
+---
+
+## Integración Continua y Despliegue (CI/CD)
+
+### Configuración GitHub Actions
+El proyecto incluye workflows de GitHub Actions para automatizar:
+- ✅ Tests automáticos en cada push
+- ✅ Linting y validación de código
+- ✅ Build automático
+- ✅ Despliegue en staging y producción
+
+### Despliegue Manual
+```bash
+# Frontend (Vercel, Netlify, etc.)
+npm run build
+# Subir carpeta dist a tu hosting
+
+# Backend (VPS, AWS, Heroku, etc.)
+cd backend-java/conexionPostgres
+javac -d bin -cp "lib/*" src/**/*.java
+java -cp "bin;lib/*" App
+```
+
+---
+
+## Monitoreo y Logging
+
+### Frontend Logging
+```javascript
+// Usar logger configurado
+import { logger } from '@/utils/logger';
+
+logger.info('Usuario inició sesión', { userId: 123 });
+logger.error('Error al procesar pago', error);
+```
+
+### Backend Logging
+```java
+// Logging en Java
+System.out.println("[INFO] Inicio del servidor");
+System.err.println("[ERROR] Excepción capturada: " + e.getMessage());
+```
+
+---
+
+## Backup y Recuperación
+
+### Backup de Base de Datos
+```bash
+# Backup completo
+pg_dump -U postgres tienda_digital_textiles_db > backup.sql
+
+# Restaurar backup
+psql -U postgres tienda_digital_textiles_db < backup.sql
+```
+
 --- 
