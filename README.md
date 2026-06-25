@@ -1279,4 +1279,45 @@ Verificar con:
 # Lighthouse → Accesibilidad
 ```
 
+---
+
+## Internacionalización (i18n)
+
+Aunque actualmente el proyecto está en español, la arquitectura permite agregar múltiples idiomas:
+
+```javascript
+// Ejemplo de estructura i18n futura
+const translations = {
+  es: {
+    nav: { home: 'Inicio', catalog: 'Catálogo' }
+  },
+  en: {
+    nav: { home: 'Home', catalog: 'Catalog' }
+  }
+}
+```
+
+### Planes de Localización
+- [ ] Inglés
+- [ ] Portugués
+- [ ] Francés
+- [ ] Alemán
+
+---
+
+## SEO y Meta Tags
+
+El proyecto incluye soporte para SEO:
+
+```jsx
+// En cada página
+import { Helmet } from 'react-helmet';
+
+<Helmet>
+  <title>D&D Textil - Tienda de Telas Premium</title>
+  <meta name="description" content="Compra telas de calidad por metraje" />
+  <meta name="keywords" content="telas, textiles, comprar, metraje" />
+</Helmet>
+```
+
 --- 
