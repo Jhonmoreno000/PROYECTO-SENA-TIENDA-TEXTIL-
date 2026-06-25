@@ -1526,4 +1526,53 @@ Mínimo 0.5 metros por producto.
 - 🐘 [Documentación PostgreSQL](https://www.postgresql.org/docs/)
 - 🔐 [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 
+---
+
+## Tutoriales y Ejemplos
+
+### Ejemplo: Crear un Nuevo Componente
+```jsx
+// src/components/ProductCard.jsx
+import React from 'react';
+
+export const ProductCard = ({ product, onAddCart }) => {
+  return (
+    <div className="p-4 bg-white rounded-lg shadow-md">
+      <img src={product.image} alt={product.name} />
+      <h3 className="font-bold">{product.name}</h3>
+      <p className="text-gray-600">${product.price}</p>
+      <button 
+        onClick={() => onAddCart(product)}
+        className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        Agregar
+      </button>
+    </div>
+  );
+};
+```
+
+### Ejemplo: Crear un Endpoint Backend
+```java
+// src/api/handlers/ProductsHandler.java
+public void handle(HttpExchange exchange) throws IOException {
+  if (exchange.getRequestMethod().equals("GET")) {
+    List<Product> products = productDAO.findAll();
+    String json = gson.toJson(products);
+    exchange.getResponseHeaders().set("Content-Type", "application/json");
+    exchange.sendResponseHeaders(200, json.length());
+    exchange.getResponseBody().write(json.getBytes());
+  }
+}
+```
+
+---
+
+## Reconocimientos Especiales
+
+A todos los que han contribuido al proyecto:
+- Equipo docente SENA
+- Compañeros desarrolladores
+- Comunidad de código abierto
+
 --- 
