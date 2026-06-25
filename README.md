@@ -886,4 +886,79 @@ Ver el archivo [LICENSE](LICENSE) para más detalles.
 - [Java](https://www.java.com/) - Backend
 
 ### Agradecimientos
-Agradecemos a la comunidad de código abierto y a todos los que contribuyen a mantener las dependencias que utilizamos. 
+Agradecemos a la comunidad de código abierto y a todos los que contribuyen a mantener las dependencias que utilizamos.
+
+---
+
+## Roadmap - Futuras Mejoras Planeadas
+
+### Q3 2026
+- [ ] Integración con pasarelas de pago (Stripe, PayPal)
+- [ ] Sistema de notificaciones en tiempo real con WebSockets
+- [ ] Módulo de reseñas y calificaciones de productos
+
+### Q4 2026
+- [ ] API REST completa con documentación OpenAPI/Swagger
+- [ ] Sistema de recomendaciones de productos con IA
+- [ ] App móvil nativa (React Native)
+- [ ] Soporte multiidioma (i18n)
+
+### 2027
+- [ ] Integración con marketplaces externos
+- [ ] Analytics avanzado con reportes predictivos
+- [ ] Sistema de logística integrado
+- [ ] Portal de proveedores
+
+---
+
+## Mejores Prácticas de Desarrollo
+
+### Frontend
+- Seguir estilo de código definido en `.eslintrc`
+- Usar componentes funcionales con hooks
+- Implementar lazy loading para optimizar rendimiento
+- Componentes pequeños y reutilizables
+
+### Backend
+- Seguir patrones SOLID estrictamente
+- Validar TODOS los inputs del usuario
+- Usar prepared statements para consultas SQL
+- Implementar logging adecuado
+
+### Base de Datos
+- Usar índices para tablas grandes
+- Mantener integridad referencial con foreign keys
+- Realizar backups regularmente
+- Documentar cambios en schema
+
+---
+
+## Debugging y Desarrollo Local
+
+### Errores Comunes
+
+**Error: "Cannot find module '@/' "**
+Solución: Verificar que `vite.config.js` tenga el alias configurado:
+```js
+resolve: {
+  alias: {
+    '@': fileURLToPath(new URL('./src', import.meta.url))
+  }
+}
+```
+
+**Error de conexión Backend**
+- Verificar que Java esté corriendo en puerto 8080
+- Revisar credenciales de PostgreSQL en las variables de entorno
+- Comprobar CORS headers en `ApiServer.java`
+
+---
+
+## Estadísticas del Proyecto
+
+- **Líneas de Código (Frontend):** ~5000+
+- **Líneas de Código (Backend):** ~3000+
+- **Líneas de Código (SQL):** ~500+
+- **Tablas en Base de Datos:** 20+
+- **Endpoints API:** 40+
+- **Componentes React:** 30+ 
