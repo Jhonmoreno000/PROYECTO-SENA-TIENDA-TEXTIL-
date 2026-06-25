@@ -1240,4 +1240,43 @@ git reset --soft HEAD~1
 git rebase -i HEAD~5
 ```
 
+---
+
+## Gestión de Dependencias
+
+### Actualizar Dependencias Frontend
+```bash
+# Ver outdated
+npm outdated
+
+# Actualizar todas
+npm update
+
+# Actualizar a versiones mayores
+npm install react@latest react-dom@latest
+```
+
+### Actualizar Librerías Java
+Las librerías se encuentran en `/backend-java/conexionPostgres/lib/`:
+- `postgresql-42.7.3.jar` - Driver PostgreSQL
+- `gson-2.10.1.jar` - JSON parsing
+
+Para actualizar, descargar las nuevas versiones desde Maven Central.
+
+---
+
+## Accesibilidad (A11y)
+
+El proyecto implementa estándares WCAG 2.1:
+- ✅ Colores con suficiente contraste
+- ✅ Texto descriptivo en imágenes
+- ✅ Navegación por teclado completa
+- ✅ Uso correcto de etiquetas semánticas HTML
+
+Verificar con:
+```bash
+# Auditoría en Chrome DevTools
+# Lighthouse → Accesibilidad
+```
+
 --- 
