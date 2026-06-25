@@ -1157,4 +1157,45 @@ pg_dump -U postgres tienda_digital_textiles_db > backup.sql
 psql -U postgres tienda_digital_textiles_db < backup.sql
 ```
 
+---
+
+## Estructura de Carpetas Detallada
+
+### Frontend (`/src`)
+```
+src/
+├── assets/              # Imágenes, iconos, videos
+├── components/          # Componentes React reutilizables
+│   ├── common/         # Componentes globales
+│   ├── dashboard/      # Componentes de dashboards
+│   ├── client/         # Componentes específicos cliente
+│   └── admin/          # Componentes específicos admin
+├── context/            # Context API providers
+├── hooks/              # Custom hooks personalizados
+├── pages/              # Páginas principales (rutas)
+├── utils/              # Funciones utilitarias
+├── services/           # Servicios de API
+├── styles/             # Estilos globales
+└── App.jsx             # Componente raíz
+```
+
+### Backend (`/backend-java/conexionPostgres/src`)
+```
+src/
+├── App.java                   # Entrada principal
+├── MockDataSeeder.java        # Semilla de datos
+├── api/
+│   ├── ApiServer.java        # Configuración del servidor
+│   └── handlers/             # Controladores HTTP
+├── application/
+│   └── services/             # Lógica de negocio
+├── domain/
+│   ├── models/              # POJOs
+│   └── repositories/        # Interfaces DAO
+├── infrastructure/
+│   ├── config/              # Configuración
+│   └── persistence/jdbc/    # Implementación DAO
+└── utils/                   # Utilidades
+```
+
 --- 
