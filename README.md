@@ -807,4 +807,61 @@ Recientemente hemos integrado mejoras significativas orientadas a facilitar el d
 ---
 
 ## Contacto
-Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) 
+Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000)
+
+---
+
+## Guía de Contribución
+
+¡Nos encantaría que contribuyas a mejorar D&D Textil! Aquí te mostramos cómo hacerlo:
+
+### Pasos para Contribuir
+
+1. **Fork el repositorio** desde GitHub
+2. **Clona tu fork** localmente:
+   ```bash
+   git clone https://github.com/tu-usuario/PROYECTO-SENA-TIENDA-TEXTIL-.git
+   cd PROYECTO-SENA-TIENDA-TEXTIL-
+   ```
+
+3. **Crea una rama para tu feature:**
+   ```bash
+   git checkout -b feature/tu-feature
+   ```
+
+4. **Realiza los cambios** y haz commits descriptivos:
+   ```bash
+   git commit -m "feat: descripción clara de tu cambio"
+   ```
+
+5. **Push a tu fork:**
+   ```bash
+   git push origin feature/tu-feature
+   ```
+
+6. **Abre un Pull Request** describiendo tus cambios
+
+### Convenciones de Commits
+
+Usamos el estándar de Conventional Commits:
+- `feat:` para nuevas funcionalidades
+- `fix:` para correcciones de errores
+- `docs:` para cambios en documentación
+- `style:` para cambios de formato
+- `refactor:` para refactorización de código
+- `test:` para pruebas unitarias
+
+### Requerimientos para PRs
+
+- ✅ Código debe pasar validación de linting
+- ✅ Mínimo 2 revisores para aprobación
+- ✅ Commits bien documentados
+- ✅ Tests unitarios para nuevas funcionalidades
+
+---
+
+## Licencia
+
+Este proyecto está licenciado bajo la licencia MIT. Esto significa que puedes usar, modificar y distribuir el código siempre y cuando incluyas la atribución original.
+
+Ver el archivo [LICENSE](LICENSE) para más detalles. 
