@@ -864,4 +864,26 @@ Usamos el estándar de Conventional Commits:
 
 Este proyecto está licenciado bajo la licencia MIT. Esto significa que puedes usar, modificar y distribuir el código siempre y cuando incluyas la atribución original.
 
-Ver el archivo [LICENSE](LICENSE) para más detalles. 
+Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+## Créditos y Autores
+
+### Desarrollo Principal
+- **Jhon Moreno** - Arquitecto Principal y Desarrollador Lead
+
+### Colaboradores
+- David Velez - Contribuidor
+- Equipo de Desarrollo SENA
+
+### Tecnologías y Librerías Utilizadas
+- [React](https://react.dev/) - Librería para UI
+- [Vite](https://vitejs.dev/) - Build tool y bundler
+- [Tailwind CSS](https://tailwindcss.com/) - Framework CSS
+- [Framer Motion](https://www.framer.com/motion/) - Animaciones
+- [PostgreSQL](https://www.postgresql.org/) - Base de datos
+- [Java](https://www.java.com/) - Backend
+
+### Agradecimientos
+Agradecemos a la comunidad de código abierto y a todos los que contribuyen a mantener las dependencias que utilizamos. 
