@@ -1575,4 +1575,54 @@ A todos los que han contribuido al proyecto:
 - Compañeros desarrolladores
 - Comunidad de código abierto
 
---- 
+---
+
+## Versiones Soportadas
+
+### Navegadores Soportados (Frontend)
+- ✅ Chrome 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
+- ⚠️ IE11 (sin soporte oficial)
+
+### Versiones Node.js
+- ✅ Node 16.x
+- ✅ Node 18.x
+- ✅ Node 20.x
+
+### Versiones Java
+- ✅ Java 17 LTS
+- ✅ Java 18+
+
+### Versiones PostgreSQL
+- ✅ PostgreSQL 12+
+- ✅ PostgreSQL 14+
+- ✅ PostgreSQL 15+
+
+---
+
+## Next Steps - Próximos Pasos
+
+Después de clonar el repositorio:
+
+1. ✅ Instala dependencias: `npm install`
+2. ✅ Configura base de datos: Importa SQL
+3. ✅ Inicia el backend: `java App`
+4. ✅ Inicia el frontend: `npm run dev`
+5. ✅ Visita http://localhost:5173
+
+---
+
+## Agradecimiento Final
+
+¡Gracias por ser parte del proyecto D&D Textil! 
+
+Tu contribución, reporte de bugs, sugerencias o uso del proyecto nos ayuda a mejorar cada día. 
+
+**¡Juntos hacemos software mejor!** 🚀
+
+---
+
+**Última actualización:** 25 de Junio de 2026
+**Versión del Documento:** 1.5.0 
