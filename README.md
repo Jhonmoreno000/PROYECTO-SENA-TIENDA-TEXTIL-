@@ -1369,4 +1369,43 @@ kill -9 [PID]
 - Revisar credenciales en variable de entorno
 - Comprobar puerto (default 5432)
 
+---
+
+## Performance Metrics
+
+### Objetivos de Performance
+- ⏱️ Tiempo de carga inicial: < 3s
+- ⏱️ First Contentful Paint (FCP): < 1.8s
+- ⏱️ Largest Contentful Paint (LCP): < 2.5s
+- ⏱️ Cumulative Layout Shift (CLS): < 0.1
+- ⏱️ Response Time API: < 200ms
+
+### Herramientas para Medir
+```bash
+# Frontend
+npm run analyze  # Analizar bundle size
+
+# Backend
+# Usar JMH (Java Microbenchmark Harness)
+
+# Base de Datos
+EXPLAIN ANALYZE SELECT * FROM products;
+```
+
+---
+
+## Documentación de Base de Datos
+
+### Diagrama Entidad-Relación (ER)
+Ver archivo `BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql` para el schema completo.
+
+### Principales Tablas
+- `users` - Usuarios del sistema
+- `products` - Catálogo de productos
+- `orders` - Pedidos realizados
+- `order_items` - Items de cada orden
+- `categories` - Categorías de productos
+- `inventory_batches` - Lotes de inventario
+- `waste_events` - Eventos de desperdicio
+
 --- 
