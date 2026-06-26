@@ -18,7 +18,7 @@
 
 ## Tabla de Contenidos
 1. [Visión General](#visión-general)
-2. [Capturas de Pantalla](#capturas-de-pantalla)
+2. [Mapa de Navegación](#mapa-de-navegación)
 3. [Instalación Rápida](#instalación-rápida)
 4. [Documentación de D&D Textil](#documentación-de-dd-textil)
    - [¿Qué es D&D Textil?](#qué-es-dd-textil)
@@ -56,18 +56,12 @@
 
 ---
 
-## Capturas de Pantalla
+## Mapa de Navegación
 
-A continuación se muestran algunas capturas de pantalla de la plataforma D&D Textil en acción:
+A continuación se muestra el mapa de navegación de la plataforma D&D Textil:
 
-### Interfaz Principal
 <p align="center">
-  <img src="public/images/screenshots/screenshot-1.png" alt="Pantalla Principal" width="800" />
-</p>
-
-### Dashboard de Administración
-<p align="center">
-  <img src="public/images/screenshots/screenshot-2.png" alt="Dashboard Admin" width="800" />
+  <img src="public/images/diagrams/mapa-navegacion.png" alt="Mapa de Navegación" width="900" />
 </p>
 
 ---
@@ -1636,7 +1630,7 @@ Este proyecto ha sido exhaustivamente documentado con:
 - ✅ **50+** secciones de documentación completa
 - ✅ **100+** ejemplos de código
 - ✅ **20+** guías paso a paso
-- ✅ **2** imágenes de demostración
+- ✅ **1** mapa de navegación
 - ✅ **Roadmap** claro hasta 2027
 - ✅ **Troubleshooting** detallado
 - ✅ **Arquitectura** explicada en profundidad
