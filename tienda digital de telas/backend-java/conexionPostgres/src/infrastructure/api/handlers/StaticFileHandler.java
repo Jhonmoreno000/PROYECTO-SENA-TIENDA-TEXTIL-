@@ -1,58 +1,58 @@
 package infrastructure.api.handlers;
 
-import infrastructure.persistence.jdbc.*;
-import domain.models.*;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.google.gson.Gson;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.io.File;
-import java.io.FileOutputStream;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import java.nio.file.Files;
 import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 
-    public class StaticFileHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+/**
+ * Controlador para servir archivos estáticos (imágenes, documentos, etc.)
+ * desde el directorio de subidas configurado.
+ * Ruta base: /uploads
+ * Traduce la ruta URI a una ruta de archivo local y la envía al cliente
+ * con el tipo MIME adecuado.
+ */
+public class StaticFileHandler extends BaseHandler {
 
-            String uriPath = exchange.getRequestURI().getPath();
-            // uriPath should be /uploads/filename.ext
-            String filePath = uriPath.substring(1); // removes leading slash
-            File file = new File(filePath);
+    /**
+     * Sirve cualquier archivo solicitado bajo /uploads.
+     * Ej: /uploads/imagenes/producto123.jpg → busca en uploads/imagenes/producto123.jpg
+     * Si el archivo no existe o es un directorio, responde con 404.
+     */
+    @Override
+    protected void processRequest(HttpExchange exchange) throws Exception {
+        // Extrae la ruta del archivo desde la URI (ej: /uploads/foto.png → uploads/foto.png)
+        String uriPath = exchange.getRequestURI().getPath();
+        String filePath = uriPath.substring(1);
+        File file = new File(filePath);
 
-            if (!file.exists() || file.isDirectory()) {
-                String response = "404 (Not Found)\n";
-                exchange.sendResponseHeaders(404, response.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
-                return;
-            }
-
-            // Detect MIME type
-            String mimeType = Files.probeContentType(file.toPath());
-            if (mimeType == null) {
-                mimeType = "application/octet-stream";
-            }
-
-            exchange.getResponseHeaders().set("Content-Type", mimeType);
-            exchange.sendResponseHeaders(200, file.length());
-
-            OutputStream os = exchange.getResponseBody();
-            FileInputStream fs = new FileInputStream(file);
-            final byte[] buffer = new byte[0x10000];
-            int count = 0;
-            while ((count = fs.read(buffer)) >= 0) {
-                os.write(buffer, 0, count);
-            }
-            fs.close();
-            os.close();
+        // Si el archivo no existe o es un directorio, devuelve 404
+        if (!file.exists() || file.isDirectory()) {
+            String response = "404 (Not Found)\n";
+            exchange.sendResponseHeaders(404, response.length());
+            exchange.getResponseBody().write(response.getBytes());
+            return;
         }
+
+        // Determina el tipo MIME del archivo (ej: image/png, application/pdf)
+        String mimeType = Files.probeContentType(file.toPath());
+        if (mimeType == null) {
+            mimeType = "application/octet-stream";
+        }
+
+        // Configura la cabecera Content-Type y envía el archivo en chunks de 64 KB
+        exchange.getResponseHeaders().set("Content-Type", mimeType);
+        exchange.sendResponseHeaders(200, file.length());
+
+        OutputStream os = exchange.getResponseBody();
+        FileInputStream fs = new FileInputStream(file);
+        byte[] buffer = new byte[0x10000];
+        int count;
+        while ((count = fs.read(buffer)) >= 0) {
+            os.write(buffer, 0, count);
+        }
+        fs.close();
+        os.close();
     }
+}

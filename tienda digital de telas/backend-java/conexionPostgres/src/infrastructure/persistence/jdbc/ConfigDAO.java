@@ -9,10 +9,21 @@ import java.util.Map;
 
 import infrastructure.config.Conexion;
 
+/**
+ * DAO (Data Access Object) para la Configuracion del Sistema.
+ * Gestiona las operaciones CRUD sobre la tabla 'system_config' que almacena
+ * pares clave-valor para la configuracion global del sistema D&D Textil.
+ */
 public class ConfigDAO {
 
+    /**
+     * Recupera todas las configuraciones del sistema como un mapa clave-valor.
+     * @return Map donde las claves son los nombres de configuracion y los valores
+     *         son sus respectivos contenidos.
+     */
     public Map<String, String> getAllConfig() {
         Map<String, String> configMap = new HashMap<>();
+        // Consulta todas las filas de la tabla system_config
         String query = "SELECT key, value FROM system_config";
 
         try (Connection con = Conexion.getConnection();
@@ -23,12 +34,19 @@ public class ConfigDAO {
                 configMap.put(rs.getString("key"), rs.getString("value"));
             }
         } catch (SQLException e) {
-            System.err.println(" Error obteniendo configuracion: " + e.getMessage());
+            // Error: No se pudo recuperar la configuracion del sistema
+            System.err.println("[ERROR] Error obteniendo configuracion: " + e.getMessage());
         }
         return configMap;
     }
     
+    /**
+     * Recupera el valor de una configuracion especifica por su clave.
+     * @param key Nombre de la configuracion a consultar.
+     * @return Valor asociado a la clave, o null si no existe.
+     */
     public String getConfig(String key) {
+        // Consulta filtrada por clave
         String query = "SELECT value FROM system_config WHERE key = ?";
         try (Connection con = Conexion.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -38,12 +56,22 @@ public class ConfigDAO {
                     return rs.getString("value");
                 }
             }
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            // Error silencioso: si la clave no existe, retorna null
+        }
         return null;
     }
 
+    /**
+     * Establece o actualiza el valor de una configuracion.
+     * Utiliza UPSERT (INSERT ... ON CONFLICT DO UPDATE) para crear la
+     * configuracion si no existe o actualizarla si ya existe.
+     * @param key   Nombre de la configuracion.
+     * @param value Valor a asignar.
+     * @return true si la operacion fue exitosa, false en caso de error.
+     */
     public boolean setConfig(String key, String value) {
-        // Upsert logic for PostgreSQL
+        // Logica UPSERT para PostgreSQL
         String query = "INSERT INTO system_config (key, value) VALUES (?, ?) " +
                        "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value";
         try (Connection con = Conexion.getConnection();
@@ -52,7 +80,8 @@ public class ConfigDAO {
             pst.setString(2, value);
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println(" Error guardando config: " + e.getMessage());
+            // Error: No se pudo guardar la configuracion
+            System.err.println("[ERROR] Error guardando config: " + e.getMessage());
             return false;
         }
     }

@@ -1,77 +1,52 @@
 package infrastructure.api.handlers;
 
-import infrastructure.persistence.jdbc.*;
-import domain.models.*;
+import infrastructure.persistence.jdbc.ProductDAO;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.google.gson.Gson;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.io.File;
-import java.io.FileOutputStream;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.nio.file.Files;
-import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-    public class ProductImageHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type,Authorization");
+/**
+ * Controlador dedicado exclusivamente a la subida de imágenes de productos.
+ * Actualmente no está registrado en el servidor (comentado en ApiServer).
+ * Ruta esperada: /api/products/{id}/image
+ * Solo acepta método PUT con una imagen codificada en base64 en el cuerpo JSON.
+ */
+public class ProductImageHandler extends BaseHandler {
 
-            if ("OPTIONS".equals(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
+    /**
+     * PUT /api/products/{id}/image — Guarda una imagen base64 para un producto.
+     * El cuerpo JSON debe contener el campo "image" con la cadena base64.
+     * Retorna la URL pública de la imagen guardada.
+     */
+    @Override
+    protected void processRequest(HttpExchange exchange) throws Exception {
+        // Solo acepta método PUT
+        if (!"PUT".equals(exchange.getRequestMethod())) {
+            sendJsonResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
+            return;
+        }
 
-            if ("PUT".equals(exchange.getRequestMethod())) {
-                try {
-                    // Path: /api/products/{id}/image
-                    String path = exchange.getRequestURI().getPath();
-                    String[] parts = path.split("/");
-                    // parts: ["", "api", "products", "{id}", "image"]
-                    int productId = Integer.parseInt(parts[3]);
+        // Extrae el ID del producto desde la ruta (/api/products/{id}/image)
+        String path = exchange.getRequestURI().getPath();
+        String[] parts = path.split("/");
+        int productId = Integer.parseInt(parts[3]);
 
-                    // Read JSON body
-                    InputStream is = exchange.getRequestBody();
-                    String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                    String base64Image = json.get("image").getAsString();
+        // Lee el cuerpo de la solicitud y extrae la imagen base64
+        InputStream is = exchange.getRequestBody();
+        String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        String base64Image = json.get("image").getAsString();
 
-                    ProductDAO dao = new ProductDAO();
-                    String savedUrl = dao.saveProductImage(productId, base64Image);
+        // Guarda la imagen y devuelve la URL generada
+        ProductDAO dao = new ProductDAO();
+        String savedUrl = dao.saveProductImage(productId, base64Image);
 
-                    String response;
-                    int statusCode;
-                    if (savedUrl != null) {
-                        response = "{\"url\": \"" + savedUrl + "\"}";
-                        statusCode = 200;
-                    } else {
-                        response = "{\"error\": \"Error saving image\"}";
-                        statusCode = 500;
-                    }
-
-                    byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
-                    exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
-                    exchange.sendResponseHeaders(statusCode, responseBytes.length);
-                    OutputStream os = exchange.getResponseBody();
-                    os.write(responseBytes);
-                    os.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    String error = "{\"error\": \"" + e.getMessage() + "\"}";
-                    exchange.sendResponseHeaders(500, error.getBytes().length);
-                    OutputStream os = exchange.getResponseBody();
-                    os.write(error.getBytes());
-                    os.close();
-                }
-            } else {
-                exchange.sendResponseHeaders(405, -1);
-            }
+        if (savedUrl != null) {
+            sendJsonResponse(exchange, 200, "{\"url\": \"" + savedUrl + "\"}");
+        } else {
+            sendJsonResponse(exchange, 500, "{\"error\": \"Error saving image\"}");
         }
     }
+}

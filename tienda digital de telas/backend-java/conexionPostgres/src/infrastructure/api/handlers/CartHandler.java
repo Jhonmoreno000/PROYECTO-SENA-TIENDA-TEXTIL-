@@ -1,99 +1,85 @@
 package infrastructure.api.handlers;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import infrastructure.persistence.jdbc.CartDAO;
 import domain.models.CartItem;
 
-public class CartHandler implements HttpHandler {
+/**
+ * Controlador para la gestión del carrito de compras.
+ * Ruta base: /api/cart
+ * Soporta operaciones CRUD completas sobre los ítems del carrito:
+ * GET, POST, PUT, DELETE.
+ */
+public class CartHandler extends BaseHandler {
     private final CartDAO cartDAO = new CartDAO();
     private final Gson gson = new Gson();
 
+    /**
+     * Enruta la solicitud según el método HTTP.
+     * GET /api/cart?userId=N → Obtiene el carrito de un usuario.
+     * POST /api/cart → Agrega un producto al carrito.
+     * PUT /api/cart/{id} → Actualiza la cantidad de un ítem.
+     * DELETE /api/cart/{id} → Elimina un ítem del carrito.
+     * DELETE /api/cart/clear/{userId} → Vacía el carrito de un usuario.
+     */
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        // CORS
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+    protected void processRequest(HttpExchange exchange) throws Exception {
+        String path = exchange.getRequestURI().getPath();
+        String method = exchange.getRequestMethod();
 
-        if ("OPTIONS".equals(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
-            return;
-        }
-
-        try {
-            String path = exchange.getRequestURI().getPath();
-            String method = exchange.getRequestMethod();
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-
-            if ("GET".equals(method)) {
-                // GET /api/cart?userId=xx
-                String query = exchange.getRequestURI().getQuery();
-                if (query != null && query.contains("userId=")) {
-                    int userId = Integer.parseInt(query.split("userId=")[1]);
-                    List<CartItem> items = cartDAO.getCartByUser(userId);
-                    String response = gson.toJson(items);
-                    sendResponse(exchange, 200, response);
-                } else {
-                    sendResponse(exchange, 400, "{\"error\":\"Missing userId\"}");
-                }
-            } else if ("POST".equals(method)) {
-                // POST /api/cart
-                InputStream is = exchange.getRequestBody();
-                String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                int userId = json.get("userId").getAsInt();
-                int productId = json.get("productId").getAsInt();
-                int quantity = json.get("quantity").getAsInt();
-
-                boolean success = cartDAO.addToCart(userId, productId, quantity);
-                sendResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
-            } else if ("PUT".equals(method)) {
-                // PUT /api/cart/{cartItemId}
-                String[] parts = path.split("/");
-                int cartItemId = Integer.parseInt(parts[parts.length - 1]);
-                InputStream is = exchange.getRequestBody();
-                String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                int quantity = json.get("quantity").getAsInt();
-
-                boolean success = cartDAO.updateQuantity(cartItemId, quantity);
-                sendResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
-            } else if ("DELETE".equals(method)) {
-                // DELETE /api/cart/{cartItemId} or /api/cart/clear/{userId}
-                if (path.contains("/clear/")) {
-                    String[] parts = path.split("/");
-                    int userId = Integer.parseInt(parts[parts.length - 1]);
-                    boolean success = cartDAO.clearCart(userId);
-                    sendResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
-                } else {
-                    String[] parts = path.split("/");
-                    int cartItemId = Integer.parseInt(parts[parts.length - 1]);
-                    boolean success = cartDAO.removeFromCart(cartItemId);
-                    sendResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
-                }
+        // GET /api/cart?userId=N — Obtiene todos los ítems del carrito de un usuario
+        if ("GET".equals(method)) {
+            String query = exchange.getRequestURI().getQuery();
+            if (query != null && query.contains("userId=")) {
+                int userId = Integer.parseInt(query.split("userId=")[1]);
+                List<CartItem> items = cartDAO.getCartByUser(userId);
+                sendJsonResponse(exchange, 200, gson.toJson(items));
             } else {
-                sendResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
+                sendJsonResponse(exchange, 400, "{\"error\":\"Missing userId\"}");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            sendResponse(exchange, 500, "{\"error\":\"Internal Server Error: " + e.getMessage() + "\"}");
-        }
-    }
 
-    private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        exchange.sendResponseHeaders(statusCode, bytes.length);
-        OutputStream os = exchange.getResponseBody();
-        os.write(bytes);
-        os.close();
+        // POST /api/cart — Agrega un producto al carrito (userId, productId, quantity)
+        } else if ("POST".equals(method)) {
+            InputStream is = exchange.getRequestBody();
+            String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            int userId = json.get("userId").getAsInt();
+            int productId = json.get("productId").getAsInt();
+            int quantity = json.get("quantity").getAsInt();
+            boolean success = cartDAO.addToCart(userId, productId, quantity);
+            sendJsonResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
+
+        // PUT /api/cart/{cartItemId} — Actualiza la cantidad de un ítem específico
+        } else if ("PUT".equals(method)) {
+            int cartItemId = Integer.parseInt(path.split("/")[path.split("/").length - 1]);
+            InputStream is = exchange.getRequestBody();
+            String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            int quantity = json.get("quantity").getAsInt();
+            boolean success = cartDAO.updateQuantity(cartItemId, quantity);
+            sendJsonResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
+
+        // DELETE — Puede eliminar un ítem individual o vaciar el carrito completo
+        } else if ("DELETE".equals(method)) {
+            if (path.contains("/clear/")) {
+                // DELETE /api/cart/clear/{userId} — Vacía todo el carrito del usuario
+                int userId = Integer.parseInt(path.split("/")[path.split("/").length - 1]);
+                boolean success = cartDAO.clearCart(userId);
+                sendJsonResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
+            } else {
+                // DELETE /api/cart/{cartItemId} — Elimina un solo ítem del carrito
+                int cartItemId = Integer.parseInt(path.split("/")[path.split("/").length - 1]);
+                boolean success = cartDAO.removeFromCart(cartItemId);
+                sendJsonResponse(exchange, success ? 200 : 500, "{\"success\":" + success + "}");
+            }
+        } else {
+            sendJsonResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
+        }
     }
 }

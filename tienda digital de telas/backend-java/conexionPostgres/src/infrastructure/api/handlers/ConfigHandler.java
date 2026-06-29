@@ -1,83 +1,67 @@
 package infrastructure.api.handlers;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-
 import infrastructure.persistence.jdbc.ConfigDAO;
 
-public class ConfigHandler implements HttpHandler {
+/**
+ * Controlador para la configuración global del sistema (pares clave-valor).
+ * Ruta base: /api/config
+ * Permite leer y escribir valores de configuración persistidos en la base de datos.
+ * Soporta:
+ * - GET /api/config → Obtiene todas las configuraciones.
+ * - GET /api/config/{key} → Obtiene el valor de una clave específica.
+ * - POST /api/config → Crea o actualiza un par clave-valor.
+ */
+public class ConfigHandler extends BaseHandler {
+    private final ConfigDAO dao = new ConfigDAO();
+    private final Gson gson = new Gson();
+
+    /**
+     * Enruta la solicitud según el método HTTP.
+     */
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    protected void processRequest(HttpExchange exchange) throws Exception {
+        String method = exchange.getRequestMethod();
 
-        if ("OPTIONS".equals(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
-            return;
-        }
-
-        ConfigDAO dao = new ConfigDAO();
-        Gson gson = new Gson();
-
-        try {
-            if ("GET".equals(exchange.getRequestMethod())) {
-                String path = exchange.getRequestURI().getPath();
-                if (path.equals("/api/config")) {
-                    Map<String, String> configs = dao.getAllConfig();
-                    sendResponse(exchange, 200, gson.toJson(configs));
-                } else {
-                    // example: /api/config/system_config
-                    String key = path.substring(path.lastIndexOf("/") + 1);
-                    String value = dao.getConfig(key);
-                    if (value != null) {
-                        sendResponse(exchange, 200, value); // Return the raw JSON string value stored in DB
-                    } else {
-                        sendResponse(exchange, 404, "{}");
-                    }
-                }
-            } else if ("POST".equals(exchange.getRequestMethod())) {
-                InputStream is = exchange.getRequestBody();
-                String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                
-                // Expecting JSON {"key": "home_sections_config", "value": "[...json array...]"}
-                JsonObject jsonObj = JsonParser.parseString(body).getAsJsonObject();
-                String key = jsonObj.get("key").getAsString();
-                String value = jsonObj.get("value").getAsString(); // Storing as serialized string
-                
-                if (dao.setConfig(key, value)) {
-                    sendResponse(exchange, 200, "{\"success\":true}");
-                } else {
-                    sendResponse(exchange, 500, "{\"error\":\"Error guardando config\"}");
-                }
+        // GET — Recupera configuraciones
+        if ("GET".equals(method)) {
+            String path = exchange.getRequestURI().getPath();
+            if (path.equals("/api/config")) {
+                // GET /api/config — Devuelve todas las configuraciones como mapa clave-valor
+                Map<String, String> configs = dao.getAllConfig();
+                sendJsonResponse(exchange, 200, gson.toJson(configs));
             } else {
-                sendResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
+                // GET /api/config/{key} — Devuelve el valor de una clave específica
+                String key = path.substring(path.lastIndexOf("/") + 1);
+                String value = dao.getConfig(key);
+                if (value != null) {
+                    sendJsonResponse(exchange, 200, value);
+                } else {
+                    sendJsonResponse(exchange, 404, "{}");
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            sendResponse(exchange, 500, "{\"error\":\"Server error\"}");
-        }
-    }
 
-    private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-        byte[] responseBytes;
-        if (response != null) {
-            responseBytes = response.getBytes(StandardCharsets.UTF_8);
+        // POST /api/config — Crea o actualiza una configuración (key + value en el cuerpo)
+        } else if ("POST".equals(method)) {
+            InputStream is = exchange.getRequestBody();
+            String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject jsonObj = JsonParser.parseString(body).getAsJsonObject();
+            String key = jsonObj.get("key").getAsString();
+            String value = jsonObj.get("value").getAsString();
+
+            if (dao.setConfig(key, value)) {
+                sendJsonResponse(exchange, 200, "{\"success\":true}");
+            } else {
+                sendJsonResponse(exchange, 500, "{\"error\":\"Error guardando config\"}");
+            }
         } else {
-            responseBytes = new byte[0];
+            sendJsonResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
         }
-        exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
-        exchange.sendResponseHeaders(statusCode, responseBytes.length);
-        OutputStream os = exchange.getResponseBody();
-        if (responseBytes.length > 0) os.write(responseBytes);
-        os.close();
     }
 }

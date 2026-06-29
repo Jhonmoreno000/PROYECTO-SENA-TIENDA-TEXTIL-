@@ -7,12 +7,20 @@ import infrastructure.config.Conexion;
 import domain.models.*;
 
 /**
- * DAO for tables: inventory_batches, waste_events, stock_thresholds,
- * daily_sales, global_banner, region_sales, recent_activity
+ * DAO (Data Access Object) para el Inventario y Metricas del Sistema.
+ * Gestiona multiples tablas del modulo de inventario y ERP:
+ * inventory_batches, waste_events, stock_thresholds, daily_sales,
+ * global_banner, region_sales, recent_activity, erp_sales_metrics,
+ * erp_system_notifications, erp_fabric_inventory.
  */
 public class InventoryDAO {
 
-    // â”€â”€â”€ inventory_batches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- inventory_batches ---------------------------------------------------
+
+    /**
+     * Recupera todos los lotes de inventario registrados.
+     * @return Lista de objetos InventoryBatch con datos de cada lote.
+     */
     public List<InventoryBatch> getAllBatches() {
         List<InventoryBatch> list = new ArrayList<>();
         String query = "SELECT * FROM inventory_batches ORDER BY id";
@@ -31,10 +39,18 @@ public class InventoryDAO {
                 if (rs.getTimestamp("last_update") != null) b.setLastUpdate(rs.getTimestamp("last_update").toString().split(" ")[0]);
                 list.add(b);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar los lotes de inventario
+            e.printStackTrace(); 
+        }
         return list;
     }
 
+    /**
+     * Agrega un nuevo lote de inventario.
+     * @param b Objeto InventoryBatch con los datos del lote.
+     * @return true si la insercion fue exitosa, false en caso de error.
+     */
     public boolean addBatch(InventoryBatch b) {
         String query = "INSERT INTO inventory_batches (id, fabric_type, supplier, initial_meters, current_meters, status) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.getConnection();
@@ -46,9 +62,20 @@ public class InventoryDAO {
             pst.setDouble(5, b.getCurrentMeters());
             pst.setString(6, b.getStatus() != null ? b.getStatus() : "active");
             return pst.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { 
+            // Error: No se pudo insertar el lote de inventario
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
+    /**
+     * Actualiza los metros actuales y el estado de un lote de inventario.
+     * @param batchId       Identificador del lote.
+     * @param currentMeters Metros actuales disponibles.
+     * @param status        Nuevo estado del lote (ej: 'active', 'depleted').
+     * @return true si la actualizacion fue exitosa, false en caso de error.
+     */
     public boolean updateBatch(String batchId, double currentMeters, String status) {
         String query = "UPDATE inventory_batches SET current_meters = ?, status = ?, last_update = NOW() WHERE id = ?";
         try (Connection con = Conexion.getConnection();
@@ -57,10 +84,19 @@ public class InventoryDAO {
             pst.setString(2, status);
             pst.setString(3, batchId);
             return pst.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { 
+            // Error: No se pudo actualizar el lote de inventario
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
-    // â”€â”€â”€ waste_events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- waste_events --------------------------------------------------------
+
+    /**
+     * Recupera todos los eventos de desperdicio registrados, del mas reciente al mas antiguo.
+     * @return Lista de objetos WasteEvent.
+     */
     public List<WasteEvent> getAllWasteEvents() {
         List<WasteEvent> list = new ArrayList<>();
         String query = "SELECT * FROM waste_events ORDER BY id DESC";
@@ -80,10 +116,18 @@ public class InventoryDAO {
                 w.setUserId(rs.getInt("user_id"));
                 list.add(w);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar los eventos de desperdicio
+            e.printStackTrace(); 
+        }
         return list;
     }
 
+    /**
+     * Registra un nuevo evento de desperdicio.
+     * @param w Objeto WasteEvent con los datos del evento.
+     * @return true si la insercion fue exitosa, false en caso de error.
+     */
     public boolean addWasteEvent(WasteEvent w) {
         String query = "INSERT INTO waste_events (batch_id, meters, reason, description, responsible, event_date, user_id) VALUES (?, ?, ?, ?, ?, CURRENT_DATE, ?)";
         try (Connection con = Conexion.getConnection();
@@ -95,10 +139,19 @@ public class InventoryDAO {
             pst.setString(5, w.getResponsible());
             pst.setInt(6, w.getUserId());
             return pst.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { 
+            // Error: No se pudo insertar el evento de desperdicio
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
-    // â”€â”€â”€ stock_thresholds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- stock_thresholds ----------------------------------------------------
+
+    /**
+     * Recupera todos los umbrales de stock minimo configurados.
+     * @return Lista de objetos StockThreshold.
+     */
     public List<StockThreshold> getAllThresholds() {
         List<StockThreshold> list = new ArrayList<>();
         String query = "SELECT * FROM stock_thresholds ORDER BY id";
@@ -113,10 +166,19 @@ public class InventoryDAO {
                 t.setAlertEnabled(rs.getBoolean("alert_enabled"));
                 list.add(t);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar los umbrales de stock
+            e.printStackTrace(); 
+        }
         return list;
     }
 
+    /**
+     * Actualiza el minimo de metros para un tipo de tela en los umbrales de stock.
+     * @param fabricType Tipo de tela a actualizar.
+     * @param minMeters  Nuevo valor minimo en metros.
+     * @return true si la actualizacion fue exitosa, false en caso de error.
+     */
     public boolean updateThreshold(String fabricType, double minMeters) {
         String query = "UPDATE stock_thresholds SET min_meters = ? WHERE fabric_type = ?";
         try (Connection con = Conexion.getConnection();
@@ -124,10 +186,19 @@ public class InventoryDAO {
             pst.setDouble(1, minMeters);
             pst.setString(2, fabricType);
             return pst.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { 
+            // Error: No se pudo actualizar el umbral de stock
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
-    // â”€â”€â”€ daily_sales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- daily_sales ---------------------------------------------------------
+
+    /**
+     * Recupera las ventas diarias de los ultimos 30 dias.
+     * @return Lista de objetos DailySale con total de ventas y pedidos por dia.
+     */
     public List<DailySale> getDailySales() {
         List<DailySale> list = new ArrayList<>();
         String query = "SELECT * FROM daily_sales ORDER BY sale_date DESC LIMIT 30";
@@ -142,11 +213,19 @@ public class InventoryDAO {
                 d.setTotalOrders(rs.getInt("total_orders"));
                 list.add(d);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar las ventas diarias
+            e.printStackTrace(); 
+        }
         return list;
     }
 
-    // â”€â”€â”€ global_banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- global_banner -------------------------------------------------------
+
+    /**
+     * Recupera el banner global activo (el primero encontrado).
+     * @return Objeto GlobalBanner o null si no hay ninguno configurado.
+     */
     public GlobalBanner getBanner() {
         String query = "SELECT * FROM global_banner ORDER BY id LIMIT 1";
         try (Connection con = Conexion.getConnection();
@@ -161,12 +240,22 @@ public class InventoryDAO {
                 if (rs.getTimestamp("updated_at") != null) b.setUpdatedAt(rs.getTimestamp("updated_at").toString());
                 return b;
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudo recuperar el banner global
+            e.printStackTrace(); 
+        }
         return null;
     }
 
+    /**
+     * Actualiza el banner global. Si no existe ninguno, lo inserta.
+     * @param enabled    Indica si el banner esta habilitado.
+     * @param message    Mensaje del banner.
+     * @param bannerType Tipo de banner (ej: 'info', 'warning', 'promo').
+     * @return true si la operacion fue exitosa, false en caso de error.
+     */
     public boolean updateBanner(boolean enabled, String message, String bannerType) {
-        // Upsert: update if exists, insert if not
+        // UPSERT: actualiza si existe, inserta si no
         String query = "UPDATE global_banner SET enabled = ?, message = ?, banner_type = ?, updated_at = NOW() WHERE id = (SELECT id FROM global_banner ORDER BY id LIMIT 1)";
         try (Connection con = Conexion.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -175,7 +264,7 @@ public class InventoryDAO {
             pst.setString(3, bannerType);
             int rows = pst.executeUpdate();
             if (rows == 0) {
-                // No banner exists yet, insert one
+                // No existe banner, se inserta uno nuevo
                 String insertQuery = "INSERT INTO global_banner (enabled, message, banner_type) VALUES (?, ?, ?)";
                 try (PreparedStatement ins = con.prepareStatement(insertQuery)) {
                     ins.setBoolean(1, enabled);
@@ -185,10 +274,19 @@ public class InventoryDAO {
                 }
             }
             return true;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { 
+            // Error: No se pudo actualizar el banner global
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
-    // â”€â”€â”€ region_sales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- region_sales --------------------------------------------------------
+
+    /**
+     * Recupera las ventas por region/departamento, ordenadas de mayor a menor.
+     * @return Lista de objetos RegionSale.
+     */
     public List<RegionSale> getRegionSales() {
         List<RegionSale> list = new ArrayList<>();
         String query = "SELECT * FROM region_sales ORDER BY sales DESC";
@@ -204,11 +302,19 @@ public class InventoryDAO {
                 r.setCapital(rs.getString("capital"));
                 list.add(r);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar las ventas por region
+            e.printStackTrace(); 
+        }
         return list;
     }
 
-    // â”€â”€â”€ recent_activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- recent_activity -----------------------------------------------------
+
+    /**
+     * Recupera las 20 actividades mas recientes del sistema.
+     * @return Lista de objetos RecentActivity.
+     */
     public List<RecentActivity> getRecentActivity() {
         List<RecentActivity> list = new ArrayList<>();
         String query = "SELECT * FROM recent_activity ORDER BY created_at DESC LIMIT 20";
@@ -228,10 +334,18 @@ public class InventoryDAO {
                 a.setIcon(rs.getString("icon"));
                 list.add(a);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudo recuperar la actividad reciente
+            e.printStackTrace(); 
+        }
         return list;
     }
 
+    /**
+     * Registra una nueva actividad en el sistema.
+     * @param a Objeto RecentActivity con los datos de la actividad.
+     * @return true si la insercion fue exitosa, false en caso de error.
+     */
     public boolean addActivity(RecentActivity a) {
         String query = "INSERT INTO recent_activity (type, user_id, user_name, action, amount, icon) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.getConnection();
@@ -243,14 +357,19 @@ public class InventoryDAO {
             if (a.getAmount() != null) pst.setDouble(5, a.getAmount()); else pst.setNull(5, Types.NUMERIC);
             pst.setString(6, a.getIcon());
             return pst.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { 
+            // Error: No se pudo insertar la actividad
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
-    // ── erp_sales_metrics ─────────────────────────────────────────────────────
+    // --- erp_sales_metrics ---------------------------------------------------
+
     /**
      * Retorna las metricas de ventas ERP (ventas reales vs objetivo) de los
      * ultimos 30 dias, ordenadas cronologicamente ascendente.
-     * @return Lista de mapas con campos: recordDate, actualSales, targetSales, profitMargin
+     * @return Lista de mapas con campos: recordDate, actualSales, targetSales, profitMargin.
      */
     public List<java.util.Map<String, Object>> getErpSalesMetrics() {
         List<java.util.Map<String, Object>> list = new ArrayList<>();
@@ -266,14 +385,18 @@ public class InventoryDAO {
                 row.put("profitMargin", rs.getDouble("profit_margin"));
                 list.add(row);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar las metricas de ventas ERP
+            e.printStackTrace(); 
+        }
         return list;
     }
 
-    // ── erp_system_notifications ──────────────────────────────────────────────
+    // --- erp_system_notifications --------------------------------------------
+
     /**
      * Retorna las notificaciones del sistema ERP, las mas recientes primero.
-     * @return Lista de mapas con campos: id, type, title, message, isRead, createdAt
+     * @return Lista de mapas con campos: id, type, title, message, isRead, createdAt.
      */
     public List<java.util.Map<String, Object>> getErpNotifications() {
         List<java.util.Map<String, Object>> list = new ArrayList<>();
@@ -292,15 +415,19 @@ public class InventoryDAO {
                     row.put("createdAt", rs.getTimestamp("created_at").toString());
                 list.add(row);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudieron recuperar las notificaciones del sistema ERP
+            e.printStackTrace(); 
+        }
         return list;
     }
 
-    // ── erp_fabric_inventory ──────────────────────────────────────────────────
+    // --- erp_fabric_inventory ------------------------------------------------
+
     /**
      * Retorna el inventario de telas ERP con alertas de stock bajo.
      * @return Lista de mapas con campos: id, sku, fabricName, category, supplier,
-     *         currentMeters, minThresholdMeters, costPerMeter, lowStock
+     *         currentMeters, minThresholdMeters, costPerMeter, lowStock, lastRestockDate.
      */
     public List<java.util.Map<String, Object>> getErpFabricInventory() {
         List<java.util.Map<String, Object>> list = new ArrayList<>();
@@ -320,12 +447,16 @@ public class InventoryDAO {
                 row.put("currentMeters", current);
                 row.put("minThresholdMeters", threshold);
                 row.put("costPerMeter", rs.getDouble("cost_per_meter"));
+                // Calcula si el stock actual esta por debajo del umbral minimo
                 row.put("lowStock", current <= threshold);
                 if (rs.getDate("last_restock_date") != null)
                     row.put("lastRestockDate", rs.getDate("last_restock_date").toString());
                 list.add(row);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { 
+            // Error: No se pudo recuperar el inventario de telas ERP
+            e.printStackTrace(); 
+        }
         return list;
     }
 }

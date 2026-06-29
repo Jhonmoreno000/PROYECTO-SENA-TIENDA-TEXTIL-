@@ -11,12 +11,21 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 /**
- * Implementación JDBC para el Repositorio de Usuarios.
+ * Implementacion JDBC del Repositorio de Usuarios (UserRepository).
+ * Esta clase es el adaptador de infraestructura para el puerto definido
+ * en la capa de dominio (Clean Architecture). Proporciona operaciones
+ * de busqueda, guardado y actualizacion sobre la tabla 'users'.
  */
 public class JdbcUserRepositoryImpl implements UserRepository {
 
+    /**
+     * Busca un usuario activo por su correo electronico.
+     * @param email Correo electronico del usuario a buscar.
+     * @return Optional con el User si existe y esta activo, Optional.empty() si no.
+     */
     @Override
     public Optional<User> findByEmailAndActive(String email) {
+        // Consulta el usuario activo incluyendo todos los campos relevantes
         String query = "SELECT id, name, email, role, active, suspended, suspension_reason, commission_rate, " +
                 "registered_at, last_login, password_hash FROM users WHERE email = ? AND active = true";
 
@@ -36,25 +45,33 @@ public class JdbcUserRepositoryImpl implements UserRepository {
                         rs.getDouble("commission_rate"),
                         rs.getString("registered_at"),
                         rs.getString("last_login"),
-                        null // Status can be derived
+                        null // Status se deriva posteriormente
                     );
                     
-                    // Nota técnica: En Clean Architecture el DAO no debería hacer Hashes ni validación de hashes
-                    // pero dado que el hash viaja junto al registro, debemos pasar el Hash al Domain si quieramos 
+                    // Nota tecnica: En Clean Architecture el DAO no deberia hacer Hashes ni validacion de hashes
+                    // pero dado que el hash viaja junto al registro, debemos pasar el Hash al Domain si quisieramos
                     // que el servicio lo valide en memoria. Como lo hace la base actual, lo simplificamos a la capa DB
                     // ya que no hay una entidad Password aislada en tu Domain.
                     return Optional.of(user);
                 }
             }
         } catch (SQLException e) {
+            // Error: No se pudo buscar el usuario por email
             e.printStackTrace();
         }
         return Optional.empty();
     }
     
-    // Método para ser compatible con la validación de contraseña del antiguo AuthDAO.
-    // Clean code: Agregar la validación requerida de hasheo directamente contra la BD y Auth DAO para no romper
+    /**
+     * Busca un usuario activo por email y verifica que el hash de contrasena
+     * coincida. Metodo de compatibilidad con la validacion de contrasena del
+     * antiguo AuthDAO.
+     * @param email     Correo electronico del usuario.
+     * @param plainHash Hash SHA-256 de la contrasena en texto plano.
+     * @return Optional con el User si coincide, Optional.empty() si no.
+     */
     public Optional<User> findByEmailAndMatchPassword(String email, String plainHash) {
+         // Consulta que verifica tanto el email como el hash en la misma sentencia SQL
          String query = "SELECT id, name, email, role, active, suspended, suspension_reason, commission_rate, " +
                 "registered_at, last_login, password_hash FROM users WHERE email = ? AND password_hash = ? AND active = true";
 
@@ -81,13 +98,21 @@ public class JdbcUserRepositoryImpl implements UserRepository {
                 }
             }
         } catch (SQLException e) {
+            // Error: No se pudo realizar la busqueda con validacion de hash
             e.printStackTrace();
         }
         return Optional.empty();
     }
 
+    /**
+     * Guarda un nuevo usuario en la base de datos.
+     * @param user          Objeto User con los datos del nuevo usuario.
+     * @param hashedPassword Hash SHA-256 de la contrasena (ya procesada).
+     * @return true si el guardado fue exitoso, false en caso de error.
+     */
     @Override
     public boolean save(User user, String hashedPassword) {
+        // Inserta un nuevo usuario con rol por defecto 'cliente' y active=true
         String query = "INSERT INTO users (name, email, role, active, password_hash) VALUES (?, ?, ?, ?, ?)";
         try (Connection con = Conexion.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -99,11 +124,16 @@ public class JdbcUserRepositoryImpl implements UserRepository {
 
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
+            // Error: No se pudo insertar el nuevo usuario (email duplicado, BD caida)
             e.printStackTrace();
             return false;
         }
     }
 
+    /**
+     * Actualiza la fecha/hora del ultimo inicio de sesion de un usuario.
+     * @param userId Identificador del usuario.
+     */
     @Override
     public void updateLastLogin(int userId) {
         String query = "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?";
@@ -112,6 +142,7 @@ public class JdbcUserRepositoryImpl implements UserRepository {
             pst.setInt(1, userId);
             pst.executeUpdate();
         } catch (SQLException e) {
+            // Error: No se pudo actualizar la fecha de ultimo inicio de sesion
             e.printStackTrace();
         }
     }

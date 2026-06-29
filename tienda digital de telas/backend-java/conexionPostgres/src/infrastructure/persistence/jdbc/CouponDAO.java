@@ -11,10 +11,21 @@ import java.util.List;
 import infrastructure.config.Conexion;
 import domain.models.Coupon;
 
+/**
+ * DAO (Data Access Object) para Cupones de Descuento.
+ * Gestiona las operaciones CRUD sobre la tabla 'coupons' del sistema
+ * D&D Textil.
+ */
 public class CouponDAO {
 
+    /**
+     * Recupera todos los cupones registrados en el sistema, ordenados por ID
+     * descendente (mas recientes primero).
+     * @return Lista de objetos Coupon con sus reglas de uso.
+     */
     public List<Coupon> getAllCoupons() {
         List<Coupon> coupons = new ArrayList<>();
+        // Consulta todos los campos de la tabla coupons
         String query = "SELECT id, code, discount_type, discount_value, expires_at, min_purchase, max_uses, first_time_only, usage_count, active FROM coupons ORDER BY id DESC";
 
         try (Connection con = Conexion.getConnection();
@@ -50,11 +61,17 @@ public class CouponDAO {
                 coupons.add(coupon);
             }
         } catch (SQLException e) {
-            System.err.println("âŒ Error obteniendo cupones: " + e.getMessage());
+            // Error: No se pudieron recuperar los cupones (problema de BD o conexion)
+            System.err.println("[ERROR] Error obteniendo cupones: " + e.getMessage());
         }
         return coupons;
     }
 
+    /**
+     * Inserta un nuevo cupon en la base de datos.
+     * @param coupon Objeto Coupon con los datos del cupon a insertar.
+     * @return true si la insercion fue exitosa, false en caso de error.
+     */
     public boolean addCoupon(Coupon coupon) {
         String query = "INSERT INTO coupons (code, discount_type, discount_value, expires_at, min_purchase, max_uses, first_time_only, active) VALUES (?, ?, ?, CAST(? AS TIMESTAMP), ?, ?, ?, ?)";
         try (Connection con = Conexion.getConnection();
@@ -63,7 +80,7 @@ public class CouponDAO {
             pst.setString(2, coupon.getDiscountType());
             pst.setDouble(3, coupon.getDiscountValue());
             
-            // Assuming expiresAt is standard ISO or SQL date format string since it comes from an input type="date"
+            // Asume que expiresAt es una fecha en formato ISO o SQL (proviene de input type="date")
             if (coupon.getExpiresAt() != null && !coupon.getExpiresAt().isEmpty()) {
                 pst.setString(4, coupon.getExpiresAt() + " 23:59:59");
             } else {
@@ -88,11 +105,17 @@ public class CouponDAO {
             int rows = pst.executeUpdate();
             return rows > 0;
         } catch (SQLException e) {
-            System.err.println(" Error insertando cupÃ³n: " + e.getMessage());
+            // Error: No se pudo insertar el cupon (codigo duplicado, BD, etc.)
+            System.err.println("[ERROR] Error insertando cupon: " + e.getMessage());
             return false;
         }
     }
 
+    /**
+     * Desactiva un cupon existente (soft-delete) marcando active = false.
+     * @param id Identificador del cupon a desactivar.
+     * @return true si se desactivo correctamente, false en caso de error.
+     */
     public boolean deactivateCoupon(int id) {
         String query = "UPDATE coupons SET active = false WHERE id = ?";
         try (Connection con = Conexion.getConnection();
@@ -100,7 +123,8 @@ public class CouponDAO {
             pst.setInt(1, id);
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error desactivando cupÃ³n: " + e.getMessage());
+            // Error: No se pudo desactivar el cupon
+            System.err.println("[ERROR] Error desactivando cupon: " + e.getMessage());
             return false;
         }
     }
