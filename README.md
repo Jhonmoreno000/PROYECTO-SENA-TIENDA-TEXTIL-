@@ -747,11 +747,6 @@ Recientemente hemos integrado mejoras significativas orientadas a facilitar el d
 
 ---
 
-## Contacto
-Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000)
-
----
-
 ## Guía de Contribución
 
 ¡Nos encantaría que contribuyas a mejorar D&D Textil! Aquí te mostramos cómo hacerlo:
@@ -801,4 +796,5 @@ Este proyecto está licenciado bajo la licencia MIT.
 
 ### Colaboradores
 - David Velez - Contribuidor
+- Daniel Barrientos - Contribuidor
 - Equipo de Desarrollo SENA
