@@ -1618,6 +1618,97 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 
 
 --
+-- ERP Tables (added for analytics dashboard)
+--
+
+CREATE TABLE IF NOT EXISTS public.erp_sales_metrics (
+    id integer NOT NULL,
+    record_date date NOT NULL,
+    actual_sales numeric(15,2) DEFAULT 0.00 NOT NULL,
+    target_sales numeric(15,2) DEFAULT 0.00 NOT NULL,
+    profit_margin numeric(5,2) DEFAULT 0.00 NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE SEQUENCE IF NOT EXISTS public.erp_sales_metrics_id_seq
+    AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER SEQUENCE public.erp_sales_metrics_id_seq OWNED BY public.erp_sales_metrics.id;
+ALTER TABLE ONLY public.erp_sales_metrics ALTER COLUMN id SET DEFAULT nextval('public.erp_sales_metrics_id_seq'::regclass);
+ALTER TABLE ONLY public.erp_sales_metrics ADD CONSTRAINT erp_sales_metrics_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.erp_sales_metrics ADD CONSTRAINT erp_sales_metrics_record_date_key UNIQUE (record_date);
+
+CREATE TABLE IF NOT EXISTS public.erp_system_notifications (
+    id integer NOT NULL,
+    type character varying(50) NOT NULL,
+    title character varying(150) NOT NULL,
+    message text NOT NULL,
+    is_read boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE SEQUENCE IF NOT EXISTS public.erp_system_notifications_id_seq
+    AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER SEQUENCE public.erp_system_notifications_id_seq OWNED BY public.erp_system_notifications.id;
+ALTER TABLE ONLY public.erp_system_notifications ALTER COLUMN id SET DEFAULT nextval('public.erp_system_notifications_id_seq'::regclass);
+ALTER TABLE ONLY public.erp_system_notifications ADD CONSTRAINT erp_system_notifications_pkey PRIMARY KEY (id);
+
+CREATE TABLE IF NOT EXISTS public.erp_fabric_inventory (
+    id integer NOT NULL,
+    sku character varying(50) NOT NULL,
+    fabric_name character varying(150) NOT NULL,
+    category character varying(50) NOT NULL,
+    supplier character varying(100) NOT NULL,
+    current_meters numeric(10,2) DEFAULT 0.00 NOT NULL,
+    min_threshold_meters numeric(10,2) DEFAULT 50.00 NOT NULL,
+    cost_per_meter numeric(10,2) NOT NULL,
+    last_restock_date date
+);
+
+CREATE SEQUENCE IF NOT EXISTS public.erp_fabric_inventory_id_seq
+    AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER SEQUENCE public.erp_fabric_inventory_id_seq OWNED BY public.erp_fabric_inventory.id;
+ALTER TABLE ONLY public.erp_fabric_inventory ALTER COLUMN id SET DEFAULT nextval('public.erp_fabric_inventory_id_seq'::regclass);
+ALTER TABLE ONLY public.erp_fabric_inventory ADD CONSTRAINT erp_fabric_inventory_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.erp_fabric_inventory ADD CONSTRAINT erp_fabric_inventory_sku_key UNIQUE (sku);
+
+--
+-- Seed data for ERP tables
+--
+
+COPY public.erp_sales_metrics (id, record_date, actual_sales, target_sales, profit_margin, created_at) FROM stdin;
+1	2026-06-16	2239063.74	1201582.07	32.50	2026-06-29 12:15:00
+2	2026-06-17	1235128.52	1790065.79	34.00	2026-06-29 12:15:00
+3	2026-06-18	2114342.69	1439017.22	33.20	2026-06-29 12:15:00
+4	2026-06-19	1850000.00	1650000.00	38.10	2026-06-29 12:15:00
+5	2026-06-20	1900000.00	1700000.00	36.40	2026-06-29 12:15:00
+6	2026-06-21	2400000.00	1800000.00	41.00	2026-06-29 12:15:00
+7	2026-06-22	1400000.00	1850000.00	35.50	2026-06-29 12:15:00
+8	2026-06-23	1750000.00	1550000.00	33.80	2026-06-29 12:15:00
+9	2026-06-24	1250000.00	1500000.00	30.50	2026-06-29 12:15:00
+10	2026-06-25	1800000.00	1550000.00	34.00	2026-06-29 12:15:00
+11	2026-06-26	1600000.00	1600000.00	33.20	2026-06-29 12:15:00
+12	2026-06-27	2100000.00	1650000.00	38.10	2026-06-29 12:15:00
+13	2026-06-28	1900000.00	1700000.00	36.40	2026-06-29 12:15:00
+14	2026-06-29	2400000.00	1800000.00	41.00	2026-06-29 12:15:00
+\.
+
+COPY public.erp_system_notifications (id, type, title, message, is_read, created_at) FROM stdin;
+1	error	Fallo de Pasarela de Pago	3 transacciones con tarjeta declinadas por el banco emisor.	f	2026-06-29 12:15:00
+2	success	Pedido Mayorista B2B	Textiles Premium SAS solicito 500m de Lino Blanco.	f	2026-06-29 12:15:00
+3	warning	Retraso de Proveedor	El envio de Seda Pura desde Italia presenta 2 dias de retraso.	f	2026-06-29 12:15:00
+4	info	Reporte Semanal Generado	El balance de ventas semanales esta listo para descarga.	f	2026-06-29 12:15:00
+\.
+
+COPY public.erp_fabric_inventory (id, sku, fabric_name, category, supplier, current_meters, min_threshold_meters, cost_per_meter, last_restock_date) FROM stdin;
+1	ALG-001	Algodon Egipcio Blanco	Algodon	Textil Corp	1200.50	100.00	25000	2026-06-14
+2	SED-042	Seda Pura Escarlata	Seda	Importaciones V&G	35.00	50.00	85000	2026-05-30
+3	LIN-112	Lino Rustico Crudo	Lino	Textil Corp	450.00	80.00	42000	2026-06-19
+4	TER-998	Terciopelo Azul Noche	Terciopelo	Tejidos Premium	15.00	30.00	110000	2026-05-15
+5	DRL-201	Dril Elastico Natural	Dril	Drilones Industriales	380.00	50.00	38000	2026-06-24
+6	LAN-055	Lana Merino Gris	Lana	Lanera del Sur	120.00	20.00	65000	2026-06-09
+\.
+
+--
 -- PostgreSQL database dump complete
 --
 
