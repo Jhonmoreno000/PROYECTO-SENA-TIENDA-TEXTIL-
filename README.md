@@ -786,4 +786,57 @@ Recientemente hemos integrado mejoras significativas orientadas a facilitar el d
 ---
 
 ## Contacto
-Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) 
+Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000)
+
+---
+
+## Guía de Contribución
+
+¡Nos encantaría que contribuyas a mejorar D&D Textil! Aquí te mostramos cómo hacerlo:
+
+### Pasos para Contribuir
+
+1. **Fork el repositorio** desde GitHub
+2. **Clona tu fork** localmente:
+   ```bash
+   git clone https://github.com/tu-usuario/PROYECTO-SENA-TIENDA-TEXTIL-.git
+   cd PROYECTO-SENA-TIENDA-TEXTIL-
+   ```
+3. **Crea una rama para tu feature:**
+   ```bash
+   git checkout -b feature/tu-feature
+   ```
+4. **Realiza los cambios** y haz commits descriptivos:
+   ```bash
+   git commit -m "feat: descripción clara de tu cambio"
+   ```
+5. **Push a tu fork:**
+   ```bash
+   git push origin feature/tu-feature
+   ```
+6. **Abre un Pull Request** describiendo tus cambios
+
+### Convenciones de Commits
+
+- `feat:` para nuevas funcionalidades
+- `fix:` para correcciones de errores
+- `docs:` para cambios en documentación
+- `style:` para cambios de formato
+- `refactor:` para refactorización de código
+
+---
+
+## Licencia
+
+Este proyecto está licenciado bajo la licencia MIT.
+
+---
+
+## Créditos y Autores
+
+### Desarrollo Principal
+- **Jhon Moreno** - Arquitecto Principal y Desarrollador Lead
+
+### Colaboradores
+- David Velez - Contribuidor
+- Equipo de Desarrollo SENA
