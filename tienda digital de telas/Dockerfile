@@ -1,7 +1,7 @@
-FROM node:20-bookworm-slim AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+COPY node_modules ./node_modules
 COPY . .
 RUN npm run build
 
