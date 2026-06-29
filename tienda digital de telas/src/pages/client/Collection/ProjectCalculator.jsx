@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { 
-    Scissors, 
-    Info, 
-    Shirt, 
-    Layout, 
-    Square, 
+import { Link } from 'react-router-dom';
+import {
+    Scissors,
+    Info,
+    Shirt,
+    Layout,
+    Square,
     Box,
     Calculator,
-    ArrowRight
+    ArrowRight,
+    CircleDashed,
+    ArrowDownToLine,
 } from 'lucide-react';
 
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
@@ -19,7 +22,7 @@ import { formatCurrency } from '../../../utils/formatters';
 const PROJECTS = {
     skirt_circular: {
         name: 'Falda Circular',
-        icon: <Shirt className="w-6 h-6" />,
+        icon: <CircleDashed className="w-6 h-6" />,
         fields: ['waist', 'length'],
         calculate: (measures, fabricWidth) => {
             const radius = measures.waist / (2 * Math.PI);
@@ -32,7 +35,7 @@ const PROJECTS = {
     },
     skirt_straight: {
         name: 'Falda Recta',
-        icon: <Shirt className="w-6 h-6" />,
+        icon: <ArrowDownToLine className="w-6 h-6" />,
         fields: ['waist', 'hip', 'length'],
         calculate: (measures, fabricWidth) => {
             const widthNeeded = (measures.hip + 10) / 100; // hip + ease
@@ -219,18 +222,13 @@ function ProjectCalculator() {
                     ================================================================ */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="card p-6 md:p-8">
-                            <div className="flex items-start gap-4 mb-8 pb-6 border-b border-gray-100 dark:border-slate-800">
-                                <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 text-violet-600 dark:text-violet-400">
-                                    {project.icon}
-                                </div>
-                                <div>
-                                    <h3 className="font-black text-2xl text-gray-900 dark:text-white tracking-tight">
-                                        {project.name}
-                                    </h3>
-                                    <p className="text-gray-500 font-medium mt-1 leading-relaxed">
-                                        {project.description}
-                                    </p>
-                                </div>
+                            <div className="mb-8 pb-6 border-b border-gray-100 dark:border-slate-800">
+                                <h3 className="font-black text-2xl text-gray-900 dark:text-white tracking-tight">
+                                    {project.name}
+                                </h3>
+                                <p className="text-gray-500 font-medium mt-1 leading-relaxed">
+                                    {project.description}
+                                </p>
                             </div>
 
                             {/* Configuraciones Base de Tela */}

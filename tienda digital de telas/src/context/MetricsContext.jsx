@@ -13,7 +13,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 /** URL base del backend Java */
-const API = 'http://localhost:8081';
+const API = '';
 
 const MetricsContext = createContext();
 
@@ -100,125 +100,72 @@ export function MetricsProvider({ children }) {
     // Estado de carga
     const [loading,           setLoading]           = useState(true);
     
-    // Alertas de bajo stock
-    const [lowStockAlerts, setLowStockAlerts] = useState([]);
-    const fetchLowStockAlerts = async () => {
-        const data = await apiFetch('/api/alerts/low-stock');
-        setLowStockAlerts(data || []);
-    };
 
-    const acknowledgeLowStockAlert = async (alertId) => {
-        try {
-            const response = await fetch(`${API}/api/alerts/low-stock/${alertId}/acknowledge`, {
-                method: 'PUT',
-            });
-            if (response.ok) {
-                fetchLowStockAlerts(); // Refrescar después de confirmar
-            }
-        } catch (error) {
-            console.error('Error al confirmar alerta:', error);
-        }
-    };
-
-
-
-    // ── Carga inicial: todos los endpoints ───────────────────────────────
+    // ── Carga inicial: todos los endpoints en paralelo ───────────────────
     const fetchAllData = useCallback(async () => {
         setLoading(true);
-        try {
-            // Usuarios
-            const apiUsers = await apiFetch('/api/users');
-            if (apiUsers?.length > 0) setUsers(apiUsers);
-
-            // Productos
-            const apiProducts = await apiFetch('/api/products');
-            if (apiProducts?.length > 0) setProducts(apiProducts);
-
-            // Productos pendientes de moderación
-            const apiPending = await apiFetch('/api/products/pending');
-            setPendingProducts(apiPending || []);
-
-            // Pedidos
-            const apiOrders = await apiFetch('/api/orders');
-            if (apiOrders?.length > 0) setOrders(apiOrders);
-
-            // Cupones
-            const apiCoupons = await apiFetch('/api/coupons');
-            if (apiCoupons?.length > 0) setCoupons(apiCoupons);
-
-            // Tickets de soporte
-            const apiTickets = await apiFetch('/api/support/tickets');
-            if (apiTickets?.length > 0) setSupportTickets(apiTickets);
-
-            // Bug reports
-            const apiBugs = await apiFetch('/api/support/bugs');
-            if (apiBugs?.length > 0) setBugReports(apiBugs);
-
-            // ── Inventario (endpoints dedicados) ─────────────────────────
-            const apiBatches = await apiFetch('/api/inventory/batches');
-            if (apiBatches?.length > 0) setInventoryBatches(apiBatches);
-
-            const apiWaste = await apiFetch('/api/inventory/waste');
-            if (apiWaste?.length > 0) setWasteEvents(apiWaste);
-
-            const apiThresholds = await apiFetch('/api/inventory/thresholds');
-            if (apiThresholds?.length > 0) setStockThresholds(apiThresholds);
-
-            // ── Métricas (endpoints dedicados) ───────────────────────────
-            const apiSales = await apiFetch('/api/metrics/sales');
-            if (apiSales?.length > 0) {
-                // Mapeamos sale_date → name para que Recharts lo use como eje X
-                setSalesData(apiSales.map(s => ({
-                    ...s,
-                    name: s.saleDate
-                        ? new Date(s.saleDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
-                        : s.name,
-                    value: s.totalSales,
-                    orders: s.totalOrders
-                })).reverse()); // Orden cronológico ascendente
-            }
-
-            const apiRegions = await apiFetch('/api/metrics/regions');
-            if (apiRegions?.length > 0) setRegionSales(apiRegions);
-
-            // ── Actividad reciente ────────────────────────────────────────
-            const apiActivity = await apiFetch('/api/activity');
-            if (apiActivity?.length > 0) setRecentActivity(apiActivity);
-
-            // ── Banner global ─────────────────────────────────────────────
-            const apiBanner = await apiFetch('/api/banner');
-            if (apiBanner) setGlobalBanner(apiBanner);
-
-            // ── Tablas ERP dedicadas ──────────────────────────────────────
-            const apiErpSales = await apiFetch('/api/metrics/erp-sales');
-            if (apiErpSales?.length > 0) {
-                // Mapeamos para que ErpAreaChart reciba: date, actualSales, targetSales
-                setErpSalesMetrics(apiErpSales.map(s => ({
-                    ...s,
-                    date: s.recordDate
-                        ? new Date(s.recordDate + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
-                        : s.recordDate,
-                })));
-            }
-
-            const apiErpNotif = await apiFetch('/api/metrics/notifications');
-            if (apiErpNotif?.length > 0) setErpNotifications(apiErpNotif);
-
-            const apiErpFabric = await apiFetch('/api/metrics/fabric-inventory');
-            if (apiErpFabric?.length > 0) setErpFabricInventory(apiErpFabric);
-
-            // ── Configuración del sistema ─────────────────────────────────
-            const apiConfigRaw = await apiFetch('/api/config/system_config');
-            if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
-                setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
-            }
-
-        } catch (err) {
-            // El backend no está disponible — los estados quedan vacíos
-            console.error('Backend no disponible:', err.message);
-        } finally {
-            setLoading(false);
+        const [
+            apiUsers, apiProducts, apiPending, apiOrders, apiCoupons,
+            apiTickets, apiBugs, apiBatches, apiWaste, apiThresholds,
+            apiSales, apiRegions, apiActivity, apiBanner, apiErpSales,
+            apiErpNotif, apiErpFabric, apiConfigRaw
+        ] = await Promise.all([
+            apiFetch('/api/users'),
+            apiFetch('/api/products'),
+            apiFetch('/api/products/pending'),
+            apiFetch('/api/orders'),
+            apiFetch('/api/coupons'),
+            apiFetch('/api/support/tickets'),
+            apiFetch('/api/support/bugs'),
+            apiFetch('/api/inventory/batches'),
+            apiFetch('/api/inventory/waste'),
+            apiFetch('/api/inventory/thresholds'),
+            apiFetch('/api/metrics/sales'),
+            apiFetch('/api/metrics/regions'),
+            apiFetch('/api/activity'),
+            apiFetch('/api/banner'),
+            apiFetch('/api/metrics/erp-sales'),
+            apiFetch('/api/metrics/notifications'),
+            apiFetch('/api/metrics/fabric-inventory'),
+            apiFetch('/api/config/system_config'),
+        ]);
+        if (apiUsers?.length > 0) setUsers(apiUsers);
+        if (apiProducts?.length > 0) setProducts(apiProducts);
+        setPendingProducts(apiPending || []);
+        if (apiOrders?.length > 0) setOrders(apiOrders);
+        if (apiCoupons?.length > 0) setCoupons(apiCoupons);
+        if (apiTickets?.length > 0) setSupportTickets(apiTickets);
+        if (apiBugs?.length > 0) setBugReports(apiBugs);
+        if (apiBatches?.length > 0) setInventoryBatches(apiBatches);
+        if (apiWaste?.length > 0) setWasteEvents(apiWaste);
+        if (apiThresholds?.length > 0) setStockThresholds(apiThresholds);
+        if (apiSales?.length > 0) {
+            setSalesData(apiSales.map(s => ({
+                ...s,
+                name: s.saleDate
+                    ? new Date(s.saleDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+                    : s.name,
+                value: s.totalSales,
+                orders: s.totalOrders
+            })).reverse());
         }
+        if (apiRegions?.length > 0) setRegionSales(apiRegions);
+        if (apiActivity?.length > 0) setRecentActivity(apiActivity);
+        if (apiBanner) setGlobalBanner(apiBanner);
+        if (apiErpSales?.length > 0) {
+            setErpSalesMetrics(apiErpSales.map(s => ({
+                ...s,
+                date: s.recordDate
+                    ? new Date(s.recordDate + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+                    : s.recordDate,
+            })));
+        }
+        if (apiErpNotif?.length > 0) setErpNotifications(apiErpNotif);
+        if (apiErpFabric?.length > 0) setErpFabricInventory(apiErpFabric);
+        if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
+            setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
+        }
+        setLoading(false);
     }, []);
 
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
@@ -249,22 +196,69 @@ export function MetricsProvider({ children }) {
         applyColorScale('accent',    systemConfig.accentColor,    ['#f97316', '#ea580c']);
     }, [systemConfig?.primaryColor, systemConfig?.secondaryColor, systemConfig?.accentColor]);
 
-    // ── refreshData: recarga solo datos frecuentemente mutados ───────────
+    // ── refreshData: recarga todos los datos (equivalente a fetchAllData) ──
     const refreshData = useCallback(async () => {
-        const [apiProducts, apiPending, apiOrders, apiTickets, apiBugs, apiActivity] = await Promise.all([
+        const [
+            apiUsers, apiProducts, apiPending, apiOrders, apiCoupons,
+            apiTickets, apiBugs, apiBatches, apiWaste, apiThresholds,
+            apiSales, apiRegions, apiActivity, apiBanner, apiErpSales,
+            apiErpNotif, apiErpFabric, apiConfigRaw
+        ] = await Promise.all([
+            apiFetch('/api/users'),
             apiFetch('/api/products'),
             apiFetch('/api/products/pending'),
             apiFetch('/api/orders'),
+            apiFetch('/api/coupons'),
             apiFetch('/api/support/tickets'),
             apiFetch('/api/support/bugs'),
+            apiFetch('/api/inventory/batches'),
+            apiFetch('/api/inventory/waste'),
+            apiFetch('/api/inventory/thresholds'),
+            apiFetch('/api/metrics/sales'),
+            apiFetch('/api/metrics/regions'),
             apiFetch('/api/activity'),
+            apiFetch('/api/banner'),
+            apiFetch('/api/metrics/erp-sales'),
+            apiFetch('/api/metrics/notifications'),
+            apiFetch('/api/metrics/fabric-inventory'),
+            apiFetch('/api/config/system_config'),
         ]);
+        if (apiUsers?.length > 0) setUsers(apiUsers);
         if (apiProducts?.length > 0) setProducts(apiProducts);
         setPendingProducts(apiPending || []);
         if (apiOrders?.length > 0) setOrders(apiOrders);
+        if (apiCoupons?.length > 0) setCoupons(apiCoupons);
         if (apiTickets?.length > 0) setSupportTickets(apiTickets);
         if (apiBugs?.length > 0) setBugReports(apiBugs);
+        if (apiBatches?.length > 0) setInventoryBatches(apiBatches);
+        if (apiWaste?.length > 0) setWasteEvents(apiWaste);
+        if (apiThresholds?.length > 0) setStockThresholds(apiThresholds);
+        if (apiSales?.length > 0) {
+            setSalesData(apiSales.map(s => ({
+                ...s,
+                name: s.saleDate
+                    ? new Date(s.saleDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+                    : s.name,
+                value: s.totalSales,
+                orders: s.totalOrders
+            })).reverse());
+        }
+        if (apiRegions?.length > 0) setRegionSales(apiRegions);
         if (apiActivity?.length > 0) setRecentActivity(apiActivity);
+        if (apiBanner) setGlobalBanner(apiBanner);
+        if (apiErpSales?.length > 0) {
+            setErpSalesMetrics(apiErpSales.map(s => ({
+                ...s,
+                date: s.recordDate
+                    ? new Date(s.recordDate + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+                    : s.recordDate,
+            })));
+        }
+        if (apiErpNotif?.length > 0) setErpNotifications(apiErpNotif);
+        if (apiErpFabric?.length > 0) setErpFabricInventory(apiErpFabric);
+        if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
+            setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
+        }
     }, []);
 
 

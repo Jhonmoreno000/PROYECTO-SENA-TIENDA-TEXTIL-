@@ -1041,6 +1041,11 @@ COPY public.product_images (id, product_id, image_url, display_order) FROM stdin
 7	7	https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&q=80&w=800	0
 8	8	https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=800	0
 9	1	http://localhost:8081/uploads/product_1_1774997166024.jpg	0
+10	9	https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?auto=format&fit=crop&q=80&w=800	0
+11	10	https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=800	0
+12	11	https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&q=80&w=800	0
+13	12	https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?auto=format&fit=crop&q=80&w=800	0
+14	13	https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?auto=format&fit=crop&q=80&w=800	0
 \.
 
 
@@ -1057,6 +1062,11 @@ COPY public.products (id, name, category_id, price, seller_id, description, mate
 7	Tela Polar	5	22000.00	2	Tela polar suave para cobijas y chaquetas.	Poliester 100%	1.50m	280g/m2	Lavar a maquina, no planchar	150	f	t	2026-03-31 17:20:06.146677	\N	approved	\N
 8	Oxford Camisa	1	38000.00	3	Tela oxford clasica para camisas formales.	Algodon peinado	1.50m	130g/m2	Planchar a temperatura media	90	f	t	2026-03-31 17:20:06.146677	\N	approved	\N
 1	Algodon Premium	1	25000.00	2	Tela de algodon 100% natural, ideal para camisas y blusas.	Algodon 100%	1.50m	150g/m2	Lavar en frio, no blanquear	100	t	t	2026-03-31 17:20:06.146677	2026-03-31 17:46:06.290816	approved	\N
+9	Retazo Algodon	1	12000.00	2	Retazo de algodon premium, disponible para proyectos pequenos.	Algodon	1.40m	150g/m2	Lavar a maquina	3	f	t	2026-06-29 12:00:00	\N	approved	\N
+10	Seda Cruda	2	95000.00	2	Seda cruda sin tenir, ultima pieza disponible.	Seda pura	1.10m	60g/m2	Limpieza en seco	8	f	t	2026-06-29 12:00:00	\N	approved	\N
+11	Lino Arrugado	3	38000.00	2	Lino con textura arrugada natural. AGOTADO.	Lino	1.50m	180g/m2	Planchar en caliente	0	f	t	2026-06-29 12:00:00	\N	approved	\N
+12	Lana Bebe	4	72000.00	3	Lana ultra suave para ropa de bebe. Quedan pocos metros.	Lana merino	1.30m	200g/m2	Lavar a mano	5	f	t	2026-06-29 12:00:00	\N	approved	\N
+13	Algodon Estampado	1	28000.00	4	Algodon con estampado floral, edicion limitada.	Algodon	1.45m	130g/m2	Lavar a maquina	12	f	t	2026-06-29 12:00:00	\N	approved	\N
 \.
 
 
@@ -1215,14 +1225,14 @@ SELECT pg_catalog.setval('public.orders_id_seq', 5, true);
 -- Name: product_images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.product_images_id_seq', 9, true);
+SELECT pg_catalog.setval('public.product_images_id_seq', 14, true);
 
 
 --
 -- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.products_id_seq', 8, true);
+SELECT pg_catalog.setval('public.products_id_seq', 13, true);
 
 
 --

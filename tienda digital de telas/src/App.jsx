@@ -37,7 +37,8 @@ import Profile from './pages/client/Settings/Profile';
 import AddressBook from './pages/client/Settings/AddressBook';
 
 // Seller Dashboard
-import SellerProducts from './pages/seller/SellerDashboard';
+import SellerDashboard from './pages/seller/SellerDashboard';
+import SellerProducts from './pages/seller/SellerProducts';
 import SellerOrders from './pages/seller/SellerOrders';
 import StockAlerts from './pages/seller/StockAlerts';
 
@@ -228,7 +229,7 @@ function AppRoutes() {
                         path="/vendedor"
                         element={
                             <ProtectedRoute roles={['seller', 'admin']}>
-                                <SellerProducts />
+                                <SellerDashboard />
                             </ProtectedRoute>
                         }
                     />
