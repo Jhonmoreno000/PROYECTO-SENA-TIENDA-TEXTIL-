@@ -18,7 +18,7 @@
 
 ## Tabla de Contenidos
 1. [Visión General](#visión-general)
-2. [Instalación Rápida](#instalación-rápida)
+2. [Instalación Rápida (Docker)](#instalación-rápida-docker)
 3. [Documentación de D&D Textil](#documentación-de-dd-textil)
    - [¿Qué es D&D Textil?](#qué-es-dd-textil)
    - [¿Quiénes usan la plataforma?](#quiénes-usan-la-plataforma)
@@ -31,7 +31,7 @@
 9. [Arquitectura del Proyecto y Principios SOLID](#arquitectura-del-proyecto-y-principios-solid)
 10. [Arquitectura Frontend](#arquitectura-frontend)
 11. [Esquema Base de Datos](#esquema-base-de-datos)
-12. [Guía de Despliegue Local](#guía-de-despliegue-local)
+12. [Guía de Despliegue con Docker](#guía-de-despliegue-con-docker)
 13. [Solución de Problemas Frecuentes](#solución-de-problemas-frecuentes)
 14. [Novedades y Actualizaciones Recientes](#novedades-y-actualizaciones-recientes)
 
@@ -51,21 +51,53 @@
 | :--- | :--- |
 | Módulo de soporte integrado para reportar garantías y recibir atención al cliente ligada a pedidos o fallos de tela. | Manejador en frontend vía Context APIs sincronizados con endpoints Java/Postgres escalables. |
 
-## Instalación rápida
+## Instalación Rápida (Docker)
+
+### Requisitos
+
+- [Docker](https://docs.docker.com/engine/install/)
+- [Docker Compose](https://docs.docker.com/compose/install/) (incluido con Docker Desktop)
+
+### Pasos
+
 ```bash
-# Clona el repositorio
- git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
- cd PROYECTO-SENA-TIENDA-TEXTIL-
+# 1. Clona el repositorio
+git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
+cd PROYECTO-SENA-TIENDA-TEXTIL-
 
-# Instala las dependencias
-npm install
+# 2. Configura las variables de entorno
+cp .env.example .env
+# Edita .env y cambia POSTGRES_PASSWORD por una contraseña segura
 
-# (Opcional) Si tienes backend en Java/Postgres:
-cd backend-java/conexionPostgres
-java -cp "bin;lib/gson-2.10.1.jar;lib/postgresql-42.7.3.jar" App
+# 3. Inicia todos los servicios
+docker compose up -d
 
-# Inicia la aplicación frontend
-npm run dev
+# 4. Abre en tu navegador
+# Frontend: http://localhost:3001
+# Backend:  http://localhost:8081
+```
+
+> Los servicios se levantan en este orden: **PostgreSQL → Backend Java → Frontend React**.  
+> Docker Compose espera a que la base de datos esté lista antes de iniciar el backend automáticamente.
+
+### Credenciales de prueba
+
+| Rol          | Correo                    | Contraseña   |
+|--------------|---------------------------|--------------|
+| Cliente      | cliente@ddtextil.com      | cliente123   |
+| Vendedor     | vendedor@ddtextil.com     | vendedor123  |
+| Administrador| admin@ddtextil.com        | admin123     |
+
+### Detener los servicios
+
+```bash
+docker compose down
+```
+
+Para eliminar también los volúmenes (base de datos, imágenes subidas):
+
+```bash
+docker compose down -v
 ```
 
 # Documentación de D&D Textil 
@@ -320,7 +352,7 @@ Todas rematan su proceso devolviendo la variable más un `+= 10%`, un salvavidas
 
 ## Cómo ingresar al sistema de Producción (Demo)
 
-Para probar la plataforma en tus navegadores en Localhost, puedes usar estas cuentas de demostración prefabricadas (cuyas contraseñas ya corrieron bajo hash en BD). Enciende primero la Base de datos, luego Java y por último Vite. Puedes automatizar esto usando el script `iniciar_todo windows.bat` (en Windows) o `iniciar todo linux.sh` (en Linux):
+Para probar la plataforma en tus navegadores en Localhost, puedes usar estas cuentas de demostración prefabricadas (cuyas contraseñas ya corrieron bajo hash en BD). Puedes levantar todo el ecosistema con Docker (`docker compose up -d`) o manualmente iniciando Base de datos → Backend Java → Frontend React:
 
 | Rol | Correo | Password (Sin encriptar a ojo de User) |
 |---|---|---|
@@ -344,7 +376,7 @@ Está programado de raíz. Limitantes algorítmicas `max={producto.stock}` está
 Usa la Calculadora de Metraje del Panel.
 
 **¿Es seguro pagar en esta plataforma?**
-Sí. Tus scripts de inicio (`iniciar_todo windows.bat` o `iniciar todo linux.sh`) inyectan una variable pura del sistema (`DB_PASSWORD`) de forma de entorno en lugar de tener texto plano en strings. Esto es principio de OWASP Security top 10. Las validaciones de capa frontend corren en tiempo útil con Regex validando todo campo previo envío. Cero inyección y seguridad máxima logrando aislar variables públicas de base de datos cerrada y restringiendo con roles en UI (Routes Protector).
+Sí. Con Docker, las variables de entorno se configuran en el archivo `.env` y se inyectan de forma segura en los contenedores sin exponerlas en el código fuente. En despliegue manual, el backend lee `DB_PASSWORD` desde variables de entorno del sistema. Esto es principio de OWASP Security top 10. Las validaciones de capa frontend corren en tiempo útil con Regex validando todo campo previo envío. Cero inyección y seguridad máxima logrando aislar variables públicas de base de datos cerrada y restringiendo con roles en UI (Routes Protector).
 
 ---
 
@@ -553,155 +585,87 @@ Las conexiones (`Conexion.java`) manejan un pool estático pero poseen mecanismo
 
 ---
 
-## Guía de Despliegue Local
+## Guía de Despliegue con Docker
 
-### Requisitos Previos
+### Requisitos
 
-- **Java JDK 17+** 👉 [https://adoptium.net](https://adoptium.net)
-- **Node.js 18+** 👉 [https://nodejs.org](https://nodejs.org)
-- **PostgreSQL 14+** 👉 [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
+- **Docker** v24+ y **Docker Compose** v2+ instalados en tu sistema.
 
-Verifica que están instalados:
+### Estructura de servicios
 
-```bash
-java -version
-node -v
-npm -v
-psql --version
-```
+| Servicio   | Imagen base                  | Puerto  | Descripción                          |
+|------------|------------------------------|---------|--------------------------------------|
+| `db`       | `postgres:14`                | `5432`  | Base de datos relacional             |
+| `backend`  | `eclipse-temurin:17-jre`     | `8081`  | API REST en Java (Vanilla)           |
+| `frontend` | `nginx:alpine`               | `3001`  | SPA React construida y servida       |
 
-### 1. Base de Datos
+### Configuración
 
-#### 1.1. Crear la base de datos
+1. **Clona el repositorio:**
+   ```bash
+   git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
+   cd PROYECTO-SENA-TIENDA-TEXTIL-
+   ```
 
-Abre una terminal y ejecuta:
+2. **Crea el archivo de variables de entorno:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edita `.env` y cambia `POSTGRES_PASSWORD` por una contraseña segura.
 
-```bash
-psql -U postgres
-```
+3. **Inicia los servicios:**
+   ```bash
+   docker compose up -d
+   ```
+   La primera vez descargará las imágenes y compilará el backend y frontend.
 
-Dentro de psql:
+4. **Verifica que todo esté funcionando:**
+   ```bash
+   docker compose ps
+   ```
+   Los tres servicios deben aparecer como `Up` o `Healthy`.
 
-```sql
-CREATE DATABASE tienda_digital_textiles_db;
-\q
-```
+   También puedes ver los logs en vivo:
+   ```bash
+   docker compose logs -f
+   ```
 
-#### 1.2. Restaurar el esquema y datos
+5. **Accede a la plataforma:**
+   - **Frontend:** [http://localhost:3001](http://localhost:3001)
+   - **Backend (API):** [http://localhost:8081](http://localhost:8081)
 
-El archivo SQL se encuentra en la carpeta `BASE DE DATOS/` en la raíz del repositorio.
+### Comandos útiles
 
-```bash
-psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql"
-```
+| Acción                               | Comando                       |
+|--------------------------------------|-------------------------------|
+| Iniciar servicios                    | `docker compose up -d`        |
+| Detener servicios                    | `docker compose down`         |
+| Detener y borrar volúmenes (BD)      | `docker compose down -v`      |
+| Ver logs en tiempo real              | `docker compose logs -f`      |
+| Reconstruir imágenes desde cero      | `docker compose build --no-cache` |
+| Acceder al contenedor del backend    | `docker compose exec backend /bin/sh` |
+| Acceder a la base de datos           | `docker compose exec db psql -U postgres -d tienda_digital_textiles_db` |
 
-> **Nota:** Si te pide contraseña, ingresa la contraseña de tu usuario `postgres` de PostgreSQL.
+### Personalización
 
-#### 1.3. Verificar que se crearon las tablas
+Todas las variables de entorno se configuran en el archivo `.env`:
 
-```bash
-psql -U postgres -d tienda_digital_textiles_db -c "\dt"
-```
+| Variable           | Valor por defecto                                       | Descripción                        |
+|--------------------|---------------------------------------------------------|------------------------------------|
+| `POSTGRES_DB`      | `tienda_digital_textiles_db`                            | Nombre de la base de datos         |
+| `POSTGRES_USER`    | `postgres`                                              | Usuario de PostgreSQL              |
+| `POSTGRES_PASSWORD`| *(obligatorio)*                                         | Contraseña de PostgreSQL           |
+| `DB_URL`           | `jdbc:postgresql://db:5432/tienda_digital_textiles_db`  | URL JDBC del backend               |
+| `DB_USER`          | `postgres`                                              | Usuario para la conexión JDBC      |
+| `DB_PASSWORD`      | *(obligatorio)*                                         | Contraseña para la conexión JDBC   |
 
-Deberías ver las tablas: `users`, `products`, `categories`, `orders`, `order_items`, `product_images`, `coupons`, `coupon_categories`, `coupon_usage`, `support_tickets`, `bug_reports`, `cart_items`, `daily_sales`, `global_banner`, `inventory_batches`, `system_config`, entre otras.
+### Despliegue manual (sin Docker)
 
-### 2. Backend (Java API REST)
+Si prefieres ejecutar los componentes directamente en tu máquina sin Docker, consulta los scripts de inicio o ejecuta cada componente por separado:
 
-#### 2.1. Configurar variables de entorno
-
-El backend necesita la contraseña de PostgreSQL como variable de entorno. **No se almacena en el código fuente.**
-
-**PowerShell (Windows):**
-
-```powershell
-$env:DB_PASSWORD = "TU_CONTRASEÑA_DE_POSTGRES"
-```
-
-**CMD (Windows):**
-
-```cmd
-set DB_PASSWORD=TU_CONTRASEÑA_DE_POSTGRES
-```
-
-**Linux/Mac:**
-
-```bash
-export DB_PASSWORD="TU_CONTRASEÑA_DE_POSTGRES"
-```
-
-Variables opcionales (tienen valores por defecto):
-
-| Variable      | Valor por defecto                                         |
-|---------------|-----------------------------------------------------------|
-| `DB_URL`      | `jdbc:postgresql://localhost:5432/tienda_digital_textiles_db` |
-| `DB_USER`     | `postgres`                                                |
-| `DB_PASSWORD` | *(vacío – debes configurarla)*                            |
-
-#### 2.2. Compilar el backend
-
-Desde la carpeta del proyecto frontend (`tienda digital de telas/`):
-
-```bash
-javac -encoding UTF-8 -cp "backend-java/conexionPostgres/lib/*" -d "backend-java/conexionPostgres/bin" backend-java/conexionPostgres/src/App.java backend-java/conexionPostgres/src/conexion/*.java backend-java/conexionPostgres/src/api/*.java backend-java/conexionPostgres/src/dao/*.java backend-java/conexionPostgres/src/models/*.java
-```
-
-#### 2.3. Ejecutar el backend
-
-```bash
-java -cp "backend-java/conexionPostgres/bin;backend-java/conexionPostgres/lib/*" App
-```
-
-Deberías ver:
-
-```
- Iniciando aplicación Backend...
- Conexión a PostgreSQL establecida con éxito.
- ¡Conecta a la base de datos tienda_digital_textiles_db perfectamente!
- Servidor API escuchando en el puerto 8081
-```
-
-El backend queda escuchando en `http://localhost:8081`.
-
-### 3. Frontend (React + Vite)
-
-#### 3.1. Instalar dependencias
-
-Desde la carpeta del proyecto frontend (`tienda digital de telas/`):
-
-```bash
-npm install
-```
-
-#### 3.2. Ejecutar en modo desarrollo
-
-```bash
-npm run dev
-```
-
-Deberías ver:
-
-```
-  VITE v5.x.x  ready in xxx ms
-
-  ➜  Local:   http://localhost:3001/
-```
-
-Abre `http://localhost:3001` en tu navegador.
-
-#### 3.3. Build de producción (opcional)
-
-```bash
-npm run build
-npm run preview
-```
-
-### Orden de Ejecución
-
-Siempre ejecuta en este orden:
-
-1. **PostgreSQL** – asegúrate de que el servicio esté corriendo
-2. **Backend Java** – configura `DB_PASSWORD` y ejecuta el servidor
-3. **Frontend React** – ejecuta `npm run dev`
+1. **Base de datos:** Crea la base `tienda_digital_textiles_db` e importa `BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql`.
+2. **Backend:** Configura `DB_PASSWORD` como variable de entorno, compila con `javac` y ejecuta con `java`.
+3. **Frontend:** Ejecuta `npm install && npm run dev` desde la carpeta `tienda digital de telas/`.
 
 ---
 
@@ -775,11 +739,9 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
 
 ## Novedades y Actualizaciones Recientes
 
-Recientemente hemos integrado mejoras significativas orientadas a facilitar el despliegue del proyecto en múltiples sistemas operativos y mejorar la estabilidad general:
+Recientemente hemos integrado mejoras significativas orientadas a facilitar el despliegue del proyecto:
 
-- **Soporte Multiplataforma con Scripts de Inicio Rápido:** Hemos añadido scripts de automatización nativos para iniciar todo el ecosistema (Base de datos, Backend Java y Frontend React) con un solo clic:
-  - **Windows:** Integración del script `iniciar_todo windows.bat`.
-  - **Linux (Fedora/Ubuntu/etc.):** Integración del script `iniciar todo linux.sh`.
+- **Despliegue con Docker:** Añadido soporte completo con `docker-compose.yml`, Dockerfiles para el frontend (Nginx) y el backend (Java 17), más un `.env.example` para configuración.
 - **Migración y Compatibilidad en Linux (Fedora):** Se ha configurado y testeado el proyecto para asegurar compatibilidad total en entornos Linux, incluyendo la instalación y configuración de Node.js, configuración nativa de PostgreSQL y la resolución de problemas de autenticación de conexión entre el backend de Java y la base de datos bajo este sistema operativo.
 - **Mejoras en la Conexión a Base de Datos:** Se han resuelto problemas de autenticación de PostgreSQL asegurando que la integración entre el backend en Vanilla Java y la base de datos sea robusta y segura tanto en entornos Windows como Linux.
 

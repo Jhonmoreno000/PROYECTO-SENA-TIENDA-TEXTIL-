@@ -2,17 +2,19 @@ services:
   db:
     image: postgres:14
     container_name: ddtextil-db
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: tienda_digital_textiles_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Mp.1025889078
+      POSTGRES_DB: ${POSTGRES_DB:-tienda_digital_textiles_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - "./BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql:/docker-entrypoint-initdb.d/01-init.sql"
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d tienda_digital_textiles_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-tienda_digital_textiles_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,10 +24,12 @@ services:
       context: ./tienda digital de telas/backend-java/conexionPostgres
       dockerfile: Dockerfile
     container_name: ddtextil-backend
+    env_file:
+      - .env
     environment:
-      DB_URL: jdbc:postgresql://db:5432/tienda_digital_textiles_db
-      DB_USER: postgres
-      DB_PASSWORD: Mp.1025889078
+      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/tienda_digital_textiles_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "8081:8081"
     depends_on:

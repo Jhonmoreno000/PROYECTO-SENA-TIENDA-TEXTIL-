@@ -319,7 +319,7 @@ Todas rematan su proceso devolviendo la variable más un `+= 10%`, un salvavidas
 
 ## Cómo ingresar al sistema de Producción (Demo)
 
-Para probar la plataforma en tus navegadores en Localhost, puedes usar estas cuentas de demostración prefabricadas (cuyas contraseñas ya corrieron bajo hash en BD). Enciende primero la Base de datos, luego Java y por último Vite con el script `iniciar_todo.ps1`:
+Para probar la plataforma en tus navegadores en Localhost, puedes usar estas cuentas de demostración prefabricadas (cuyas contraseñas ya corrieron bajo hash en BD):
 
 | Rol | Correo | Password (Sin encriptar a ojo de User) |
 |---|---|---|
@@ -343,7 +343,7 @@ Está programado de raíz. Limitantes algorítmicas `max={producto.stock}` está
 Usa la Calculadora de Metraje del Panel.
 
 **¿Es seguro pagar en esta plataforma?**
-Sí. Tu `iniciar_todo.ps1` inyecta una variable pura del sistema (`DB_PASSWORD`) de forma de entorno en lugar de tener texto plano en strings. Esto es principio de OWASP Security top 10. Las validaciones de capa frontend corren en tiempo útil con Regex validando todo campo previo envío. Cero inyección y seguridad máxima logrando aislar variables públicas de base de datos cerrada y restringiendo con roles en UI (Routes Protector).
+Sí. Con Docker, las variables de entorno se configuran en el archivo `.env` y se inyectan de forma segura en los contenedores sin exponerlas en el código fuente. Esto es principio de OWASP Security top 10. Las validaciones de capa frontend corren en tiempo útil con Regex validando todo campo previo envío. Cero inyección y seguridad máxima logrando aislar variables públicas de base de datos cerrada y restringiendo con roles en UI (Routes Protector).
 
 ---
 
