@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
     MapPin, 
     Plus, 
-    Edit2, 
+    Edit, 
     Trash2, 
     Check, 
     X, 
@@ -478,7 +478,7 @@ function AddressBook() {
                                                 onClick={() => handleEdit(address)}
                                                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-bold bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                                             >
-                                                <Edit2 className="w-4 h-4" />
+                                                <Edit className="w-4 h-4" />
                                                 Editar
                                             </button>
                                             

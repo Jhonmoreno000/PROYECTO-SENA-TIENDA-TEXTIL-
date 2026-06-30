@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Layers, Plus, Trash2, Save, Edit2, X, Image } from 'lucide-react';
+import { Layers, Plus, Trash2, Save, Edit, X, Image } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
@@ -125,7 +125,7 @@ function ManageCarousel() {
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => handleEditClick(slide)} className="p-2.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:bg-indigo-500/10 rounded-xl transition-all border border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-90" title="Editar"><Edit2 size={18} /></button>
+                                                <button onClick={() => handleEditClick(slide)} className="p-2.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:bg-indigo-500/10 rounded-xl transition-all border border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-90" title="Editar"><Edit size={18} /></button>
                                                 <button onClick={() => handleDelete(slide.id)} className="p-2.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:bg-rose-500/10 rounded-xl transition-all border border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-90" title="Eliminar"><Trash2 size={18} /></button>
                                             </>
                                         )}

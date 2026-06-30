@@ -14,10 +14,9 @@ import {
     Bell,           
     Trash2,         
     Plus,           
-    Edit2,          
+    Edit,          
     Folder,         
     X,              
-    Edit3,
     ArrowRight
 } from 'lucide-react';
 
@@ -251,7 +250,7 @@ function Wishlist() {
                                                         "{item.notes}"
                                                     </p>
                                                     <div className="flex items-center gap-1 mt-2 text-xs font-bold text-rose-600 dark:text-rose-400 opacity-0 group-hover/note:opacity-100 transition-opacity">
-                                                        <Edit3 className="w-3 h-3" /> Editar nota
+                                                        <Edit className="w-3 h-3" /> Editar nota
                                                     </div>
                                                 </button>
                                             ) : (
@@ -262,8 +261,8 @@ function Wishlist() {
                                                     }}
                                                     className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors py-2"
                                                 >
-                                                    <Edit2 className="w-4 h-4" />
-                                                    Añadir nota de proyecto
+<Edit className="w-4 h-4" />
+                                                        Añadir nota de proyecto
                                                 </button>
                                             )}
                                         </div>
