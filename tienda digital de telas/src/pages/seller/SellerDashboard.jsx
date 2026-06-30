@@ -20,19 +20,19 @@ import React, { useState, useEffect } from 'react';
 
 // Íconos de lucide-react usados en todo el panel
 import {
-  Package,  // Reportes de bugs
-  Edit2,          // Botón editar producto
-  Trash2,         // Botón eliminar producto
-  Plus,           // Botón nuevo producto
-  Save,           // Guardar edición
-  X,              // Cancelar edición
-  DollarSign,     // Métrica de ventas
-  ShoppingBag,    // Métrica de pedidos
-  TrendingUp,     // Gráfico / tendencia
-  BarChart3,      // Sección de productos estrella
-  Filter,         // Barra de filtros
-  RefreshCw,      // Refrescar datos
-  Star            // Banner decorativo / productos
+ Package,  // Reportes de bugs
+ Edit,          // Botón editar producto
+ Trash2,         // Botón eliminar producto
+ Plus,           // Botón nuevo producto
+ Save,           // Guardar edición
+ X,              // Cancelar edición
+ DollarSign,     // Métrica de ventas
+ ShoppingBag,    // Métrica de pedidos
+ TrendingUp,     // Gráfico / tendencia
+ BarChart3,      // Sección de productos estrella
+ Filter,         // Barra de filtros
+ RefreshCw,      // Refrescar datos
+ Star            // Banner decorativo / productos
 } from 'lucide-react';
 
 // Layout compartido: sidebar + header
@@ -526,7 +526,7 @@ export default function SellerDashboard() {
                             className="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-500/10 transition-colors"
                             title="Editar"
                           >
-                            <Edit2 size={16} strokeWidth={2.5} />
+                            <Edit size={16} strokeWidth={2.5} />
                           </button>
                           <button
                             onClick={() => deleteItem(product.id)}

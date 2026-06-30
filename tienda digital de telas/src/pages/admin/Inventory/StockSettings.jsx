@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bell, Mail, AlertTriangle, CheckCircle, Settings, Edit2, Check } from 'lucide-react';
+import { Bell, Mail, AlertTriangle, CheckCircle, Settings, Edit, Check } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
@@ -119,7 +119,7 @@ function StockSettings() {
                                                         <button onClick={() => { setEditingType(threshold.fabricType); setTempValue(threshold.minMeters.toString()); }}
                                                             className="flex items-center gap-2 font-mono font-black text-slate-700 dark:text-slate-300 hover:text-[#f97316] transition-colors group/edit">
                                                             {threshold.minMeters}m
-                                                            <Edit2 size={13} className="opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+                                                            <Edit size={13} className="opacity-0 group-hover/edit:opacity-100 transition-opacity" />
                                                         </button>
                                                     )}
                                                 </td>

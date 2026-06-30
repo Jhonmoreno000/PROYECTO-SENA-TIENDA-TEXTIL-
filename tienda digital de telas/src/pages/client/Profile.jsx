@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Save } from 'lucide-react';
+import { Edit, Save } from 'lucide-react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import AnimatedPage from '../../components/AnimatedPage';
 import clientDashboardLinks from '../../data/clientDashboardLinks';
@@ -57,7 +57,7 @@ function ClientProfile() {
                             : 'bg-primary-600 hover:bg-primary-700 text-white'
                             }`}
                     >
-                        {isEditing ? <><Save className="w-4 h-4" /> Guardar</> : <><Edit2 className="w-4 h-4"/> Editar</>}
+                        {isEditing ? <><Save className="w-4 h-4" /> Guardar</> : <><Edit className="w-4 h-4"/> Editar</>}
                     </button>
                 </div>
 

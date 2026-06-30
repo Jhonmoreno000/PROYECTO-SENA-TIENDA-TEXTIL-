@@ -6,7 +6,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { 
     Package,
     Plus,
-    Edit2,
+    Edit,
     Filter,
     AlertTriangle,
     TrendingDown,
@@ -304,7 +304,7 @@ function BatchControl() {
                                             onClick={() => setEditingBatch(batch.id)}
                                             className="px-4 py-2 text-xs font-black uppercase tracking-widest text-[#f97316] bg-transparent border-2 border-[#f97316]/30 rounded-xl hover:bg-[#f97316] hover:text-white hover:border-[#f97316] transition-all shadow-sm flex items-center gap-2"
                                         >
-                                            <Edit2 size={14} /> Ajustar
+                                            <Edit size={14} /> Ajustar
                                         </button>
                                     </div>
                                 </div>

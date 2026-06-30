@@ -32,13 +32,19 @@
   h6 {
     @apply font-display font-bold;
   }
-}@layer components {
+}
+
+@layer components {
   .btn-primary {
     @apply px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 border-none;
   }
 
   .btn-secondary {
     @apply px-5 py-2.5 bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 rounded-xl font-bold transition-all duration-300 hover:bg-slate-200 dark:hover:bg-slate-700 shadow-sm border-none;
+  }
+
+  .btn-outline {
+    @apply px-5 py-2.5 bg-transparent border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all duration-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-500;
   }
 
   .card {

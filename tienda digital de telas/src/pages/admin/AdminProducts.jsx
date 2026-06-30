@@ -32,7 +32,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import {
   Package,        // Ícono de caja (productos)
   Search,         // Lupa para buscar
-  Edit2,          // Lápiz para editar
+  Edit,          // Lápiz para editar
   Trash2,         // Basurero para eliminar
   Save,           // Diskette para guardar
   X as XIcon,     // X para cerrar o indicar "agotado"
@@ -413,7 +413,7 @@ export default function AdminProducts() {
                           className="p-2.5 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-xl transition-colors"
                           title="Editar Producto"
                         >
-                          <Edit2 size={15} />
+                          <Edit size={15} />
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
@@ -444,7 +444,7 @@ export default function AdminProducts() {
             <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/60">
               <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  <Edit2 size={18} />
+                  <Edit size={18} />
                 </div>
                 Editar: {editingProduct.name}
               </h2>
