@@ -20,19 +20,19 @@ import React, { useState, useEffect } from 'react';
 
 // Íconos de lucide-react usados en todo el panel
 import {
-   Package,
-   Edit,
-   Trash2,
-   Plus,
-   Save,
-   X,
-   DollarSign,
-   ShoppingBag,
-   TrendingUp,
-   BarChart3,
-   Filter,
-   RefreshCw,
-   Star
+ Package,  // Reportes de bugs
+ Edit,          // Botón editar producto
+ Trash2,         // Botón eliminar producto
+ Plus,           // Botón nuevo producto
+ Save,           // Guardar edición
+ X,              // Cancelar edición
+ DollarSign,     // Métrica de ventas
+ ShoppingBag,    // Métrica de pedidos
+ TrendingUp,     // Gráfico / tendencia
+ BarChart3,      // Sección de productos estrella
+ Filter,         // Barra de filtros
+ RefreshCw,      // Refrescar datos
+ Star            // Banner decorativo / productos
 } from 'lucide-react';
 
 // Layout compartido: sidebar + header
