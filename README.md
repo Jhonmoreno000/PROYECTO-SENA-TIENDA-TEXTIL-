@@ -789,6 +789,11 @@ Este proyecto está licenciado bajo la licencia MIT.
 
 ---
 
+## Contacto
+Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000)
+
+---
+
 ## Créditos y Autores
 
 ### Desarrollo Principal
