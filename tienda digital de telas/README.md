@@ -772,5 +772,94 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
 
 --- 
 
+---
+
+## Auditoría de Seguridad y Ataques Realizados
+
+Como parte del proceso de hardening de la aplicación, se realizó una auditoría de seguridad completa encontrando y corrigiendo las siguientes vulnerabilidades:
+
+### 🔴 Ataque 1: XSS (Cross-Site Scripting) en Contact.jsx
+**Vulnerabilidad:** El componente `LocationGlobe` en `src/pages/Contact.jsx` (línea 101) utilizaba `el.innerHTML` con template literals interpolando datos `${d.name}`, `${d.temp}`, `${d.time}` y `${d.color}`. Esto permitía inyección de HTML/JavaScript arbitrario si alguna fuente de datos (API externa, etc.) resultaba comprometida, ya que `innerHTML` bypasses el escape automático de React (JSX).
+
+**Corrección:** Reemplazado `innerHTML` por creación programática del DOM con `document.createElement()`, `textContent` para datos de usuario y `className` para estilos. Los SVG estáticos se mantienen con `innerHTML` pues no contienen datos interpolados.
+
+**Archivos afectados:** `src/pages/Contact.jsx`
+
+---
+
+### 🔴 Ataque 2: Ausencia de Security Headers (CSP, XFO, HSTS)
+**Vulnerabilidad:** El archivo `index.html` carecía de headers de seguridad críticos: sin Content-Security-Policy (XSS), sin X-Frame-Options (clickjacking), sin X-Content-Type-Options (MIME sniffing) y sin Referrer-Policy (filtración de URLs). Un atacante podría cargar la página en un iframe malicioso, ejecutar scripts no autorizados o robar datos referenciales.
+
+**Corrección:** Agregados `<meta http-equiv>` tags:
+- `Content-Security-Policy`: Solo permite `'self'`, Google Fonts, conexiones a `localhost:8081` y `api.open-meteo.com`. Bloquea frames (`frame-src 'none'`) y plugins (`object-src 'none'`).
+- `X-Frame-Options: DENY`: Previene clickjacking.
+- `X-Content-Type-Options: nosniff`: Previene MIME sniffing.
+- `Referrer-Policy: strict-origin-when-cross-origin`: Controla fuga de referrer.
+
+**Archivos afectados:** `index.html`
+
+---
+
+### 🔴 Ataque 3: Credenciales Demo Hardcodeadas en Login
+**Vulnerabilidad:** En `src/pages/Login.jsx` (líneas 91-101) se encontraron 3 pares de credenciales hardcodeadas en texto plano (`admin@ddtextil.com`/`admin123`, `vendedor@ddtextil.com`/`vendedor123`, `cliente@ddtextil.com`/`cliente123`). Cualquier persona con acceso al código fuente (repositorio público) podía conocer contraseñas funcionales del sistema.
+
+**Corrección:** Eliminadas las contraseñas del código fuente. Los botones de demo ahora solo prellenan el correo electrónico; la contraseña debe ser ingresada por el usuario o configurada en el backend.
+
+**Archivos afectados:** `src/pages/Login.jsx`
+
+---
+
+### 🔴 Ataque 4: Open Redirect en Login
+**Vulnerabilidad:** La función de redirección post-login en `src/pages/Login.jsx` (línea 23) tomaba `location.state?.from?.pathname` sin validación, permitiendo potencialmente redirigir a usuarios a URLs maliciosas o externas si un atacante lograba manipular el estado de React Router.
+
+**Corrección:** Agregada validación estricta: solo se permiten rutas que comiencen con prefijos conocidos (`/`, `/cliente`, `/vendedor`, `/admin`, `/catalogo`, `/carrito`, `/checkout`, `/perfil`) y se rechazan rutas con protocolos (`://`) o doble slash inicial (`//`).
+
+**Archivos afectados:** `src/pages/Login.jsx`
+
+---
+
+### 🔴 Ataque 5: Datos de Pago en localStorage
+**Vulnerabilidad:** En `src/pages/payment/Payment.jsx` (líneas 46, 55), los resultados del pago (incluyendo `transactionId`, `amount`, `method`) se almacenaban en `localStorage` bajo la clave `lastPayment`. Aunque no se guardaban datos de tarjeta directamente, el almacenamiento persistente de datos financieros en el navegador expone información sensible accesible desde cualquier script en el mismo origen.
+
+**Corrección:** Eliminadas las llamadas a `localStorage.setItem('lastPayment', ...)`. El resultado del pago ahora solo se usa para navegación inmediata sin persistencia innecesaria. (El pedido final se almacena como `lastOrder` para la pantalla de confirmación).
+
+**Archivos afectados:** `src/pages/payment/Payment.jsx`
+
+---
+
+### 🟡 Ataque 6: URLs Hardcodeadas a `localhost:8081`
+**Vulnerabilidad:** Múltiples archivos (AuthContext, ProductContext, Home, SellerProducts, SellerDashboard, ManageHome, AdminProducts) tenían la URL del backend hardcodeada como `http://localhost:8081`. Esto no solo impedía cambiar de entorno sin modificar código, sino que al estar en HTTP (no HTTPS), las credenciales viajaban en texto plano en redes no locales.
+
+**Corrección:** Creado `src/config.js` con `getApiUrl(path)` que lee `VITE_API_URL` de variables de entorno (Vite `import.meta.env`) con fallback a `http://localhost:8081`. Actualizados todos los archivos para usar `getApiUrl()`.
+
+**Archivos afectados:** `src/config.js` (nuevo), `src/context/AuthContext.jsx`, `src/context/ProductContext.jsx`, `src/pages/Home.jsx`, `src/pages/seller/SellerProducts.jsx`, `src/pages/seller/SellerDashboard.jsx`, `src/pages/admin/ManageHome.jsx`, `src/pages/admin/AdminProducts.jsx`
+
+---
+
+### 🟡 Ataque 7: Dev Server Expuesto (`allowedHosts: true`)
+**Vulnerabilidad:** En `vite.config.js` (línea 18), la opción `allowedHosts: true` permitía que cualquier sitio web externo realizara peticiones al servidor de desarrollo de Vite, abriendo la puerta a ataques de DNS rebinding durante el desarrollo.
+
+**Corrección:** Eliminada la propiedad `allowedHosts` del `vite.config.js`.
+
+**Archivos afectados:** `vite.config.js`
+
+---
+
+### Resumen de Riesgos Identificados (No Corregidos en Frontend)
+Estos problemas requieren cambios en el backend Java o en la infraestructura:
+
+| # | Riesgo | Severidad | Dónde |
+|---|--------|-----------|-------|
+| 1 | Autenticación sin JWT: el backend devuelve el objeto usuario en texto plano sin token firmado | **Crítica** | `AuthHandler.java` |
+| 2 | Sin tokens de autorización en llamadas API: cualquier llamada al backend es anónima | **Crítica** | Todos los handlers |
+| 3 | CSRF: sin tokens anti-CSRF en ningún formulario | **Alta** | Todos los endpoints mutantes |
+| 4 | CORS permisivo (`Access-Control-Allow-Origin: *`) | **Alta** | `BaseHandler.java` |
+| 5 | Passwords hasheados con SHA-256 (sin salt, ni bcrypt/argon2) | **Alta** | `AuthService.java` |
+| 6 | Sin rate limiting en login (fuerza bruta) | **Alta** | Backend y nginx |
+| 7 | Base de datos SQL dump completo en el repositorio público con hashes de passwords | **Alta** | `BASE DE DATOS/` |
+| 8 | Pago simulado sin pasarela real, datos de tarjeta en estado de React | **Crítica** | `Payment.jsx`, `PaymentForm.jsx` |
+
+---
+
 ## Contacto
 Puedes comunicarte vía [GitHub](https://github.com/Jhonmoreno000) 
