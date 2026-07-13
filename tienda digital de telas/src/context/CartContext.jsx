@@ -49,19 +49,23 @@ export function CartProvider({ children }) {
      * @param {number} quantity - Cantidad de metros a agregar (por defecto 1)
      */
     const addToCart = (product, quantity = 1) => {
+        const maxStock = product.stock ?? 99;
         setCartItems((prevItems) => {
-            // Buscamos si el producto ya está en el carrito
             const existingItem = prevItems.find((item) => item.id === product.id);
+            const currentQty = existingItem ? existingItem.quantity : 0;
+            const newTotal = currentQty + quantity;
+
+            if (newTotal > maxStock) {
+                return prevItems;
+            }
 
             if (existingItem) {
-                // Si ya existe, solo sumamos la nueva cantidad a la que ya tenía
                 return prevItems.map((item) =>
                     item.id === product.id
-                        ? { ...item, quantity: item.quantity + quantity }
+                        ? { ...item, quantity: newTotal }
                         : item
                 );
             } else {
-                // Si es nuevo, lo agregamos al carrito con la cantidad indicada
                 return [...prevItems, { ...product, quantity }];
             }
         });
@@ -121,6 +125,27 @@ export function CartProvider({ children }) {
     };
 
     /**
+     * getOrderCalculations — Calcula descuento, envío, IVA y total
+     * @param {Object} [coupon] - Cupón a usar (por defecto appliedCoupon)
+     * @returns {{ subtotal, discount, afterDiscount, shipping, tax, total }}
+     */
+    const getOrderCalculations = (coupon = appliedCoupon) => {
+        const subtotal = getCartTotal();
+        let discount = 0;
+        if (coupon) {
+            discount = coupon.discountType === 'percentage'
+                ? subtotal * (coupon.discountValue / 100)
+                : coupon.discountValue;
+            discount = Math.min(discount, subtotal);
+        }
+        const afterDiscount = subtotal - discount;
+        const shipping = afterDiscount >= 100000 ? 0 : 15000;
+        const tax = afterDiscount * 0.19;
+        const total = afterDiscount + shipping + tax;
+        return { subtotal, discount, afterDiscount, shipping, tax, total };
+    };
+
+    /**
      * isInCart — Verifica si un producto ya está en el carrito
      * @param {string|number} productId - ID del producto a verificar
      * @returns {boolean} true si está en el carrito, false si no
@@ -150,6 +175,7 @@ export function CartProvider({ children }) {
         clearCart,           // Vaciar todo el carrito
         getCartTotal,        // Calcular el total
         getCartItemCount,    // Contar artículos totales
+        getOrderCalculations,// Calcular descuento, envío, IVA, total
         isInCart,            // Saber si un producto ya está en el carrito
         getProductQuantity,  // Saber la cantidad de un producto específico
     };

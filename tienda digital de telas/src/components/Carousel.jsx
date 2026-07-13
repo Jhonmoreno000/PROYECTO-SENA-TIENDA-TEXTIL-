@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -7,71 +8,64 @@ import { useUI } from '../context/UIContext';
 gsap.registerPlugin(useGSAP);
 
 function Carousel() {
+    const navigate = useNavigate();
     const { carouselSlides } = useUI();
     const slides = carouselSlides && carouselSlides.length > 0 ? carouselSlides : [
         { id: 1, title: 'No slides', subtitle: '', image: 'https://placehold.co/1200x500?text=No+Slides' }
     ];
 
     const [currentSlide, setCurrentSlide] = useState(0);
+    const currentRef = useRef(0);
     const containerRef = useRef(null);
     const slidesRef = useRef([]);
 
-    // Auto play
-    useEffect(() => {
-        const timer = setInterval(() => {
-            nextSlide();
-        }, 6000);
-        return () => clearInterval(timer);
-    }, [currentSlide]);
-
-    const nextSlide = () => {
-        animateSlideChange(currentSlide, (currentSlide + 1) % slides.length, 1);
-    };
-
-    const prevSlide = () => {
-        animateSlideChange(currentSlide, (currentSlide - 1 + slides.length) % slides.length, -1);
-    };
-
-    const goToSlide = (index) => {
-        if (index === currentSlide) return;
-        animateSlideChange(currentSlide, index, index > currentSlide ? 1 : -1);
-    };
-
-    const animateSlideChange = (oldIndex, newIndex, direction) => {
+    const animateSlideChange = useCallback((oldIndex, newIndex, direction) => {
         const oldSlide = slidesRef.current[oldIndex];
         const newSlide = slidesRef.current[newIndex];
         
         if (!oldSlide || !newSlide) return;
 
-        // Preparamos el nuevo slide fuera de la vista
-        gsap.set(newSlide, { xPercent: direction * 100, opacity: 0, zIndex: 10 });
+        gsap.set(newSlide, { xPercent: direction * 100, opacity: 1, zIndex: 10 });
         gsap.set(oldSlide, { zIndex: 1 });
 
-        // Preparamos los textos del nuevo slide para animarlos de abajo hacia arriba
         const title = newSlide.querySelector('.carousel-title');
         const subtitle = newSlide.querySelector('.carousel-subtitle');
         const cta = newSlide.querySelector('.carousel-cta');
         gsap.set([title, subtitle, cta], { y: 30, opacity: 0 });
 
         const tl = gsap.timeline();
-        
-        // El slide viejo sale
         tl.to(oldSlide, { xPercent: -direction * 50, opacity: 0, duration: 0.8, ease: "power2.inOut" }, 0);
-        
-        // El slide nuevo entra
         tl.to(newSlide, { xPercent: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
-
-        // Animamos los textos del nuevo slide
         tl.to([title, subtitle, cta], {
-            y: 0,
-            opacity: 1,
-            duration: 0.6,
-            stagger: 0.15,
-            ease: "power2.out"
-        }, "-=0.3"); // Comienza un poco antes de que termine la transición del fondo
+            y: 0, opacity: 1, duration: 0.6, stagger: 0.15, ease: "power2.out"
+        }, "-=0.3");
 
         setCurrentSlide(newIndex);
-    };
+        currentRef.current = newIndex;
+    }, []);
+
+    const nextSlide = useCallback(() => {
+        const next = (currentRef.current + 1) % slides.length;
+        animateSlideChange(currentRef.current, next, 1);
+    }, [slides.length, animateSlideChange]);
+
+    const prevSlide = useCallback(() => {
+        const prev = (currentRef.current - 1 + slides.length) % slides.length;
+        animateSlideChange(currentRef.current, prev, -1);
+    }, [slides.length, animateSlideChange]);
+
+    const goToSlide = useCallback((index) => {
+        if (index === currentRef.current) return;
+        animateSlideChange(currentRef.current, index, index > currentRef.current ? 1 : -1);
+    }, [animateSlideChange]);
+
+    // Auto play (usa ref para evitar stale closure)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            nextSlide();
+        }, 6000);
+        return () => clearInterval(timer);
+    }, [nextSlide]);
 
     // Configuración inicial del primer render
     useGSAP(() => {
@@ -96,7 +90,6 @@ function Carousel() {
                     key={index}
                     ref={el => slidesRef.current[index] = el}
                     className="absolute inset-0 w-full h-full"
-                    style={{ opacity: index === 0 ? 1 : 0 }}
                 >
                     <div
                         className="absolute inset-0 bg-cover bg-center"
@@ -115,6 +108,7 @@ function Carousel() {
                             </p>
                             <div className="carousel-cta">
                                 <button
+                                    onClick={() => navigate('/catalogo')}
                                     className="bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md px-10 py-3.5 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_24px_rgba(255,255,255,0.1)] hover:scale-105 active:scale-95"
                                 >
                                     {slide.cta || 'Explorar Colección'}
