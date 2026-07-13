@@ -109,7 +109,7 @@ function CartRow({ item, onRemove, onQuantity }) {
 ────────────────────────────────────────────── */
 export default function Cart() {
     const { cartItems, updateQuantity, removeFromCart, clearCart,
-        getCartTotal, getCartItemCount, appliedCoupon, setAppliedCoupon } = useCart();
+        getCartItemCount, appliedCoupon, setAppliedCoupon, getOrderCalculations } = useCart();
     const { coupons } = useMetrics();
     const navigate = useNavigate();
 
@@ -117,20 +117,7 @@ export default function Cart() {
     const [couponError, setCouponError] = useState('');
 
     /* ── Cálculos ── */
-    const subtotal = getCartTotal();
-
-    let discount = 0;
-    if (appliedCoupon) {
-        discount = appliedCoupon.discountType === 'percentage'
-            ? subtotal * (appliedCoupon.discountValue / 100)
-            : appliedCoupon.discountValue;
-        discount = Math.min(discount, subtotal);
-    }
-
-    const afterDiscount = subtotal - discount;
-    const shipping = afterDiscount >= 100000 ? 0 : 15000;
-    const tax = afterDiscount * 0.19;
-    const total = afterDiscount + shipping + tax;
+    const { subtotal, discount, shipping, tax, total } = getOrderCalculations();
 
     /* ── Cupón ── */
     const applyCoupon = () => {

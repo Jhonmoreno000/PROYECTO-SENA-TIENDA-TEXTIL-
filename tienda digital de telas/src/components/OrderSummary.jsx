@@ -4,24 +4,8 @@ import { formatCurrency } from '../utils/formatters';
 import { Tag } from 'lucide-react';
 
 function OrderSummary({ formData }) {
-    const { cartItems, getCartTotal, getCartItemCount, appliedCoupon } = useCart();
-
-    const subtotal = getCartTotal();
-
-    let discountAmount = 0;
-    if (appliedCoupon) {
-        if (appliedCoupon.discountType === 'percentage') {
-            discountAmount = subtotal * (appliedCoupon.discountValue / 100);
-        } else {
-            discountAmount = appliedCoupon.discountValue;
-        }
-        discountAmount = Math.min(discountAmount, subtotal);
-    }
-
-    const discountedSubtotal = subtotal - discountAmount;
-    const shipping = discountedSubtotal >= 100000 ? 0 : 15000;
-    const tax = discountedSubtotal * 0.19;
-    const total = discountedSubtotal + shipping + tax;
+    const { cartItems, getCartItemCount, appliedCoupon, getOrderCalculations } = useCart();
+    const { subtotal, discount: discountAmount, tax, shipping, total } = getOrderCalculations();
 
     return (
         <div className="card p-6 sticky top-24">
