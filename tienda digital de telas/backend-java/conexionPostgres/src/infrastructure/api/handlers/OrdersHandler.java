@@ -1,14 +1,17 @@
 package infrastructure.api.handlers;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import infrastructure.persistence.jdbc.OrderDAO;
 import domain.models.Order;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador para la gestión de pedidos (órdenes de compra).
@@ -45,6 +48,27 @@ public class OrdersHandler extends BaseHandler {
             byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, bytes.length);
             exchange.getResponseBody().write(bytes);
+
+        // POST /api/orders — Crea un nuevo pedido desde el checkout
+        } else if ("POST".equalsIgnoreCase(method)) {
+            InputStream is = exchange.getRequestBody();
+            String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+
+            int clientId = json.get("clientId").getAsInt();
+            double total = json.get("total").getAsDouble();
+
+            Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+            List<Map<String, Object>> items = gson.fromJson(json.get("items"), listType);
+
+            int orderId = orderDAO.createOrder(clientId, total, items);
+
+            if (orderId > 0) {
+                String resp = "{\"success\":true,\"orderId\":" + orderId + "}";
+                sendJsonResponse(exchange, 201, resp);
+            } else {
+                sendJsonResponse(exchange, 500, "{\"error\":\"Error al crear el pedido\"}");
+            }
 
         // PUT /api/orders/{id}/status — Cambia el estado de un pedido (ej: pendiente → enviado)
         } else if ("PUT".equalsIgnoreCase(method)) {

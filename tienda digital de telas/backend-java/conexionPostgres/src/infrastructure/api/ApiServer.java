@@ -60,6 +60,8 @@ public class ApiServer {
         server.createContext("/api/users", new UsersHandler());
         // Gestión de pedidos
         server.createContext("/api/orders", new OrdersHandler());
+        // Facturación electrónica (generación y descarga de PDF)
+        server.createContext("/api/invoices", new InvoiceHandler());
         // Gestión de cupones de descuento
         server.createContext("/api/coupons", new CouponsHandler());
         // Configuración global del sistema

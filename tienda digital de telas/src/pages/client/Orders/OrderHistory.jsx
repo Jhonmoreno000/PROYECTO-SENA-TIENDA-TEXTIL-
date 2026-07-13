@@ -21,6 +21,7 @@ import { useMetrics } from '../../../context/MetricsContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useProducts } from '../../../context/ProductContext';
 import { formatCurrency } from '../../../utils/formatters';
+import { getApiUrl } from '../../../config';
 
 // ---------------------------------------------------------------------------
 // Funciones Auxiliares para Estados
@@ -75,9 +76,26 @@ function OrderHistory() {
     const activeOrders = orders.filter(o => (o.clientId === user?.id || true) && ['paid', 'cutting', 'packed', 'shipped'].includes(o.status)).length;
     const deliveredOrders = orders.filter(o => (o.clientId === user?.id || true) && o.status === 'delivered').length;
 
-    const handleDownloadInvoice = (orderId) => {
-        // Mock download - en una app real generaría PDF
-        alert(`Descargando factura del pedido #${orderId}`);
+    const handleDownloadInvoice = async (orderId) => {
+        try {
+            const res = await fetch(getApiUrl(`/api/invoices/${orderId}`));
+            if (!res.ok) {
+                alert('Error al descargar la factura');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `FAC-${String(orderId).padStart(6, '0')}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error downloading invoice:', err);
+            alert('Error al descargar la factura');
+        }
     };
 
     return (

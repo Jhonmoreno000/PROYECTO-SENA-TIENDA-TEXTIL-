@@ -8,7 +8,8 @@ import {
     AlertTriangle, 
     TrendingUp, 
     Package,
-    Settings
+    Settings,
+    Receipt
 } from 'lucide-react';
 
 /**
@@ -65,6 +66,7 @@ const adminDashboardLinks = [
             { label: 'Crear Cupones', path: '/admin/soporte/cupones', icon: DollarSign },
         ],
     },
+    { label: 'Facturación', path: '/admin/facturas', icon: Receipt },
     { label: 'Reportes', path: '/admin/reportes', icon: FileText },
     { label: 'Configuración', path: '/admin/configuracion', icon: Settings },
 ];

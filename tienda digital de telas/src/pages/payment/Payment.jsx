@@ -10,14 +10,17 @@ import PaymentForm from './PaymentForm';
 import PSEForm from './PSEForm';
 import { useCart } from '../../context/CartContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../utils/formatters';
+import { getApiUrl } from '../../config';
 
 gsap.registerPlugin(useGSAP);
 
 function Payment() {
     const navigate = useNavigate();
-    const { getCartTotal, clearCart } = useCart();
+    const { getCartTotal, getOrderCalculations, cartItems, clearCart } = useCart();
     const { showNotification } = useNotification();
+    const { user } = useAuth();
     const contentRef = useRef(null);
 
     const [paymentMethod, setPaymentMethod] = useState('card');
@@ -37,13 +40,31 @@ function Payment() {
         setCardData({ cardholderName: data.cardholderName || '', cardNumber: data.cardNumber || '', expiryDate: data.expiryDate || '', cvv: data.cvv || '' });
     }, []);
 
-    const simulatePayment = async (data, method) => new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: 'TXN-' + Date.now(), method, amount: total, data }), 2500));
+    const createOrder = async () => {
+        const calculations = getOrderCalculations();
+        const items = cartItems.map(item => ({
+            productId: item.id,
+            quantity: item.quantity,
+            unitPrice: item.price,
+        }));
+        const payload = {
+            clientId: user?.id || 1,
+            total: calculations.total,
+            items,
+        };
+        const res = await fetch(getApiUrl('/api/orders'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        return await res.json();
+    };
 
     const handleCardPayment = async (data) => {
         setIsProcessing(true);
         try {
-            const result = await simulatePayment(data, 'card');
-            if (result.success) { clearCart(); showNotification('success', '¡Pago procesado exitosamente!'); navigate('/confirmacion'); }
+            const result = await createOrder();
+            if (result.success) { clearCart(); showNotification('success', '¡Pago procesado exitosamente!'); navigate(`/confirmacion?orderId=${result.orderId}`); }
         } catch { showNotification('error', 'Error al procesar el pago.'); }
         finally { setIsProcessing(false); }
     };
@@ -51,8 +72,8 @@ function Payment() {
     const handlePSEPayment = async (data) => {
         setIsProcessing(true);
         try {
-            const result = await simulatePayment(data, 'pse');
-            if (result.success) { clearCart(); showNotification('success', '¡Pago PSE procesado!'); navigate('/confirmacion'); }
+            const result = await createOrder();
+            if (result.success) { clearCart(); showNotification('success', '¡Pago PSE procesado!'); navigate(`/confirmacion?orderId=${result.orderId}`); }
         } catch { showNotification('error', 'Error al procesar el pago PSE.'); }
         finally { setIsProcessing(false); }
     };

@@ -56,6 +56,7 @@ const RevenueProjection = lazy(() => import('./pages/admin/Analytics/RevenueProj
 const TicketManagement = lazy(() => import('./pages/admin/Support/TicketManagement'));
 const CouponCreation = lazy(() => import('./pages/admin/Support/CouponCreation'));
 const Contact = lazy(() => import('./pages/Contact'));
+const AdminInvoices = lazy(() => import('./pages/admin/AdminInvoices'));
 
 function DashboardFallback() {
     return (
@@ -331,6 +332,16 @@ function AppRoutes() {
                             <ProtectedRoute roles="admin">
                                 <Suspense fallback={<DashboardFallback />}>
                                     <ManageHome />
+                                </Suspense>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/facturas"
+                        element={
+                            <ProtectedRoute roles="admin">
+                                <Suspense fallback={<DashboardFallback />}>
+                                    <AdminInvoices />
                                 </Suspense>
                             </ProtectedRoute>
                         }
