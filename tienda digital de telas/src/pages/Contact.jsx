@@ -98,29 +98,40 @@ const LocationGlobe = () => {
                     htmlElementsData={marker}
                     htmlElement={d => {
                         const el = document.createElement('div');
-                        el.innerHTML = `
-                            <div class="relative flex items-center justify-center w-4 h-4 cursor-pointer group">
-                                <div class="absolute bottom-6 bg-white/90 backdrop-blur-md pl-3 pr-4 py-1.5 rounded-full text-xs font-black text-gray-900 shadow-2xl border border-white/40 flex items-center gap-2 whitespace-nowrap transform transition-transform group-hover:scale-110 group-hover:-translate-y-1">
-                                    <div class="flex items-center gap-1.5 border-r border-gray-300 pr-2">
-                                        <span class="text-emerald-500 text-[10px] animate-pulse">●</span> ${d.name}
-                                    </div>
-                                    <div class="flex items-center gap-1 text-primary-600 font-bold border-r border-gray-300 pr-2">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                        </svg>
-                                        ${d.temp !== null ? d.temp + '°C' : '...'}
-                                    </div>
-                                    <div class="flex items-center gap-1 text-gray-700 font-mono font-bold tracking-tighter">
-                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        ${d.time}
-                                    </div>
-                                </div>
-                                <div class="w-full h-full rounded-full border-2 border-white shadow-[0_0_15px_rgba(16,185,129,0.8)]" style="background-color: ${d.color};"></div>
-                            </div>
-                        `;
+                        el.className = 'relative flex items-center justify-center w-4 h-4 cursor-pointer group';
                         el.style.pointerEvents = 'auto';
+
+                        const bubble = document.createElement('div');
+                        bubble.className = 'absolute bottom-6 bg-white/90 backdrop-blur-md pl-3 pr-4 py-1.5 rounded-full text-xs font-black text-gray-900 shadow-2xl border border-white/40 flex items-center gap-2 whitespace-nowrap transform transition-transform group-hover:scale-110 group-hover:-translate-y-1';
+
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'flex items-center gap-1.5 border-r border-gray-300 pr-2';
+                        const dot = document.createElement('span');
+                        dot.className = 'text-emerald-500 text-[10px] animate-pulse';
+                        dot.textContent = '●';
+                        nameDiv.appendChild(dot);
+                        nameDiv.appendChild(document.createTextNode(d.name));
+
+                        const tempDiv = document.createElement('div');
+                        tempDiv.className = 'flex items-center gap-1 text-primary-600 font-bold border-r border-gray-300 pr-2';
+                        tempDiv.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>';
+                        tempDiv.appendChild(document.createTextNode(d.temp !== null ? d.temp + '\u00B0C' : '...'));
+
+                        const timeDiv = document.createElement('div');
+                        timeDiv.className = 'flex items-center gap-1 text-gray-700 font-mono font-bold tracking-tighter';
+                        timeDiv.innerHTML = '<svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                        timeDiv.appendChild(document.createTextNode(d.time));
+
+                        bubble.appendChild(nameDiv);
+                        bubble.appendChild(tempDiv);
+                        bubble.appendChild(timeDiv);
+
+                        const dotEl = document.createElement('div');
+                        dotEl.className = 'w-full h-full rounded-full border-2 border-white shadow-[0_0_15px_rgba(16,185,129,0.8)]';
+                        dotEl.style.backgroundColor = d.color;
+
+                        el.appendChild(bubble);
+                        el.appendChild(dotEl);
                         return el;
                     }}
                     backgroundColor="rgba(0,0,0,0)"
