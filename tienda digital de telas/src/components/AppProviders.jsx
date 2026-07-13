@@ -19,12 +19,12 @@
  */
 
 import React from 'react';
-import { NotificationProvider } from '../context/NotificationContext'; // Mensajes emergentes (Toast)
-import { CartProvider }         from '../context/CartContext';          // Carrito de compras
-import { AuthProvider }         from '../context/AuthContext';          // Sesión del usuario
-import { ProductProvider }      from '../context/ProductContext';       // Catálogo de telas
-import { UIProvider }           from '../context/UIContext';            // Configuración visual del Home
-import { MetricsProvider }      from '../context/MetricsContext';       // Métricas y datos del ERP
+import { NotificationProvider } from '../context/NotificationContext';
+import { CartProvider }         from '../context/CartContext';
+import { AuthProvider }         from '../context/AuthContext';
+import { ProductProvider }      from '../context/ProductContext';
+import { UIProvider }           from '../context/UIContext';
+import { MetricsProvider }      from '../context/MetricsContext';
 
 /**
  * AppProviders — Componente que anida todos los proveedores de contexto
@@ -32,23 +32,17 @@ import { MetricsProvider }      from '../context/MetricsContext';       // Métr
  */
 export function AppProviders({ children }) {
     return (
-        /* Proveedor de notificaciones: el más externo porque todos pueden necesitar mostrar mensajes */
         <NotificationProvider>
-            {/* Proveedor de autenticación: necesita notificaciones para mostrar "Bienvenido" o "Error" */}
             <AuthProvider>
-                {/* Proveedor de métricas: trae pedidos, usuarios y datos del ERP */}
-                <MetricsProvider>
-                    {/* Proveedor del carrito: guarda los productos que el cliente eligió */}
-                    <CartProvider>
-                        {/* Proveedor de productos: trae el catálogo de la API */}
-                        <ProductProvider>
-                            {/* Proveedor de UI: controla el carrusel y secciones del Home */}
+                <ProductProvider>
+                    <MetricsProvider>
+                        <CartProvider>
                             <UIProvider>
                                 {children}
                             </UIProvider>
-                        </ProductProvider>
-                    </CartProvider>
-                </MetricsProvider>
+                        </CartProvider>
+                    </MetricsProvider>
+                </ProductProvider>
             </AuthProvider>
         </NotificationProvider>
     );
