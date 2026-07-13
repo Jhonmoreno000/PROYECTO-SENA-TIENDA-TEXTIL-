@@ -20,7 +20,14 @@ function Login() {
     const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const from = location.state?.from?.pathname || '/';
+    const from = (() => {
+        const path = location.state?.from?.pathname || '/';
+        const allowedPrefixes = ['/', '/cliente', '/vendedor', '/admin', '/catalogo', '/carrito', '/checkout', '/perfil'];
+        if (allowedPrefixes.some(p => path.startsWith(p)) && !path.includes('://') && !path.startsWith('//')) {
+            return path;
+        }
+        return '/';
+    })();
 
     const [authError, setAuthError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -89,15 +96,14 @@ function Login() {
     };
 
     const setDemoCredentials = (role) => {
-        if (role === 'admin') {
-            setValue('email', 'admin@ddtextil.com');
-            setValue('password', 'admin123');
-        } else if (role === 'seller') {
-            setValue('email', 'vendedor@ddtextil.com');
-            setValue('password', 'vendedor123');
-        } else if (role === 'client') {
-            setValue('email', 'cliente@ddtextil.com');
-            setValue('password', 'cliente123');
+        const emails = {
+            admin: 'admin@ddtextil.com',
+            seller: 'vendedor@ddtextil.com',
+            client: 'cliente@ddtextil.com'
+        };
+        if (emails[role]) {
+            setValue('email', emails[role]);
+            setValue('password', '');
         }
         setAuthError('');
     };
