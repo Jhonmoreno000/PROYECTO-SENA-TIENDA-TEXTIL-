@@ -38,7 +38,7 @@ function StockAlerts() {
                             <h3 className="text-3xl font-bold mt-1 text-red-600 dark:text-red-400">{criticalStockItems.length}</h3>
                             <p className="text-xs text-gray-400 mt-2">Menos de 10m</p>
                         </div>
-                        <div className="w-12 h-12 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-500 dark:bg-red-900/20 dark:border-red-800">
+                        <div className="w-12 h-12 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-500 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800">
                             <TrendingDown className="w-6 h-6" />
                         </div>
                     </div>

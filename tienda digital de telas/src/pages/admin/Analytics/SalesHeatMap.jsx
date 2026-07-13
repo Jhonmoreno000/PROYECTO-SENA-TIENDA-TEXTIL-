@@ -13,6 +13,13 @@ import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
 
+const colorVariants = {
+    indigo: { icon: "text-indigo-600 dark:text-indigo-400", border: "border-indigo-100 dark:border-indigo-500/20", value: "text-indigo-600 dark:text-indigo-400" },
+    emerald: { icon: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-100 dark:border-emerald-500/20", value: "text-emerald-600 dark:text-emerald-400" },
+    amber: { icon: "text-amber-600 dark:text-amber-400", border: "border-amber-100 dark:border-amber-500/20", value: "text-amber-600 dark:text-amber-400" },
+    violet: { icon: "text-violet-600 dark:text-violet-400", border: "border-violet-100 dark:border-violet-500/20", value: "text-violet-600 dark:text-violet-400" },
+};
+
 const CustomizedContent = ({ x, y, width, height, name, value }) => (
     <g>
         <rect x={x} y={y} width={width} height={height} style={{ fill: `rgba(99,102,241,${Math.min(value / 20000000, 1)})`, stroke: '#fff', strokeWidth: 2 }} />
@@ -85,7 +92,7 @@ function SalesHeatMap() {
                 <div className="-m-6 p-6 min-h-screen">
                     <BackButton />
                     <div className={`${glassCard} p-12 text-center mt-8 flex flex-col items-center`}>
-                        <Map className="w-16 h-16 text-slate-300 mb-4" />
+                        <Map className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" />
                         <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold">No hay datos de ventas regionales disponibles</p>
                     </div>
                 </div>
@@ -109,9 +116,9 @@ function SalesHeatMap() {
                                 <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${color}-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500`} />
                                 <div className="flex items-center justify-between mb-4 relative z-10">
                                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</span>
-                                    <div className={`p-2.5 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={18} /></div>
+                                    <div className={`p-2.5 bg-white shadow-sm rounded-xl ${colorVariants[color]?.border || ''} ${colorVariants[color]?.icon || ''}`}><Icon size={18} /></div>
                                 </div>
-                                <p className={`text-2xl font-black text-${color}-600 relative z-10 leading-tight`}>{value}</p>
+                                <p className={`text-2xl font-black ${colorVariants[color]?.value || ''} relative z-10 leading-tight`}>{value}</p>
                                 {sub && <p className="text-xs font-bold text-emerald-500 mt-1 relative z-10">{sub}</p>}
                             </div>
                         ))}

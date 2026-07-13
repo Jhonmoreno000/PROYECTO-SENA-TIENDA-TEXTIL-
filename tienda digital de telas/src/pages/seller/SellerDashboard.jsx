@@ -285,7 +285,7 @@ export default function SellerDashboard() {
                   className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg hover:text-primary-600 dark:text-primary-400 transition-colors" 
                   title="Actualizar datos"
                 >
-                    <RefreshCw size={18} />
+                    <RefreshCw size={18} className="text-gray-500 dark:text-gray-400" />
                 </button>
             </div>
         </div>
@@ -344,7 +344,7 @@ export default function SellerDashboard() {
             {/* Top Productos ocupa 1 columna */}
             <div className="lg:col-span-1 card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col h-[400px]">
                 <div className="flex items-center gap-2 mb-4">
-                    <BarChart3 className="w-5 h-5 text-gray-400" />
+                    <BarChart3 className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <h3 className="font-semibold text-gray-900 dark:text-white leading-tight">
                         Productos Estrella
                     </h3>
@@ -386,7 +386,7 @@ export default function SellerDashboard() {
         <div className="card bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex flex-wrap gap-4 justify-between items-center bg-gray-50/30 dark:bg-slate-800/30">
             <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-gray-400" />
+              <Package className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white leading-tight">
                   Control de Inventario

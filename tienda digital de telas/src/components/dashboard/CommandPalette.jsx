@@ -96,7 +96,7 @@ export default function CommandPalette({ isOpen, onClose, links = [] }) {
                 className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden will-change-transform"
             >
                 <div className="flex items-center px-4 py-4 border-b border-gray-100 dark:border-slate-800">
-                    <Search className="w-5 h-5 text-gray-400 mr-3" />
+                    <Search className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
                     <input
                         ref={inputRef}
                         type="text"
@@ -141,7 +141,7 @@ export default function CommandPalette({ isOpen, onClose, links = [] }) {
                                                 <span className={`text-xs ${isSelected ? 'text-primary-600/70 dark:text-primary-400/70' : 'text-gray-500'}`}>{link.group}</span>
                                             </div>
                                         </div>
-                                        {isSelected && <CornerDownLeft className="w-4 h-4 text-primary-500" />}
+                                        {isSelected && <CornerDownLeft className="w-4 h-4 text-primary-500 dark:text-primary-400" />}
                                     </button>
                                 );
                             })}

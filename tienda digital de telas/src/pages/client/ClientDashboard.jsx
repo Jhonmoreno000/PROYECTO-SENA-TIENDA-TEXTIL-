@@ -253,7 +253,7 @@ function ClientDashboard() {
             ACCIONES RÁPIDAS
         ================================================================ */}
         <div className="flex items-center gap-2 mb-5">
-          <Settings className="w-5 h-5 text-gray-400" />
+          <Settings className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           <h3 className="font-bold text-gray-900 dark:text-white tracking-tight">Acceso Rápido</h3>
         </div>
 
@@ -326,7 +326,7 @@ function ClientDashboard() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                          <Package className="w-5 h-5 text-slate-500" />
+                          <Package className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -397,7 +397,7 @@ function ClientDashboard() {
                 </p>
               </div>
               <Link to="/cliente/configuracion" className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0">
-                <Settings className="w-4 h-4 text-slate-500" />
+                <Settings className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </Link>
             </div>
 

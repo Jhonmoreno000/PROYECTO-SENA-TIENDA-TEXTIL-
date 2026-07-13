@@ -52,7 +52,7 @@ function Accordion({ id, title, icon: Icon, openSection, setOpenSection, childre
                     </div>
                     <h3 className={`font-black text-lg ${isOpen ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>{title}</h3>
                 </div>
-                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
             <div ref={contentRef} className="overflow-hidden h-0 opacity-0">
                 <div className="p-6 pt-0 border-t border-slate-100 dark:border-slate-700/50 mt-4">

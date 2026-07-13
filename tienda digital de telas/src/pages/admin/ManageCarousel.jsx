@@ -134,7 +134,7 @@ function ManageCarousel() {
                             ))}
                             {carouselSlides.length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-24 text-center">
-                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-500/10 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700 shadow-inner"><Layers className="w-10 h-10 text-slate-300" /></div>
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-500/10 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700 shadow-inner"><Layers className="w-10 h-10 text-slate-300 dark:text-slate-600" /></div>
                                     <p className="font-bold text-slate-900 dark:text-white text-xl mb-2">Sin slides activos</p>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Agrega el primer slide con el botón de arriba.</p>
                                 </div>

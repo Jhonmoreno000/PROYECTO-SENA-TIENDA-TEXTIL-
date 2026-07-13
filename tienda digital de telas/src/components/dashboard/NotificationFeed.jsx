@@ -9,10 +9,10 @@ export default function NotificationFeed({ notifications = [] }) {
     const containerRef = useRef(null);
     
     const typeConfig = {
-        error: { icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-500/10" },
-        success: { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
-        warning: { icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
-        info: { icon: Info, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" }
+        error: { icon: AlertCircle, color: "text-rose-500 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-500/10" },
+        success: { icon: CheckCircle2, color: "text-emerald-500 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+        warning: { icon: AlertTriangle, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10" },
+        info: { icon: Info, color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-500/10" }
     };
 
     useGSAP(() => {
@@ -28,7 +28,7 @@ export default function NotificationFeed({ notifications = [] }) {
         <div ref={containerRef} className="card p-0 overflow-hidden flex flex-col h-full bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
             <div className="p-5 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/30">
                 <div className="flex items-center gap-2">
-                    <Bell className="w-5 h-5 text-gray-500" />
+                    <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                     <h3 className="font-semibold text-gray-900 dark:text-white">Centro de Alertas</h3>
                 </div>
                 {notifications.filter(n => !n.isRead).length > 0 && (

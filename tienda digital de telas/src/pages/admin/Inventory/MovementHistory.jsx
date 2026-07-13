@@ -11,6 +11,12 @@ import adminDashboardLinks from '../../../data/adminDashboardLinks';
 const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
 const glassInput = "bg-slate-50 dark:bg-slate-900  border border-slate-200 dark:border-slate-700 focus:border-indigo-500 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder-slate-400";
 
+const colorVariants = {
+    slate: { icon: "text-slate-600 dark:text-slate-400", border: "border-slate-100 dark:border-slate-500/20", value: "text-slate-600 dark:text-slate-400" },
+    rose: { icon: "text-rose-600 dark:text-rose-400", border: "border-rose-100 dark:border-rose-500/20", value: "text-rose-600 dark:text-rose-400" },
+    emerald: { icon: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-100 dark:border-emerald-500/20", value: "text-emerald-600 dark:text-emerald-400" },
+};
+
 function MovementHistory() {
     const { inventoryBatches, wasteEvents, orders } = useMetrics();
     const [filterType, setFilterType] = useState('all');
@@ -81,9 +87,9 @@ function MovementHistory() {
                                 <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${color}-50 rounded-full opacity-40 group-hover:scale-150 transition-transform duration-500`} />
                                 <div className="flex items-center justify-between mb-4 relative z-10">
                                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</span>
-                                    <div className={`p-2.5 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={18} /></div>
+                                    <div className={`p-2.5 bg-white shadow-sm rounded-xl ${colorVariants[color]?.border || ''} ${colorVariants[color]?.icon || ''}`}><Icon size={18} /></div>
                                 </div>
-                                <p className={`text-4xl font-black text-${color}-600 relative z-10`}>{value}</p>
+                                <p className={`text-4xl font-black ${colorVariants[color]?.value || ''} relative z-10`}>{value}</p>
                             </div>
                         ))}
                     </div>
@@ -144,7 +150,7 @@ function MovementHistory() {
                             </table>
                             {filteredMovements.length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-24 text-center animate-in fade-in duration-500">
-                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-500/10 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700 shadow-inner"><Package className="w-10 h-10 text-slate-300" /></div>
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-500/10 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700 shadow-inner"><Package className="w-10 h-10 text-slate-300 dark:text-slate-600" /></div>
                                     <p className="font-bold text-slate-900 dark:text-white text-xl mb-2">Sin resultados</p>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Ajusta los filtros de búsqueda.</p>
                                 </div>

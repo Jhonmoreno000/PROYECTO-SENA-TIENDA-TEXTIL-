@@ -448,7 +448,7 @@ function AddressBook() {
                                                     {address.fullName}
                                                 </p>
                                                 <p className="text-sm font-medium text-gray-500 flex items-center gap-1.5 mt-1">
-                                                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                                    <Phone className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                                                     {address.phone}
                                                 </p>
                                             </div>
@@ -464,7 +464,7 @@ function AddressBook() {
                                             </div>
                                             
                                             <p className="text-sm text-gray-500 font-medium flex items-center gap-2">
-                                                <Map className="w-4 h-4 text-slate-400" />
+                                                <Map className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                                                 <span>
                                                     {address.neighborhood && `${address.neighborhood}, `}
                                                     {address.city}, {address.department}

@@ -72,7 +72,7 @@ function TenantSelector({ isRailMode }) {
                     )}
                 </div>
                 {/* MoreVertical: menú de opciones del tenant (reemplaza MdMoreVert) */}
-                {!isRailMode && <MoreVertical className="w-5 h-5 text-gray-400" />}
+                {!isRailMode && <MoreVertical className="w-5 h-5 text-gray-400 dark:text-gray-500" />}
             </button>
 
             {/* Dropdown Menu para seleccionar tienda */}
@@ -86,7 +86,7 @@ function TenantSelector({ isRailMode }) {
                                 className="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                             >
                                 <span className="text-sm font-medium">{tenant}</span>
-                                {selectedTenant === tenant && <Check className="w-5 h-5 text-primary-600" />}
+                                {selectedTenant === tenant && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
                             </button>
                         ))}
                     </div>
@@ -443,7 +443,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
                         title={isRailMode ? "Buscar (Ctrl+K)" : undefined}
                     >
                         {/* Search: ícono de búsqueda (reemplaza MdSearch) */}
-                        <Search className="w-5 h-5 shrink-0" />
+                        <Search className="w-5 h-5 shrink-0 text-gray-500 dark:text-gray-400" />
                         {!isRailMode && (
                             <div className="flex-1 flex items-center justify-between text-sm">
                                 <span>Buscar...</span>
@@ -554,13 +554,13 @@ function DashboardLayout({ children, title, links, subtitle }) {
                             title={isRailMode ? "Expandir" : "Contraer Sidebar"}
                         >
                             {/* Menu: ícono de hamburguesa para toggle del sidebar (reemplaza MdMenu) */}
-                            <Menu className="w-6 h-6 shrink-0" />
+                            <Menu className="w-6 h-6 shrink-0 text-gray-500 dark:text-gray-400" />
                         </button>
 
                         {/* Botón de cerrar sesión */}
                         <button
                             onClick={logout}
-                            className={`flex items-center justify-center p-2 rounded-none text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
+                            className={`flex items-center justify-center p-2 rounded-none text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group ${!isRailMode && 'flex-1 mx-1'}`}
                             title="Cerrar Sesión"
                         >
                             {/* LogOut: ícono de cerrar sesión (reemplaza MdLogout) */}
@@ -580,7 +580,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
                             className="p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800 transition-colors"
                         >
                             {/* Menu: ícono de hamburguesa para abrir sidebar móvil */}
-                            <Menu className="w-7 h-7" />
+                            <Menu className="w-7 h-7 text-gray-600 dark:text-gray-300" />
                         </button>
                         <span className="font-display font-bold text-lg text-gray-900 dark:text-white truncate">
                             {title}
@@ -592,7 +592,7 @@ function DashboardLayout({ children, title, links, subtitle }) {
                         className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 shadow-sm border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                     >
                         {/* Search: lupa de búsqueda en header móvil */}
-                        <Search className="w-5 h-5" />
+                        <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                     </button>
                 </header>
 

@@ -293,7 +293,7 @@ export default function AdminProducts() {
             </div>
 
             <div className="relative w-full md:w-72 shrink-0">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar por nombre o categoría..."

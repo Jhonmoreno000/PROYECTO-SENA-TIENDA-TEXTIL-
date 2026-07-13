@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, LucideIcon } from 'lucide-react';
 
 /**
  * ErpMetricCard.jsx — Tarjeta de Métrica de Alta Densidad (ERP)
@@ -33,11 +33,11 @@ export default function ErpMetricCard({
     
     // Mapeo de colores estandarizado para Data Analytics
     const colorMap = {
-        blue: { stroke: "#3b82f6", fill: "#93c5fd" },
-        green: { stroke: "#10b981", fill: "#6ee7b7" },
-        rose: { stroke: "#f43f5e", fill: "#fda4af" },
-        amber: { stroke: "#f59e0b", fill: "#fcd34d" },
-        orange: { stroke: "#f97316", fill: "#fdba74" }
+        blue: { stroke: "#3b82f6", fill: "#93c5fd", bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-500 dark:text-blue-400" },
+        green: { stroke: "#10b981", fill: "#6ee7b7", bg: "bg-green-50 dark:bg-green-900/20", text: "text-green-500 dark:text-green-400" },
+        rose: { stroke: "#f43f5e", fill: "#fda4af", bg: "bg-rose-50 dark:bg-rose-900/20", text: "text-rose-500 dark:text-rose-400" },
+        amber: { stroke: "#f59e0b", fill: "#fcd34d", bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-500 dark:text-amber-400" },
+        orange: { stroke: "#f97316", fill: "#fdba74", bg: "bg-orange-50 dark:bg-orange-900/20", text: "text-orange-500 dark:text-orange-400" }
     };
 
     const currentColors = colorMap[colorKey] || colorMap.blue;
@@ -49,7 +49,7 @@ export default function ErpMetricCard({
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-2">
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-                    <div className={`p-2 rounded-lg bg-${colorKey}-50 dark:bg-${colorKey}-900/20 text-${colorKey}-500`}>
+                    <div className={`p-2 rounded-lg ${currentColors.bg} ${currentColors.text}`}>
                         {Icon && <Icon size={18} strokeWidth={2} />}
                     </div>
                 </div>
@@ -60,8 +60,8 @@ export default function ErpMetricCard({
                     {/* Indicador de Tendencia Numérico */}
                     {trendValue && (
                         <span className={`flex items-center text-xs font-semibold mb-1 ${
-                            trendDirection === 'up' ? 'text-green-500' : 
-                            trendDirection === 'down' ? 'text-rose-500' : 'text-gray-500'
+                            trendDirection === 'up' ? 'text-green-500 dark:text-green-400' : 
+                            trendDirection === 'down' ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'
                         }`}>
                             {trendDirection === 'up' && <TrendingUp size={12} className="mr-1" />}
                             {trendDirection === 'down' && <TrendingDown size={12} className="mr-1" />}

@@ -255,7 +255,7 @@ function OrderHistory() {
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                                                                <Package className="w-5 h-5 text-slate-400" />
+                                                                <Package className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                                                             </div>
                                                         )}
                                                     </div>

@@ -305,7 +305,7 @@ export default function AdminOverview() {
                     <div className="card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <Activity size={18} className="text-gray-400" /> Actividad Reciente
+                                <Activity size={18} className="text-gray-400 dark:text-gray-500" /> Actividad Reciente
                             </h3>
                             <span className="text-xs text-gray-400">Base de Datos Real</span>
                         </div>
@@ -346,7 +346,7 @@ export default function AdminOverview() {
                     <div className="card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <Users size={18} className="text-gray-400" /> Top Vendedores
+                                <Users size={18} className="text-gray-400 dark:text-gray-500" /> Top Vendedores
                             </h3>
                             <Link to="/admin/vendedores" className="text-xs text-primary-600 dark:text-primary-400 font-medium">
                                 Ver todos
@@ -391,13 +391,13 @@ export default function AdminOverview() {
                     {/* Resumen de estados de pedidos */}
                     <div className="card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                         <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                            <ShoppingBag size={18} className="text-gray-400" /> Estado de Pedidos
+                            <ShoppingBag size={18} className="text-gray-400 dark:text-gray-500" /> Estado de Pedidos
                         </h3>
                         <div className="grid grid-cols-3 gap-4">
                             {[
-                                { label: 'Entregados', status: 'delivered', icon: CheckCircle, color: 'text-emerald-500' },
-                                { label: 'En proceso', status: ['paid','cutting','packed','shipped','processing'], icon: Clock, color: 'text-amber-500' },
-                                { label: 'Pendientes', status: 'pending', icon: XCircle, color: 'text-rose-500' },
+                                { label: 'Entregados', status: 'delivered', icon: CheckCircle, color: 'text-emerald-500 dark:text-emerald-400' },
+                                { label: 'En proceso', status: ['paid','cutting','packed','shipped','processing'], icon: Clock, color: 'text-amber-500 dark:text-amber-400' },
+                                { label: 'Pendientes', status: 'pending', icon: XCircle, color: 'text-rose-500 dark:text-rose-400' },
                             ].map(({ label, status, icon: Icon, color }) => {
                                 const count = orders.filter(o =>
                                     Array.isArray(status) ? status.includes(o.status) : o.status === status
@@ -417,7 +417,7 @@ export default function AdminOverview() {
                     <div className="card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <Package size={18} className="text-gray-400" /> Operaciones de Inventario
+                                <Package size={18} className="text-gray-400 dark:text-gray-500" /> Operaciones de Inventario
                             </h3>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

@@ -12,6 +12,13 @@ import adminDashboardLinks from '../../data/adminDashboardLinks';
 const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
 const MEDAL = ['bg-amber-100 text-amber-600 dark:text-amber-400 border-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.4)]', 'bg-slate-200 text-slate-600 dark:text-slate-400 dark:text-slate-500 border-slate-300', 'bg-orange-100 text-orange-600 dark:text-orange-400 border-orange-200', 'bg-white text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700'];
 
+const colorVariants = {
+    indigo: { icon: "text-indigo-600 dark:text-indigo-400", border: "border-indigo-100 dark:border-indigo-500/20" },
+    blue: { icon: "text-blue-600 dark:text-blue-400", border: "border-blue-100 dark:border-blue-500/20" },
+    emerald: { icon: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-100 dark:border-emerald-500/20" },
+    amber: { icon: "text-amber-600 dark:text-amber-400", border: "border-amber-100 dark:border-amber-500/20" },
+};
+
 function ClientMetrics() {
     const { users, orders } = useMetrics();
     const clients = users.filter(u => u.role === 'client' || u.role === 'cliente');
@@ -65,10 +72,10 @@ function ClientMetrics() {
                                         <h3 className="text-4xl font-black text-slate-900 dark:text-white">{count}</h3>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>
                                     </div>
-                                    <div className={`p-3 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={22} /></div>
+                                    <div className={`p-3 bg-white shadow-sm rounded-xl ${colorVariants[color]?.border || ''} ${colorVariants[color]?.icon || ''}`}><Icon size={22} /></div>
                                 </div>
                                 <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 relative z-10">
-                                    Valor total: <span className={`font-black text-${color}-600`}>{formatCurrency(total)}</span>
+                                    Valor total: <span className={`font-black ${colorVariants[color]?.value || ''}`}>{formatCurrency(total)}</span>
                                 </div>
                             </div>
                         ))}
@@ -123,7 +130,7 @@ function ClientMetrics() {
                             <div key={label} className={`stats-card ${glassCard} p-6 overflow-hidden relative group hover:-translate-y-1 transition-all duration-300`}>
                                 <div className={`absolute -right-4 -top-4 w-20 h-20 bg-${color}-50 rounded-full opacity-40 group-hover:scale-150 transition-transform duration-500`} />
                                 <div className="flex items-center gap-2 mb-3 relative z-10">
-                                    <div className={`p-2 bg-white shadow-sm rounded-xl border border-${color}-100 text-${color}-600`}><Icon size={16} /></div>
+                                    <div className={`p-2 bg-white shadow-sm rounded-xl ${colorVariants[color]?.border || ''} ${colorVariants[color]?.icon || ''}`}><Icon size={16} /></div>
                                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</span>
                                 </div>
                                 <p className="text-xl font-black text-slate-900 dark:text-white truncate relative z-10">{value}</p>
