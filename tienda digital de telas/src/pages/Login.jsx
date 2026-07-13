@@ -96,14 +96,14 @@ function Login() {
     };
 
     const setDemoCredentials = (role) => {
-        const emails = {
-            admin: 'admin@ddtextil.com',
-            seller: 'vendedor@ddtextil.com',
-            client: 'cliente@ddtextil.com'
+        const creds = {
+            admin: { email: 'admin@ddtextil.com', password: 'admin123' },
+            seller: { email: 'vendedor@ddtextil.com', password: 'vendedor123' },
+            client: { email: 'cliente@ddtextil.com', password: 'cliente123' }
         };
-        if (emails[role]) {
-            setValue('email', emails[role]);
-            setValue('password', '');
+        if (creds[role]) {
+            setValue('email', creds[role].email);
+            setValue('password', creds[role].password);
         }
         setAuthError('');
     };
