@@ -23,5 +23,23 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three') || id.includes('react-globe.gl')) {
+            return 'three-vendor';
+          }
+          if (id.includes('node_modules/gsap') || id.includes('@gsap/react')) {
+            return 'gsap-vendor';
+          }
+          if (id.includes('node_modules/recharts')) {
+            return 'recharts-vendor';
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600,
+  },
 })
 
