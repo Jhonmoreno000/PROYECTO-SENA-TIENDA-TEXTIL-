@@ -43,7 +43,7 @@ function Payment() {
         setIsProcessing(true);
         try {
             const result = await simulatePayment(data, 'card');
-            if (result.success) { localStorage.setItem('lastPayment', JSON.stringify({ ...result, date: new Date().toISOString() })); clearCart(); showNotification('success', '¡Pago procesado exitosamente!'); navigate('/confirmacion'); }
+            if (result.success) { clearCart(); showNotification('success', '¡Pago procesado exitosamente!'); navigate('/confirmacion'); }
         } catch { showNotification('error', 'Error al procesar el pago.'); }
         finally { setIsProcessing(false); }
     };
@@ -52,7 +52,7 @@ function Payment() {
         setIsProcessing(true);
         try {
             const result = await simulatePayment(data, 'pse');
-            if (result.success) { localStorage.setItem('lastPayment', JSON.stringify({ ...result, date: new Date().toISOString() })); clearCart(); showNotification('success', '¡Pago PSE procesado!'); navigate('/confirmacion'); }
+            if (result.success) { clearCart(); showNotification('success', '¡Pago PSE procesado!'); navigate('/confirmacion'); }
         } catch { showNotification('error', 'Error al procesar el pago PSE.'); }
         finally { setIsProcessing(false); }
     };
