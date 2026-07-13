@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TriangleAlert, RefreshCw } from 'lucide-react';
 import ProductCard from './ProductCard';
+import { ProductGridSkeleton } from './Skeleton';
 import { useProducts } from '../context/ProductContext';
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -101,9 +102,7 @@ function FeaturedProducts() {
             </div>
 
             {loading ? (
-                <div className="flex justify-center items-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-                </div>
+                <ProductGridSkeleton count={3} />
             ) : error ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <TriangleAlert className="w-14 h-14 text-amber-400" />

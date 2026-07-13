@@ -16,3 +16,5 @@ export { default as Toast } from './Toast';
 export { default as TruckLoader } from './TruckLoader';
 export { default as ScrollToTop } from './ScrollToTop';
 export { default as Counter } from './Counter';
+export { SmoothScrollProvider } from './SmoothScrollProvider';
+export { Skeleton, ProductCardSkeleton, ProductGridSkeleton, TextBlockSkeleton, CatalogSkeleton } from './Skeleton';

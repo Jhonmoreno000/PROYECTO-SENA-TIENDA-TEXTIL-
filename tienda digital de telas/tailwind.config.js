@@ -46,8 +46,8 @@ export default {
                 },
             },
             fontFamily: {
-                sans: ['ui-sans-serif', 'system-ui', 'sans-serif'],
-                display: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+                sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                display: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
             },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-in-out',

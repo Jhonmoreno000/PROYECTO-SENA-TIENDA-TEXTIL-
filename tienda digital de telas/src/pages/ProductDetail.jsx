@@ -31,6 +31,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import ImageGallery from '../components/ImageGallery';
 import QuantitySelector from '../components/QuantitySelector';
 import ProductCard from '../components/ProductCard';
+import { Skeleton, TextBlockSkeleton } from '../components/Skeleton';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
 import { useProducts } from '../context/ProductContext';
@@ -83,8 +84,33 @@ function ProductDetail() {
         return (
             <div className="min-h-screen flex flex-col">
                 <Header />
-                <div className="flex-1 flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                <div className="flex-1 section-container">
+                    <div className="grid md:grid-cols-2 gap-12">
+                        <div className="space-y-4">
+                            <Skeleton className="aspect-square rounded-2xl" />
+                            <div className="grid grid-cols-4 gap-3">
+                                {[1,2,3,4].map(i => <Skeleton key={i} className="aspect-square rounded-xl" />)}
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            <Skeleton className="h-6 w-24 rounded-full" />
+                            <Skeleton className="h-10 w-3/4" />
+                            <Skeleton className="h-12 w-40" />
+                            <TextBlockSkeleton lines={4} />
+                            <div className="card p-6 space-y-4">
+                                <Skeleton className="h-6 w-48" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[1,2,3,4].map(i => <div key={i}><Skeleton className="h-4 w-16 mb-1" /><Skeleton className="h-5 w-24" /></div>)}
+                                </div>
+                            </div>
+                            <Skeleton className="h-20 rounded-lg" />
+                            <Skeleton className="h-14 w-48" />
+                            <div className="flex gap-4">
+                                <Skeleton className="h-14 flex-1 rounded-xl" />
+                                <Skeleton className="h-14 flex-1 rounded-xl" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <Footer />
             </div>

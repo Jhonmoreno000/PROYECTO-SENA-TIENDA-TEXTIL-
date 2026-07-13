@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 
 function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const { getCartItemCount } = useCart();
     const [darkMode, toggleDarkMode] = useDarkMode();
     const { user, logout } = useAuth();
@@ -33,8 +34,11 @@ function Header() {
     ];
 
     const location = useLocation();
+    const headerMounted = useRef(false);
     useGSAP(() => {
-        // Animación del logo
+        if (headerMounted.current) return;
+        headerMounted.current = true;
+
         gsap.to('.logo-gradient-anim', {
             backgroundPosition: '200% center',
             duration: 3,
@@ -42,7 +46,6 @@ function Header() {
             repeat: -1
         });
 
-        // Entrada escalonada de los links de navegación (Escritorio)
         gsap.from('.nav-link-item', {
             y: -10,
             opacity: 0,
@@ -51,7 +54,7 @@ function Header() {
             ease: "power3.out",
             delay: 0.2
         });
-    });
+    }, {});
 
     // Animación escalonada del menú móvil
     useGSAP(() => {
@@ -131,8 +134,9 @@ function Header() {
 
                         {/* ===== MENÚ DE USUARIO ===== */}
                         {user ? (
-                            <div className="relative group/user">
+                            <div className="relative">
                                 <button
+                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
                                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 active:scale-95"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold border border-primary-200 dark:border-primary-800">
@@ -140,32 +144,41 @@ function Header() {
                                     </div>
                                 </button>
 
-                                <div className="absolute right-0 top-full mt-0 pt-2 w-48 hidden group-hover/user:block transform origin-top-right z-50">
-                                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
-                                        <div className="p-3 border-b border-gray-100 dark:border-slate-700">
-                                            <p className="font-bold text-gray-900 dark:text-white truncate">{user.name}</p>
-                                            <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-                                        </div>
+                                {userMenuOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        />
+                                        <div className="absolute right-0 top-full mt-2 w-48 transform origin-top-right z-50">
+                                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
+                                                <div className="p-3 border-b border-gray-100 dark:border-slate-700">
+                                                    <p className="font-bold text-gray-900 dark:text-white truncate">{user.name}</p>
+                                                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                                                </div>
 
-                                        <div className="p-1">
-                                            <Link
-                                                to={(user.role === 'client' || user.role === 'cliente') ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
-                                                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
-                                            >
-                                                <LayoutDashboard className="w-4 h-4" />
-                                                Dashboard
-                                            </Link>
+                                                <div className="p-1">
+                                                    <Link
+                                                        to={(user.role === 'client' || user.role === 'cliente') ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
+                                                        onClick={() => setUserMenuOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
+                                                    >
+                                                        <LayoutDashboard className="w-4 h-4" />
+                                                        Dashboard
+                                                    </Link>
 
-                                            <button
-                                                onClick={logout}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg"
-                                            >
-                                                <LogOut className="w-4 h-4" />
-                                                Cerrar Sesión
-                                            </button>
+                                                    <button
+                                                        onClick={() => { logout(); setUserMenuOpen(false); }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg"
+                                                    >
+                                                        <LogOut className="w-4 h-4" />
+                                                        Cerrar Sesión
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <Link to="/login" className="flex items-center gap-2 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary-600 font-medium transition-colors">

@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductGrid from '../components/ProductGrid';
-import TruckLoader from '../components/TruckLoader';
+import { CatalogSkeleton } from '../components/Skeleton';
 import AnimatedPage from '../components/AnimatedPage';
 import { WifiOff, RefreshCw } from 'lucide-react';
 
@@ -48,9 +48,7 @@ function Catalog() {
                     {/* Products Section */}
                     <section className="section-container">
                         {loading ? (
-                            <div className="flex justify-center items-center py-24">
-                                <TruckLoader size="large" text="Cargando catálogo..." />
-                            </div>
+                            <CatalogSkeleton />
                         ) : error ? (
                             <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
                                 <div className="w-20 h-20 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center border border-orange-200 dark:border-orange-500/20">
