@@ -22,7 +22,8 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { useNotification } from './NotificationContext'; // Para mostrar mensajes de éxito o error
-import { useLocalStorage } from '../hooks/useLocalStorage'; // Hook que guarda datos en el navegador
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { getApiUrl } from '../config';
 import LogoutLoader from '../components/common/LogoutLoader'; // Animación de carga al cerrar sesión
 
 // Creamos el contexto que va a compartir los datos de sesión con toda la app
@@ -60,7 +61,7 @@ export function AuthProvider({ children }) {
      */
     const login = async (email, password) => {
         try {
-            const response = await fetch('http://localhost:8081/api/login', {
+            const response = await fetch(getApiUrl('/api/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -113,7 +114,7 @@ export function AuthProvider({ children }) {
      */
     const register = async (userData) => {
         try {
-            const response = await fetch('http://localhost:8081/api/register', {
+            const response = await fetch(getApiUrl('/api/register'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -55,6 +55,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 // Funciones de cálculo de métricas
 import { getSellerMetrics, getTopProducts } from '../../utils/metricsUtils';
+import { getApiUrl } from '../../config';
 
 // ===========================================================================
 // COMPONENTE PRINCIPAL
@@ -197,7 +198,7 @@ export default function SellerDashboard() {
     // Si se seleccionó una nueva imagen (Base64), subirla al servidor
     if (updatedForm.images?.[0]?.startsWith('data:')) {
       try {
-        const res = await fetch(`http://localhost:8081/api/products/${productId}/image`, {
+        const res = await fetch(getApiUrl(`/api/products/${productId}/image`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: updatedForm.images[0] }),

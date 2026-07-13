@@ -16,6 +16,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiUrl } from '../config';
 
 // Creamos el contexto del catálogo de productos
 const ProductContext = createContext();
@@ -51,7 +52,7 @@ export function ProductProvider({ children }) {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch('http://localhost:8081/api/products');
+            const response = await fetch(getApiUrl('/api/products'));
             if (!response.ok) {
                 throw new Error('Error al cargar los productos');
             }
@@ -99,7 +100,7 @@ export function ProductProvider({ children }) {
      */
     const updateProduct = async (updatedProduct) => {
         try {
-            const response = await fetch(`http://localhost:8081/api/products/${updatedProduct.id}`, {
+            const response = await fetch(getApiUrl(`/api/products/${updatedProduct.id}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedProduct)
@@ -123,7 +124,7 @@ export function ProductProvider({ children }) {
      */
     const deleteProduct = async (id) => {
         try {
-            const response = await fetch(`http://localhost:8081/api/products/${id}`, { method: 'DELETE' });
+            const response = await fetch(getApiUrl(`/api/products/${id}`), { method: 'DELETE' });
             if (response.ok) {
                 // Quitamos el producto de la lista sin recargar toda la página
                 setProducts(prev => prev.filter(p => p.id !== id && p.id !== String(id)));
@@ -140,7 +141,7 @@ export function ProductProvider({ children }) {
      */
     const addProduct = async (newProduct) => {
         try {
-            const response = await fetch('http://localhost:8081/api/products', {
+            const response = await fetch(getApiUrl('/api/products'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newProduct)

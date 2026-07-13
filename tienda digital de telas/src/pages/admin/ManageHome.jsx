@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useNotification } from '../../context/NotificationContext';
 import adminDashboardLinks from '../../data/adminDashboardLinks';
+import { getApiUrl } from '../../config';
 
 const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
 
@@ -31,7 +32,7 @@ function ManageHome() {
     useEffect(() => {
         const local = localStorage.getItem('home_sections_config');
         if (local) { try { setSections(JSON.parse(local)); } catch (e) {} }
-        fetch('http://localhost:8081/api/config/home_sections_config')
+        fetch(getApiUrl('/api/config/home_sections_config'))
             .then(r => r.ok ? r.text() : null)
             .then(text => {
                 if (text && text !== '{}') { const p = JSON.parse(text); setSections(p); localStorage.setItem('home_sections_config', JSON.stringify(p)); }
@@ -55,7 +56,7 @@ function ManageHome() {
         localStorage.setItem('home_sections_config', JSON.stringify(updated));
         showNotification('success', 'Visibilidad actualizada');
         try {
-            await fetch('http://localhost:8081/api/config', {
+            await fetch(getApiUrl('/api/config'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key: 'home_sections_config', value: JSON.stringify(updated) })

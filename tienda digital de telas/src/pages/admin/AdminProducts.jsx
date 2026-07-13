@@ -54,6 +54,7 @@ import { formatCurrency } from '../../utils/formatters';               // Convie
 import { useProducts } from '../../context/ProductContext';            // Trae los productos de la API
 import { useNotification } from '../../context/NotificationContext';   // Muestra notificaciones en pantalla
 import BackButton from '../../components/dashboard/BackButton';         // Botón "← Volver"
+import { getApiUrl } from '../../config';
 
 // ── Estilos reutilizables de las tarjetas (fondo blanco con borde sutil) ─────
 // Usamos cadenas de texto de clases CSS para no repetirlas en cada elemento
@@ -177,7 +178,7 @@ export default function AdminProducts() {
     if (updatedForm.images?.[0]?.startsWith('data:')) {
       try {
         const res = await fetch(
-          `http://localhost:8081/api/products/${editingProduct.id}/image`,
+          getApiUrl(`/api/products/${editingProduct.id}/image`),
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },

@@ -10,6 +10,7 @@ import { useMetrics } from '../../context/MetricsContext';
 import { useProducts } from '../../context/ProductContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { getApiUrl } from '../../config';
 
 export default function SellerProducts() {
   const { showNotification } = useNotification();
@@ -65,7 +66,7 @@ export default function SellerProducts() {
 
     if (updatedForm.images?.[0]?.startsWith('data:')) {
       try {
-        const res = await fetch(`http://localhost:8081/api/products/${productId}/image`, {
+        const res = await fetch(getApiUrl(`/api/products/${productId}/image`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: updatedForm.images[0] }),

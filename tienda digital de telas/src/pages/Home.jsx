@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header, Hero, Carousel, FeaturedProducts, Benefits, Footer, AnimatedPage } from '../components';
+import { getApiUrl } from '../config';
 
 function Home() {
     const [sections, setSections] = useState([
@@ -23,7 +24,7 @@ function Home() {
             }
             
             // Still attempt to get from backend quietly
-            fetch('http://localhost:8081/api/config/home_sections_config')
+            fetch(getApiUrl('/api/config/home_sections_config'))
                 .then(res => res.ok ? res.text() : null)
                 .then(text => {
                     if (text && text !== '{}') {
