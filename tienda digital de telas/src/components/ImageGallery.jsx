@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
-gsap.registerPlugin(useGSAP);
+
 
 function ImageGallery({ images, productName }) {
     const [selectedImage, setSelectedImage] = useState(0);

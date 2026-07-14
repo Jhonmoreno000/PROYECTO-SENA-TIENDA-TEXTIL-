@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react';
 import ProductCard from './ProductCard';
 import SmartFilter from './SmartFilter';
 
-gsap.registerPlugin(useGSAP);
+
 
 function ProductGrid({ products }) {
     const [selectedCategory, setSelectedCategory] = useState('Todos');

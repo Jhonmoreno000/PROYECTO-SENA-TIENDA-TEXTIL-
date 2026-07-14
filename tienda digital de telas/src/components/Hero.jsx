@@ -6,8 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight } from 'lucide-react';
 import Counter from './Counter';
 
-// Registrar plugins de GSAP
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Hero() {
     const containerRef = useRef(null);
@@ -26,37 +25,22 @@ export default function Hero() {
             { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 1.2, force3D: true }
         );
 
-        // Efecto visual: Escalado lentísimo continuo y flotación sutil
-        gsap.to(imageRef.current, {
-            scale: 1.03,
-            y: "-=10",
-            duration: 5,
-            ease: "sine.inOut",
-            repeat: -1,
-            yoyo: true,
-            delay: 1.2
-        });
-
-        // Animación de Textos (Efecto premium de revelado)
         if (textRef.current) {
             const texts = textRef.current.children;
-            tl.fromTo(texts, 
-                { 
-                    y: 40, 
-                    opacity: 0,
-                    rotationX: -15,
-                    transformOrigin: "top center"
+            tl.fromTo(texts,
+                {
+                    y: 30,
+                    opacity: 0
                 },
-                { 
-                    y: 0, 
-                    opacity: 1, 
-                    rotationX: 0,
-                    duration: 1, 
-                    stagger: 0.15, 
-                    ease: "power4.out",
-                    force3D: true 
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.8,
+                    stagger: 0.12,
+                    ease: "power3.out",
+                    force3D: true
                 },
-                "-=0.8"
+                "-=0.6"
             );
         }
 
@@ -69,19 +53,17 @@ export default function Hero() {
             );
         }
 
-        // 2. Efecto Parallax Nativo con ScrollTrigger
         gsap.to(imageRef.current, {
-            y: "15%", // La imagen baja sutilmente
+            y: "15%",
             ease: "none",
             scrollTrigger: {
                 trigger: containerRef.current,
                 start: "top top",
                 end: "bottom top",
-                scrub: true
+                scrub: 1
             }
         });
 
-        // Parallax inverso para el badge
         if (badgeRef.current) {
             gsap.to(badgeRef.current, {
                 y: "-50%",
@@ -90,21 +72,20 @@ export default function Hero() {
                     trigger: containerRef.current,
                     start: "top top",
                     end: "bottom top",
-                    scrub: true
+                    scrub: 1
                 }
             });
         }
 
-        // Parallax del patrón de fondo
         if (patternRef.current) {
             gsap.to(patternRef.current, {
-                y: 200, // Desplazamiento del patrón
+                y: 200,
                 ease: "none",
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: "top top",
                     end: "bottom top",
-                    scrub: true
+                    scrub: 1
                 }
             });
         }
@@ -116,7 +97,7 @@ export default function Hero() {
             {/* ===== CAPA DE PARALLAX: Patrón de fondo geométrico ===== */}
             <div 
                 ref={patternRef} 
-                className="absolute inset-0 opacity-10 dark:opacity-5 pointer-events-none w-full h-[120%]"
+                className="absolute inset-0 opacity-10 dark:opacity-5 pointer-events-none w-full h-[120%] will-change-transform"
             >
                 <div className="absolute inset-0" style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -175,14 +156,14 @@ export default function Hero() {
                         ref={imageRef}
                         src="/images/hero-telas-premium.png" 
                         alt="Telas de Lujo"
-                        className="w-full h-full object-cover origin-center"
-                        style={{ clipPath: "inset(100% 0% 0% 0%)" }} // Estado inicial para GSAP
+                        className="w-full h-full object-cover origin-center will-change-transform"
+                        style={{ clipPath: "inset(100% 0% 0% 0%)" }}
                     />
                     
                     {/* Badge Envío Gratis (Minimalista con bordes finos) */}
                     <div 
                         ref={badgeRef}
-                        className="absolute bottom-8 left-8 bg-white/80 backdrop-blur-md px-6 py-4 flex items-center gap-4 rounded-full border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+                        className="absolute bottom-8 left-8 bg-white/80 backdrop-blur-md px-6 py-4 flex items-center gap-4 rounded-full border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] will-change-transform"
                     >
                         <div className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>

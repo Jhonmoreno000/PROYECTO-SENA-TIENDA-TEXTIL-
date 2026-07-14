@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Search, ArrowRight, CornerDownLeft } from 'lucide-react';
 
-gsap.registerPlugin(useGSAP);
+
 
 /**
  * Componente CommandPalette.

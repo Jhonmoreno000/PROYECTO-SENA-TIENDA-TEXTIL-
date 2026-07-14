@@ -8,8 +8,9 @@ import * as z from 'zod';
 import { Mail, Lock, ArrowRight, Loader2, Quote, Eye, EyeOff } from 'lucide-react';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+import { EASES, microPress, microRelease } from '../utils/animations';
 
-gsap.registerPlugin(useGSAP);
+
 
 const loginSchema = z.object({
     email: z.string().min(1, "El correo es requerido").email("Formato de correo inválido"),
@@ -41,14 +42,14 @@ function Login() {
 
     useGSAP(() => {
         if (panelLeftRef.current) {
-            gsap.fromTo(panelLeftRef.current, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.8, ease: "power2.out" });
+            gsap.fromTo(panelLeftRef.current, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.7, ease: EASES.smooth });
             const textInner = panelLeftRef.current.querySelector('.panel-text');
             if (textInner) {
-                gsap.fromTo(textInner, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out", delay: 0.4 });
+                gsap.fromTo(textInner, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: EASES.smooth, delay: 0.3 });
             }
         }
         if (formCardRef.current) {
-            gsap.fromTo(formCardRef.current, { opacity: 0, y: -20, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.5)" });
+            gsap.fromTo(formCardRef.current, { opacity: 0, y: -15, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: EASES.spring });
         }
     });
 
@@ -255,9 +256,10 @@ function Login() {
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="w-full relative overflow-hidden group bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(234,88,12,0.25)] hover:shadow-[0_12px_25px_rgba(234,88,12,0.35)] transition-all duration-300 flex items-center justify-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.98]"
+                                        onMouseDown={(e) => microPress(e.currentTarget)}
+                                        onMouseUp={(e) => microRelease(e.currentTarget)}
+                                        className="w-full relative overflow-hidden bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(234,88,12,0.25)] hover:shadow-[0_12px_25px_rgba(234,88,12,0.35)] flex items-center justify-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                                         {isSubmitting ? (
                                             <>
                                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -266,7 +268,7 @@ function Login() {
                                         ) : (
                                             <>
                                                 <span>Iniciar Sesión</span>
-                                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                                <ArrowRight className="w-5 h-5" />
                                             </>
                                         )}
                                     </button>
@@ -282,7 +284,9 @@ function Login() {
                                 {/* Botón Google Login */}
                                 <button
                                     type="button"
-                                    className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-[1.02] active:scale-[0.98]"
+                                    onMouseDown={(e) => microPress(e.currentTarget)}
+                                    onMouseUp={(e) => microRelease(e.currentTarget)}
+                                    className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700"
                                 >
                                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

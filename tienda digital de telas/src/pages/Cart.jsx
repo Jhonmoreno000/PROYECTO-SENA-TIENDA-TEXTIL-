@@ -13,8 +13,7 @@ import Footer from '../components/Footer';
 import { useCart } from '../context/CartContext';
 import { useMetrics } from '../context/MetricsContext';
 import { formatCurrency } from '../utils/formatters';
-
-gsap.registerPlugin(useGSAP);
+import { staggerItems, EASES, microPress, microRelease } from '../utils/animations';
 
 /* ──────────────────────────────────────────────
    Fila de producto dentro del carrito
@@ -22,15 +21,6 @@ gsap.registerPlugin(useGSAP);
 function CartRow({ item, onRemove, onQuantity }) {
     const imageUrl = Array.isArray(item.images) && item.images[0] ? item.images[0] : null;
     const rowRef = useRef(null);
-
-    useGSAP(() => {
-        if (rowRef.current) {
-            gsap.fromTo(rowRef.current,
-                { opacity: 0, y: 14 },
-                { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
-            );
-        }
-    }, { scope: rowRef });
 
     return (
         <div
@@ -112,9 +102,19 @@ export default function Cart() {
         getCartItemCount, appliedCoupon, setAppliedCoupon, getOrderCalculations } = useCart();
     const { coupons } = useMetrics();
     const navigate = useNavigate();
+    const listRef = useRef(null);
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setCouponError] = useState('');
+
+    useGSAP(() => {
+        if (listRef.current) {
+            const items = listRef.current.querySelectorAll('[data-animate]');
+            if (items.length > 0) {
+                staggerItems(items, { stagger: 0.06 });
+            }
+        }
+    }, { dependencies: [cartItems.length], scope: listRef });
 
     /* ── Cálculos ── */
     const { subtotal, discount, shipping, tax, total } = getOrderCalculations();
@@ -197,14 +197,17 @@ export default function Cart() {
                             </button>
                         </div>
 
-                        {cartItems.map(item => (
-                            <CartRow
-                                key={item.id}
-                                item={item}
-                                onRemove={removeFromCart}
-                                onQuantity={updateQuantity}
-                            />
-                        ))}
+                        <div ref={listRef}>
+                            {cartItems.map(item => (
+                                <div key={item.id} data-animate>
+                                    <CartRow
+                                        item={item}
+                                        onRemove={removeFromCart}
+                                        onQuantity={updateQuantity}
+                                    />
+                                </div>
+                            ))}
+                        </div>
 
                         {/* Seguir comprando */}
                         <Link

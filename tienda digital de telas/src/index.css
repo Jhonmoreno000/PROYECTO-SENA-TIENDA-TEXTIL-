@@ -110,6 +110,24 @@
   .animate-on-scroll.visible {
     @apply opacity-100 translate-y-0;
   }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  .will-change-top {
+    will-change: top, left;
+  }
+
+  .backdrop-optimize {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
 }
 
 /* Scrollbar personalizado */

@@ -3,7 +3,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { AlertCircle, CheckCircle2, AlertTriangle, Info, Bell } from 'lucide-react';
 
-gsap.registerPlugin(useGSAP);
+
 
 export default function NotificationFeed({ notifications = [] }) {
     const containerRef = useRef(null);

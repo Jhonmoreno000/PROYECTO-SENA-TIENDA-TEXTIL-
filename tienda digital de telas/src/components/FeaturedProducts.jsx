@@ -8,7 +8,7 @@ import ProductCard from './ProductCard';
 import { ProductGridSkeleton } from './Skeleton';
 import { useProducts } from '../context/ProductContext';
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger);
 
 function FeaturedProducts() {
     const { products, getFeaturedProducts, loading, error, refreshProducts } = useProducts();
@@ -28,64 +28,56 @@ function FeaturedProducts() {
             }
         });
 
-        // 1. Reveal Header (Reduced blur for performance)
-        tl.fromTo('.fp-header', 
-            { opacity: 0, y: 30, filter: 'blur(8px)' },
-            { 
-                opacity: 1, y: 0, filter: 'blur(0px)', 
-                duration: 0.8, stagger: 0.1, ease: "power2.out" 
+        tl.fromTo('.fp-header',
+            { opacity: 0, y: 30 },
+            {
+                opacity: 1, y: 0,
+                duration: 0.8, stagger: 0.1, ease: "power2.out"
             }
         );
 
-        // 2. Brutal 3D reveal for cards (Optimized with force3D)
         if (featuredProducts.length > 0 && !loading && !error) {
             tl.fromTo('.fp-card',
-                { 
-                    opacity: 0, 
-                    y: 60, 
-                    rotationX: -20,
-                    scale: 0.95,
-                    filter: 'blur(4px)'
+                {
+                    opacity: 0,
+                    y: 40,
+                    scale: 0.97
                 },
                 {
-                    opacity: 1, 
-                    y: 0, 
-                    rotationX: 0, 
-                    scale: 1, 
-                    filter: 'blur(0px)',
-                    duration: 1, 
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.8,
                     force3D: true,
                     stagger: 0.1,
                     ease: "power3.out",
                     onComplete: () => {
-                        // 3. Float animation starts AFTER reveal - Optimized
                         gsap.to('.fp-card', {
-                            y: "-=8",
-                            duration: 2.5,
+                            y: "-=6",
+                            duration: 3,
                             repeat: -1,
                             yoyo: true,
                             ease: "sine.inOut",
                             force3D: true,
                             stagger: {
-                                amount: 1.2,
+                                amount: 1.5,
                                 repeat: -1,
                                 yoyo: true
                             }
                         });
                     }
                 },
-                "-=0.5"
+                "-=0.4"
             );
         }
 
-        // 4. Reveal Button
         tl.fromTo('.fp-btn',
-            { opacity: 0, scale: 0.8 },
+            { opacity: 0, scale: 0.9 },
             {
-                opacity: 1, scale: 1, 
-                duration: 0.6, ease: "back.out(1.4)"
+                opacity: 1, scale: 1,
+                duration: 0.5, ease: "back.out(1.4)"
             },
-            "-=0.4"
+            "-=0.3"
         );
 
     }, { scope: containerRef, dependencies: [featuredProducts.length, loading, error] });

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -17,6 +17,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useAuth } from '../context/AuthContext';
+import { microPress, microRelease, EASES } from '../utils/animations';
 
 function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,6 +26,7 @@ function Header() {
     const [darkMode, toggleDarkMode] = useDarkMode();
     const { user, logout } = useAuth();
     const cartCount = getCartItemCount();
+    const containerRef = useRef(null);
 
     const navLinks = [
         { name: 'Inicio', path: '/' },
@@ -34,63 +36,70 @@ function Header() {
     ];
 
     const location = useLocation();
-    const headerMounted = useRef(false);
+    const logoRef = useRef(null);
+    const navRef = useRef(null);
+    const mobileMenuRef = useRef(null);
+
     useGSAP(() => {
-        if (headerMounted.current) return;
-        headerMounted.current = true;
+        if (logoRef.current) {
+            gsap.to(logoRef.current, {
+                backgroundPosition: '200% center',
+                duration: 3,
+                ease: "linear",
+                repeat: -1
+            });
+        }
 
-        gsap.to('.logo-gradient-anim', {
-            backgroundPosition: '200% center',
-            duration: 3,
-            ease: "linear",
-            repeat: -1
-        });
-
-        gsap.from('.nav-link-item', {
-            y: -10,
-            opacity: 0,
-            stagger: 0.1,
-            duration: 0.8,
-            ease: "power3.out",
-            delay: 0.2
-        });
-    }, {});
-
-    // Animación escalonada del menú móvil
-    useGSAP(() => {
-        if (mobileMenuOpen) {
-            gsap.from(".mobile-menu-item", {
-                x: -30,
+        if (navRef.current) {
+            gsap.from(navRef.current.children, {
+                y: -10,
                 opacity: 0,
-                stagger: 0.1,
-                duration: 0.5,
-                ease: "power2.out",
+                stagger: 0.08,
+                duration: 0.6,
+                ease: "power3.out",
+                delay: 0.2
+            });
+        }
+    }, { scope: containerRef });
+
+    useGSAP(() => {
+        if (mobileMenuOpen && mobileMenuRef.current) {
+            gsap.from(mobileMenuRef.current.children, {
+                x: -16,
+                opacity: 0,
+                stagger: 0.04,
+                duration: 0.35,
+                ease: EASES.springGentle,
                 clearProps: "all"
             });
         }
-    }, { dependencies: [mobileMenuOpen] });
+    }, { dependencies: [mobileMenuOpen], scope: containerRef });
+
+    const handleBtnDown = useCallback((e) => microPress(e.currentTarget), []);
+    const handleBtnUp = useCallback((e) => microRelease(e.currentTarget), []);
 
     return (
-        <header className="sticky top-0 z-50 bg-white/25 dark:bg-slate-900/25 backdrop-blur-2xl border-b border-gray-200/20 dark:border-slate-700/20 shadow-sm">
+        <header ref={containerRef} className="sticky top-0 z-50 bg-white/25 dark:bg-slate-900/25 backdrop-blur-2xl border-b border-gray-200/20 dark:border-slate-700/20 shadow-sm">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16 md:h-20">
 
                     {/* ===== LOGO DE LA MARCA ===== */}
                     <Link to="/" className="flex items-center group">
                         <div className="relative">
-                            <span
-                                className="logo-gradient-anim text-3xl md:text-4xl font-black tracking-tighter inline-block group-hover:scale-105 transition-transform duration-300"
-                                style={{
-                                    background: 'linear-gradient(135deg, var(--theme-primary, #f97316) 0%, var(--theme-accent, #ea580c) 50%, var(--theme-primary, #fb923c) 100%)',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                    backgroundClip: 'text',
-                                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
-                                    backgroundSize: '200% auto'
-                                }}
-                            >
-                                D&D
-                            </span>
+                    <span
+                            ref={logoRef}
+                            className="logo-gradient-anim text-3xl md:text-4xl font-black tracking-tighter inline-block group-hover:scale-105 transition-transform duration-300"
+                            style={{
+                                background: 'linear-gradient(135deg, var(--theme-primary, #f97316) 0%, var(--theme-accent, #ea580c) 50%, var(--theme-primary, #fb923c) 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                                backgroundSize: '200% auto'
+                            }}
+                        >
+                            D&D
+                        </span>
 
                             <div
                                 className="logo-gradient-anim absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"
@@ -103,12 +112,12 @@ function Header() {
                     </Link>
 
                     {/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
-                    <div className="hidden md:flex items-center space-x-8">
+                    <div ref={navRef} className="hidden md:flex items-center space-x-8">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors duration-200 relative group nav-link-item"
+                                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors duration-200 relative group"
                             >
                                 {link.name}
                                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
@@ -119,10 +128,11 @@ function Header() {
                     {/* ===== BOTONES DE ACCIÓN ===== */}
                     <div className="flex items-center space-x-4">
 
-                        {/* Botón de toggle para modo oscuro/claro */}
                         <button
                             onClick={toggleDarkMode}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                            onMouseDown={handleBtnDown}
+                            onMouseUp={handleBtnUp}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                             aria-label="Toggle dark mode"
                         >
                             {darkMode ? (
@@ -137,7 +147,9 @@ function Header() {
                             <div className="relative">
                                 <button
                                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 active:scale-95"
+                                    onMouseDown={handleBtnDown}
+                                    onMouseUp={handleBtnUp}
+                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold border border-primary-200 dark:border-primary-800">
                                         {user.name.charAt(0)}
@@ -204,10 +216,11 @@ function Header() {
                             </div>
                         </Link>
 
-                        {/* ===== BOTÓN MENÚ MÓVIL ===== */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                            onMouseDown={handleBtnDown}
+                            onMouseUp={handleBtnUp}
+                            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                             aria-label="Toggle menu"
                         >
                             {mobileMenuOpen ? (
@@ -225,13 +238,13 @@ function Header() {
                         mobileMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                 >
-                    <div className="py-4 space-y-2 mobile-menu-items">
+                    <div ref={mobileMenuRef} className="py-4 space-y-2">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors mobile-menu-item"
+                                className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors"
                             >
                                 {link.name}
                             </Link>

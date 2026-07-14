@@ -23,6 +23,8 @@ import React, { useEffect, useRef, useState } from 'react';
 export default function SpotlightCursor() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const cursorRef = useRef(null);
+    const rafRef = useRef(null);
+    const mouseRef = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const checkDarkMode = () => {
@@ -44,15 +46,25 @@ export default function SpotlightCursor() {
         if (!el) return;
 
         const updateCursor = (e) => {
-            el.style.background = `radial-gradient(
-                circle 600px at ${e.clientX}px ${e.clientY}px,
-                rgba(255, 255, 255, 0.05) 0%,
-                rgba(0, 0, 0, 0.4) 100%
-            )`;
+            mouseRef.current = { x: e.clientX, y: e.clientY };
+            if (!rafRef.current) {
+                rafRef.current = requestAnimationFrame(() => {
+                    const { x, y } = mouseRef.current;
+                    el.style.background = `radial-gradient(
+                        circle 600px at ${x}px ${y}px,
+                        rgba(255, 255, 255, 0.06) 0%,
+                        rgba(0, 0, 0, 0.3) 100%
+                    )`;
+                    rafRef.current = null;
+                });
+            }
         };
 
         window.addEventListener('mousemove', updateCursor, { passive: true });
-        return () => window.removeEventListener('mousemove', updateCursor);
+        return () => {
+            window.removeEventListener('mousemove', updateCursor);
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
     }, [isDarkMode]);
 
     if (!isDarkMode) return null;

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
+
 import { useGSAP } from '@gsap/react';
+
+
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUI } from '../context/UIContext';
 
-gsap.registerPlugin(useGSAP);
+
 
 function Carousel() {
     const navigate = useNavigate();
