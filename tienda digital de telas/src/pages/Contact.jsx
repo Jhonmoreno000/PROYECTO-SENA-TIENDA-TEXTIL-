@@ -1,145 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, Navigation, ExternalLink, Store } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AnimatedPage from '../components/AnimatedPage';
-import Globe from 'react-globe.gl';
+import { EASES, microPress, microRelease } from '../utils/animations';
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger);
 
-// Componente interactivo del globo terráqueo centrado en Medellín
-const LocationGlobe = () => {
-    const globeEl = useRef();
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-    const [temperature, setTemperature] = useState(null);
-    const [time, setTime] = useState(new Date().toLocaleTimeString('es-CO', { hour12: false }));
-    const containerRef = useRef();
+const STORE_LOCATION = {
+    lat: 4.7110,
+    lng: -74.0721,
+    address: 'Calle 123 #45-67',
+    city: 'Bogotá, Colombia',
+    phone: '+57 (1) 234 5678',
+    phone2: '+57 300 123 4567',
+    email: 'info@ddtextil.com',
+    email2: 'ventas@ddtextil.com',
+    hours: 'Lun - Vie: 8:00 AM - 6:00 PM',
+    hours2: 'Sáb: 9:00 AM - 2:00 PM',
+    mapsQuery: 'Cra.+7+%2372-01,+Bogot%C3%A1',
+};
 
-    useEffect(() => {
-        const observeTarget = containerRef.current;
-        if (!observeTarget) return;
-        const resizeObserver = new ResizeObserver(entries => {
-            if (entries[0]) {
-                const { width, height } = entries[0].contentRect;
-                setDimensions({ width, height });
-            }
-        });
-        resizeObserver.observe(observeTarget);
-        return () => resizeObserver.unobserve(observeTarget);
-    }, []);
+function InteractiveMap() {
+    const iframeRef = useRef(null);
+    const [mapMode, setMapMode] = useState('roadmap');
 
-    useEffect(() => {
-        if (globeEl.current) {
-            globeEl.current.pointOfView({ lat: 6.2442, lng: -75.5812, altitude: 1.2 }, 2000);
-            globeEl.current.controls().autoRotate = true;
-            globeEl.current.controls().autoRotateSpeed = 0.5;
-        }
-    }, [dimensions]);
+    const src = `https://www.google.com/maps/embed?q=${STORE_LOCATION.lat},${STORE_LOCATION.lng}&z=16${mapMode === 'satellite' ? '&t=k' : ''}`;
 
-    useEffect(() => {
-        const clockInterval = setInterval(() => {
-            setTime(new Date().toLocaleTimeString('es-CO', { hour12: false }));
-        }, 1000);
-
-        const fetchTelemetry = async () => {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=6.2442&longitude=-75.5812&current_weather=true');
-                const data = await res.json();
-                if (data?.current_weather) {
-                    setTemperature(data.current_weather.temperature);
-                }
-            } catch (err) {
-                console.error("Error al obtener telemetría:", err);
-            }
-        };
-
-        fetchTelemetry();
-        const tempInterval = setInterval(fetchTelemetry, 300000);
-        
-        return () => {
-            clearInterval(clockInterval);
-            clearInterval(tempInterval);
-        };
-    }, []);
-
-    const marker = [{ 
-        lat: 6.2442, lng: -75.5812, name: 'Medellín', color: '#10b981', temp: temperature, time: time 
-    }];
-
-    const currentHour = new Date().getHours();
-    const isNight = currentHour < 6 || currentHour >= 18;
-    const earthImageUrl = isNight 
-        ? "//unpkg.com/three-globe/example/img/earth-night.jpg"
-        : "//unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
+    const openDirections = () => {
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${STORE_LOCATION.lat},${STORE_LOCATION.lng}`, '_blank');
+    };
 
     return (
-        <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing relative">
-            {dimensions.width > 0 && (
-                <Globe
-                    ref={globeEl}
-                    width={dimensions.width}
-                    height={dimensions.height}
-                    globeImageUrl={earthImageUrl}
-                    bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                    showAtmosphere={true}
-                    atmosphereColor={isNight ? "#4338ca" : "#38bdf8"}
-                    atmosphereAltitude={0.15}
-                    ringsData={marker}
-                    ringLat="lat"
-                    ringLng="lng"
-                    ringColor="color"
-                    ringMaxRadius={4}
-                    ringPropagationSpeed={1.5}
-                    ringRepeatPeriod={1200}
-                    labelsData={[]}
-                    htmlElementsData={marker}
-                    htmlElement={d => {
-                        const el = document.createElement('div');
-                        el.className = 'relative flex items-center justify-center w-4 h-4 cursor-pointer group';
-                        el.style.pointerEvents = 'auto';
-
-                        const bubble = document.createElement('div');
-                        bubble.className = 'absolute bottom-6 bg-white/90 backdrop-blur-md pl-3 pr-4 py-1.5 rounded-full text-xs font-black text-gray-900 shadow-2xl border border-white/40 flex items-center gap-2 whitespace-nowrap transform transition-transform group-hover:scale-110 group-hover:-translate-y-1';
-
-                        const nameDiv = document.createElement('div');
-                        nameDiv.className = 'flex items-center gap-1.5 border-r border-gray-300 pr-2';
-                        const dot = document.createElement('span');
-                        dot.className = 'text-emerald-500 text-[10px] animate-pulse';
-                        dot.textContent = '●';
-                        nameDiv.appendChild(dot);
-                        nameDiv.appendChild(document.createTextNode(d.name));
-
-                        const tempDiv = document.createElement('div');
-                        tempDiv.className = 'flex items-center gap-1 text-primary-600 font-bold border-r border-gray-300 pr-2';
-                        tempDiv.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>';
-                        tempDiv.appendChild(document.createTextNode(d.temp !== null ? d.temp + '\u00B0C' : '...'));
-
-                        const timeDiv = document.createElement('div');
-                        timeDiv.className = 'flex items-center gap-1 text-gray-700 font-mono font-bold tracking-tighter';
-                        timeDiv.innerHTML = '<svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
-                        timeDiv.appendChild(document.createTextNode(d.time));
-
-                        bubble.appendChild(nameDiv);
-                        bubble.appendChild(tempDiv);
-                        bubble.appendChild(timeDiv);
-
-                        const dotEl = document.createElement('div');
-                        dotEl.className = 'w-full h-full rounded-full border-2 border-white shadow-[0_0_15px_rgba(16,185,129,0.8)]';
-                        dotEl.style.backgroundColor = d.color;
-
-                        el.appendChild(bubble);
-                        el.appendChild(dotEl);
-                        return el;
-                    }}
-                    backgroundColor="rgba(0,0,0,0)"
-                />
-            )}
+        <div className="relative w-full h-full">
+            <iframe
+                ref={iframeRef}
+                title="Ubicación D&D Textil"
+                src={src}
+                className="w-full h-full"
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+            />
+            <div className="absolute inset-0 pointer-events-none z-10">
+                <div className="absolute top-4 left-4 flex gap-2 pointer-events-auto">
+                    <button onClick={() => setMapMode('roadmap')}
+                        onMouseDown={(e) => microPress(e.currentTarget)}
+                        onMouseUp={(e) => microRelease(e.currentTarget)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-md border transition-all duration-200 ${
+                            mapMode === 'roadmap'
+                            ? 'bg-primary-600 text-white border-primary-500 shadow-lg'
+                            : 'bg-black/50 text-white/80 border-white/20 hover:bg-black/70'}`}>
+                        Mapa
+                    </button>
+                    <button onClick={() => setMapMode('satellite')}
+                        onMouseDown={(e) => microPress(e.currentTarget)}
+                        onMouseUp={(e) => microRelease(e.currentTarget)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-md border transition-all duration-200 ${
+                            mapMode === 'satellite'
+                            ? 'bg-primary-600 text-white border-primary-500 shadow-lg'
+                            : 'bg-black/50 text-white/80 border-white/20 hover:bg-black/70'}`}>
+                        Satélite
+                    </button>
+                </div>
+                <button onClick={openDirections}
+                    onMouseDown={(e) => microPress(e.currentTarget)}
+                    onMouseUp={(e) => microRelease(e.currentTarget)}
+                    className="absolute bottom-4 right-4 pointer-events-auto flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-lg transition-all duration-200">
+                    <Navigation className="w-4 h-4" />
+                    Cómo Llegar
+                </button>
+            </div>
         </div>
     );
-};
+}
 
 function Contact() {
     const containerRef = useRef(null);
@@ -162,24 +99,24 @@ function Contact() {
     };
 
     const contactInfo = [
-        { icon: MapPin, title: 'Dirección', info: 'Calle 123 #45-67', info2: 'Bogotá, Colombia', color: 'from-blue-500 to-cyan-500' },
-        { icon: Phone, title: 'Teléfono', info: '+57 (1) 234 5678', info2: '+57 300 123 4567', color: 'from-green-500 to-emerald-500' },
-        { icon: Mail, title: 'Email', info: 'info@ddtextil.com', info2: 'ventas@ddtextil.com', color: 'from-purple-500 to-pink-500' },
-        { icon: Clock, title: 'Horario', info: 'Lun - Vie: 8:00 AM - 6:00 PM', info2: 'Sáb: 9:00 AM - 2:00 PM', color: 'from-orange-500 to-red-500' },
+        { icon: MapPin, title: 'Dirección', info: STORE_LOCATION.address, info2: STORE_LOCATION.city, color: 'from-blue-500 to-cyan-500' },
+        { icon: Phone, title: 'Teléfono', info: STORE_LOCATION.phone, info2: STORE_LOCATION.phone2, color: 'from-green-500 to-emerald-500' },
+        { icon: Mail, title: 'Email', info: STORE_LOCATION.email, info2: STORE_LOCATION.email2, color: 'from-purple-500 to-pink-500' },
+        { icon: Clock, title: 'Horario', info: STORE_LOCATION.hours, info2: STORE_LOCATION.hours2, color: 'from-orange-500 to-red-500' },
     ];
 
     useGSAP(() => {
-        gsap.fromTo('.contact-hero-text', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" });
+        gsap.fromTo('.contact-hero-text', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: EASES.smooth });
 
         gsap.fromTo('.contact-card',
             { opacity: 0, y: 30 },
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out",
+            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: EASES.springGentle,
                 scrollTrigger: { trigger: '.contact-cards', start: "top 80%", once: true } }
         );
 
-        gsap.fromTo('.contact-form', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power2.out",
+        gsap.fromTo('.contact-form', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6, ease: EASES.smooth,
             scrollTrigger: { trigger: '.contact-form-section', start: "top 80%", once: true } });
-        gsap.fromTo('.contact-map', { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power2.out",
+        gsap.fromTo('.contact-map', { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: EASES.smooth,
             scrollTrigger: { trigger: '.contact-form-section', start: "top 80%", once: true } });
     }, { scope: containerRef });
 
@@ -188,7 +125,6 @@ function Contact() {
             <Header />
 
             <AnimatedPage className="flex-1">
-                {/* Hero Section */}
                 <section className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="contact-hero-text text-center">
@@ -202,7 +138,6 @@ function Contact() {
                     </div>
                 </section>
 
-                {/* Contact Info Cards */}
                 <section className="py-16 bg-white dark:bg-slate-900 contact-cards">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -226,10 +161,8 @@ function Contact() {
                     </div>
                 </section>
 
-                {/* Contact Form & Map */}
                 <section className="section-container contact-form-section">
                     <div className="grid lg:grid-cols-2 gap-12">
-                        {/* Form */}
                         <div className="contact-form">
                             <h2 className="text-3xl font-display font-bold mb-6">
                                 Envíanos un Mensaje
@@ -265,65 +198,77 @@ function Contact() {
                                     <textarea id="message" name="message" value={formData.message} onChange={handleChange} required rows="5" className="input-field resize-none" placeholder="Escribe tu mensaje aquí..."></textarea>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    className="btn-primary w-full flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                                >
+                                <button type="submit"
+                                    onMouseDown={(e) => microPress(e.currentTarget)}
+                                    onMouseUp={(e) => microRelease(e.currentTarget)}
+                                    className="btn-primary w-full flex items-center justify-center gap-2">
                                     <Send className="w-4 h-4" />
                                     Enviar Mensaje
                                 </button>
 
                                 {submitted && (
                                     <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 p-4 rounded-lg text-center font-semibold">
-                                        ✓ ¡Mensaje enviado exitosamente! Te contactaremos pronto.
+                                        ¡Mensaje enviado exitosamente! Te contactaremos pronto.
                                     </div>
                                 )}
                             </form>
                         </div>
 
-                        {/* Map & Additional Info */}
                         <div className="contact-map space-y-8">
-                            <div className="card overflow-hidden h-[400px] bg-black flex items-center justify-center relative">
-                                <LocationGlobe />
-                                <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/20">
-                                     Medellín, Colombia
+                            <div className="card overflow-hidden h-[450px] relative group">
+                                <InteractiveMap />
+                                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold border border-white/20 flex items-center gap-1.5 z-20">
+                                    <Store className="w-3.5 h-3.5" />
+                                    {STORE_LOCATION.city}
                                 </div>
                             </div>
 
-                            {/* FAQ */}
-                            <div className="card p-8">
-                                <h3 className="text-2xl font-bold mb-6">Preguntas Frecuentes</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <h4 className="font-bold mb-2">¿Hacen envíos a toda Colombia?</h4>
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm">Sí, realizamos envíos a todo el territorio nacional. Envío gratis en compras superiores a $100.000.</p>
+                            <div className="card p-6">
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                                        <Store className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold mb-2">¿Puedo visitar la tienda física?</h4>
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm">¡Por supuesto! Estamos ubicados en Bogotá. Te recomendamos agendar una cita para una atención personalizada.</p>
+                                        <h3 className="text-lg font-bold">Visítanos</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Te esperamos en nuestra tienda física</p>
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold mb-2">¿Ofrecen muestras de telas?</h4>
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm">Sí, ofrecemos muestras de hasta 10x10 cm por un costo mínimo. Contáctanos para más información.</p>
+                                </div>
+                                <div className="space-y-3 text-sm">
+                                    <div className="flex items-start gap-3">
+                                        <MapPin className="w-4 h-4 text-primary-500 mt-0.5 shrink-0" />
+                                        <span className="text-gray-700 dark:text-gray-300">{STORE_LOCATION.address}, {STORE_LOCATION.city}</span>
                                     </div>
+                                    <div className="flex items-start gap-3">
+                                        <Clock className="w-4 h-4 text-primary-500 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-gray-700 dark:text-gray-300">{STORE_LOCATION.hours}</p>
+                                            <p className="text-gray-700 dark:text-gray-300">{STORE_LOCATION.hours2}</p>
+                                        </div>
+                                    </div>
+                                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${STORE_LOCATION.lat},${STORE_LOCATION.lng}`}
+                                        target="_blank"
+                                        onMouseDown={(e) => microPress(e.currentTarget)}
+                                        onMouseUp={(e) => microRelease(e.currentTarget)}
+                                        className="inline-flex items-center gap-2 mt-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold transition-all duration-200">
+                                        <ExternalLink className="w-4 h-4" />
+                                        Abrir en Google Maps
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Social Media */}
                 <section className="bg-gray-50 dark:bg-slate-800 py-16">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h2 className="text-3xl font-display font-bold mb-6">Síguenos en Redes Sociales</h2>
                         <p className="text-gray-600 dark:text-gray-400 mb-8">Mantente al día con nuestras últimas novedades, promociones y tendencias</p>
                         <div className="flex justify-center gap-4">
                             {['Facebook', 'Instagram', 'Twitter', 'Pinterest'].map((social) => (
-                                <a
-                                    key={social}
-                                    href="#"
-                                    className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-lg hover:shadow-xl hover:scale-110 active:scale-90 transition-all"
-                                >
+                                <a key={social} href="#"
+                                    onMouseDown={(e) => microPress(e.currentTarget)}
+                                    onMouseUp={(e) => microRelease(e.currentTarget)}
+                                    className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-lg hover:shadow-xl hover:scale-110 active:scale-90 transition-all">
                                     {social[0]}
                                 </a>
                             ))}
