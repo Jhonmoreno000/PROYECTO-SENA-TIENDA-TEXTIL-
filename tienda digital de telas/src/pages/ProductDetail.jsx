@@ -24,7 +24,7 @@ import React, { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ArrowLeft, ShoppingCart, Heart, Share2, Check } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Share2, Check, AlertTriangle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AnimatedPage from '../components/AnimatedPage';
@@ -47,12 +47,13 @@ function ProductDetail() {
 
     const { addToCart } = useCart(); // Función para agregar al carrito
     const { getProductById, loading, products } = useProducts(); // Datos de productos
-    const { isInWishlist, addToWishlist, removeFromWishlist } = useMetrics(); // Funciones de wishlist
+    const { isInWishlist, addToWishlist, removeFromWishlist, productDiscounts } = useMetrics(); // Funciones de wishlist
 
     // Cantidad de metros que el cliente quiere comprar (por defecto 1)
     const [quantity, setQuantity] = useState(1);
     // Controla si se muestra el mensaje verde "¡Producto agregado al carrito!"
     const [showSuccess, setShowSuccess] = useState(false);
+    const [showStockError, setShowStockError] = useState(false);
 
     // Referencias para las animaciones GSAP
     const contentRef = useRef(null); // Contenedor de la sección principal
@@ -138,6 +139,11 @@ function ProductDetail() {
         );
     }
 
+    const discountInfo = productDiscounts?.[product.id];
+    const hasDiscount = discountInfo?.active && discountInfo?.percent > 0;
+    const discountedPrice = hasDiscount ? product.price * (1 - discountInfo.percent / 100) : product.price;
+    const isOutOfStock = (product.stock ?? 0) <= 0;
+
     // Productos relacionados: misma categoría, máximo 4, excluyendo el actual
     const relatedProducts = products
         .filter((p) => p.category === product.category && p.id !== product.id)
@@ -148,17 +154,28 @@ function ProductDetail() {
      * El mensaje de confirmación desaparece automáticamente después de 3 segundos.
      */
     const handleAddToCart = () => {
-        addToCart(product, quantity);
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000); // Ocultamos el mensaje a los 3 segundos
+        const added = addToCart(product, quantity);
+        if (added) {
+            setShowSuccess(true);
+            setShowStockError(false);
+            setTimeout(() => setShowSuccess(false), 3000);
+        } else {
+            setShowStockError(true);
+            setTimeout(() => setShowStockError(false), 3000);
+        }
     };
 
     /**
      * handleBuyNow — Agrega al carrito y lleva directamente a la pantalla del carrito
      */
     const handleBuyNow = () => {
-        addToCart(product, quantity);
-        navigate('/carrito');
+        const added = addToCart(product, quantity);
+        if (added) {
+            navigate('/carrito');
+        } else {
+            setShowStockError(true);
+            setTimeout(() => setShowStockError(false), 3000);
+        }
     };
 
     /**
@@ -226,9 +243,19 @@ function ProductDetail() {
                             {/* Precio por metro */}
                             <div className="flex items-baseline gap-3">
                                 <div className="text-4xl font-bold text-primary-600 dark:text-primary-400">
-                                    {formatCurrency(product.price)}
+                                    {formatCurrency(hasDiscount ? discountedPrice : product.price)}
                                 </div>
+                                {hasDiscount && (
+                                    <div className="text-xl text-gray-400 line-through">
+                                        {formatCurrency(product.price)}
+                                    </div>
+                                )}
                                 <div className="text-gray-500 dark:text-gray-400">por metro</div>
+                                {hasDiscount && (
+                                    <span className="ml-2 px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">
+                                        -{discountInfo.percent}% OFF
+                                    </span>
+                                )}
                             </div>
 
                             {/* Descripción del producto */}
@@ -254,7 +281,7 @@ function ProductDetail() {
                                     </div>
                                     <div>
                                         <div className="text-sm text-gray-500 dark:text-gray-400">Stock</div>
-                                        <div className="font-semibold">{product.stock} metros</div>
+                                        <div className="font-semibold">{isOutOfStock ? <span className="text-red-500">Agotado</span> : `${product.stock} metros`}</div>
                                     </div>
                                 </div>
                             </div>
@@ -286,13 +313,21 @@ function ProductDetail() {
                             <div className="flex gap-4">
                                 <button
                                     onClick={handleAddToCart}
-                                    className="flex-1 btn-primary flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                                    disabled={isOutOfStock}
+                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-transform rounded-xl py-3 px-6 font-bold ${isOutOfStock
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'btn-primary'
+                                    }`}
                                 >
-                                    <ShoppingCart className="w-5 h-5" /> Agregar al Carrito
+                                    <ShoppingCart className="w-5 h-5" /> {isOutOfStock ? 'Agotado' : 'Agregar al Carrito'}
                                 </button>
                                 <button
                                     onClick={handleBuyNow}
-                                    className="flex-1 btn-secondary active:scale-95 transition-transform"
+                                    disabled={isOutOfStock}
+                                    className={`flex-1 active:scale-95 transition-transform rounded-xl py-3 px-6 font-bold ${isOutOfStock
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'btn-secondary'
+                                    }`}
                                 >
                                     Comprar Ahora
                                 </button>
@@ -324,6 +359,13 @@ function ProductDetail() {
                                 >
                                     <Check className="w-6 h-6 flex-shrink-0" />
                                     <span className="font-semibold">¡Producto agregado al carrito!</span>
+                                </div>
+                            )}
+
+                            {showStockError && (
+                                <div className="bg-red-500 text-white p-4 rounded-lg flex items-center gap-3">
+                                    <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+                                    <span className="font-semibold">Stock insuficiente para agregar al carrito</span>
                                 </div>
                             )}
                         </div>

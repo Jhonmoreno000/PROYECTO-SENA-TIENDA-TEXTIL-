@@ -50,25 +50,24 @@ export function CartProvider({ children }) {
      */
     const addToCart = (product, quantity = 1) => {
         const maxStock = product.stock ?? 99;
+        if (maxStock <= 0) return false;
+
+        const currentQty = getProductQuantity(product.id);
+        if (currentQty + quantity > maxStock) return false;
+
         setCartItems((prevItems) => {
-            const existingItem = prevItems.find((item) => item.id === product.id);
-            const currentQty = existingItem ? existingItem.quantity : 0;
-            const newTotal = currentQty + quantity;
-
-            if (newTotal > maxStock) {
-                return prevItems;
-            }
-
+            const items = Array.isArray(prevItems) ? prevItems : [];
+            const existingItem = items.find((item) => item.id === product.id);
             if (existingItem) {
-                return prevItems.map((item) =>
+                return items.map((item) =>
                     item.id === product.id
-                        ? { ...item, quantity: newTotal }
+                        ? { ...item, quantity: item.quantity + quantity }
                         : item
                 );
-            } else {
-                return [...prevItems, { ...product, quantity }];
             }
+            return [...items, { ...product, quantity }];
         });
+        return true;
     };
 
     /**
@@ -79,15 +78,16 @@ export function CartProvider({ children }) {
      */
     const updateQuantity = (productId, newQuantity) => {
         if (newQuantity <= 0) {
-            removeFromCart(productId); // Si la cantidad llega a 0, lo quitamos del carrito
+            removeFromCart(productId);
             return;
         }
 
-        setCartItems((prevItems) =>
-            prevItems.map((item) =>
+        setCartItems((prevItems) => {
+            const items = Array.isArray(prevItems) ? prevItems : [];
+            return items.map((item) =>
                 item.id === productId ? { ...item, quantity: newQuantity } : item
-            )
-        );
+            );
+        });
     };
 
     /**
@@ -95,7 +95,10 @@ export function CartProvider({ children }) {
      * @param {string|number} productId - ID del producto a eliminar
      */
     const removeFromCart = (productId) => {
-        setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+        setCartItems((prevItems) => {
+            const items = Array.isArray(prevItems) ? prevItems : [];
+            return items.filter((item) => item.id !== productId);
+        });
     };
 
     /**
@@ -113,7 +116,8 @@ export function CartProvider({ children }) {
      * @returns {number} Total en pesos colombianos
      */
     const getCartTotal = () => {
-        return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        return items.reduce((total, item) => total + item.price * item.quantity, 0);
     };
 
     /**
@@ -121,7 +125,8 @@ export function CartProvider({ children }) {
      * @returns {number} Total de unidades/metros en el carrito
      */
     const getCartItemCount = () => {
-        return cartItems.reduce((count, item) => count + item.quantity, 0);
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        return items.reduce((count, item) => count + item.quantity, 0);
     };
 
     /**
@@ -151,7 +156,8 @@ export function CartProvider({ children }) {
      * @returns {boolean} true si está en el carrito, false si no
      */
     const isInCart = (productId) => {
-        return cartItems.some((item) => item.id === productId);
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        return items.some((item) => item.id === productId);
     };
 
     /**
@@ -160,7 +166,8 @@ export function CartProvider({ children }) {
      * @returns {number} Cantidad en el carrito (0 si no está)
      */
     const getProductQuantity = (productId) => {
-        const item = cartItems.find((item) => item.id === productId);
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        const item = items.find((item) => item.id === productId);
         return item ? item.quantity : 0;
     };
 

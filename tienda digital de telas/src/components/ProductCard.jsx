@@ -1,28 +1,34 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ShoppingCart, Eye, Heart } from 'lucide-react';
+import { ShoppingCart, Eye, Heart, Tag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useMetrics } from '../context/MetricsContext';
 import { formatCurrency } from '../utils/formatters';
 
-gsap.registerPlugin(useGSAP);
-
 function ProductCard({ product }) {
     const navigate = useNavigate();
     const { addToCart, isInCart } = useCart();
-    const { isInWishlist, addToWishlist, removeFromWishlist } = useMetrics();
+    const { isInWishlist, addToWishlist, removeFromWishlist, productDiscounts } = useMetrics();
     const [showAddedMessage, setShowAddedMessage] = useState(false);
     const messageRef = useRef(null);
     const cardRef = useRef(null);
+    const tiltFrame = useRef(null);
+
+    const discountInfo = productDiscounts?.[product.id];
+    const hasDiscount = discountInfo?.active && discountInfo?.percent > 0;
+    const discountedPrice = hasDiscount ? product.price * (1 - discountInfo.percent / 100) : product.price;
+    const isOutOfStock = (product.stock ?? 0) <= 0;
 
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        addToCart(product, 1);
-        setShowAddedMessage(true);
-        setTimeout(() => setShowAddedMessage(false), 2000);
+        const result = addToCart(product, 1);
+        if (result) {
+            setShowAddedMessage(true);
+            setTimeout(() => setShowAddedMessage(false), 2000);
+        }
     };
 
     const handleToggleWishlist = (e) => {
@@ -64,25 +70,29 @@ function ProductCard({ product }) {
         });
     };
 
-    const handleMouseMove = (e) => {
-        const rect = cardRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        // Slightly reduced tilt for smoother feel
-        const rotateX = (y - centerY) / 12;
-        const rotateY = (centerX - x) / 12;
+    const handleMouseMove = useCallback((e) => {
+        if (tiltFrame.current) return;
+        tiltFrame.current = requestAnimationFrame(() => {
+            tiltFrame.current = null;
+            const rect = cardRef.current.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
 
-        gsap.to(cardRef.current, {
-            rotationX: rotateX,
-            rotationY: rotateY,
-            duration: 0.3, // Smoother follow
-            force3D: true,
-            ease: "power1.out"
+            const rotateX = (y - centerY) / 14;
+            const rotateY = (centerX - x) / 14;
+
+            gsap.to(cardRef.current, {
+                rotationX: rotateX,
+                rotationY: rotateY,
+                duration: 0.4,
+                force3D: true,
+                ease: "power1.out",
+                overwrite: "auto"
+            });
         });
-    };
+    }, []);
 
     useGSAP(() => {
         if (showAddedMessage && messageRef.current) {
@@ -138,9 +148,20 @@ function ProductCard({ product }) {
                         </button>
                     </div>
 
-                    {product.stock < 10 && (
+                    {isOutOfStock ? (
+                        <div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-3 py-1 rounded-full">
+                            Agotado
+                        </div>
+                    ) : product.stock < 10 && (
                         <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                             ¡Últimas unidades!
+                        </div>
+                    )}
+
+                    {hasDiscount && (
+                        <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                            <Tag size={10} />
+                            -{discountInfo.percent}%
                         </div>
                     )}
 
@@ -172,18 +193,26 @@ function ProductCard({ product }) {
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                                {formatCurrency(product.price)}
+                                {formatCurrency(hasDiscount ? discountedPrice : product.price)}
                             </div>
+                            {hasDiscount && (
+                                <div className="text-xs text-gray-400 line-through">
+                                    {formatCurrency(product.price)}
+                                </div>
+                            )}
                             <div className="text-xs text-gray-500 dark:text-gray-400">por metro</div>
                         </div>
 
                         <button
                             onClick={handleAddToCart}
-                            className={`p-3 rounded-lg hover:scale-110 active:scale-95 transition-all duration-200 ${isInCart(product.id)
-                                ? 'bg-green-500 text-white'
-                                : 'bg-primary-600 hover:bg-primary-700 text-white'
+                            disabled={isOutOfStock}
+                            className={`p-3 rounded-lg transition-all duration-200 ${isOutOfStock
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : isInCart(product.id)
+                                    ? 'bg-green-500 text-white hover:scale-110 active:scale-95'
+                                    : 'bg-primary-600 hover:bg-primary-700 text-white hover:scale-110 active:scale-95'
                                 }`}
-                            aria-label="Agregar al carrito"
+                            aria-label={isOutOfStock ? "Agotado" : "Agregar al carrito"}
                         >
                             <ShoppingCart className="w-5 h-5" />
                         </button>

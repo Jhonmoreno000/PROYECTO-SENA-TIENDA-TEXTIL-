@@ -53,6 +53,7 @@ import adminDashboardLinks from '../../data/adminDashboardLinks';       // Links
 import { formatCurrency } from '../../utils/formatters';               // Convierte 25000 → "$25.000"
 import { useProducts } from '../../context/ProductContext';            // Trae los productos de la API
 import { useNotification } from '../../context/NotificationContext';   // Muestra notificaciones en pantalla
+import { useMetrics } from '../../context/MetricsContext';
 import BackButton from '../../components/dashboard/BackButton';         // Botón "← Volver"
 import { getApiUrl } from '../../config';
 
@@ -86,6 +87,7 @@ export default function AdminProducts() {
   // - loading: true mientras están cargando (muestra el "skeleton")
   // - deleteProduct / updateProduct: funciones para guardar cambios en la API
   const { products, loading: productsLoading, deleteProduct, updateProduct, refreshProducts } = useProducts();
+  const { productDiscounts, saveProductDiscount } = useMetrics();
 
 
   // ── Estado local ──────────────────────────────────────────────────────────
@@ -148,6 +150,7 @@ export default function AdminProducts() {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openEditModal = (product) => {
+    const existingDiscount = productDiscounts?.[product.id];
     setEditingProduct(product);
     setEditForm({
       name:     product.name,
@@ -155,6 +158,8 @@ export default function AdminProducts() {
       stock:    product.stock,
       images:   product.images,
       category: product.category,
+      discountActive: existingDiscount?.active || false,
+      discountPercent: existingDiscount?.percent || 0,
     });
   };
 
@@ -195,6 +200,10 @@ export default function AdminProducts() {
     }
 
     await updateProduct({ ...updatedForm, id: editingProduct.id });
+    await saveProductDiscount(editingProduct.id, {
+      active: editForm.discountActive,
+      percent: Number(editForm.discountPercent) || 0,
+    });
     closeEditModal();
     showNotification('success', 'Producto actualizado correctamente');
   };
@@ -546,6 +555,37 @@ export default function AdminProducts() {
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs uppercase">
                         mts
                       </span>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700/60 pt-4">
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                      Oferta / Descuento
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div
+                          onClick={() => setEditForm(prev => ({ ...prev, discountActive: !prev.discountActive }))}
+                          className={`relative w-11 h-6 rounded-full transition-all duration-300 ${editForm.discountActive ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-slate-300 dark:bg-slate-600'}`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${editForm.discountActive ? 'left-6' : 'left-1'}`} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Activar oferta</span>
+                      </label>
+                      {editForm.discountActive && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={editForm.discountPercent || ''}
+                            onChange={e => setEditForm(prev => ({ ...prev, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                            className={`w-20 px-3 py-2 font-black text-sm text-center ${glassInput}`}
+                            min={0}
+                            max={100}
+                            placeholder="20"
+                          />
+                          <span className="text-sm font-bold text-slate-400">% OFF</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

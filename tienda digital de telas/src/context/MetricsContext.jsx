@@ -90,6 +90,8 @@ export function MetricsProvider({ children }) {
     const [recentActivity,    setRecentActivity]    = useState([]);
     // Banner global (avisos, mantenimiento, promociones)
     const [globalBanner,      setGlobalBanner]      = useState(null);
+    // Descuentos por producto (admin configura desde AdminProducts)
+    const [productDiscounts,  setProductDiscounts]  = useState({});
     // Configuración del sistema (nombre, colores, tasas, etc.)
     const [systemConfig,      setSystemConfig]      = useState(defaultSystemConfig);
     // Lista de deseos de usuarios
@@ -112,7 +114,7 @@ export function MetricsProvider({ children }) {
                 apiUsers, apiPending, apiOrders, apiCoupons,
                 apiTickets, apiBugs, apiBatches, apiWaste, apiThresholds,
                 apiSales, apiRegions, apiActivity, apiBanner, apiErpSales,
-                apiErpNotif, apiErpFabric, apiConfigRaw
+                apiErpNotif, apiErpFabric, apiConfigRaw, apiProductDiscounts
             ] = await Promise.all([
                 apiFetch('/api/users'),
                 apiFetch('/api/products/pending'),
@@ -131,6 +133,7 @@ export function MetricsProvider({ children }) {
                 apiFetch('/api/metrics/notifications'),
                 apiFetch('/api/metrics/fabric-inventory'),
                 apiFetch('/api/config/system_config'),
+                apiFetch('/api/config/product_discounts'),
             ]);
             if (apiUsers?.length > 0) setUsers(apiUsers);
             setPendingProducts(apiPending || []);
@@ -166,6 +169,9 @@ export function MetricsProvider({ children }) {
             if (apiErpFabric?.length > 0) setErpFabricInventory(apiErpFabric);
             if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
                 setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
+            }
+            if (apiProductDiscounts && typeof apiProductDiscounts === 'object') {
+                setProductDiscounts(apiProductDiscounts);
             }
         } catch (err) {
             console.error('Backend no disponible:', err.message);
@@ -613,6 +619,20 @@ export function MetricsProvider({ children }) {
         } catch (e) { console.error('Error al actualizar config:', e); }
     };
 
+    // ── FUNCIONES DE DESCUENTOS POR PRODUCTO ───────────────────────────────
+
+    const saveProductDiscount = async (productId, discount) => {
+        const updated = { ...productDiscounts, [productId]: discount };
+        setProductDiscounts(updated);
+        try {
+            await fetch(`${API}/api/config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'product_discounts', value: JSON.stringify(updated) })
+            });
+        } catch (e) { console.error('Error al guardar descuento:', e); }
+    };
+
     // ── Valor del contexto ───────────────────────────────────────────────
     const value = {
         // Estado
@@ -684,6 +704,10 @@ export function MetricsProvider({ children }) {
 
         // Configuración
         updateSystemConfig,
+
+        // Descuentos por producto
+        productDiscounts,
+        saveProductDiscount,
 
         // Wishlist
         addToWishlist,
