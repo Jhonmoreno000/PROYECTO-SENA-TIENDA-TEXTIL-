@@ -8,6 +8,8 @@
   <img src="https://img.shields.io/badge/TailwindCSS-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" />
   <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" />
 </p>
 
 ---
@@ -34,6 +36,7 @@
 12. [Guía de Despliegue con Docker](#guía-de-despliegue-con-docker)
 13. [Solución de Problemas Frecuentes](#solución-de-problemas-frecuentes)
 14. [Novedades y Actualizaciones Recientes](#novedades-y-actualizaciones-recientes)
+15. [Aplicación Móvil (Android Wrapper)](#aplicación-móvil-android-wrapper)
 
 ---
 
@@ -739,11 +742,31 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
 
 ## Novedades y Actualizaciones Recientes
 
-Recientemente hemos integrado mejoras significativas orientadas a facilitar el despliegue del proyecto:
+Recientemente hemos integrado mejoras significativas orientadas a facilitar el despliegue del proyecto y la experiencia de usuario móvil:
 
+- **App Nativa Android (Beta):** Se ha desarrollado un wrapper nativo en Kotlin que permite ejecutar la tienda como una aplicación instalable, con soporte para gestos nativos y optimización de rendimiento.
 - **Despliegue con Docker:** Añadido soporte completo con `docker-compose.yml`, Dockerfiles para el frontend (Nginx) y el backend (Java 17), más un `.env.example` para configuración.
 - **Migración y Compatibilidad en Linux (Fedora):** Se ha configurado y testeado el proyecto para asegurar compatibilidad total en entornos Linux, incluyendo la instalación y configuración de Node.js, configuración nativa de PostgreSQL y la resolución de problemas de autenticación de conexión entre el backend de Java y la base de datos bajo este sistema operativo.
 - **Mejoras en la Conexión a Base de Datos:** Se han resuelto problemas de autenticación de PostgreSQL asegurando que la integración entre el backend en Vanilla Java y la base de datos sea robusta y segura tanto en entornos Windows como Linux.
+
+---
+
+## Aplicación Móvil (Android Wrapper)
+
+Ubicada en la carpeta [TiendaTextilApp/](./TiendaTextilApp/), esta es la versión móvil de la plataforma.
+
+### Arquitectura Móvil
+La aplicación utiliza una arquitectura **Híbrida Web-Native**:
+- **Contenedor Nativo**: Escrito en **Kotlin**, gestiona el ciclo de vida y la integración con el hardware del dispositivo.
+- **WebView de Alto Rendimiento**: Utiliza `WebViewAssetLoader` para servir el frontend de React localmente, eliminando tiempos de carga por red para la interfaz.
+- **Puente de Datos**: Configurado para permitir **Mixed Content**, permitiendo la comunicación segura entre el frontend (HTTPS virtual) y la API local (HTTP).
+
+### Características Destacadas
+- **Navegación Fluida**: Manejo nativo del botón de retroceso de Android.
+- **Persistencia**: Sincronización total con la API en `10.0.2.2`.
+- **Modo Oscuro Adaptativo**: Soporte para cambios de tema guardados localmente.
+
+Para más detalles, consulta el [README de la App Móvil](./TiendaTextilApp/README.md).
 
 ---
 
