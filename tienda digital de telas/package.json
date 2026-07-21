@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/core": "^8.4.2",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@studio-freight/lenis": "^1.0.42",
@@ -24,10 +25,15 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@babel/core": "^8.0.1",
     "@babel/eslint-parser": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@babel/preset-react": "^8.0.1",
+=======
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+>>>>>>> e42fdc7 (Sync: Otros cambios en el repositorio)
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
