@@ -1,0 +1,4 @@
+- [x] Configurar excepciones de red para la API local
+- [x] Habilitar Contenido Mixto en el WebView
+- [x] Verificar persistencia de datos (DOM Storage)
+- [x] Compilar y probar en emulador
