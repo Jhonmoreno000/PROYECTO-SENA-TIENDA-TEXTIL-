@@ -56,6 +56,12 @@ public class ApiServer {
         // --- Endpoints legacy (aún no migrados completamente pero funcionales) ---
         // CRUD de productos y moderación
         server.createContext("/api/products", new ProductsHandler());
+        // Reseñas de productos
+        server.createContext("/api/reviews", new ReviewsHandler());
+        // Slides del carrusel del Home (apartados de la tienda)
+        server.createContext("/api/carousel", new CarouselHandler());
+        // Apartados del inicio (Nuevas Colecciones, Telas Exclusivas, Ofertas Especiales)
+        server.createContext("/api/home-sections", new HomeSectionsHandler());
         // Gestión de usuarios
         server.createContext("/api/users", new UsersHandler());
         // Gestión de pedidos
