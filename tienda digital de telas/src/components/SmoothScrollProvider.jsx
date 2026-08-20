@@ -1,6 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react';
-import Lenis from '@studio-freight/lenis';
-import gsap from 'gsap';
+import React, { createContext, useContext, useEffect } from 'react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 export const LenisContext = createContext(null);
@@ -10,34 +8,41 @@ export function useLenis() {
 }
 
 export function SmoothScrollProvider({ children }) {
-    const lenisRef = useRef(null);
-
     useEffect(() => {
-        const lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            direction: 'vertical',
-            gestureDirection: 'vertical',
-            smooth: true,
-            smoothTouch: false,
-            touchMultiplier: 2,
-            wheelMultiplier: 1,
-        });
+        // Scroll nativo del navegador: máxima fluidez y cero lag.
+        // No se intercepta la rueda con suavizado artificial (Lenis) porque
+        // duplicaba el trabajo por frame (rAF extra) y daba sensación de
+        // arrastre al bajar. Los triggers de ScrollTrigger siguen funcionando
+        // sobre el scroll nativo.
 
-        lenisRef.current = lenis;
+        // Recalcula las posiciones de los triggers cuando las imágenes
+        // terminan de cargar (cambian la altura del layout y las animaciones
+        // de aparición se dispararían tarde = sensación de lag).
+        let refreshTimer = null;
+        const scheduleRefresh = () => {
+            if (refreshTimer) return;
+            refreshTimer = setTimeout(() => {
+                refreshTimer = null;
+                ScrollTrigger.refresh();
+            }, 200);
+        };
 
-        lenis.on('scroll', ScrollTrigger.update);
+        const onImageLoad = (e) => {
+            if (e.target && e.target.tagName === 'IMG' && e.target.complete) {
+                scheduleRefresh();
+            }
+        };
+        const onWindowLoad = () => scheduleRefresh();
 
-        gsap.ticker.add((time) => {
-            lenis.raf(time * 1000);
-        });
-        gsap.ticker.lagSmoothing(0);
+        window.addEventListener('load', onWindowLoad);
+        document.addEventListener('load', onImageLoad, true);
 
         return () => {
-            lenis.destroy();
-            gsap.ticker.remove(lenis.raf);
+            window.removeEventListener('load', onWindowLoad);
+            document.removeEventListener('load', onImageLoad, true);
+            if (refreshTimer) clearTimeout(refreshTimer);
         };
     }, []);
 
-    return <LenisContext.Provider value={lenisRef}>{children}</LenisContext.Provider>;
+    return <LenisContext.Provider value={null}>{children}</LenisContext.Provider>;
 }
