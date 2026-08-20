@@ -2,6 +2,7 @@ export { default as Benefits } from './Benefits';
 export { default as Carousel } from './Carousel';
 export { default as CheckoutForm } from './CheckoutForm';
 export { default as FeaturedProducts } from './FeaturedProducts';
+export { default as HomeSection } from './HomeSection';
 export { default as Footer } from './Footer';
 export { default as AnimatedPage } from './AnimatedPage';
 export { default as Header } from './Header';

@@ -6,16 +6,19 @@ import { useGSAP } from '@gsap/react';
 
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useUI } from '../context/UIContext';
+import { getApiUrl } from '../config';
 
-
+// Slides de respaldo si el backend no responde (los mismos apartados por defecto)
+const FALLBACK_SLIDES = [
+    { id: 1, title: 'Nueva Colección 2024', subtitle: 'Tendencias exclusivas en telas premium', image: '/images/carousel-nueva-coleccion.png', cta: 'Ver Más', sectionKey: 'nuevas' },
+    { id: 2, title: 'Telas Exclusivas', subtitle: 'Diseños únicos para proyectos especiales', image: '/images/carousel-telas-exclusivas.png', cta: 'Explorar', sectionKey: 'exclusivas' },
+    { id: 3, title: 'Ofertas Especiales', subtitle: 'Descuentos increíbles en telas seleccionadas', image: '/images/carousel-ofertas-especiales.png', cta: 'Ver Ofertas', sectionKey: 'ofertas' },
+];
 
 function Carousel() {
     const navigate = useNavigate();
-    const { carouselSlides } = useUI();
-    const slides = carouselSlides && carouselSlides.length > 0 ? carouselSlides : [
-        { id: 1, title: 'No slides', subtitle: '', image: 'https://placehold.co/1200x500?text=No+Slides' }
-    ];
+    const [carouselSlides, setCarouselSlides] = useState(FALLBACK_SLIDES);
+    const slides = carouselSlides && carouselSlides.length > 0 ? carouselSlides : FALLBACK_SLIDES;
 
     const [currentSlide, setCurrentSlide] = useState(0);
     const currentRef = useRef(0);
@@ -70,6 +73,20 @@ function Carousel() {
         return () => clearInterval(timer);
     }, [nextSlide]);
 
+    // Carga los slides desde la base de datos (los administra el panel admin)
+    useEffect(() => {
+        fetch(getApiUrl('/api/carousel'))
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data && data.length > 0) {
+                    setCarouselSlides(data);
+                }
+            })
+            .catch(() => {
+                // Si el backend no responde se mantienen los slides de respaldo
+            });
+    }, []);
+
     // Configuración inicial del primer render
     useGSAP(() => {
         slidesRef.current.forEach((slide, i) => {
@@ -111,7 +128,7 @@ function Carousel() {
                             </p>
                             <div className="carousel-cta">
                                 <button
-                                    onClick={() => navigate('/catalogo')}
+                                    onClick={() => navigate(slide.sectionKey ? `/catalogo?seccion=${slide.sectionKey}` : '/catalogo')}
                                     className="bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md px-10 py-3.5 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_24px_rgba(255,255,255,0.1)] hover:scale-105 active:scale-95"
                                 >
                                     {slide.cta || 'Explorar Colección'}
