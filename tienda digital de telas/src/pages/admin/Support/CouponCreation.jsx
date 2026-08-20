@@ -320,7 +320,7 @@ function CouponCreation() {
                                                 onClick={() => setFormData({ ...formData, discountType: 'fixed' })}
                                                 className={`flex-1 py-3 text-xs font-black flex items-center justify-center gap-1.5 transition-all ${formData.discountType === 'fixed' ? 'bg-[#f97316] text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100'}`}
                                             >
-                                                $ Fijo
+                                                COP Fijo
                                             </button>
                                         </div>
                                     </div>

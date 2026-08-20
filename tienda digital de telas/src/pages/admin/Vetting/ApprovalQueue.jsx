@@ -6,6 +6,7 @@ import DashboardLayout from '../../../components/layouts/DashboardLayout';
 import BackButton from '../../../components/dashboard/BackButton';
 import { useMetrics } from '../../../context/MetricsContext';
 import { useProducts } from '../../../context/ProductContext';
+import { formatCurrency } from '../../../utils/formatters';
 import adminDashboardLinks from '../../../data/adminDashboardLinks';
 
 const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
@@ -173,7 +174,7 @@ function ApprovalQueue() {
                             </div>
                             <img src={selectedProduct.images[0]} alt={selectedProduct.name} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
                             <h4 className="text-xl font-black text-slate-900 dark:text-white mb-1">{selectedProduct.name}</h4>
-                            <p className="text-2xl font-black text-[#f97316] mb-4">${selectedProduct.price.toLocaleString('es-CO')}<span className="text-sm font-normal text-slate-400 dark:text-slate-500"> /m</span></p>
+                            <p className="text-2xl font-black text-[#f97316] mb-4">{formatCurrency(selectedProduct.price)}<span className="text-sm font-normal text-slate-400 dark:text-slate-500"> /m</span></p>
                             <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">{selectedProduct.description}</p>
                             <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 mb-8">
                                 <div className="w-10 h-10 rounded-full bg-[#f97316] flex items-center justify-center text-white font-black">{selectedProduct.sellerName?.charAt(0)}</div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDarkMode } from '../../hooks/useDarkMode';
+import { formatCurrency } from '../../utils/formatters';
 
 function BarChart({ data, dataKey = 'value', xKey = 'name', title, height = 300, color = '#8B5CF6' }) {
     const [darkMode] = useDarkMode();
@@ -12,7 +13,7 @@ function BarChart({ data, dataKey = 'value', xKey = 'name', title, height = 300,
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
                     <p className="text-sm text-primary-600 dark:text-primary-400 font-bold">
                         {typeof payload[0].value === 'number' && payload[0].value > 1000
-                            ? `$${payload[0].value.toLocaleString('es-CO')}`
+                            ? formatCurrency(payload[0].value)
                             : payload[0].value}
                     </p>
                 </div>

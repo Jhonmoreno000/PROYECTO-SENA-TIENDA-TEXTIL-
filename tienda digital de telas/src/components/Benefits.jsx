@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { formatCurrency } from '../utils/formatters';
 
 // Importación de íconos desde lucide-react
 import {
@@ -20,7 +21,7 @@ function Benefits() {
         {
             icon: Truck,
             title: 'Envío Gratis',
-            description: 'En compras superiores a $100.000',
+            description: `En compras superiores a ${formatCurrency(100000)}`,
             color: 'from-blue-500 to-cyan-500',
         },
         {

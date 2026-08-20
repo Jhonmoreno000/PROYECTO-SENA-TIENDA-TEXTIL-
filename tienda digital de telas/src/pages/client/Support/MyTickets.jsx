@@ -85,7 +85,7 @@ function MyTickets() {
             createdAt: '2026-01-15',
             updatedAt: '2026-01-20',
             resolution: 'refund',
-            resolutionDetails: 'Se realizó reembolso completo de $185,000 COP',
+            resolutionDetails: 'Se realizó reembolso completo de 185.000 COP',
             photos: [],
             responses: [
                 {

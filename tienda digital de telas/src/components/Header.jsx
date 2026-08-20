@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useState, useRef, useCallback } from 'react';
-=======
-import React, { useState, useRef } from 'react';
->>>>>>> e42fdc7 (Sync: Otros cambios en el repositorio)
 import { Link, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import gsap from 'gsap';
@@ -44,12 +40,7 @@ function Header() {
     const [darkMode, toggleDarkMode] = useDarkMode();
     const { user, logout } = useAuth();
     const cartCount = getCartItemCount();
-<<<<<<< HEAD
-    const containerRef = useRef(null);
-=======
-    const navRef = useRef(null);
-    const location = useLocation();
->>>>>>> e42fdc7 (Sync: Otros cambios en el repositorio)
+const containerRef = useRef(null);
 
     const navLinks = [
         { name: 'Inicio', path: '/' },
@@ -58,8 +49,7 @@ function Header() {
         { name: 'Contacto', path: '/contacto' },
     ];
 
-<<<<<<< HEAD
-    const location = useLocation();
+const location = useLocation();
     const logoRef = useRef(null);
     const navRef = useRef(null);
     const mobileMenuRef = useRef(null);
@@ -77,32 +67,6 @@ function Header() {
         if (navRef.current) {
             gsap.from(navRef.current.children, {
                 y: -10,
-=======
-    useGSAP(() => {
-        gsap.to('.logo-gradient-anim', {
-            backgroundPosition: '200% center',
-            duration: 3,
-            ease: "linear",
-            repeat: -1
-        });
-
-        if (!isNative) {
-            gsap.from('.nav-link-item', {
-                y: -10,
-                opacity: 0,
-                stagger: 0.1,
-                duration: 0.8,
-                ease: "power3.out",
-                delay: 0.2
-            });
-        }
-    });
-
-    useGSAP(() => {
-        if (mobileMenuOpen && !isNative) {
-            gsap.from(".mobile-menu-item", {
-                x: -30,
->>>>>>> e42fdc7 (Sync: Otros cambios en el repositorio)
                 opacity: 0,
                 stagger: 0.08,
                 duration: 0.6,
@@ -301,12 +265,8 @@ function Header() {
                         </span>
                     </Link>
 
-<<<<<<< HEAD
-                    {/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
+{/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
                     <div ref={navRef} className="hidden md:flex items-center space-x-8">
-=======
-                    <div className="hidden md:flex items-center space-x-8">
->>>>>>> e42fdc7 (Sync: Otros cambios en el repositorio)
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
