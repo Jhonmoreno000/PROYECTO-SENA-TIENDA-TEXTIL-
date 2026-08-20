@@ -67,7 +67,7 @@ function CartRow({ item, onRemove, onQuantity }) {
                     {/* Selector +/- */}
                     <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-xl p-1">
                         <button
-                            onClick={() => onQuantity(item.id, item.quantity - 1)}
+                            onClick={() => onQuantity(item.id, (Number(item.quantity) || 0) - 1)}
                             disabled={item.quantity <= 1}
                             className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
                         >
@@ -75,7 +75,7 @@ function CartRow({ item, onRemove, onQuantity }) {
                         </button>
                         <span className="w-8 text-center font-bold text-sm tabular-nums">{item.quantity}</span>
                         <button
-                            onClick={() => onQuantity(item.id, item.quantity + 1)}
+                            onClick={() => onQuantity(item.id, (Number(item.quantity) || 0) + 1)}
                             disabled={item.quantity >= (item.stock ?? 99)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
                         >
@@ -330,7 +330,7 @@ export default function Cart() {
                                 <div className="pt-2 space-y-2 border-t border-gray-100 dark:border-slate-700">
                                     {[
                                         { icon: ShieldCheck, label: 'Pago 100% seguro' },
-                                        { icon: Truck, label: 'Envío gratis desde $100.000' },
+                                        { icon: Truck, label: `Envío gratis desde ${formatCurrency(100000)}` },
                                         { icon: RefreshCw, label: 'Devoluciones fáciles' },
                                     ].map(({ icon: Icon, label }) => (
                                         <div key={label} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">

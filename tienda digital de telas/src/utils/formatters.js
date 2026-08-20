@@ -10,20 +10,18 @@
 
 /**
  * formatCurrency — Convierte un número a formato de pesos colombianos
- * Ejemplo: formatCurrency(25000) → "$\u00a025.000"
+ * Ejemplo: formatCurrency(25000) → "25.000 COP"
  *
  * @param {number} amount - El número a convertir (precio en pesos)
- * @returns {string} El precio formateado con símbolo $ y puntos separadores de miles
+ * @returns {string} El precio formateado con separadores de miles y sufijo COP
  */
 export function formatCurrency(amount) {
-    // Si el valor es vacío o no es un número, devolvemos "$0" para evitar errores
-    if (amount == null || isNaN(amount)) return '$ 0';
+    // Si el valor es vacío o no es un número, devolvemos "0 COP" para evitar errores
+    if (amount == null || isNaN(amount)) return '0 COP';
     return new Intl.NumberFormat('es-CO', {
-        style: 'currency',        // Formato de moneda
-        currency: 'COP',          // Pesos colombianos
         minimumFractionDigits: 0, // Sin decimales (los precios son enteros)
         maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount) + ' COP';
 }
 
 /**
