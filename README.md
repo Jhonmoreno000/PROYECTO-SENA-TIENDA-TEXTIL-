@@ -1,72 +1,129 @@
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=00b4d8&height=200&section=header&text=D%26D%20Textil&fontSize=70&animation=fadeIn" />
-</p>
+<div align="center">
 
-<p align="center">
+# D&D Textil
+
+### Ecosistema tecnológico para la industria textil
+
+Plataforma integral para la comercialización, distribución y gestión de inventario de telas, construida con una arquitectura reactiva, un backend corporativo ligero y un modelo relacional en tiempo real.
+
+<p>
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
-  <img src="https://img.shields.io/badge/Vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white" />
-  <img src="https://img.shields.io/badge/TailwindCSS-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" />
-  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
-  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
 </p>
 
----
+<p>
+  <img src="https://img.shields.io/github/languages/top/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-" />
+  <img src="https://img.shields.io/github/languages/count/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-" />
+  <img src="https://img.shields.io/github/last-commit/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-" />
+  <img src="https://img.shields.io/github/repo-size/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-" />
+</p>
 
-## PRESENTACION DEL PROYECTO
-
-D&D Textil es un ecosistema tecnológico diseñado para optimizar los procesos de comercialización, distribución y gestión de inventario en la industria textil. La solución integra un frontend moderno bajo arquitectura reactiva, un backend corporativo ligero y un modelo de datos relacional para control de inventarios, métricas y gestión de pedidos en tiempo real.
-
----
-
-## INDICE DE DOCUMENTACION
-
-Toda la documentación técnica se encuentra centralizada y estructurada para su consulta rápida en el siguiente enlace:
-
-> **[Portal General de Documentación (DOCUMENTACION.md)](file:///c:/Users/Anderson%20Moreno/Downloads/PROYECTO-SENA-TIENDA-TEXTIL-/DOCUMENTACION.md)**
+</div>
 
 ---
 
-## GUIA RAPIDA DE INSTALACION (DOCKER)
+## Visión general
 
-### Requisitos del Sistema
-*   Docker Engine v24 o superior
-*   Docker Compose v2 o superior
+Un solo ecosistema que une tienda en línea, paneles de administración y control de inventario. Los tres bloques comparten una misma base de datos y una API REST, de modo que cada cambio en catálogo, reseñas o apartados del inicio se refleja al instante en todas las interfaces.
 
-### Procedimiento de Despliegue
+**Lo esencial en pocas líneas**
+
+- Tienda pública con carrito, reseñas de clientes y apartados dinámicos (nuevas colecciones, telas exclusivas y ofertas).
+- Panel administrativo para gestionar usuarios, productos, carrusel, apartados del inicio, inventario, pedidos y facturación.
+- Despliegue completo con Docker Compose: tres contenedores listos en un solo comando.
+
+## Arquitectura
+
+```
+┌──────────────────────────┐     ┌──────────────────────────┐
+│  Frontend  React + Vite  │     │  Frontend  App Android   │
+│  http://localhost:3001   │     │  WebView + Kotlin        │
+└────────────┬─────────────┘     └────────────┬─────────────┘
+             │  REST / JSON                    │  REST / JSON
+             ▼                                ▼
+┌────────────────────────────────────────────────────────────┐
+│              Backend  Java (HTTPServer + JDBC)             │
+│                http://localhost:8081/api/*                 │
+└────────────────────────────┬───────────────────────────────┘
+                             │  JDBC
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│              PostgreSQL 17 (Docker volume)                 │
+└────────────────────────────────────────────────────────────┘
+```
+
+## Características
+
+| Área | Detalle |
+| :--- | :--- |
+| Tienda | Catálogo con filtros, fichas de tela, reseñas reales guardadas en base de datos, carrito y checkout. |
+| Home dinámico | Carrusel y apartados del inicio (nuevas colecciones, exclusivas, ofertas) editables desde el panel admin. |
+| Gestión | Productos, usuarios, inventario por lotes, alertas de stock, pedidos y facturación electrónica con PDF. |
+| Roles | Cliente, vendedor y administrador con accesos diferenciados a cada panel. |
+| Despliegue | Docker Compose levanta frontend, backend y base de datos con una sola orden. |
+
+## Inicio rápido
+
+### Requisitos
+
+- Docker Engine v24 o superior
+- Docker Compose v2 o superior
+
+### Despliegue
 
 ```bash
-# 1. Clonar el repositorio del proyecto
+# Clonar el repositorio
 git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
 cd PROYECTO-SENA-TIENDA-TEXTIL-
 
-# 2. Configurar el archivo de variables de entorno
+# Configurar variables de entorno
 cp .env.example .env
 
-# 3. Inicializar los servicios en modo segundo plano
+# Levantar los tres servicios en segundo plano
 docker compose up -d
 ```
 
-### Puertos de Red Asignados
+### Puertos
 
-| Servicio | URL de Acceso |
+| Servicio | Acceso |
 | :--- | :--- |
-| **Frontend de la Aplicación** | [http://localhost:3001](http://localhost:3001) |
-| **Backend API (REST)** | [http://localhost:8081](http://localhost:8081) |
+| Frontend de la aplicación | http://localhost:3001 |
+| Backend API (REST) | http://localhost:8081 |
 
----
+### Detener y limpiar
 
-## CREDENCIALES DE ACCESO DE PRUEBA
+```bash
+# Detener los contenedores
+docker compose down
 
-El sistema cuenta con usuarios de prueba sembrados en la base de datos para validar las diferentes funcionalidades e interfaces según los niveles de acceso del software:
+# Detener y eliminar los datos persistidos (reset total)
+docker compose down -v
+```
 
-| Rol de Usuario | Correo Electrónico | Contraseña |
+## Credenciales de prueba
+
+Usuarios sembrados en la base de datos para validar los niveles de acceso del software.
+
+| Rol | Correo electrónico | Contraseña |
 | :--- | :--- | :--- |
-| **Cliente** | `cliente@ddtextil.com` | `cliente123` |
-| **Vendedor** | `vendedor@ddtextil.com` | `vendedor123` |
-| **Administrador** | `admin@ddtextil.com` | `admin123` |
+| Cliente | `cliente@ddtextil.com` | `cliente123` |
+| Vendedor | `vendedor@ddtextil.com` | `vendedor123` |
+| Administrador | `admin@ddtextil.com` | `admin123` |
+
+## Documentación
+
+La documentación técnica completa está centralizada en un único portal:
+
+> [DOCUMENTACION.md](DOCUMENTACION.md)
 
 ---
 
-Para detener y limpiar la ejecución de los contenedores locales, utilice el comando `docker compose down`. Si requiere resetear la persistencia de datos (base de datos), añada el flag `-v`: `docker compose down -v`.
+<div align="center">
+
+<sub>Proyecto formativo SENA · D&D Textil</sub>
+
+</div>
