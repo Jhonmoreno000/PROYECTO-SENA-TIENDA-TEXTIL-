@@ -49,6 +49,7 @@ public class ProductsHandler extends BaseHandler {
      * GET /api/products — Lista todos los productos.
      * GET /api/products/pending — Lista productos pendientes de moderación.
      * GET /api/products?sellerId=N — Lista productos de un vendedor específico.
+     * GET /api/products?section=nuevas|exclusivas|ofertas — Lista productos de una sección del Home.
      */
     private void handleGet(HttpExchange exchange, String path, ProductDAO dao, Gson gson) throws Exception {
         List<Product> products;
@@ -61,6 +62,10 @@ public class ProductsHandler extends BaseHandler {
         } else if (queryParams != null && queryParams.contains("sellerId=")) {
             int sellerId = Integer.parseInt(queryParams.split("sellerId=")[1].split("&")[0]);
             products = dao.getProductsBySeller(sellerId);
+        // Filtro por sección del Home: /api/products?section=nuevas
+        } else if (queryParams != null && queryParams.contains("section=")) {
+            String section = queryParams.split("section=")[1].split("&")[0];
+            products = dao.getProductsBySection(section);
         // Listado completo de productos
         } else {
             products = dao.getAllProducts();
@@ -90,8 +95,10 @@ public class ProductsHandler extends BaseHandler {
             int productId = Integer.parseInt(path.split("/")[3]);
             InputStream is = exchange.getRequestBody();
             String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            Product updates = gson.fromJson(body, Product.class);
-            boolean success = dao.updateProduct(productId, updates);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            Product updates = gson.fromJson(json, Product.class);
+            Boolean featured = json.has("featured") ? json.get("featured").getAsBoolean() : null;
+            boolean success = dao.updateProduct(productId, updates, featured);
             sendJsonResponse(exchange, success ? 200 : 500, success ? "{\"success\":true}" : "{\"error\":\"Update failed\"}");
 
         // Subida de imagen: PUT /api/products/{id}/image

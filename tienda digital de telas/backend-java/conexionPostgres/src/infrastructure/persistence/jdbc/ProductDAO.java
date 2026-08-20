@@ -56,6 +56,9 @@ public class ProductDAO {
                 product.setCare(rs.getString("care"));
                 product.setStock(rs.getInt("stock"));
                 product.setFeatured(rs.getBoolean("featured"));
+                product.setNewCollection(rs.getBoolean("is_new_collection"));
+                product.setExclusive(rs.getBoolean("is_exclusive"));
+                product.setOffer(rs.getBoolean("is_offer"));
                 product.setImages(getProductImages(conn, productId));
 
                 products.add(product);
@@ -101,6 +104,9 @@ public class ProductDAO {
                     product.setCare(rs.getString("care"));
                     product.setStock(rs.getInt("stock"));
                     product.setFeatured(rs.getBoolean("featured"));
+                    product.setNewCollection(rs.getBoolean("is_new_collection"));
+                    product.setExclusive(rs.getBoolean("is_exclusive"));
+                    product.setOffer(rs.getBoolean("is_offer"));
                     product.setImages(getProductImages(conn, productId));
 
                     products.add(product);
@@ -227,6 +233,65 @@ public class ProductDAO {
     }
 
     /**
+     * Recupera los productos activos que pertenecen a una seccion del Home.
+     * Las secciones son: "nuevas" (nuevas colecciones), "exclusivas" (telas
+     * exclusivas) y "ofertas" (ofertas especiales). Cada una mapea a un flag
+     * booleano de la tabla products que el administrador controla.
+     * @param section Clave de la seccion ('nuevas', 'exclusivas' o 'ofertas').
+     * @return Lista de productos activos marcados con esa seccion.
+     */
+    public List<Product> getProductsBySection(String section) {
+        List<Product> products = new ArrayList<>();
+        Connection conn = Conexion.getConnection();
+
+        String column;
+        if ("exclusivas".equals(section)) {
+            column = "is_exclusive";
+        } else if ("ofertas".equals(section)) {
+            column = "is_offer";
+        } else {
+            column = "is_new_collection";
+        }
+
+        String query = "SELECT p.*, c.name as category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.active = true AND p." + column + " = true";
+
+        try (PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Product product = new Product();
+                int productId = rs.getInt("id");
+
+                product.setId(String.valueOf(productId));
+                product.setName(rs.getString("name"));
+                product.setCategory(rs.getString("category_name"));
+                product.setPrice(rs.getDouble("price"));
+                product.setSellerId(rs.getInt("seller_id"));
+                product.setDescription(rs.getString("description"));
+                product.setMaterial(rs.getString("material"));
+                product.setWidth(rs.getString("width"));
+                product.setWeight(rs.getString("weight"));
+                product.setCare(rs.getString("care"));
+                product.setStock(rs.getInt("stock"));
+                product.setFeatured(rs.getBoolean("featured"));
+                product.setNewCollection(rs.getBoolean("is_new_collection"));
+                product.setExclusive(rs.getBoolean("is_exclusive"));
+                product.setOffer(rs.getBoolean("is_offer"));
+                product.setImages(getProductImages(conn, productId));
+
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            // Error: Fallo la consulta de productos por seccion
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    /**
      * Recupera los productos pendientes de moderacion (moderation_status = 'pending').
      * @return Lista de productos que aun no han sido moderados.
      */
@@ -259,6 +324,9 @@ public class ProductDAO {
                 product.setCare(rs.getString("care"));
                 product.setStock(rs.getInt("stock"));
                 product.setFeatured(rs.getBoolean("featured"));
+                product.setNewCollection(rs.getBoolean("is_new_collection"));
+                product.setExclusive(rs.getBoolean("is_exclusive"));
+                product.setOffer(rs.getBoolean("is_offer"));
 
                 product.setImages(getProductImages(conn, productId));
                 products.add(product);
@@ -337,9 +405,10 @@ public class ProductDAO {
      * solo envia {price, stock}, el nombre/descripcion/etc. se conservan.
      * @param id      Identificador del producto a actualizar.
      * @param updates Objeto Product con los campos a actualizar (los null no se modifican).
+     * @param featured Nuevo estado de destacado, o null si no debe cambiar.
      * @return true si la actualizacion fue exitosa, false en caso de error.
      */
-    public boolean updateProduct(int id, Product updates) {
+    public boolean updateProduct(int id, Product updates, Boolean featured) {
         // Usa COALESCE para solo sobrescribir campos que realmente se proporcionan.
         // Si el frontend solo envia {price, stock}, name/description/etc se conservan.
         String query = "UPDATE products SET " +
@@ -352,6 +421,9 @@ public class ProductDAO {
                 "care = COALESCE(?, care), " +
                 "stock = COALESCE(NULLIF(?, -1), stock), " +
                 "featured = COALESCE(?, featured), " +
+                "is_new_collection = COALESCE(?, is_new_collection), " +
+                "is_exclusive = COALESCE(?, is_exclusive), " +
+                "is_offer = COALESCE(?, is_offer), " +
                 "updated_at = NOW() " +
                 "WHERE id = ?";
         try (Connection conn = Conexion.getConnection();
@@ -367,9 +439,12 @@ public class ProductDAO {
             stmt.setString(7, updates.getCare());
             // Stock: usa -1 como valor centinela para "no proporcionado"
             stmt.setInt(8, updates.getStock() > 0 ? updates.getStock() : -1);
-            // Featured: no se puede distinguir false de null con boolean, se usa tipo Object
-            stmt.setObject(9, updates.isFeatured());
-            stmt.setInt(10, id);
+            // Featured: solo se toca si viene explicito (null = no cambiar)
+            stmt.setObject(9, featured);
+            stmt.setObject(10, updates.isNewCollection());
+            stmt.setObject(11, updates.isExclusive());
+            stmt.setObject(12, updates.isOffer());
+            stmt.setInt(13, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             // Error: No se pudo actualizar el producto (problema de BD)
