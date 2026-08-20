@@ -24,13 +24,14 @@ import React, { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ArrowLeft, ShoppingCart, Heart, Share2, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Share2, Check, AlertTriangle, Info, Ruler, Layers, Weight, Droplets, Package } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AnimatedPage from '../components/AnimatedPage';
 import ImageGallery from '../components/ImageGallery';
 import QuantitySelector from '../components/QuantitySelector';
 import ProductCard from '../components/ProductCard';
+import ReviewsSection from '../components/ReviewsSection';
 import { Skeleton, TextBlockSkeleton } from '../components/Skeleton';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatters';
@@ -49,8 +50,10 @@ function ProductDetail() {
     const { getProductById, loading, products } = useProducts(); // Datos de productos
     const { isInWishlist, addToWishlist, removeFromWishlist, productDiscounts } = useMetrics(); // Funciones de wishlist
 
-    // Cantidad de metros que el cliente quiere comprar (por defecto 1)
-    const [quantity, setQuantity] = useState(1);
+    // Cantidad de metros por corte que el cliente quiere comprar (por defecto 1)
+    const [metersPerCut, setMetersPerCut] = useState(1);
+    // Cantidad de cortes (unidades) del mismo corte de tela
+    const [cuts, setCuts] = useState(1);
     // Controla si se muestra el mensaje verde "¡Producto agregado al carrito!"
     const [showSuccess, setShowSuccess] = useState(false);
     const [showStockError, setShowStockError] = useState(false);
@@ -144,6 +147,15 @@ function ProductDetail() {
     const discountedPrice = hasDiscount ? product.price * (1 - discountInfo.percent / 100) : product.price;
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
+    // Total de metros = metros por corte × cantidad de cortes
+    const totalMeters = Math.round(metersPerCut * cuts * 100) / 100;
+    // Máximo de cortes permitidos para no superar el stock disponible
+    const maxCuts = isOutOfStock ? 1 : Math.max(1, Math.floor(product.stock / metersPerCut));
+    // Etiqueta legible del total (3,5 en vez de 3.5)
+    const totalMetersLabel = totalMeters % 1 === 0
+        ? String(totalMeters)
+        : totalMeters.toFixed(1).replace('.', ',');
+
     // Productos relacionados: misma categoría, máximo 4, excluyendo el actual
     const relatedProducts = products
         .filter((p) => p.category === product.category && p.id !== product.id)
@@ -154,7 +166,7 @@ function ProductDetail() {
      * El mensaje de confirmación desaparece automáticamente después de 3 segundos.
      */
     const handleAddToCart = () => {
-        const added = addToCart(product, quantity);
+        const added = addToCart(product, totalMeters);
         if (added) {
             setShowSuccess(true);
             setShowStockError(false);
@@ -169,13 +181,22 @@ function ProductDetail() {
      * handleBuyNow — Agrega al carrito y lleva directamente a la pantalla del carrito
      */
     const handleBuyNow = () => {
-        const added = addToCart(product, quantity);
+        const added = addToCart(product, totalMeters);
         if (added) {
             navigate('/carrito');
         } else {
             setShowStockError(true);
             setTimeout(() => setShowStockError(false), 3000);
         }
+    };
+
+    /**
+     * handleMetersChange — Cambia los metros por corte y ajusta los cortes
+     * para que el total de metros nunca supere el stock disponible.
+     */
+    const handleMetersChange = (value) => {
+        setMetersPerCut(value);
+        setCuts(current => Math.min(current, Math.max(1, Math.floor(product.stock / value))));
     };
 
     /**
@@ -263,50 +284,94 @@ function ProductDetail() {
                                 {product.description}
                             </p>
 
-                            {/* Tabla de especificaciones técnicas */}
-                            <div className="card p-6 space-y-3">
-                                <h3 className="font-bold text-lg mb-4">Especificaciones Técnicas</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">Material</div>
-                                        <div className="font-semibold">{product.material}</div>
+                            {/* Información de la Tela */}
+                            <div className="card p-6">
+                                <h3 className="font-bold text-lg mb-5 flex items-center gap-2">
+                                    <Info className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                    Información de la Tela
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                        <Layers className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">Material</div>
+                                            <div className="font-semibold text-sm">{product.material || '—'}</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">Ancho</div>
-                                        <div className="font-semibold">{product.width}</div>
+                                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                        <Ruler className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">Ancho</div>
+                                            <div className="font-semibold text-sm">{product.width || '—'}</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">Peso</div>
-                                        <div className="font-semibold">{product.weight}</div>
+                                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                        <Weight className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">Peso</div>
+                                            <div className="font-semibold text-sm">{product.weight || '—'}</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">Stock</div>
-                                        <div className="font-semibold">{isOutOfStock ? <span className="text-red-500">Agotado</span> : `${product.stock} metros`}</div>
+                                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                        <Package className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">Stock</div>
+                                            <div className="font-semibold text-sm">{isOutOfStock ? <span className="text-red-500">Agotado</span> : `${product.stock} metros`}</div>
+                                        </div>
                                     </div>
                                 </div>
+                                {product.care && (
+                                    <div className="flex items-start gap-3 p-4 mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                        <Droplets className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <div className="font-semibold text-blue-900 dark:text-blue-300">
+                                                Cuidado y lavado
+                                            </div>
+                                            <div className="text-sm text-blue-700 dark:text-blue-400">
+                                                {product.care}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Instrucciones de cuidado del tejido */}
-                            <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <Check className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <div className="font-semibold text-blue-900 dark:text-blue-300">
-                                        Cuidado del producto
+                            {/* Selector de metros por corte y cantidad de cortes */}
+                            <div className="card p-6 space-y-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block font-bold mb-3 flex items-center gap-2 text-sm">
+                                            <Ruler className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                            Metros por corte
+                                        </label>
+                                        <QuantitySelector
+                                            quantity={metersPerCut}
+                                            setQuantity={handleMetersChange}
+                                            max={product.stock}
+                                            min={0.5}
+                                            step={0.5}
+                                        />
                                     </div>
-                                    <div className="text-sm text-blue-700 dark:text-blue-400">
-                                        {product.care}
+                                    <div>
+                                        <label className="block font-bold mb-3 flex items-center gap-2 text-sm">
+                                            <Layers className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                            Cantidad de cortes
+                                        </label>
+                                        <QuantitySelector
+                                            quantity={cuts}
+                                            setQuantity={setCuts}
+                                            max={maxCuts}
+                                        />
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Selector de cantidad en metros */}
-                            <div>
-                                <label className="block font-bold mb-3">Cantidad (metros)</label>
-                                <QuantitySelector
-                                    quantity={quantity}
-                                    setQuantity={setQuantity}
-                                    max={product.stock} // No permite pedir más que el stock disponible
-                                />
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+                                    <div className="text-sm text-slate-600 dark:text-slate-300">
+                                        Total: <span className="font-black text-slate-900 dark:text-white">{totalMetersLabel} metros</span>
+                                        <span className="text-slate-400"> · {cuts} corte{cuts > 1 ? 's' : ''} de {metersPerCut % 1 === 0 ? metersPerCut : metersPerCut.toFixed(1).replace('.', ',')} m</span>
+                                    </div>
+                                    <div className="font-black text-lg text-primary-600 dark:text-primary-400">
+                                        {formatCurrency(discountedPrice * totalMeters)}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Botones principales: Agregar al carrito + Comprar ahora */}
@@ -358,7 +423,7 @@ function ProductDetail() {
                                     className="bg-green-500 text-white p-4 rounded-lg flex items-center gap-3"
                                 >
                                     <Check className="w-6 h-6 flex-shrink-0" />
-                                    <span className="font-semibold">¡Producto agregado al carrito!</span>
+                                    <span className="font-semibold">¡{totalMetersLabel} metros agregados al carrito!</span>
                                 </div>
                             )}
 
@@ -370,6 +435,9 @@ function ProductDetail() {
                             )}
                         </div>
                     </div>
+
+                    {/* Sección de reseñas de clientes */}
+                    <ReviewsSection productId={product.id} />
 
                     {/* Sección de productos relacionados (misma categoría de tela) */}
                     {relatedProducts.length > 0 && (

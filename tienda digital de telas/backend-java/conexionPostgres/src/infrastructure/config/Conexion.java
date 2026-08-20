@@ -23,7 +23,7 @@ public class Conexion {
         : "postgres";
     private static final String PASSWORD = System.getenv("DB_PASSWORD") != null 
         ? System.getenv("DB_PASSWORD") 
-        : "Mp.1025889078";
+        : "";
 
     // Constructor privado para evitar instanciacion externa (Singleton)
     private Conexion() {}

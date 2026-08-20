@@ -32,6 +32,12 @@ public class Product {
     private int stock;
     /** Indica si el producto debe aparecer destacado en la página principal. */
     private boolean featured;
+    /** Indica si el producto pertenece a la sección "Nuevas Colecciones" del Home. */
+    private boolean isNewCollection;
+    /** Indica si el producto pertenece a la sección "Telas Exclusivas" del Home. */
+    private boolean isExclusive;
+    /** Indica si el producto pertenece a la sección "Ofertas Especiales" del Home. */
+    private boolean isOffer;
     /** Lista de URLs de imágenes del producto. */
     private List<String> images;
 
@@ -90,6 +96,18 @@ public class Product {
     public boolean isFeatured() { return featured; }
     /** Marca o desmarca el producto como destacado. */
     public void setFeatured(boolean featured) { this.featured = featured; }
+    /** Indica si el producto pertenece a la sección "Nuevas Colecciones". */
+    public boolean isNewCollection() { return isNewCollection; }
+    /** Asigna si el producto pertenece a "Nuevas Colecciones". */
+    public void setNewCollection(boolean isNewCollection) { this.isNewCollection = isNewCollection; }
+    /** Indica si el producto pertenece a la sección "Telas Exclusivas". */
+    public boolean isExclusive() { return isExclusive; }
+    /** Asigna si el producto pertenece a "Telas Exclusivas". */
+    public void setExclusive(boolean isExclusive) { this.isExclusive = isExclusive; }
+    /** Indica si el producto pertenece a la sección "Ofertas Especiales". */
+    public boolean isOffer() { return isOffer; }
+    /** Asigna si el producto pertenece a "Ofertas Especiales". */
+    public void setOffer(boolean isOffer) { this.isOffer = isOffer; }
     /** Obtiene la lista de URLs de imágenes del producto. */
     public List<String> getImages() { return images; }
     /** Asigna la lista de URLs de imágenes del producto. */

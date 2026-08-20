@@ -49,11 +49,12 @@ export function CartProvider({ children }) {
      * @param {number} quantity - Cantidad de metros a agregar (por defecto 1)
      */
     const addToCart = (product, quantity = 1) => {
-        const maxStock = product.stock ?? 99;
+        const maxStock = Number(product.stock ?? 99);
+        const qty = Number(quantity) || 1;
         if (maxStock <= 0) return false;
 
-        const currentQty = getProductQuantity(product.id);
-        if (currentQty + quantity > maxStock) return false;
+        const currentQty = Number(getProductQuantity(product.id)) || 0;
+        if (currentQty + qty > maxStock) return false;
 
         setCartItems((prevItems) => {
             const items = Array.isArray(prevItems) ? prevItems : [];
@@ -61,11 +62,11 @@ export function CartProvider({ children }) {
             if (existingItem) {
                 return items.map((item) =>
                     item.id === product.id
-                        ? { ...item, quantity: item.quantity + quantity }
+                        ? { ...item, quantity: (Number(item.quantity) || 0) + qty }
                         : item
                 );
             }
-            return [...items, { ...product, quantity }];
+            return [...items, { ...product, quantity: qty }];
         });
         return true;
     };
@@ -77,7 +78,8 @@ export function CartProvider({ children }) {
      * @param {number} newQuantity      - Nueva cantidad deseada
      */
     const updateQuantity = (productId, newQuantity) => {
-        if (newQuantity <= 0) {
+        const parsedQuantity = Number(newQuantity);
+        if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
             removeFromCart(productId);
             return;
         }
@@ -85,7 +87,7 @@ export function CartProvider({ children }) {
         setCartItems((prevItems) => {
             const items = Array.isArray(prevItems) ? prevItems : [];
             return items.map((item) =>
-                item.id === productId ? { ...item, quantity: newQuantity } : item
+                item.id === productId ? { ...item, quantity: parsedQuantity } : item
             );
         });
     };
@@ -117,7 +119,7 @@ export function CartProvider({ children }) {
      */
     const getCartTotal = () => {
         const items = Array.isArray(cartItems) ? cartItems : [];
-        return items.reduce((total, item) => total + item.price * item.quantity, 0);
+        return items.reduce((total, item) => total + Number(item.price || 0) * (Number(item.quantity) || 0), 0);
     };
 
     /**
@@ -126,7 +128,7 @@ export function CartProvider({ children }) {
      */
     const getCartItemCount = () => {
         const items = Array.isArray(cartItems) ? cartItems : [];
-        return items.reduce((count, item) => count + item.quantity, 0);
+        return items.reduce((count, item) => count + (Number(item.quantity) || 0), 0);
     };
 
     /**
@@ -168,7 +170,7 @@ export function CartProvider({ children }) {
     const getProductQuantity = (productId) => {
         const items = Array.isArray(cartItems) ? cartItems : [];
         const item = items.find((item) => item.id === productId);
-        return item ? item.quantity : 0;
+        return item ? Number(item.quantity) || 0 : 0;
     };
 
     // Datos y funciones disponibles para todos los componentes que usen useCart()

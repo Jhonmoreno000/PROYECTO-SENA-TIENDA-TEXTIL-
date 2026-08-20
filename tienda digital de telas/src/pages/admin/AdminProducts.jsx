@@ -50,7 +50,7 @@ import { useGSAP } from '@gsap/react';
 // Componentes compartidos del proyecto
 import DashboardLayout from '../../components/layouts/DashboardLayout'; // Marco del panel con el menú lateral
 import adminDashboardLinks from '../../data/adminDashboardLinks';       // Links del menú del administrador
-import { formatCurrency } from '../../utils/formatters';               // Convierte 25000 → "$25.000"
+import { formatCurrency } from '../../utils/formatters';               // Convierte 25000 → "25.000 COP"
 import { useProducts } from '../../context/ProductContext';            // Trae los productos de la API
 import { useNotification } from '../../context/NotificationContext';   // Muestra notificaciones en pantalla
 import { useMetrics } from '../../context/MetricsContext';
@@ -158,6 +158,13 @@ export default function AdminProducts() {
       stock:    product.stock,
       images:   product.images,
       category: product.category,
+      material: product.material,
+      width:    product.width,
+      weight:   product.weight,
+      care:     product.care,
+      isNewCollection: !!product.isNewCollection,
+      isExclusive:     !!product.isExclusive,
+      isOffer:         !!product.isOffer,
       discountActive: existingDiscount?.active || false,
       discountPercent: existingDiscount?.percent || 0,
     });
@@ -348,6 +355,12 @@ export default function AdminProducts() {
                 const isLowStock   = stock > 0 && stock <= 15;
                 const isBestseller = product.salesCount > 50 || product.featured;
 
+                const sectionBadges = [
+                    { on: product.isNewCollection, label: 'Nueva Colección', cls: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/20' },
+                    { on: product.isExclusive, label: 'Exclusiva', cls: 'bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-500/20' },
+                    { on: product.isOffer, label: 'Oferta', cls: 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20' },
+                ].filter(b => b.on);
+
                 const stockBadge = isOutOfStock
                   ? { bg: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20', dot: 'bg-rose-500 animate-pulse', label: 'Agotado' }
                   : isLowStock
@@ -393,6 +406,11 @@ export default function AdminProducts() {
                               {product.category}
                             </span>
                           )}
+                          {sectionBadges.map(badge => (
+                            <span key={badge.label} className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-widest uppercase border ${badge.cls}`}>
+                              {badge.label}
+                            </span>
+                          ))}
                         </div>
 
                         <p className="text-xs font-mono text-slate-400 dark:text-slate-500 mb-1.5">
@@ -448,10 +466,10 @@ export default function AdminProducts() {
           <div onClick={closeEditModal} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
           <div
             ref={modalRef}
-            className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+            className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]"
           >
             {/* Header modal */}
-            <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/60">
+            <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/60 shrink-0">
               <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                   <Edit size={18} />
@@ -467,7 +485,7 @@ export default function AdminProducts() {
             </div>
 
             {/* Formulario */}
-            <form onSubmit={handleSave} className="p-6 sm:p-8">
+            <form onSubmit={handleSave} className="p-6 sm:p-8 overflow-y-auto flex-1">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Zona de imagen */}
                 <div className="w-full md:w-1/3">
@@ -558,6 +576,58 @@ export default function AdminProducts() {
                     </div>
                   </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Material / Composición
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.material || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, material: e.target.value }))}
+                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
+                      placeholder="Ej: 100% Algodón"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Ancho
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.width || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, width: e.target.value }))}
+                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
+                      placeholder="Ej: 1.50 m"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Peso
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.weight || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, weight: e.target.value }))}
+                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
+                      placeholder="Ej: 180 gr/m²"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Cuidado y lavado
+                    </label>
+                    <textarea
+                      value={editForm.care || ''}
+                      onChange={e => setEditForm(prev => ({ ...prev, care: e.target.value }))}
+                      className={`w-full px-4 py-3 text-sm font-bold resize-none ${glassInput}`}
+                      rows="3"
+                      placeholder="Lavar en agua fría, no usar blanqueador, secar a la sombra..."
+                    />
+                  </div>
+
                   <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700/60 pt-4">
                     <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
                       Oferta / Descuento
@@ -586,6 +656,31 @@ export default function AdminProducts() {
                           <span className="text-sm font-bold text-slate-400">% OFF</span>
                         </div>
                       )}
+                    </div>
+                  </div>
+                <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700/60 pt-4">
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                      Apartados del Inicio
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {[
+                        { key: 'isNewCollection', label: 'Nueva Colección', desc: 'Sección Nuevas Colecciones del Home' },
+                        { key: 'isExclusive', label: 'Telas Exclusivas', desc: 'Sección Telas Exclusivas del Home' },
+                        { key: 'isOffer', label: 'Ofertas Especiales', desc: 'Sección Ofertas Especiales del Home' },
+                      ].map(({ key, label, desc }) => (
+                        <label key={key} className="flex items-center gap-2 cursor-pointer">
+                          <div
+                            onClick={() => setEditForm(prev => ({ ...prev, [key]: !prev[key] }))}
+                            className={`relative w-11 h-6 rounded-full transition-all duration-300 shrink-0 ${editForm[key] ? 'bg-indigo-600 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'bg-slate-300 dark:bg-slate-600'}`}
+                          >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${editForm[key] ? 'left-6' : 'left-1'}`} />
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300 block leading-tight">{label}</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{desc}</span>
+                          </div>
+                        </label>
+                      ))}
                     </div>
                   </div>
                 </div>

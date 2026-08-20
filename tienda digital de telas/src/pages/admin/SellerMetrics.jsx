@@ -90,7 +90,7 @@ function SellerMetrics() {
                     {/* Resumen KPI */}
                     <div className="grid md:grid-cols-3 gap-6 mb-8">
                         {[
-                            { label: 'Mejor Vendedor', value: sellersWithMetrics[0]?.name || 'N/A', sub: sellersWithMetrics[0] ? formatCurrency(sellersWithMetrics[0].metrics.totalSales) : '$0', icon: TrendingUp, color: 'indigo' },
+                            { label: 'Mejor Vendedor', value: sellersWithMetrics[0]?.name || 'N/A', sub: sellersWithMetrics[0] ? formatCurrency(sellersWithMetrics[0].metrics.totalSales) : formatCurrency(0), icon: TrendingUp, color: 'indigo' },
                             { label: 'Ventas Promedio', value: formatCurrency(avgVentas), sub: 'por vendedor', icon: DollarSign, color: 'emerald' },
                             { label: 'Total Reportes', value: totalReportes, sub: 'en todos los vendedores', icon: AlertCircle, color: totalReportes > 5 ? 'rose' : 'slate' },
                         ].map(({ label, value, sub, icon: Icon, color }) => (

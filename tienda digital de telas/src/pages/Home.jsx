@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Hero, Carousel, FeaturedProducts, Benefits, Footer, AnimatedPage } from '../components';
+import { Header, Hero, Carousel, FeaturedProducts, Benefits, Footer, AnimatedPage, HomeSection } from '../components';
 import { getApiUrl } from '../config';
+
+// Apartados por defecto si el backend no responde (editables desde el admin)
+const DEFAULT_SECTIONS = [
+    { key: 'nuevas', title: 'Nuevas Colecciones', subtitle: 'Descubre las telas más recientes que llegan a la tienda', active: true },
+    { key: 'exclusivas', title: 'Telas Exclusivas', subtitle: 'Diseños únicos seleccionados para tus proyectos especiales', active: true },
+    { key: 'ofertas', title: 'Ofertas Especiales', subtitle: 'Precios especiales en telas seleccionadas por tiempo limitado', active: true },
+];
+
+// Flags de productos que alimentan cada apartado
+const SECTION_FLAGS = { nuevas: 'isNewCollection', exclusivas: 'isExclusive', ofertas: 'isOffer' };
 
 function Home() {
     const [sections, setSections] = useState([
@@ -9,6 +19,17 @@ function Home() {
         { id: 'featured', visible: true },
         { id: 'benefits', visible: true },
     ]);
+    const [homeSections, setHomeSections] = useState(DEFAULT_SECTIONS);
+
+    useEffect(() => {
+        // Carga los apartados editados por el admin desde la base de datos
+        fetch(getApiUrl('/api/home-sections'))
+            .then(res => res.ok ? res.json() : null)
+            .then(data => { if (data && data.length > 0) setHomeSections(data); })
+            .catch(() => {
+                // Si el backend no responde se mantienen los apartados por defecto
+            });
+    }, []);
 
     useEffect(() => {
         // Function to load settings
@@ -66,6 +87,14 @@ function Home() {
                 <AnimatedPage>
                     {isVisible('hero') && <Hero />}
                     {isVisible('carousel') && <Carousel />}
+                    {homeSections.map((section, i) => (
+                        <HomeSection
+                            key={section.key}
+                            section={section}
+                            flag={SECTION_FLAGS[section.key]}
+                            bgClass={i % 2 === 1 ? 'bg-white dark:bg-slate-900' : undefined}
+                        />
+                    ))}
                     {isVisible('featured') && <FeaturedProducts />}
                     {isVisible('benefits') && <Benefits />}
                 </AnimatedPage>

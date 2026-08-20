@@ -12,6 +12,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProducts } from './ProductContext';
+import { formatCurrency } from '../utils/formatters';
 
 /** URL base del backend Java */
 const API = '';
@@ -431,7 +432,7 @@ export function MetricsProvider({ children }) {
         if (!coupon) return { valid: false, message: 'Cupón no válido o expirado' };
         if (new Date() > new Date(coupon.expiresAt)) return { valid: false, message: 'Cupón expirado' };
         if (coupon.rules?.minPurchase && cartTotal < coupon.rules.minPurchase)
-            return { valid: false, message: `Compra mínima de $${coupon.rules.minPurchase.toLocaleString()}` };
+            return { valid: false, message: `Compra mínima de ${formatCurrency(coupon.rules.minPurchase)}` };
         if (coupon.rules?.firstTimeOnly && userOrders.length > 0)
             return { valid: false, message: 'Solo para primera compra' };
         if (coupon.rules?.maxUses && coupon.usageCount >= coupon.rules.maxUses)

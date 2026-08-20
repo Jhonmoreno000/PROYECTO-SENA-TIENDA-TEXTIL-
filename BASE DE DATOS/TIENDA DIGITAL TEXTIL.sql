@@ -439,6 +439,181 @@ ALTER SEQUENCE public.product_images_id_seq OWNED BY public.product_images.id;
 
 
 --
+-- Name: reviews; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reviews (
+    id integer NOT NULL,
+    product_id integer NOT NULL,
+    user_id integer NOT NULL,
+    rating integer NOT NULL,
+    comment text NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.reviews OWNER TO postgres;
+
+--
+-- Name: reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.reviews_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.reviews_id_seq OWNER TO postgres;
+
+--
+-- Name: reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.reviews_id_seq OWNED BY public.reviews.id;
+
+--
+-- Name: reviews id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews ALTER COLUMN id SET DEFAULT nextval('public.reviews_id_seq'::regclass);
+
+--
+-- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_pkey PRIMARY KEY (id);
+
+--
+-- Name: reviews reviews_rating_check; Type: CHECK; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_rating_check CHECK ((rating >= 1) AND (rating <= 5));
+
+--
+-- Name: reviews reviews_product_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_product_fk FOREIGN KEY (product_id) REFERENCES public.products(id);
+
+--
+-- Name: reviews reviews_user_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_user_fk FOREIGN KEY (public.reviews.user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: home_sections; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.home_sections (
+    key character varying(30) NOT NULL,
+    title character varying(150) NOT NULL,
+    subtitle character varying(300),
+    active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.home_sections OWNER TO postgres;
+
+--
+-- Name: home_sections home_sections_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.home_sections
+    ADD CONSTRAINT home_sections_pkey PRIMARY KEY (key);
+
+--
+-- Data for Name: home_sections; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.home_sections (key, title, subtitle, active, sort_order, created_at) FROM stdin;
+nuevas	Nuevas Colecciones	Descubre las telas más recientes que llegan a la tienda	t	1	2026-08-20 01:30:00
+exclusivas	Telas Exclusivas	Diseños únicos seleccionados para tus proyectos especiales	t	2	2026-08-20 01:30:00
+ofertas	Ofertas Especiales	Precios especiales en telas seleccionadas por tiempo limitado	t	3	2026-08-20 01:30:00
+\.
+
+--
+-- Name: carousel_slides; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.carousel_slides (
+    id integer NOT NULL,
+    title character varying(150) NOT NULL,
+    subtitle character varying(300),
+    image text,
+    cta character varying(50),
+    section_key character varying(30),
+    active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.carousel_slides OWNER TO postgres;
+
+--
+-- Name: carousel_slides_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.carousel_slides_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.carousel_slides_id_seq OWNER TO postgres;
+
+--
+-- Name: carousel_slides_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.carousel_slides_id_seq OWNED BY public.carousel_slides.id;
+
+--
+-- Name: carousel_slides id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.carousel_slides ALTER COLUMN id SET DEFAULT nextval('public.carousel_slides_id_seq'::regclass);
+
+--
+-- Name: carousel_slides carousel_slides_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.carousel_slides
+    ADD CONSTRAINT carousel_slides_pkey PRIMARY KEY (id);
+
+--
+-- Data for Name: carousel_slides; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.carousel_slides (id, title, subtitle, image, cta, section_key, active, sort_order, created_at) FROM stdin;
+1	Nueva Colección 2024	Tendencias exclusivas en telas premium	/images/carousel-nueva-coleccion.png	Ver Más	nuevas	t	1	2026-08-20 01:00:00
+2	Telas Exclusivas	Diseños únicos para proyectos especiales	/images/carousel-telas-exclusivas.png	Explorar	exclusivas	t	2	2026-08-20 01:00:00
+3	Ofertas Especiales	Descuentos increíbles en telas seleccionadas	/images/carousel-ofertas-especiales.png	Ver Ofertas	ofertas	t	3	2026-08-20 01:00:00
+\.
+
+--
+-- Name: carousel_slides_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.carousel_slides_id_seq', 3, true);
+
+
+--
 -- Name: products; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -452,9 +627,12 @@ CREATE TABLE public.products (
     material character varying(100),
     width character varying(30),
     weight character varying(30),
-    care character varying(200),
+    care text,
     stock integer DEFAULT 0 NOT NULL,
     featured boolean DEFAULT false NOT NULL,
+    is_new_collection boolean DEFAULT false NOT NULL,
+    is_exclusive boolean DEFAULT false NOT NULL,
+    is_offer boolean DEFAULT false NOT NULL,
     active boolean DEFAULT true NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone,

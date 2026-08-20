@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import ProductCard from './ProductCard';
 import SmartFilter from './SmartFilter';
+import { formatCurrency } from '../utils/formatters';
 
 
 
@@ -70,7 +71,7 @@ function ProductGrid({ products }) {
 
                     <div className="flex-1">
                         <label className="block font-bold mb-2">
-                            Rango de precio: ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
+                            Rango de precio: {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
                         </label>
                         <input
                             type="range"

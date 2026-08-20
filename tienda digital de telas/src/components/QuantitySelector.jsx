@@ -12,12 +12,13 @@
 import React from 'react';
 import { Minus, Plus } from 'lucide-react';
 
-function QuantitySelector({ quantity, setQuantity, max = 100, min = 1 }) {
-    const increment = () => { if (quantity < max) setQuantity(quantity + 1); };
-    const decrement = () => { if (quantity > min) setQuantity(quantity - 1); };
+function QuantitySelector({ quantity, setQuantity, max = 100, min = 1, step = 1 }) {
+    const round = (value) => Math.round(value * 100) / 100;
+    const increment = () => { if (round(quantity + step) <= max) setQuantity(round(quantity + step)); };
+    const decrement = () => { if (round(quantity - step) >= min) setQuantity(round(quantity - step)); };
 
     const handleInputChange = (e) => {
-        const value = parseInt(e.target.value);
+        const value = parseFloat(e.target.value);
         if (!isNaN(value) && value >= min && value <= max) {
             setQuantity(value);
         } else if (e.target.value === '') {
@@ -42,6 +43,7 @@ function QuantitySelector({ quantity, setQuantity, max = 100, min = 1 }) {
                 onChange={handleInputChange}
                 min={min}
                 max={max}
+                step={step}
                 className="w-20 h-10 text-center text-lg font-bold rounded-lg border-2 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
             />
 

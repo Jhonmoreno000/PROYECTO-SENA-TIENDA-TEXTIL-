@@ -47,25 +47,10 @@ function FeaturedProducts() {
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    duration: 0.8,
+                    duration: 0.7,
                     force3D: true,
-                    stagger: 0.1,
-                    ease: "power3.out",
-                    onComplete: () => {
-                        gsap.to('.fp-card', {
-                            y: "-=6",
-                            duration: 3,
-                            repeat: -1,
-                            yoyo: true,
-                            ease: "sine.inOut",
-                            force3D: true,
-                            stagger: {
-                                amount: 1.5,
-                                repeat: -1,
-                                yoyo: true
-                            }
-                        });
-                    }
+                    stagger: 0.08,
+                    ease: "power3.out"
                 },
                 "-=0.4"
             );
@@ -85,10 +70,10 @@ function FeaturedProducts() {
     return (
         <section ref={containerRef} className="section-container bg-[var(--color-bg-secondary)] overflow-hidden">
             <div className="text-center mb-12">
-                <h2 className="fp-header text-3xl md:text-4xl font-display font-bold mb-4 dark:text-white will-change-transform">
+                <h2 className="fp-header text-3xl md:text-4xl font-display font-bold mb-4 dark:text-white">
                     Productos <span className="text-gradient">Destacados</span>
                 </h2>
-                <p className="fp-header text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto will-change-transform">
+                <p className="fp-header text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
                     Descubre nuestra selección especial de telas premium para tus proyectos
                 </p>
             </div>
@@ -113,7 +98,7 @@ function FeaturedProducts() {
             ) : (
                 <div className="fp-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
                     {featuredProducts.map((product) => (
-                        <div key={product.id} className="fp-card will-change-transform">
+                        <div key={product.id} className="fp-card">
                             <ProductCard product={product} />
                         </div>
                     ))}
@@ -121,7 +106,7 @@ function FeaturedProducts() {
             )}
 
             <div className="fp-btn-container text-center">
-                <Link to="/catalogo" className="fp-btn btn-primary inline-flex items-center hover:scale-105 active:scale-95 transition-transform will-change-transform">
+                <Link to="/catalogo" className="fp-btn btn-primary inline-flex items-center hover:scale-105 active:scale-95 transition-transform">
                     Ver Catálogo Completo
                 </Link>
             </div>
