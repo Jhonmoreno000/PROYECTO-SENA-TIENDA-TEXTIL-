@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - "./BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql:/docker-entrypoint-initdb.d/01-init.sql"
+      - "./BASE DE DATOS:/docker-entrypoint-initdb.d:ro"
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
