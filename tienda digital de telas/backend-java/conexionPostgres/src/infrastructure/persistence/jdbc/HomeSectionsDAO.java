@@ -25,12 +25,12 @@ public class HomeSectionsDAO {
      */
     public List<HomeSection> getAllSections() {
         List<HomeSection> sections = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         String query = "SELECT * FROM home_sections ORDER BY sort_order ASC, key ASC";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 sections.add(mapRow(rs));
@@ -48,12 +48,12 @@ public class HomeSectionsDAO {
      */
     public List<HomeSection> getActiveSections() {
         List<HomeSection> sections = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         String query = "SELECT * FROM home_sections WHERE active = true ORDER BY sort_order ASC, key ASC";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 sections.add(mapRow(rs));

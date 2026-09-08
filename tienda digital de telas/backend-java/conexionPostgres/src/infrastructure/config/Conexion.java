@@ -6,15 +6,15 @@ import java.sql.SQLException;
 
 /**
  * Clase de configuracion de infraestructura para la conexion a PostgreSQL.
- * Implementa el patron Singleton para gestionar una unica conexion a la base
- * de datos del sistema D&D Textil. Obtiene credenciales desde variables de
- * entorno con fallback a valores locales de desarrollo.
+ * Proporciona conexiones independientes e hilos-seguros para soportar
+ * alto trafico concurrente en el backend de D&D Textil.
+ * 
+ * Cada llamada a getConnection() retorna una conexion limpia y dedicada
+ * para ser gestionada en un bloque try-with-resources en los DAOs.
  */
 public class Conexion {
-    // Patron Singleton para una unica conexion (opcional pero buena practica)
-    private static Connection connection = null;
 
-    // Variables de entorno para conexion (se deben configurar antes de ejecutar)
+    // Variables de entorno para conexion con fallback a PostgreSQL local
     private static final String URL = System.getenv("DB_URL") != null 
         ? System.getenv("DB_URL") 
         : "jdbc:postgresql://localhost:5432/tienda_digital_textiles_db";
@@ -25,57 +25,33 @@ public class Conexion {
         ? System.getenv("DB_PASSWORD") 
         : "";
 
-    // Constructor privado para evitar instanciacion externa (Singleton)
+    static {
+        try {
+            // Carga el driver JDBC de PostgreSQL una sola vez en el classloader
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            System.err.println("[ERROR CRITICO] No se encontro el driver JDBC de PostgreSQL.");
+            e.printStackTrace();
+        }
+    }
+
+    // Constructor privado para evitar instanciacion
     private Conexion() {}
 
     /**
-     * Obtiene la conexion activa a la base de datos. Si la conexion actual es
-     * nula, esta cerrada o invalida, la reemplaza por una nueva.
-     * @return Connection activa a PostgreSQL, o null si ocurre un error.
+     * Obtiene una nueva conexion independiente a la base de datos PostgreSQL.
+     * Al usarse dentro de un bloque try-with-resources en el DAO, la conexion
+     * se cierra automaticamente al finalizar la peticion sin afectar otros hilos.
+     *
+     * @return Connection activa a PostgreSQL, o null si ocurre un error de red/BD.
      */
     public static Connection getConnection() {
         try {
-            // Reconecta si la conexion es nula, esta cerrada, o ya no es valida (obsoleta)
-            // isValid(3) envia una verificacion real a PostgreSQL con timeout de 3 segundos
-            // Esto es critico porque isClosed() NO detecta conexiones que PostgreSQL ha terminado por inactividad
-            if (connection == null || connection.isClosed() || !connection.isValid(3)) {
-                // Cierra la conexion antigua obsoleta si existe
-                if (connection != null) {
-                    try { connection.close(); } catch (SQLException ignored) {}
-                    connection = null;
-                }
-                Class.forName("org.postgresql.Driver");
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                System.out.println("[OK] Conexion a PostgreSQL establecida con exito.");
-            }
-        } catch (ClassNotFoundException e) {
-            // Error: El driver JDBC de PostgreSQL no esta en el classpath
-            System.err.println("[ERROR] No se encontro el driver JDBC de PostgreSQL.");
-            e.printStackTrace();
+            return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (SQLException e) {
-            // Error: Fallo la conexion a la base de datos (red, credenciales, servidor caido)
-            System.err.println("[ERROR] Error de conexion a la base de datos PostgreSQL.");
+            System.err.println("[ERROR BD] Fallo al establecer conexion con PostgreSQL: " + e.getMessage());
             e.printStackTrace();
-            // Reinicia la conexion para que la siguiente llamada intente reconectar
-            connection = null;
-        }
-        return connection;
-    }
-
-    /**
-     * Cierra la conexion activa a la base de datos si existe.
-     */
-    public static void disconnect() {
-        if (connection != null) {
-            try {
-                connection.close();
-                connection = null;
-                System.out.println("[DESCONECTADO] Conexion cerrada.");
-            } catch (SQLException e) {
-                // Error: No se pudo cerrar la conexion correctamente
-                System.err.println("[ERROR] Error al cerrar la conexion.");
-                e.printStackTrace();
-            }
+            return null;
         }
     }
 }

@@ -26,7 +26,6 @@ public class ReviewsDAO {
      */
     public List<Review> getReviewsByProduct(int productId) {
         List<Review> reviews = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         // JOIN con users para incluir el nombre del autor en la respuesta
         String query = "SELECT r.*, u.name as user_name " +
@@ -35,7 +34,8 @@ public class ReviewsDAO {
                 "WHERE r.product_id = ? " +
                 "ORDER BY r.created_at DESC, r.id DESC";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, productId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

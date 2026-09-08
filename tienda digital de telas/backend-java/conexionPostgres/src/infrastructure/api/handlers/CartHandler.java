@@ -35,13 +35,12 @@ public class CartHandler extends BaseHandler {
 
         // GET /api/cart?userId=N — Obtiene todos los ítems del carrito de un usuario
         if ("GET".equals(method)) {
-            String query = exchange.getRequestURI().getQuery();
-            if (query != null && query.contains("userId=")) {
-                int userId = Integer.parseInt(query.split("userId=")[1]);
+            int userId = getQueryParamInt(exchange, "userId", -1);
+            if (userId > 0) {
                 List<CartItem> items = cartDAO.getCartByUser(userId);
                 sendJsonResponse(exchange, 200, gson.toJson(items));
             } else {
-                sendJsonResponse(exchange, 400, "{\"error\":\"Missing userId\"}");
+                sendJsonResponse(exchange, 400, "{\"error\":\"Missing or invalid userId\"}");
             }
 
         // POST /api/cart — Agrega un producto al carrito (userId, productId, quantity)

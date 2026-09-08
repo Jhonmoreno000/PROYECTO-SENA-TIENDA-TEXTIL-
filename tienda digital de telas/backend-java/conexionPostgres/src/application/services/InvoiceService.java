@@ -17,11 +17,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Servicio de Aplicación para la generación de Facturas Electrónicas en PDF.
+ * Utiliza Apache PDFBox para construir dinámicamente un documento PDF con marca de agua,
+ * encabezado con datos fiscales de D&D Textil, tabla detallada de ítems de compra,
+ * cálculo de impuestos (IVA 19%), totales formateados en pesos colombianos (COP)
+ * y la conversión del valor numérico a palabras (Son: X pesos).
+ */
 public class InvoiceService {
 
+    /** Margen exterior de las páginas PDF en puntos (50pt). */
     private static final float MARGIN = 50;
+    /** Ancho total de la página formato A4 (595.27pt). */
     private static final float PAGE_WIDTH = PDRectangle.A4.getWidth();
+    /** Alto total de la página formato A4 (841.89pt). */
     private static final float PAGE_HEIGHT = PDRectangle.A4.getHeight();
+    /** Formateador de moneda en pesos colombianos (COP). */
     private static final NumberFormat COP = NumberFormat.getCurrencyInstance(new Locale("es", "CO"));
 
     public byte[] generateInvoice(

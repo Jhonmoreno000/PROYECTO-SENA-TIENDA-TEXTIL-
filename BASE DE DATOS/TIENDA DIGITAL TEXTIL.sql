@@ -1211,19 +1211,19 @@ COPY public.orders (id, client_id, seller_id, total, status, order_date, updated
 --
 
 COPY public.product_images (id, product_id, image_url, display_order) FROM stdin;
-2	2	https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=800	0
-3	3	https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?auto=format&fit=crop&q=80&w=800	0
-4	4	https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&q=80&w=800	0
-5	5	https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?auto=format&fit=crop&q=80&w=800	0
-6	6	https://images.unsplash.com/photo-1553531384-397c80973a0b?auto=format&fit=crop&q=80&w=800	0
-7	7	https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&q=80&w=800	0
-8	8	https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=800	0
-9	1	http://localhost:8081/uploads/product_1_1774997166024.jpg	0
-10	9	https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?auto=format&fit=crop&q=80&w=800	0
-11	10	https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&q=80&w=800	0
-12	11	https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&q=80&w=800	0
-13	12	https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?auto=format&fit=crop&q=80&w=800	0
-14	13	https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?auto=format&fit=crop&q=80&w=800	0
+2	2	/uploads/product_16_1775766690228.webp	0
+3	3	/uploads/product_14_1775766898975.webp	0
+4	4	/uploads/product_14_1775766898975.webp	0
+5	5	/uploads/product_10_1775767265179.jpg	0
+6	6	/uploads/product_16_1775766690228.webp	0
+7	7	/uploads/product_15_1775767332095.jpg	0
+8	8	/uploads/product_12_1775767112691.jpg	0
+9	1	/uploads/product_12_1775767112691.jpg	0
+10	9	/uploads/product_9_1775766848979.jpg	0
+11	10	/uploads/product_10_1775766963190.webp	0
+12	11	/uploads/product_11_1775767027618.jpg	0
+13	12	/uploads/product_15_1775767332095.jpg	0
+14	13	/uploads/product_13_1777056293881.jpg	0
 \.
 
 

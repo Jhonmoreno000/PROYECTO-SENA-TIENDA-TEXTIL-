@@ -36,7 +36,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - uploads:/app/uploads
+      - "./tienda digital de telas/backend-java/conexionPostgres/uploads:/app/uploads"
 
   frontend:
     build:
@@ -50,4 +50,4 @@ services:
 
 volumes:
   pgdata:
-  uploads:
+

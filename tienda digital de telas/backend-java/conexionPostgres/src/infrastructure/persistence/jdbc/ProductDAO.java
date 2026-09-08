@@ -29,7 +29,6 @@ public class ProductDAO {
      */
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         // LEFT JOIN para obtener el nombre de la categoria desde la tabla categories
         String query = "SELECT p.*, c.name as category_name " +
@@ -37,8 +36,9 @@ public class ProductDAO {
                 "LEFT JOIN categories c ON p.category_id = c.id " +
                 "WHERE p.active = true";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Product product = new Product();
@@ -77,7 +77,6 @@ public class ProductDAO {
      */
     public List<Product> getProductsBySeller(int sellerId) {
         List<Product> products = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         // Incluye filtro active=true para que productos eliminados no reaparezcan en la vista del vendedor
         String query = "SELECT p.*, c.name as category_name " +
@@ -85,7 +84,8 @@ public class ProductDAO {
                 "LEFT JOIN categories c ON p.category_id = c.id " +
                 "WHERE p.seller_id = ? AND p.active = true";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, sellerId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -182,22 +182,23 @@ public class ProductDAO {
                 fos.write(imageBytes);
             }
 
-            String imageUrl = "http://localhost:8081/uploads/" + fileName;
+            String imageUrl = "/uploads/" + fileName;
 
-            // Elimina las imagenes viejas de este producto
-            Connection conn = Conexion.getConnection();
-            String deleteQuery = "DELETE FROM product_images WHERE product_id = ?";
-            try (PreparedStatement delStmt = conn.prepareStatement(deleteQuery)) {
-                delStmt.setInt(1, productId);
-                delStmt.executeUpdate();
-            }
+            // Elimina las imagenes viejas de este producto e inserta la nueva
+            try (Connection conn = Conexion.getConnection()) {
+                String deleteQuery = "DELETE FROM product_images WHERE product_id = ?";
+                try (PreparedStatement delStmt = conn.prepareStatement(deleteQuery)) {
+                    delStmt.setInt(1, productId);
+                    delStmt.executeUpdate();
+                }
 
-            // Inserta la nueva URL de la imagen
-            String insertQuery = "INSERT INTO product_images (product_id, image_url, display_order) VALUES (?, ?, 0)";
-            try (PreparedStatement insStmt = conn.prepareStatement(insertQuery)) {
-                insStmt.setInt(1, productId);
-                insStmt.setString(2, imageUrl);
-                insStmt.executeUpdate();
+                // Inserta la nueva URL de la imagen
+                String insertQuery = "INSERT INTO product_images (product_id, image_url, display_order) VALUES (?, ?, 0)";
+                try (PreparedStatement insStmt = conn.prepareStatement(insertQuery)) {
+                    insStmt.setInt(1, productId);
+                    insStmt.setString(2, imageUrl);
+                    insStmt.executeUpdate();
+                }
             }
 
             return imageUrl;
@@ -216,10 +217,10 @@ public class ProductDAO {
      * @return true si la actualizacion fue exitosa, false en caso de error.
      */
     public boolean updateProduct(int productId, double price, int stock) {
-        Connection conn = Conexion.getConnection();
         // Actualiza precio y stock, y registra la fecha/hora de la modificacion
         String query = "UPDATE products SET price = ?, stock = ?, updated_at = NOW() WHERE id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setDouble(1, price);
             stmt.setInt(2, stock);
             stmt.setInt(3, productId);
@@ -242,7 +243,6 @@ public class ProductDAO {
      */
     public List<Product> getProductsBySection(String section) {
         List<Product> products = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         String column;
         if ("exclusivas".equals(section)) {
@@ -258,8 +258,9 @@ public class ProductDAO {
                 "LEFT JOIN categories c ON p.category_id = c.id " +
                 "WHERE p.active = true AND p." + column + " = true";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Product product = new Product();
@@ -297,7 +298,6 @@ public class ProductDAO {
      */
     public List<Product> getPendingProducts() {
         List<Product> products = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         // LEFT JOIN para incluir el nombre de categoria, filtrando solo pendientes de moderacion
         String query = "SELECT p.*, c.name as category_name " +
@@ -305,8 +305,9 @@ public class ProductDAO {
                 "LEFT JOIN categories c ON p.category_id = c.id " +
                 "WHERE p.moderation_status = 'pending'";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Product product = new Product();
@@ -347,11 +348,11 @@ public class ProductDAO {
      * @return true si la actualizacion fue exitosa, false en caso de error.
      */
     public boolean updateModerationStatus(int productId, String status, String reason) {
-        Connection conn = Conexion.getConnection();
         // Si se aprueba, active debe ser true. Si se rechaza, permanece false.
         boolean active = status.equals("approved");
         String query = "UPDATE products SET moderation_status = ?, rejection_reason = ?, active = ?, updated_at = NOW() WHERE id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, status);
             stmt.setString(2, reason);
             stmt.setBoolean(3, active);

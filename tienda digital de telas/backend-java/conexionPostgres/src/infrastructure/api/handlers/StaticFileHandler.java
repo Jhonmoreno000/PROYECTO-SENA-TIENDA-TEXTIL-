@@ -27,32 +27,44 @@ public class StaticFileHandler extends BaseHandler {
         String filePath = uriPath.substring(1);
         File file = new File(filePath);
 
+        // Prevención de ataques de Path Traversal: asegurar que el archivo esté dentro de uploads/
+        File uploadsDir = new File("uploads").getCanonicalFile();
+        File canonicalFile = file.getCanonicalFile();
+        if (!canonicalFile.getPath().startsWith(uploadsDir.getPath())) {
+            sendJsonResponse(exchange, 403, "{\"error\":\"Acceso denegado: ruta no permitida\"}");
+            return;
+        }
+
         // Si el archivo no existe o es un directorio, devuelve 404
-        if (!file.exists() || file.isDirectory()) {
-            String response = "404 (Not Found)\n";
-            exchange.sendResponseHeaders(404, response.length());
-            exchange.getResponseBody().write(response.getBytes());
+        if (!canonicalFile.exists() || canonicalFile.isDirectory()) {
+            sendJsonResponse(exchange, 404, "{\"error\":\"Archivo no encontrado\"}");
             return;
         }
 
         // Determina el tipo MIME del archivo (ej: image/png, application/pdf)
-        String mimeType = Files.probeContentType(file.toPath());
+        String mimeType = Files.probeContentType(canonicalFile.toPath());
         if (mimeType == null) {
             mimeType = "application/octet-stream";
         }
 
-        // Configura la cabecera Content-Type y envía el archivo en chunks de 64 KB
+        // Configura la cabecera Content-Type y envía el archivo
         exchange.getResponseHeaders().set("Content-Type", mimeType);
-        exchange.sendResponseHeaders(200, file.length());
-
-        OutputStream os = exchange.getResponseBody();
-        FileInputStream fs = new FileInputStream(file);
-        byte[] buffer = new byte[0x10000];
-        int count;
-        while ((count = fs.read(buffer)) >= 0) {
-            os.write(buffer, 0, count);
+        
+        if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(200, -1);
+            exchange.getResponseBody().close();
+            return;
         }
-        fs.close();
-        os.close();
+
+        exchange.sendResponseHeaders(200, canonicalFile.length());
+
+        try (OutputStream os = exchange.getResponseBody();
+             FileInputStream fs = new FileInputStream(canonicalFile)) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = fs.read(buffer)) >= 0) {
+                os.write(buffer, 0, count);
+            }
+        }
     }
 }

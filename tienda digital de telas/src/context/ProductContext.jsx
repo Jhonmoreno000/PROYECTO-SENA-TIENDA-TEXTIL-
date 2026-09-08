@@ -57,7 +57,15 @@ export function ProductProvider({ children }) {
                 throw new Error('Error al cargar los productos');
             }
             const data = await response.json();
-            setProducts(data);
+            const formattedData = (data || []).map(p => ({
+                ...p,
+                images: (p.images || []).map(img =>
+                    img && typeof img === 'string' && img.startsWith('http://localhost:8081/uploads/')
+                        ? img.replace('http://localhost:8081', '')
+                        : img
+                )
+            }));
+            setProducts(formattedData);
         } catch (err) {
             console.error('Error al obtener productos de la API:', err);
             // Mensaje específico si el backend no está encendido

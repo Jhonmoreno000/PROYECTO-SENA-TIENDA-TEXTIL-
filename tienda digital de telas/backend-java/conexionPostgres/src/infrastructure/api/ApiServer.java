@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.File;
 import java.net.InetSocketAddress;
 
+import java.util.concurrent.Executors;
+
 import application.services.AuthService;
 import domain.repositories.UserRepository;
 import infrastructure.api.handlers.AuthHandler;
@@ -14,9 +16,8 @@ import infrastructure.api.handlers.*;
 /**
  * Servidor HTTP principal de la API REST para la tienda textil.
  * Configura y arranca el servidor embebido de Java (com.sun.net.httpserver),
- * registra todas las rutas (endpoints) y realiza la inyección de dependencias
- * manual para los controladores que ya han sido migrados a Clean Architecture.
- * Los controladores legacy aún operativos se instancian directamente.
+ * registra todas las rutas (endpoints) y asigna un Pool de Hilos Concurrente (64 hilos)
+ * para soportar alto tráfico de usuarios sin congelamientos ni degradación de rendimiento.
  */
 public class ApiServer {
 
@@ -87,10 +88,13 @@ public class ApiServer {
         // Sirve archivos estáticos subidos (imágenes, documentos)
         server.createContext("/uploads", new StaticFileHandler());
 
-        // Usa el executor por defecto (null = hilo por solicitud)
-        server.setExecutor(null);
+        // Pool de Hilos para alta concurrencia (procesa hasta 64 solicitudes simultáneas en paralelo)
+        int numThreads = Math.max(32, Runtime.getRuntime().availableProcessors() * 8);
+        server.setExecutor(Executors.newFixedThreadPool(numThreads));
+        
         // Inicia el servidor (comienza a aceptar conexiones)
         server.start();
-        System.out.println("Servidor API (Clean Architecture Híbrido Actualizado) corriendo en puerto: " + port);
+        System.out.println("Servidor API (Alto Rendimiento Concurrente: " + numThreads + " hilos) corriendo en puerto: " + port);
     }
 }
+

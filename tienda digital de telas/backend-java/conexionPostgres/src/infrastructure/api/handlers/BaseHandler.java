@@ -97,4 +97,42 @@ public abstract class BaseHandler implements HttpHandler {
         String json = "{\"error\": \"" + safeMessage + "\"}";
         sendJsonResponse(exchange, statusCode, json);
     }
+
+    /**
+     * Obtiene el valor de un parámetro de consulta (query param) de la URI de forma segura.
+     * Evita excepciones por desbordamiento de arreglos o formatos imprevistos.
+     *
+     * @param exchange  Intercambio HTTP.
+     * @param paramName Nombre del parámetro a buscar.
+     * @return El valor del parámetro descodificado en UTF-8, o null si no existe.
+     */
+    protected String getQueryParam(HttpExchange exchange, String paramName) {
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null || query.isBlank()) return null;
+        for (String pair : query.split("&")) {
+            String[] kv = pair.split("=");
+            if (kv.length >= 1 && kv[0].equalsIgnoreCase(paramName)) {
+                return kv.length > 1 ? java.net.URLDecoder.decode(kv[1], StandardCharsets.UTF_8) : "";
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene un parámetro de consulta como entero de forma segura.
+     *
+     * @param exchange     Intercambio HTTP.
+     * @param paramName    Nombre del parámetro.
+     * @param defaultValue Valor por defecto si no existe o no es numérico.
+     * @return El valor entero parsed, o defaultValue si falla.
+     */
+    protected int getQueryParamInt(HttpExchange exchange, String paramName, int defaultValue) {
+        String val = getQueryParam(exchange, paramName);
+        if (val == null) return defaultValue;
+        try {
+            return Integer.parseInt(val);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
 }

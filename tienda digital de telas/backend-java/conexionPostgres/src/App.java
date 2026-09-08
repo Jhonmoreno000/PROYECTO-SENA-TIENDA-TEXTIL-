@@ -1,9 +1,17 @@
-// Importa la clase ApiServer desde el paquete infrastructure.api, que contiene la lógica del servidor HTTP
 import infrastructure.api.ApiServer;
 
-// Clase principal de la aplicación — punto de entrada del sistema backend de D&D Textil
+/**
+ * Clase principal de la aplicación — Punto de entrada del backend Java para D&D Textil.
+ * Inicia el servidor HTTP embebido en el puerto configurado (puerto 8081 por defecto).
+ */
 public class App {
-    // Método principal que inicia la ejecución del programa; recibe argumentos de línea de comandos
+
+    /**
+     * Punto de entrada principal de la JVM.
+     * Instancia y arranca el {@link ApiServer} en el puerto especificado.
+     *
+     * @param args Argumentos de la línea de comandos (opcionales).
+     */
     public static void main(String[] args) {
         // Bloque try-catch para capturar cualquier excepción durante el arranque del servidor
         try {

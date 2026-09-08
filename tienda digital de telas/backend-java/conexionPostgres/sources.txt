@@ -1,44 +1,55 @@
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\App.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\MockDataSeeder.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\application\services\AuthService.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\exceptions\DomainException.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\BugReport.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\CartItem.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\ConfigItem.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\Coupon.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\DailySale.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\GlobalBanner.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\InventoryBatch.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\Order.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\Product.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\RecentActivity.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\RegionSale.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\StockThreshold.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\SupportTicket.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\User.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\models\WasteEvent.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\domain\repositories\UserRepository.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\ApiServer.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\AuthHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\BaseHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\CartHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\ConfigHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\CouponsHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\InventoryHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\OrdersHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\ProductImageHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\ProductsHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\StaticFileHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\SupportHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\api\handlers\UsersHandler.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\config\Conexion.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\AuthDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\CartDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\ConfigDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\CouponDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\InventoryDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\JdbcUserRepositoryImpl.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\OrderDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\ProductDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\SupportDAO.java"
-"C:\Users\Anderson Moreno\Documents\tienda digital de telas\tienda digital de telas\backend-java\conexionPostgres\src\infrastructure\persistence\jdbc\UserDAO.java"
+src/App.java
+src/MockDataSeeder.java
+src/application/services/AuthService.java
+src/application/services/InvoiceService.java
+src/domain/exceptions/DomainException.java
+src/domain/models/BugReport.java
+src/domain/models/CarouselSlide.java
+src/domain/models/CartItem.java
+src/domain/models/ConfigItem.java
+src/domain/models/Coupon.java
+src/domain/models/DailySale.java
+src/domain/models/GlobalBanner.java
+src/domain/models/HomeSection.java
+src/domain/models/InventoryBatch.java
+src/domain/models/Order.java
+src/domain/models/Product.java
+src/domain/models/RecentActivity.java
+src/domain/models/RegionSale.java
+src/domain/models/Review.java
+src/domain/models/StockThreshold.java
+src/domain/models/SupportTicket.java
+src/domain/models/User.java
+src/domain/models/WasteEvent.java
+src/domain/repositories/UserRepository.java
+src/infrastructure/api/ApiServer.java
+src/infrastructure/api/handlers/AuthHandler.java
+src/infrastructure/api/handlers/BaseHandler.java
+src/infrastructure/api/handlers/CarouselHandler.java
+src/infrastructure/api/handlers/CartHandler.java
+src/infrastructure/api/handlers/ConfigHandler.java
+src/infrastructure/api/handlers/CouponsHandler.java
+src/infrastructure/api/handlers/HomeSectionsHandler.java
+src/infrastructure/api/handlers/InventoryHandler.java
+src/infrastructure/api/handlers/InvoiceHandler.java
+src/infrastructure/api/handlers/OrdersHandler.java
+src/infrastructure/api/handlers/ProductImageHandler.java
+src/infrastructure/api/handlers/ProductsHandler.java
+src/infrastructure/api/handlers/ReviewsHandler.java
+src/infrastructure/api/handlers/StaticFileHandler.java
+src/infrastructure/api/handlers/SupportHandler.java
+src/infrastructure/api/handlers/UsersHandler.java
+src/infrastructure/config/Conexion.java
+src/infrastructure/persistence/jdbc/AuthDAO.java
+src/infrastructure/persistence/jdbc/CarouselDAO.java
+src/infrastructure/persistence/jdbc/CartDAO.java
+src/infrastructure/persistence/jdbc/ConfigDAO.java
+src/infrastructure/persistence/jdbc/CouponDAO.java
+src/infrastructure/persistence/jdbc/HomeSectionsDAO.java
+src/infrastructure/persistence/jdbc/InventoryDAO.java
+src/infrastructure/persistence/jdbc/JdbcUserRepositoryImpl.java
+src/infrastructure/persistence/jdbc/OrderDAO.java
+src/infrastructure/persistence/jdbc/ProductDAO.java
+src/infrastructure/persistence/jdbc/ReviewsDAO.java
+src/infrastructure/persistence/jdbc/SupportDAO.java
+src/infrastructure/persistence/jdbc/UserDAO.java

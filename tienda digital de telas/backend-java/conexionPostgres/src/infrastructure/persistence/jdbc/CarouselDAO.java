@@ -25,12 +25,12 @@ public class CarouselDAO {
      */
     public List<CarouselSlide> getActiveSlides() {
         List<CarouselSlide> slides = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         String query = "SELECT * FROM carousel_slides WHERE active = true ORDER BY sort_order ASC, id ASC";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 slides.add(mapRow(rs));
@@ -48,12 +48,12 @@ public class CarouselDAO {
      */
     public List<CarouselSlide> getAllSlides() {
         List<CarouselSlide> slides = new ArrayList<>();
-        Connection conn = Conexion.getConnection();
 
         String query = "SELECT * FROM carousel_slides ORDER BY sort_order ASC, id ASC";
 
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-                ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 slides.add(mapRow(rs));
