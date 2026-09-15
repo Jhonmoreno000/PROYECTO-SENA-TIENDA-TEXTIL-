@@ -1,0 +1,3 @@
+@echo off
+echo Ejecutando PobladorDatosPrueba para PostgreSQL...
+java -cp "bin;lib/*" PobladorDatosPrueba
