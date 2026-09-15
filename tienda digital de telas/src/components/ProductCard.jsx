@@ -27,10 +27,12 @@ function ProductCard({ product }) {
 
     const discountInfo = productDiscounts?.[product.id];
     const hasDiscount = discountInfo?.active && discountInfo?.percent > 0;
-    const discountedPrice = hasDiscount ? product.price * (1 - discountInfo.percent / 100) : product.price;
-    const isOutOfStock = (product.stock ?? 0) <= 0;
-    const lowStock = !isOutOfStock && product.stock < 10;
-    const categoryStyle = CATEGORY_STYLES[product.category] || 'bg-slate-600/90 text-white';
+    const basePrice = Number(product.price ?? product.precio ?? 0);
+    const discountedPrice = hasDiscount ? basePrice * (1 - discountInfo.percent / 100) : basePrice;
+    const stockAvailable = Number(product.stock !== undefined ? product.stock : (product.existencias !== undefined ? product.existencias : 0));
+    const isOutOfStock = stockAvailable <= 0;
+    const lowStock = !isOutOfStock && stockAvailable < 10;
+    const categoryStyle = CATEGORY_STYLES[product.category || product.categoria] || 'bg-slate-600/90 text-white';
     const inCart = isInCart(product.id);
     const qtyInCart = getProductQuantity(product.id);
 
@@ -181,20 +183,22 @@ function ProductCard({ product }) {
                 <div className="p-5">
                     <Link to={`/producto/${product.id}`} className="block">
                         <h3 className="font-bold text-lg mb-2 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                            {product.name}
+                            {product.name || product.nombre}
                         </h3>
 
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                            {product.description}
+                            {product.description || product.descripcion}
                         </p>
 
                         <div className="flex flex-wrap items-center gap-2 text-xs mb-4">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-medium">
-                                <Ruler size={12} /> Ancho: {product.width}
-                            </span>
-                            {product.weight && (
+                            {(product.width || product.ancho) && (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-medium">
-                                    <Weight size={12} /> {product.weight}
+                                    <Ruler size={12} /> Ancho: {product.width || product.ancho}
+                                </span>
+                            )}
+                            {(product.weight || product.peso) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-medium">
+                                    <Weight size={12} /> {product.weight || product.peso}
                                 </span>
                             )}
                             {product.material && (
@@ -208,11 +212,11 @@ function ProductCard({ product }) {
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 leading-tight">
-                                {formatCurrency(hasDiscount ? discountedPrice : product.price)}
+                                {formatCurrency(hasDiscount ? discountedPrice : basePrice)}
                             </div>
                             {hasDiscount && (
                                 <div className="text-xs text-gray-400 line-through">
-                                    {formatCurrency(product.price)}
+                                    {formatCurrency(basePrice)}
                                 </div>
                             )}
                             <div className="text-xs text-gray-500 dark:text-gray-400">por metro</div>

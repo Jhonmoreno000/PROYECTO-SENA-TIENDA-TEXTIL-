@@ -63,22 +63,22 @@ function OrderHistory() {
 
     // Filtrar pedidos para el cliente actual
     const clientOrders = orders
-        .filter(order => order.clientId === user?.id || true) // Show all for demo
-        .filter(order => filterStatus === 'all' || order.status === filterStatus)
+        .filter(order => (order.clientId === user?.id || order.idCliente === user?.id || true)) // Show all for demo
+        .filter(order => filterStatus === 'all' || order.status === filterStatus || order.estado === filterStatus)
         .filter(order =>
             searchTerm === '' ||
             order.id.toString().includes(searchTerm) ||
             (order.trackingNumber && order.trackingNumber.includes(searchTerm))
         )
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+        .sort((a, b) => new Date(b.date || b.orderDate || b.fecha || 0) - new Date(a.date || a.orderDate || a.fecha || 0));
 
-    const totalOrders = orders.filter(order => order.clientId === user?.id || true).length;
-    const activeOrders = orders.filter(o => (o.clientId === user?.id || true) && ['paid', 'cutting', 'packed', 'shipped'].includes(o.status)).length;
-    const deliveredOrders = orders.filter(o => (o.clientId === user?.id || true) && o.status === 'delivered').length;
+    const totalOrders = orders.filter(order => order.clientId === user?.id || order.idCliente === user?.id || true).length;
+    const activeOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id || true) && ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
+    const deliveredOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id || true) && (o.status === 'delivered' || o.estado === 'entregado')).length;
 
     const handleDownloadInvoice = async (orderId) => {
         try {
-            const res = await fetch(getApiUrl(`/api/invoices/${orderId}`));
+            const res = await fetch(getApiUrl(`/api/facturas/${orderId}`));
             if (!res.ok) {
                 alert('Error al descargar la factura');
                 return;
@@ -233,7 +233,7 @@ function OrderHistory() {
                                             <div className="flex flex-wrap items-center gap-6 text-sm">
                                                 <span className="flex items-center gap-2 text-gray-500 dark:text-gray-400 font-medium">
                                                     <Calendar className="w-4 h-4 text-gray-400" />
-                                                    {new Date(order.date).toLocaleDateString('es-CO', {
+                                                    {new Date(order.date || order.orderDate || order.fecha || Date.now()).toLocaleDateString('es-CO', {
                                                         year: 'numeric',
                                                         month: 'long',
                                                         day: 'numeric'
@@ -252,9 +252,9 @@ function OrderHistory() {
                                         <div className="md:text-right bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                                             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total Pagado</p>
                                             <p className="text-2xl font-black text-gray-900 dark:text-white">
-                                                {formatCurrency(order.total)}
+                                                {formatCurrency(order.total || order.montoTotal || 0)}
                                             </p>
-                                            <p className="text-xs font-medium text-gray-500 mt-1">{order.items || 1} producto(s)</p>
+                                            <p className="text-xs font-medium text-gray-500 mt-1">{(Array.isArray(order.items) ? order.items.length : (order.items || 1))} producto(s)</p>
                                         </div>
                                     </div>
 

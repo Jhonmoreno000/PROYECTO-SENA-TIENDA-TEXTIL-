@@ -20,8 +20,9 @@ public abstract class ManejadorBase implements HttpHandler {
         intercambio.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
         intercambio.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type,Authorization");
 
-        if ("OPTIONS".equals(intercambio.getRequestMethod())) {
+        if ("OPTIONS".equalsIgnoreCase(intercambio.getRequestMethod())) {
             intercambio.sendResponseHeaders(204, -1);
+            intercambio.getResponseBody().close();
             return;
         }
 

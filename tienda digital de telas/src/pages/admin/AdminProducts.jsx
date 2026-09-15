@@ -190,11 +190,14 @@ export default function AdminProducts() {
     if (updatedForm.images?.[0]?.startsWith('data:')) {
       try {
         const res = await fetch(
-          getApiUrl(`/api/products/${editingProduct.id}/image`),
+          getApiUrl(`/api/productos/${editingProduct.id}/imagen`),
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: updatedForm.images[0] }),
+            body: JSON.stringify({
+              image: updatedForm.images[0],
+              imagen: updatedForm.images[0]
+            }),
           }
         );
         if (res.ok) {

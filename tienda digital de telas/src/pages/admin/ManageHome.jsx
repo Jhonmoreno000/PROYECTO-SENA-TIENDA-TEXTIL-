@@ -32,7 +32,7 @@ function ManageHome() {
     useEffect(() => {
         const local = localStorage.getItem('home_sections_config');
         if (local) { try { setSections(JSON.parse(local)); } catch (e) {} }
-        fetch(getApiUrl('/api/config/home_sections_config'))
+        fetch(getApiUrl('/api/configuracion/home_sections_config'))
             .then(r => r.ok ? r.text() : null)
             .then(text => {
                 if (text && text !== '{}') { const p = JSON.parse(text); setSections(p); localStorage.setItem('home_sections_config', JSON.stringify(p)); }
@@ -56,10 +56,15 @@ function ManageHome() {
         localStorage.setItem('home_sections_config', JSON.stringify(updated));
         showNotification('success', 'Visibilidad actualizada');
         try {
-            await fetch(getApiUrl('/api/config'), {
+            await fetch(getApiUrl('/api/configuracion'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'home_sections_config', value: JSON.stringify(updated) })
+                body: JSON.stringify({
+                    key: 'home_sections_config',
+                    clave: 'home_sections_config',
+                    value: JSON.stringify(updated),
+                    valor: JSON.stringify(updated)
+                })
             });
         } catch (e) {}
     };

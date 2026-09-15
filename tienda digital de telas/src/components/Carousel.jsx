@@ -75,11 +75,18 @@ function Carousel() {
 
     // Carga los slides desde la base de datos (los administra el panel admin)
     useEffect(() => {
-        fetch(getApiUrl('/api/carousel'))
+        fetch(getApiUrl('/api/carrusel'))
             .then(res => res.ok ? res.json() : null)
             .then(data => {
                 if (data && data.length > 0) {
-                    setCarouselSlides(data);
+                    setCarouselSlides(data.map(s => ({
+                        ...s,
+                        title: s.title || s.titulo,
+                        subtitle: s.subtitle || s.subtitulo,
+                        image: s.image || s.imagen,
+                        sectionKey: s.sectionKey || s.claveSeccion,
+                        cta: s.cta
+                    })));
                 }
             })
             .catch(() => {

@@ -3,6 +3,7 @@ import { Send, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useNotification } from '../context/NotificationContext';
+import { getApiUrl } from '../config';
 
 function BugReport() {
     const { showNotification } = useNotification();
@@ -15,21 +16,41 @@ function BugReport() {
     });
     const [submitted, setSubmitted] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Simulate API call
-        setTimeout(() => {
-            setSubmitted(true);
-            showNotification('success', 'Reporte enviado correctamente');
-            setFormData({
-                title: '',
-                description: '',
-                steps: '',
-                severity: 'low',
-                type: 'bug'
+        try {
+            const payload = {
+                title: formData.title,
+                titulo: formData.title,
+                description: `${formData.description}\n\nPasos para reproducir:\n${formData.steps}`,
+                descripcion: `${formData.description}\n\nPasos para reproducir:\n${formData.steps}`,
+                severity: formData.severity,
+                severidad: formData.severity,
+                sellerId: 1,
+                idVendedor: 1,
+                sellerName: 'Usuario Web',
+                nombreVendedor: 'Usuario Web',
+                status: 'open',
+                estado: 'abierto'
+            };
+            await fetch(getApiUrl('/api/soporte/errores'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-        }, 1000);
+        } catch (err) {
+            console.warn('Error enviando reporte:', err);
+        }
+
+        setSubmitted(true);
+        showNotification('success', 'Reporte enviado correctamente');
+        setFormData({
+            title: '',
+            description: '',
+            steps: '',
+            severity: 'low',
+            type: 'bug'
+        });
     };
 
     return (

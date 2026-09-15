@@ -109,9 +109,13 @@ public class PedidoDAO {
                         Object objCant = articulo.getOrDefault("quantity", articulo.get("cantidad"));
                         Object objPrecio = articulo.getOrDefault("unitPrice", articulo.get("precioUnitario"));
 
-                        pst.setInt(2, ((Number) objProd).intValue());
-                        pst.setInt(3, ((Number) objCant).intValue());
-                        pst.setDouble(4, ((Number) objPrecio).doubleValue());
+                        int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
+                        double cant = (objCant instanceof Number) ? ((Number) objCant).doubleValue() : Double.parseDouble(String.valueOf(objCant));
+                        double precio = (objPrecio instanceof Number) ? ((Number) objPrecio).doubleValue() : Double.parseDouble(String.valueOf(objPrecio));
+
+                        pst.setInt(2, idProd);
+                        pst.setDouble(3, cant);
+                        pst.setDouble(4, precio);
                         pst.addBatch();
                     }
                     pst.executeBatch();

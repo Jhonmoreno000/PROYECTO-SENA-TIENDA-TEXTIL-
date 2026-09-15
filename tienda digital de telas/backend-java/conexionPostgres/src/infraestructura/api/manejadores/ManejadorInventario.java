@@ -7,12 +7,12 @@ import com.google.gson.JsonParser;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import infraestructura.persistencia.jdbc.InventarioDAO;
-import dominio.modelos.LoteInventario;
-import dominio.modelos.EventoMerma;
 import dominio.modelos.ActividadReciente;
+import dominio.modelos.EventoMerma;
+import dominio.modelos.LoteInventario;
 
 /**
- * Controlador para la gestión de inventario, métricas, actividad y banners.
+ * Controlador para inventario, lotes, desperdicios, métricas y actividad.
  */
 public class ManejadorInventario extends ManejadorBase {
     private final InventarioDAO dao = new InventarioDAO();
@@ -20,14 +20,14 @@ public class ManejadorInventario extends ManejadorBase {
 
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
-        String ruta = intercambio.getRequestURI().getPath();
         String metodo = intercambio.getRequestMethod();
+        String ruta = intercambio.getRequestURI().getPath();
 
-        if ("GET".equals(metodo)) {
+        if ("GET".equalsIgnoreCase(metodo)) {
             manejarGet(ruta, intercambio);
-        } else if ("POST".equals(metodo)) {
+        } else if ("POST".equalsIgnoreCase(metodo)) {
             manejarPost(ruta, intercambio);
-        } else if ("PUT".equals(metodo)) {
+        } else if ("PUT".equalsIgnoreCase(metodo)) {
             manejarPut(ruta, intercambio);
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
@@ -81,21 +81,38 @@ public class ManejadorInventario extends ManejadorBase {
     private void manejarPut(String ruta, HttpExchange intercambio) throws Exception {
         InputStream entrada = intercambio.getRequestBody();
         String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
+        JsonObject json;
+        try {
+            json = JsonParser.parseString(cuerpo).getAsJsonObject();
+        } catch (Exception e) {
+            enviarRespuestaJson(intercambio, 400, "{\"error\":\"JSON inválido\"}");
+            return;
+        }
 
         if (ruta.contains("/batches/") || ruta.contains("/lotes/")) {
-            String idLote = ruta.split("/")[ruta.split("/").length - 1];
-            double metros = json.has("currentMeters") ? json.get("currentMeters").getAsDouble() : json.get("metrosActuales").getAsDouble();
-            String estado = json.has("status") ? json.get("status").getAsString() : json.get("estado").getAsString();
+            String[] partes = ruta.split("/");
+            String idLote = partes[partes.length - 1];
+            double metros = json.has("currentMeters") ? json.get("currentMeters").getAsDouble()
+                          : (json.has("metrosActuales") ? json.get("metrosActuales").getAsDouble() : 0.0);
+            String estado = json.has("status") ? json.get("status").getAsString()
+                          : (json.has("estado") ? json.get("estado").getAsString() : "active");
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.actualizarLote(idLote, metros, estado) + "}");
+
         } else if (ruta.endsWith("/thresholds") || ruta.endsWith("/umbrales")) {
-            String tela = json.has("fabricType") ? json.get("fabricType").getAsString() : json.get("tipoTela").getAsString();
-            double metrosMinimos = json.has("minMeters") ? json.get("minMeters").getAsDouble() : json.get("metrosMinimos").getAsDouble();
+            String tela = json.has("fabricType") ? json.get("fabricType").getAsString()
+                        : (json.has("tipoTela") ? json.get("tipoTela").getAsString() : "");
+            double metrosMinimos = json.has("minMeters") ? json.get("minMeters").getAsDouble()
+                                 : (json.has("metrosMinimos") ? json.get("metrosMinimos").getAsDouble() : 20.0);
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.actualizarUmbral(tela, metrosMinimos) + "}");
+
         } else if (ruta.equals("/api/banner")) {
-            boolean habilitado = json.has("enabled") ? json.get("enabled").getAsBoolean() : json.get("habilitado").getAsBoolean();
-            String mensaje = json.has("message") ? json.get("message").getAsString() : json.get("mensaje").getAsString();
-            String tipo = json.has("bannerType") ? json.get("bannerType").getAsString() : json.get("tipoBanner").getAsString();
+            boolean habilitado = json.has("enabled") ? json.get("enabled").getAsBoolean()
+                               : (json.has("habilitado") ? json.get("habilitado").getAsBoolean()
+                               : (json.has("activo") ? json.get("activo").getAsBoolean() : false));
+            String mensaje = json.has("message") ? json.get("message").getAsString()
+                           : (json.has("mensaje") ? json.get("mensaje").getAsString() : "");
+            String tipo = json.has("bannerType") ? json.get("bannerType").getAsString()
+                        : (json.has("tipoBanner") ? json.get("tipoBanner").getAsString() : "info");
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.actualizarBanner(habilitado, mensaje, tipo) + "}");
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");

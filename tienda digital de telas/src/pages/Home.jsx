@@ -23,7 +23,7 @@ function Home() {
 
     useEffect(() => {
         // Carga los apartados editados por el admin desde la base de datos
-        fetch(getApiUrl('/api/home-sections'))
+        fetch(getApiUrl('/api/secciones-inicio'))
             .then(res => res.ok ? res.json() : null)
             .then(data => { if (data && data.length > 0) setHomeSections(data); })
             .catch(() => {
@@ -45,7 +45,7 @@ function Home() {
             }
             
             // Still attempt to get from backend quietly
-            fetch(getApiUrl('/api/config/home_sections_config'))
+            fetch(getApiUrl('/api/configuracion/home_sections_config'))
                 .then(res => res.ok ? res.text() : null)
                 .then(text => {
                     if (text && text !== '{}') {

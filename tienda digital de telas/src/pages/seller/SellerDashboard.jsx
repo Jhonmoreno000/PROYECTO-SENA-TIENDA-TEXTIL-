@@ -198,10 +198,13 @@ export default function SellerDashboard() {
     // Si se seleccionó una nueva imagen (Base64), subirla al servidor
     if (updatedForm.images?.[0]?.startsWith('data:')) {
       try {
-        const res = await fetch(getApiUrl(`/api/products/${productId}/image`), {
+        const res = await fetch(getApiUrl(`/api/productos/${productId}/imagen`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: updatedForm.images[0] }),
+          body: JSON.stringify({
+            image: updatedForm.images[0],
+            imagen: updatedForm.images[0]
+          }),
         });
         if (res.ok) {
           const data = await res.json();

@@ -23,7 +23,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useNotification } from './NotificationContext'; // Para mostrar mensajes de éxito o error
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { getApiUrl } from '../config';
+import { getApiUrl, RUTAS_API } from '../config';
 import LogoutLoader from '../components/common/LogoutLoader'; // Animación de carga al cerrar sesión
 
 // Creamos el contexto que va a compartir los datos de sesión con toda la app
@@ -61,13 +61,13 @@ export function AuthProvider({ children }) {
      */
     const login = async (email, password) => {
         try {
-            const response = await fetch(getApiUrl('/api/login'), {
+            const rutaLogin = RUTAS_API?.login || '/api/iniciar-sesion';
+            const response = await fetch(getApiUrl(rutaLogin), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, correo: email, password, contrasena: password })
             });
 
-            // Protección: el backend a veces devuelve HTML en lugar de JSON si hay un error grave
             let data;
             try {
                 data = await response.json();
@@ -78,17 +78,25 @@ export function AuthProvider({ children }) {
             }
 
             if (response.ok && data.success) {
-                // Normalizamos los roles que vienen del backend en español a los que usa el frontend
-                // Ejemplo: 'administrador' → 'admin', 'vendedor' → 'seller', 'cliente' → 'client'
-                let normalizedRole = data.user.role;
+                const rawUser = data.user || data.usuario || {};
+                let normalizedRole = rawUser.role || rawUser.rol || 'client';
                 if (normalizedRole === 'administrador' || normalizedRole === 'admin') normalizedRole = 'admin';
-                else if (normalizedRole === 'vendedor') normalizedRole = 'seller';
-                else if (normalizedRole === 'cliente') normalizedRole = 'client';
+                else if (normalizedRole === 'vendedor' || normalizedRole === 'seller') normalizedRole = 'seller';
+                else if (normalizedRole === 'cliente' || normalizedRole === 'client') normalizedRole = 'client';
 
-                const loggedInUser = { ...data.user, role: normalizedRole };
+                const nombreUsuario = rawUser.name || rawUser.nombre || 'Usuario';
+                const loggedInUser = {
+                    ...rawUser,
+                    name: nombreUsuario,
+                    nombre: nombreUsuario,
+                    email: rawUser.email || rawUser.correo,
+                    correo: rawUser.email || rawUser.correo,
+                    role: normalizedRole,
+                    rol: normalizedRole
+                };
 
-                // Por seguridad, nunca guardamos el hash de la contraseña en el navegador
                 delete loggedInUser.password_hash;
+                delete loggedInUser.contrasena_hash;
 
                 setUser(loggedInUser);
                 showNotification('success', `¡Bienvenido ${loggedInUser.name}!`);
@@ -99,7 +107,6 @@ export function AuthProvider({ children }) {
             }
         } catch (error) {
             console.error('Error al iniciar sesión:', error);
-            // Si el error es de red (backend apagado), mostramos un mensaje específico
             const msg = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')
                 ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : 'Error al conectar con el servidor';
@@ -114,13 +121,17 @@ export function AuthProvider({ children }) {
      */
     const register = async (userData) => {
         try {
-            const response = await fetch(getApiUrl('/api/register'), {
+            const rutaRegistro = RUTAS_API?.registro || '/api/registro';
+            const response = await fetch(getApiUrl(rutaRegistro), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: userData.name,
-                    email: userData.email,
-                    password: userData.password
+                    name: userData.name || userData.nombre,
+                    nombre: userData.name || userData.nombre,
+                    email: userData.email || userData.correo,
+                    correo: userData.email || userData.correo,
+                    password: userData.password || userData.contrasena,
+                    contrasena: userData.password || userData.contrasena
                 })
             });
 
@@ -134,8 +145,7 @@ export function AuthProvider({ children }) {
             }
 
             if (response.ok && data.success) {
-                // Si el registro fue exitoso, iniciamos sesión automáticamente
-                return await login(userData.email, userData.password);
+                return await login(userData.email || userData.correo, userData.password || userData.contrasena);
             } else {
                 showNotification('error', data.error || 'No se pudo crear la cuenta');
                 return { success: false, message: data.error };

@@ -32,15 +32,35 @@ function TicketManagement() {
     const modalRef = useRef(null);
     const modalOverlayRef = useRef(null);
 
+    const isPending = (t) => {
+        const s = (t?.status || t?.estado || '').toLowerCase();
+        return s === 'open' || s === 'abierto' || s === 'in_progress' || s === 'en_progreso';
+    };
+
+    const isResolved = (t) => {
+        const s = (t?.status || t?.estado || '').toLowerCase();
+        return s === 'resolved' || s === 'resuelto' || s === 'closed' || s === 'cerrado';
+    };
+
     const filteredTickets = filterStatus === 'all'
         ? supportTickets
-        : supportTickets.filter(t => t.status === filterStatus);
+        : supportTickets.filter(t => {
+            const s = (t?.status || t?.estado || '').toLowerCase();
+            if (filterStatus === 'open') return s === 'open' || s === 'abierto';
+            if (filterStatus === 'in_progress') return s === 'in_progress' || s === 'en_progreso';
+            if (filterStatus === 'resolved') return s === 'resolved' || s === 'resuelto';
+            return s === filterStatus;
+        });
 
-    const highPriority = supportTickets.filter(t => t.priority === 'high' && t.status !== 'resolved').length;
-    const pending = supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
-    const resolvedToday = supportTickets.filter(t =>
-        t.status === 'resolved' && new Date(t.resolvedAt).toDateString() === new Date().toDateString()
-    ).length;
+    const highPriority = supportTickets.filter(t => {
+        const p = (t?.priority || t?.prioridad || '').toLowerCase();
+        return (p === 'high' || p === 'alta') && !isResolved(t);
+    }).length;
+    const pending = supportTickets.filter(isPending).length;
+    const resolvedToday = supportTickets.filter(t => {
+        const date = t?.resolvedAt || t?.fechaResolucion || t?.updatedAt;
+        return isResolved(t) && date && new Date(date).toDateString() === new Date().toDateString();
+    }).length;
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
@@ -70,29 +90,42 @@ function TicketManagement() {
     };
 
     const getStatusStyles = (status) => {
-        switch (status) {
-            case 'open': return 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200';
-            case 'in_progress': return 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200';
-            case 'resolved': return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200';
-            case 'closed': return 'bg-slate-50 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+        const s = (status || '').toLowerCase();
+        switch (s) {
+            case 'open':
+            case 'abierto': return 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200';
+            case 'in_progress':
+            case 'en_progreso': return 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200';
+            case 'resolved':
+            case 'resuelto': return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200';
+            case 'closed':
+            case 'cerrado': return 'bg-slate-50 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
             default: return 'bg-slate-50 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
         }
     };
 
     const getStatusLabel = (status) => {
-        switch (status) {
-            case 'open': return 'Abierto';
-            case 'in_progress': return 'En Progreso';
-            case 'resolved': return 'Resuelto';
-            case 'closed': return 'Cerrado';
-            default: return status;
+        const s = (status || '').toLowerCase();
+        switch (s) {
+            case 'open':
+            case 'abierto': return 'Abierto';
+            case 'in_progress':
+            case 'en_progreso': return 'En Progreso';
+            case 'resolved':
+            case 'resuelto': return 'Resuelto';
+            case 'closed':
+            case 'cerrado': return 'Cerrado';
+            default: return status || 'Abierto';
         }
     };
 
     const getNeonOrb = (priority) => {
-        switch (priority) {
-            case 'high': return <div className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse" />;
-            case 'medium': return <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.9)]" />;
+        const p = (priority || '').toLowerCase();
+        switch (p) {
+            case 'high':
+            case 'alta': return <div className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse" />;
+            case 'medium':
+            case 'media': return <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.9)]" />;
             default: return <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]" />;
         }
     };
@@ -106,9 +139,9 @@ function TicketManagement() {
 
     const tabs = [
         { id: 'all', label: 'Todos', count: supportTickets.length },
-        { id: 'open', label: 'Abiertos', count: supportTickets.filter(t => t.status === 'open').length },
-        { id: 'in_progress', label: 'En Acción', count: supportTickets.filter(t => t.status === 'in_progress').length },
-        { id: 'resolved', label: 'Resueltos', count: supportTickets.filter(t => t.status === 'resolved').length },
+        { id: 'open', label: 'Abiertos', count: supportTickets.filter(t => { const s = (t?.status || t?.estado || '').toLowerCase(); return s === 'open' || s === 'abierto'; }).length },
+        { id: 'in_progress', label: 'En Acción', count: supportTickets.filter(t => { const s = (t?.status || t?.estado || '').toLowerCase(); return s === 'in_progress' || s === 'en_progreso'; }).length },
+        { id: 'resolved', label: 'Resueltos', count: supportTickets.filter(isResolved).length },
     ];
 
     return (
@@ -182,34 +215,34 @@ function TicketManagement() {
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-2.5 mb-3">
                                             <span className="text-xs font-mono font-bold text-slate-400 dark:text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-                                                #{ticket.id.toString().padStart(4, '0')}
+                                                #{ticket.id?.toString().padStart(4, '0')}
                                             </span>
-                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest uppercase border ${getStatusStyles(ticket.status)}`}>
-                                                {getStatusLabel(ticket.status)}
+                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest uppercase border ${getStatusStyles(ticket.status || ticket.estado)}`}>
+                                                {getStatusLabel(ticket.status || ticket.estado)}
                                             </span>
                                             <div className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                                                {getNeonOrb(ticket.priority)}
+                                                {getNeonOrb(ticket.priority || ticket.prioridad)}
                                                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                                    {ticket.priority === 'high' ? 'Alta' : ticket.priority === 'medium' ? 'Media' : 'Baja'}
+                                                    {(ticket.priority === 'high' || ticket.prioridad === 'alta') ? 'Alta' : (ticket.priority === 'medium' || ticket.prioridad === 'media') ? 'Media' : 'Baja'}
                                                 </span>
                                             </div>
                                         </div>
-                                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:text-indigo-400 transition-colors">{ticket.subject}</h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium mb-4 leading-relaxed max-w-2xl">{ticket.description}</p>
+                                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:text-indigo-400 transition-colors">{ticket.subject || ticket.asunto || 'Sin Asunto'}</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium mb-4 leading-relaxed max-w-2xl">{ticket.description || ticket.descripcion || ''}</p>
                                         <div className="flex flex-wrap gap-3">
                                             <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-                                                <User size={13} className="text-slate-400 dark:text-slate-500" /> {ticket.customerName}
+                                                <User size={13} className="text-slate-400 dark:text-slate-500" /> {ticket.customerName || ticket.clienteNombre || ticket.user || 'Cliente'}
                                             </div>
                                             <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-                                                <Mail size={13} className="text-slate-400 dark:text-slate-500" /> {ticket.customerEmail}
+                                                <Mail size={13} className="text-slate-400 dark:text-slate-500" /> {ticket.customerEmail || ticket.clienteEmail || ticket.email || ''}
                                             </div>
-                                            {ticket.orderId && (
+                                            {(ticket.orderId || ticket.pedidoId) && (
                                                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-                                                    <ShoppingBag size={13} className="text-slate-400 dark:text-slate-500" /> #{ticket.orderId}
+                                                    <ShoppingBag size={13} className="text-slate-400 dark:text-slate-500" /> #{ticket.orderId || ticket.pedidoId}
                                                 </div>
                                             )}
                                             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                                                <Calendar size={13} /> {new Date(ticket.createdAt).toLocaleDateString('es-CO')}
+                                                <Calendar size={13} /> {new Date(ticket.createdAt || ticket.fechaCreacion || Date.now()).toLocaleDateString('es-CO')}
                                             </div>
                                         </div>
                                     </div>

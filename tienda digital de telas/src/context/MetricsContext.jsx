@@ -14,8 +14,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useProducts } from './ProductContext';
 import { formatCurrency } from '../utils/formatters';
 
-/** URL base del backend Java */
-const API = '';
+import { getApiUrl, RUTAS_API } from '../config';
 
 const MetricsContext = createContext();
 
@@ -45,13 +44,129 @@ const defaultSystemConfig = {
 };
 
 /**
- * Función auxiliar: hace fetch a un endpoint y retorna el JSON o null si falla.
- * @param {string} endpoint - Ruta relativa (ej: '/api/users')
+ * Normalizadores bilingües para garantizar compatibilidad total
+ * con las propiedades en inglés y español que retornan los controladores Java.
+ */
+const normalizarUsuario = (u) => ({
+    ...u,
+    id: u.id,
+    name: u.name || u.nombre || 'Usuario',
+    nombre: u.nombre || u.name || 'Usuario',
+    email: u.email || u.correo || '',
+    correo: u.correo || u.email || '',
+    role: u.role || u.rol || 'client',
+    rol: u.rol || u.role || 'cliente',
+    phone: u.phone || u.telefono || '',
+    telefono: u.telefono || u.phone || '',
+    active: u.active !== undefined ? u.active : (u.activo !== undefined ? u.activo : true),
+    activo: u.activo !== undefined ? u.activo : (u.active !== undefined ? u.active : true),
+    commissionRate: u.commissionRate ?? u.tasaComision ?? 0.10,
+    suspended: u.suspended !== undefined ? u.suspended : (u.suspendido !== undefined ? u.suspendido : false),
+    createdAt: u.createdAt || u.fechaCreacion || ''
+});
+
+const normalizarPedido = (o) => ({
+    ...o,
+    id: o.id,
+    clientId: o.clientId ?? o.idCliente,
+    idCliente: o.idCliente ?? o.clientId,
+    sellerId: o.sellerId ?? o.idVendedor,
+    idVendedor: o.idVendedor ?? o.sellerId,
+    status: o.status || o.estado || 'pending',
+    estado: o.estado || o.status || 'pending',
+    total: Number(o.total ?? o.montoTotal ?? 0),
+    montoTotal: Number(o.montoTotal ?? o.total ?? 0),
+    date: o.date || o.orderDate || o.fecha || o.fechaPedido || new Date().toISOString(),
+    orderDate: o.orderDate || o.date || o.fechaPedido || o.fecha || new Date().toISOString(),
+    clientName: o.clientName || o.nombreCliente || 'Cliente',
+    nombreCliente: o.nombreCliente || o.clientName || 'Cliente',
+    clientEmail: o.clientEmail || o.correoCliente || '',
+    correoCliente: o.correoCliente || o.clientEmail || '',
+    items: o.items || o.articulos || []
+});
+
+const normalizarCupon = (c) => ({
+    ...c,
+    id: c.id,
+    code: c.code || c.codigo || '',
+    codigo: c.codigo || c.code || '',
+    discountType: c.discountType || c.tipoDescuento || 'percentage',
+    tipoDescuento: c.tipoDescuento || c.discountType || 'porcentaje',
+    discountValue: Number(c.discountValue ?? c.valorDescuento ?? 0),
+    valorDescuento: Number(c.valorDescuento ?? c.discountValue ?? 0),
+    active: c.active !== undefined ? c.active : (c.activo !== undefined ? c.activo : true),
+    activo: c.activo !== undefined ? c.activo : (c.active !== undefined ? c.active : true),
+    usageCount: Number(c.usageCount ?? c.conteoUsos ?? 0),
+    conteoUsos: Number(c.conteoUsos ?? c.usageCount ?? 0),
+    rules: c.rules || {}
+});
+
+const normalizarTicket = (t) => ({
+    ...t,
+    id: t.id,
+    clientId: t.clientId ?? t.idCliente,
+    idCliente: t.idCliente ?? t.clientId,
+    clientName: t.clientName || t.nombreCliente || 'Cliente',
+    nombreCliente: t.nombreCliente || t.clientName || 'Cliente',
+    subject: t.subject || t.asunto || '',
+    asunto: t.asunto || t.subject || '',
+    description: t.description || t.descripcion || '',
+    descripcion: t.descripcion || t.description || '',
+    status: t.status || t.estado || 'open',
+    estado: t.estado || t.status || 'abierto',
+    priority: t.priority || t.prioridad || 'medium',
+    prioridad: t.prioridad || t.priority || 'media',
+    createdAt: t.createdAt || t.fechaCreacion || '',
+    updatedAt: t.updatedAt || t.fechaActualizacion || ''
+});
+
+const normalizarReporteError = (r) => ({
+    ...r,
+    id: r.id,
+    sellerId: r.sellerId ?? r.idVendedor,
+    idVendedor: r.idVendedor ?? r.sellerId,
+    sellerName: r.sellerName || r.nombreVendedor || 'Vendedor',
+    nombreVendedor: r.nombreVendedor || r.sellerName || 'Vendedor',
+    title: r.title || r.titulo || '',
+    titulo: r.titulo || r.title || '',
+    description: r.description || r.descripcion || '',
+    descripcion: r.descripcion || r.description || '',
+    severity: r.severity || r.severidad || 'medium',
+    severidad: r.severidad || r.severity || 'media',
+    status: r.status || r.estado || 'open',
+    estado: r.estado || r.status || 'abierto',
+    createdAt: r.createdAt || r.fechaCreacion || ''
+});
+
+const normalizarLote = (b) => ({
+    ...b,
+    id: b.id,
+    batchCode: b.batchCode || b.codigoLote || String(b.id),
+    codigoLote: b.codigoLote || b.batchCode || String(b.id),
+    fabricType: b.fabricType || b.tipoTela || '',
+    tipoTela: b.tipoTela || b.fabricType || '',
+    color: b.color || '',
+    initialMeters: Number(b.initialMeters ?? b.metrosIniciales ?? 0),
+    metrosIniciales: Number(b.metrosIniciales ?? b.initialMeters ?? 0),
+    currentMeters: Number(b.currentMeters ?? b.metrosActuales ?? 0),
+    metrosActuales: Number(b.metrosActuales ?? b.currentMeters ?? 0),
+    status: b.status || b.estado || 'active',
+    estado: b.estado || b.status || 'activo',
+    supplier: b.supplier || b.proveedor || '',
+    proveedor: b.proveedor || b.supplier || '',
+    entryDate: b.entryDate || b.fechaIngreso || '',
+    fechaIngreso: b.fechaIngreso || b.entryDate || '',
+    lastUpdate: b.lastUpdate || b.ultimaActualizacion || ''
+});
+
+/**
+ * Función auxiliar: hace fetch a un endpoint del backend Java y retorna el JSON o null si falla.
+ * @param {string} endpoint - Ruta relativa (ej: '/api/usuarios')
  * @returns {Promise<any|null>}
  */
 async function apiFetch(endpoint) {
     try {
-        const res = await fetch(`${API}${endpoint}`);
+        const res = await fetch(getApiUrl(endpoint));
         if (!res.ok) return null;
         const text = await res.text();
         if (!text || text === 'null' || text === '{}') return null;
@@ -117,32 +232,32 @@ export function MetricsProvider({ children }) {
                 apiSales, apiRegions, apiActivity, apiBanner, apiErpSales,
                 apiErpNotif, apiErpFabric, apiConfigRaw, apiProductDiscounts
             ] = await Promise.all([
-                apiFetch('/api/users'),
-                apiFetch('/api/products/pending'),
-                apiFetch('/api/orders'),
-                apiFetch('/api/coupons'),
-                apiFetch('/api/support/tickets'),
-                apiFetch('/api/support/bugs'),
-                apiFetch('/api/inventory/batches'),
-                apiFetch('/api/inventory/waste'),
-                apiFetch('/api/inventory/thresholds'),
-                apiFetch('/api/metrics/sales'),
-                apiFetch('/api/metrics/regions'),
-                apiFetch('/api/activity'),
-                apiFetch('/api/banner'),
-                apiFetch('/api/metrics/erp-sales'),
-                apiFetch('/api/metrics/notifications'),
-                apiFetch('/api/metrics/fabric-inventory'),
-                apiFetch('/api/config/system_config'),
-                apiFetch('/api/config/product_discounts'),
+                apiFetch(RUTAS_API?.usuarios || '/api/usuarios'),
+                apiFetch('/api/productos/pendientes'),
+                apiFetch(RUTAS_API?.pedidos || '/api/pedidos'),
+                apiFetch(RUTAS_API?.cupones || '/api/cupones'),
+                apiFetch('/api/soporte/tickets'),
+                apiFetch('/api/soporte/errores'),
+                apiFetch('/api/inventario/lotes'),
+                apiFetch('/api/inventario/mermas'),
+                apiFetch('/api/inventario/umbrales'),
+                apiFetch('/api/metricas/ventas'),
+                apiFetch('/api/metricas/regiones'),
+                apiFetch(RUTAS_API?.actividad || '/api/actividad'),
+                apiFetch(RUTAS_API?.banner || '/api/banner'),
+                apiFetch('/api/metricas/ventas-erp'),
+                apiFetch('/api/metricas/notificaciones'),
+                apiFetch('/api/metricas/inventario-telas'),
+                apiFetch('/api/configuracion/system_config'),
+                apiFetch('/api/configuracion/product_discounts'),
             ]);
-            if (apiUsers?.length > 0) setUsers(apiUsers);
+            if (apiUsers?.length > 0) setUsers(apiUsers.map(normalizarUsuario));
             setPendingProducts(apiPending || []);
-            if (apiOrders?.length > 0) setOrders(apiOrders);
-            if (apiCoupons?.length > 0) setCoupons(apiCoupons);
-            if (apiTickets?.length > 0) setSupportTickets(apiTickets);
-            if (apiBugs?.length > 0) setBugReports(apiBugs);
-            if (apiBatches?.length > 0) setInventoryBatches(apiBatches);
+            if (apiOrders?.length > 0) setOrders(apiOrders.map(normalizarPedido));
+            if (apiCoupons?.length > 0) setCoupons(apiCoupons.map(normalizarCupon));
+            if (apiTickets?.length > 0) setSupportTickets(apiTickets.map(normalizarTicket));
+            if (apiBugs?.length > 0) setBugReports(apiBugs.map(normalizarReporteError));
+            if (apiBatches?.length > 0) setInventoryBatches(apiBatches.map(normalizarLote));
             if (apiWaste?.length > 0) setWasteEvents(apiWaste);
             if (apiThresholds?.length > 0) setStockThresholds(apiThresholds);
             if (apiSales?.length > 0) {
@@ -209,10 +324,11 @@ export function MetricsProvider({ children }) {
         applyColorScale('accent',    systemConfig.accentColor,    ['#f97316', '#ea580c']);
     }, [systemConfig?.primaryColor, systemConfig?.secondaryColor, systemConfig?.accentColor]);
 
-    // ── refreshData: recarga todos los datos (equivalente a fetchAllData) ──
+    // ── refreshData: recarga todos los datos (productos y métricas) ──
     const refreshData = useCallback(async () => {
         refreshProducts();
-    }, [refreshProducts]);
+        await fetchAllData();
+    }, [refreshProducts, fetchAllData]);
 
 
     // =========================================================================
@@ -248,12 +364,12 @@ export function MetricsProvider({ children }) {
      * @param {string} newStatus
      */
     const updateOrderStatus = async (orderId, newStatus) => {
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, estado: newStatus } : o));
         try {
-            await fetch(`${API}/api/orders/${orderId}/status`, {
+            await fetch(getApiUrl(`/api/pedidos/${orderId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ status: newStatus, estado: newStatus })
             });
         } catch (e) { console.error('Error al actualizar estado de pedido:', e); }
     };
@@ -264,7 +380,7 @@ export function MetricsProvider({ children }) {
 
     /** Filtra productos por vendedor */
     const getProductsBySeller = (sellerId) =>
-        products.filter(p => String(p.sellerId) === String(sellerId));
+        products.filter(p => String(p.sellerId ?? p.idVendedor) === String(sellerId));
 
     /**
      * Actualiza un producto en BD y en estado local.
@@ -273,7 +389,7 @@ export function MetricsProvider({ children }) {
      */
     const updateProduct = async (productId, updates) => {
         try {
-            await fetch(`${API}/api/products/${productId}`, {
+            await fetch(getApiUrl(`/api/productos/${productId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -284,14 +400,14 @@ export function MetricsProvider({ children }) {
 
     const deleteProduct = async (productId) => {
         try {
-            await fetch(`${API}/api/products/${productId}`, { method: 'DELETE' });
+            await fetch(getApiUrl(`/api/productos/${productId}`), { method: 'DELETE' });
             refreshProducts();
         } catch (e) { console.error('Error al eliminar producto:', e); }
     };
 
     const addProduct = async (newProduct) => {
         try {
-            const res = await fetch(`${API}/api/products`, {
+            const res = await fetch(getApiUrl('/api/productos'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newProduct)
@@ -313,10 +429,10 @@ export function MetricsProvider({ children }) {
     const approveProduct = async (productId) => {
         setPendingProducts(prev => prev.filter(p => String(p.id) !== String(productId)));
         try {
-            await fetch(`${API}/api/products/${productId}/moderate`, {
+            await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'approved' })
+                body: JSON.stringify({ status: 'approved', estado: 'approved' })
             });
             refreshProducts();
         } catch (e) { console.error('Error al aprobar producto:', e); }
@@ -324,13 +440,13 @@ export function MetricsProvider({ children }) {
 
     const rejectProduct = async (productId, reason) => {
         setPendingProducts(prev => prev.map(p =>
-            String(p.id) === String(productId) ? { ...p, status: 'rejected', rejectionReason: reason } : p
+            String(p.id) === String(productId) ? { ...p, status: 'rejected', estado: 'rejected', rejectionReason: reason, motivo: reason } : p
         ));
         try {
-            await fetch(`${API}/api/products/${productId}/moderate`, {
+            await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'rejected', reason })
+                body: JSON.stringify({ status: 'rejected', estado: 'rejected', reason, motivo: reason })
             });
             refreshProducts();
         } catch (e) { console.error('Error al rechazar producto:', e); }
@@ -338,14 +454,23 @@ export function MetricsProvider({ children }) {
 
     /** Actualiza tasa de comisión de un vendedor localmente */
     const updateSellerCommission = (sellerId, commissionRate) => {
-        setUsers(prev => prev.map(u => u.id === sellerId ? { ...u, commissionRate } : u));
+        setUsers(prev => prev.map(u => u.id === sellerId ? { ...u, commissionRate, tasaComision: commissionRate } : u));
     };
 
     /** Suspende / reactiva un vendedor localmente */
     const toggleSellerSuspension = (sellerId, reason = null) => {
         setUsers(prev => prev.map(u => {
             if (u.id === sellerId) {
-                return { ...u, suspended: !u.suspended, suspensionReason: !u.suspended ? reason : null, active: u.suspended };
+                const newSuspended = !u.suspended;
+                return {
+                    ...u,
+                    suspended: newSuspended,
+                    suspendido: newSuspended,
+                    suspensionReason: newSuspended ? reason : null,
+                    motivoSuspension: newSuspended ? reason : null,
+                    active: !newSuspended,
+                    activo: !newSuspended
+                };
             }
             return u;
         }));
@@ -364,7 +489,7 @@ export function MetricsProvider({ children }) {
     const updateBugReportStatus = async (reportId, newStatus, assignedTo = null) => {
         setBugReports(prev => prev.map(r => {
             if (r.id === reportId) {
-                const updated = { ...r, status: newStatus };
+                const updated = { ...r, status: newStatus, estado: newStatus };
                 if (assignedTo !== null) updated.assignedTo = assignedTo;
                 if (newStatus === 'resolved') updated.resolvedAt = new Date().toISOString().split('T')[0];
                 return updated;
@@ -372,16 +497,16 @@ export function MetricsProvider({ children }) {
             return r;
         }));
         try {
-            await fetch(`${API}/api/support/bugs/${reportId}/status`, {
+            await fetch(getApiUrl(`/api/soporte/errores/${reportId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus, assignedTo })
+                body: JSON.stringify({ status: newStatus, estado: newStatus, assignedTo })
             });
         } catch (e) { console.error('Error al actualizar bug report:', e); }
     };
 
     /** Filtra bug reports por vendedor — String() garantiza comparación correcta entre tipos */
-    const getBugReportsBySeller = (sellerId) => bugReports.filter(r => String(r.sellerId) === String(sellerId));
+    const getBugReportsBySeller = (sellerId) => bugReports.filter(r => String(r.sellerId ?? r.idVendedor) === String(sellerId));
 
     // =========================================================================
     // FUNCIONES DE CUPONES
@@ -396,12 +521,14 @@ export function MetricsProvider({ children }) {
             ...newCoupon,
             id: coupons.length > 0 ? Math.max(...coupons.map(c => c.id)) + 1 : 1,
             usageCount: 0,
+            conteoUsos: 0,
             active: true,
+            activo: true,
             createdAt: new Date().toISOString().split('T')[0]
         };
         setCoupons(prev => [...prev, couponObj]);
         try {
-            await fetch(`${API}/api/coupons`, {
+            await fetch(getApiUrl('/api/cupones'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(couponObj)
@@ -414,9 +541,9 @@ export function MetricsProvider({ children }) {
      * @param {number} couponId
      */
     const deactivateCoupon = async (couponId) => {
-        setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, active: false } : c));
+        setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, active: false, activo: false } : c));
         try {
-            await fetch(`${API}/api/coupons/${couponId}/deactivate`, { method: 'PUT' });
+            await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), { method: 'PUT' });
         } catch (e) { console.error('Error al desactivar cupón:', e); }
     };
 
@@ -428,9 +555,9 @@ export function MetricsProvider({ children }) {
      * @returns {{ valid: boolean, coupon?: Object, message?: string }}
      */
     const validateCoupon = (code, cartTotal, userOrders) => {
-        const coupon = coupons.find(c => c.code === code && c.active);
+        const coupon = coupons.find(c => (c.code === code || c.codigo === code) && (c.active || c.activo));
         if (!coupon) return { valid: false, message: 'Cupón no válido o expirado' };
-        if (new Date() > new Date(coupon.expiresAt)) return { valid: false, message: 'Cupón expirado' };
+        if (coupon.expiresAt && new Date() > new Date(coupon.expiresAt)) return { valid: false, message: 'Cupón expirado' };
         if (coupon.rules?.minPurchase && cartTotal < coupon.rules.minPurchase)
             return { valid: false, message: `Compra mínima de ${formatCurrency(coupon.rules.minPurchase)}` };
         if (coupon.rules?.firstTimeOnly && userOrders.length > 0)
@@ -453,12 +580,13 @@ export function MetricsProvider({ children }) {
             ...newTicket,
             id: supportTickets.length > 0 ? Math.max(...supportTickets.map(t => t.id)) + 1 : 1,
             status: 'open',
+            estado: 'abierto',
             createdAt: new Date().toISOString().split('T')[0],
             updatedAt: new Date().toISOString().split('T')[0]
         };
         setSupportTickets(prev => [...prev, ticketObj]);
         try {
-            await fetch(`${API}/api/support/tickets`, {
+            await fetch(getApiUrl('/api/soporte/tickets'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(ticketObj)
@@ -480,17 +608,17 @@ export function MetricsProvider({ children }) {
     const updateTicketStatus = async (ticketId, newStatus) => {
         setSupportTickets(prev => prev.map(t => {
             if (t.id === ticketId) {
-                const updated = { ...t, status: newStatus, updatedAt: new Date().toISOString().split('T')[0] };
+                const updated = { ...t, status: newStatus, estado: newStatus, updatedAt: new Date().toISOString().split('T')[0] };
                 if (newStatus === 'resolved') updated.resolvedAt = updated.updatedAt;
                 return updated;
             }
             return t;
         }));
         try {
-            await fetch(`${API}/api/support/tickets/${ticketId}/status`, {
+            await fetch(getApiUrl(`/api/soporte/tickets/${ticketId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ status: newStatus, estado: newStatus })
             });
         } catch (e) { console.error('Error al actualizar ticket:', e); }
     };
@@ -513,7 +641,7 @@ export function MetricsProvider({ children }) {
     const addBatch = async (newBatch) => {
         setInventoryBatches(prev => [...prev, newBatch]);
         try {
-            await fetch(`${API}/api/inventory/batches`, {
+            await fetch(getApiUrl('/api/inventario/lotes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newBatch)
@@ -531,7 +659,7 @@ export function MetricsProvider({ children }) {
             b.id === batchId ? { ...b, ...updates, lastUpdate: new Date().toISOString().split('T')[0] } : b
         ));
         try {
-            await fetch(`${API}/api/inventory/batches/${batchId}`, {
+            await fetch(getApiUrl(`/api/inventario/lotes/${batchId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -551,7 +679,7 @@ export function MetricsProvider({ children }) {
         };
         setWasteEvents(prev => [...prev, eventObj]);
         try {
-            await fetch(`${API}/api/inventory/waste`, {
+            await fetch(getApiUrl('/api/inventario/mermas'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(wasteEvent)
@@ -566,13 +694,13 @@ export function MetricsProvider({ children }) {
      */
     const updateStockThreshold = async (fabricType, minMeters) => {
         setStockThresholds(prev => prev.map(t =>
-            t.fabricType === fabricType ? { ...t, minMeters } : t
+            (t.fabricType === fabricType || t.tipoTela === fabricType) ? { ...t, minMeters, metrosMinimos: minMeters } : t
         ));
         try {
-            await fetch(`${API}/api/inventory/thresholds`, {
+            await fetch(getApiUrl('/api/inventario/umbrales'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fabricType, minMeters })
+                body: JSON.stringify({ fabricType, tipoTela: fabricType, minMeters, metrosMinimos: minMeters })
             });
         } catch (e) { console.error('Error al actualizar umbral:', e); }
     };
@@ -612,10 +740,15 @@ export function MetricsProvider({ children }) {
         const newConfig = { ...systemConfig, ...updates };
         setSystemConfig(newConfig);
         try {
-            await fetch(`${API}/api/config`, {
+            await fetch(getApiUrl('/api/configuracion'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'system_config', value: JSON.stringify(newConfig) })
+                body: JSON.stringify({
+                    key: 'system_config',
+                    clave: 'system_config',
+                    value: JSON.stringify(newConfig),
+                    valor: JSON.stringify(newConfig)
+                })
             });
         } catch (e) { console.error('Error al actualizar config:', e); }
     };
@@ -626,10 +759,15 @@ export function MetricsProvider({ children }) {
         const updated = { ...productDiscounts, [productId]: discount };
         setProductDiscounts(updated);
         try {
-            await fetch(`${API}/api/config`, {
+            await fetch(getApiUrl('/api/configuracion'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'product_discounts', value: JSON.stringify(updated) })
+                body: JSON.stringify({
+                    key: 'product_discounts',
+                    clave: 'product_discounts',
+                    value: JSON.stringify(updated),
+                    valor: JSON.stringify(updated)
+                })
             });
         } catch (e) { console.error('Error al guardar descuento:', e); }
     };

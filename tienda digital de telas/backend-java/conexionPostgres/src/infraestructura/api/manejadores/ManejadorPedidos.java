@@ -15,6 +15,7 @@ import java.util.Map;
 
 /**
  * Controlador para la gestión de pedidos (órdenes de compra).
+ * Rutas base: /api/orders y /api/pedidos
  */
 public class ManejadorPedidos extends ManejadorBase {
     private final PedidoDAO pedidoDAO;
@@ -38,18 +39,44 @@ public class ManejadorPedidos extends ManejadorBase {
         } else if ("POST".equalsIgnoreCase(metodo)) {
             InputStream entrada = intercambio.getRequestBody();
             String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
+            JsonObject json;
+            try {
+                json = JsonParser.parseString(cuerpo).getAsJsonObject();
+            } catch (Exception e) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"JSON inválido\"}");
+                return;
+            }
 
-            int idCliente = json.has("clientId") ? json.get("clientId").getAsInt() : json.get("idCliente").getAsInt();
-            double total = json.has("total") ? json.get("total").getAsDouble() : json.get("montoTotal").getAsDouble();
+            int idCliente = 1;
+            if (json.has("clientId") && !json.get("clientId").isJsonNull()) {
+                idCliente = json.get("clientId").getAsInt();
+            } else if (json.has("userId") && !json.get("userId").isJsonNull()) {
+                idCliente = json.get("userId").getAsInt();
+            } else if (json.has("idCliente") && !json.get("idCliente").isJsonNull()) {
+                idCliente = json.get("idCliente").getAsInt();
+            } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
+                idCliente = json.get("idUsuario").getAsInt();
+            }
+
+            double total = 0.0;
+            if (json.has("total") && !json.get("total").isJsonNull()) {
+                total = json.get("total").getAsDouble();
+            } else if (json.has("montoTotal") && !json.get("montoTotal").isJsonNull()) {
+                total = json.get("montoTotal").getAsDouble();
+            }
 
             Type tipoLista = new TypeToken<List<Map<String, Object>>>(){}.getType();
-            List<Map<String, Object>> articulos = gson.fromJson(json.has("items") ? json.get("items") : json.get("articulos"), tipoLista);
+            List<Map<String, Object>> articulos = null;
+            if (json.has("items")) {
+                articulos = gson.fromJson(json.get("items"), tipoLista);
+            } else if (json.has("articulos")) {
+                articulos = gson.fromJson(json.get("articulos"), tipoLista);
+            }
 
             int idPedido = pedidoDAO.crearPedido(idCliente, total, articulos);
 
             if (idPedido > 0) {
-                String respuesta = "{\"success\":true,\"orderId\":" + idPedido + "}";
+                String respuesta = "{\"success\":true,\"orderId\":" + idPedido + ",\"idPedido\":" + idPedido + "}";
                 enviarRespuestaJson(intercambio, 201, respuesta);
             } else {
                 enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error al crear el pedido\"}");
@@ -59,11 +86,13 @@ public class ManejadorPedidos extends ManejadorBase {
         } else if ("PUT".equalsIgnoreCase(metodo)) {
             String ruta = intercambio.getRequestURI().getPath();
             if (ruta.contains("/status") || ruta.contains("/estado")) {
-                int idPedido = Integer.parseInt(ruta.split("/")[3]);
+                String[] partes = ruta.split("/");
+                int idPedido = Integer.parseInt(partes[3]);
                 InputStream entrada = intercambio.getRequestBody();
                 String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
                 JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
-                String estado = json.has("status") ? json.get("status").getAsString() : json.get("estado").getAsString();
+                String estado = json.has("status") ? json.get("status").getAsString() 
+                              : (json.has("estado") ? json.get("estado").getAsString() : "pending");
                 boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando\"}");
             } else {

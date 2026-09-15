@@ -16,7 +16,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getApiUrl } from '../config';
+import { getApiUrl, RUTAS_API } from '../config';
 
 // Creamos el contexto del catálogo de productos
 const ProductContext = createContext();
@@ -52,19 +52,46 @@ export function ProductProvider({ children }) {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(getApiUrl('/api/products'));
+            const rutaProductos = RUTAS_API?.productos || '/api/productos';
+            const response = await fetch(getApiUrl(rutaProductos));
             if (!response.ok) {
                 throw new Error('Error al cargar los productos');
             }
             const data = await response.json();
-            const formattedData = (data || []).map(p => ({
-                ...p,
-                images: (p.images || []).map(img =>
+            const formattedData = (data || []).map(p => {
+                const nombre = p.name || p.nombre || '';
+                const precio = Number(p.price ?? p.precio ?? 0);
+                const existencias = Number(p.stock ?? p.existencias ?? 0);
+                const categoria = p.category || p.categoria || '';
+                const imagenes = (p.images || p.imagenes || []).map(img =>
                     img && typeof img === 'string' && img.startsWith('http://localhost:8081/uploads/')
                         ? img.replace('http://localhost:8081', '')
                         : img
-                )
-            }));
+                );
+                return {
+                    ...p,
+                    name: nombre,
+                    nombre,
+                    price: precio,
+                    precio,
+                    stock: existencias,
+                    existencias,
+                    category: categoria,
+                    categoria,
+                    images: imagenes,
+                    imagenes,
+                    description: p.description || p.descripcion || '',
+                    descripcion: p.description || p.descripcion || '',
+                    featured: p.featured ?? p.destacado ?? false,
+                    destacado: p.featured ?? p.destacado ?? false,
+                    isNewCollection: p.isNewCollection ?? p.esNuevaColeccion ?? false,
+                    esNuevaColeccion: p.isNewCollection ?? p.esNuevaColeccion ?? false,
+                    isExclusive: p.isExclusive ?? p.esExclusivo ?? false,
+                    esExclusivo: p.isExclusive ?? p.esExclusivo ?? false,
+                    isOffer: p.isOffer ?? p.esOferta ?? false,
+                    esOferta: p.isOffer ?? p.esOferta ?? false,
+                };
+            });
             setProducts(formattedData);
         } catch (err) {
             console.error('Error al obtener productos de la API:', err);
@@ -108,17 +135,16 @@ export function ProductProvider({ children }) {
      */
     const updateProduct = async (updatedProduct) => {
         try {
-            const response = await fetch(getApiUrl(`/api/products/${updatedProduct.id}`), {
+            const rutaProd = RUTAS_API?.productos || '/api/productos';
+            const response = await fetch(getApiUrl(`${rutaProd}/${updatedProduct.id}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedProduct)
             });
             if (response.ok) {
-                // Actualizamos la lista local sin necesidad de recargar todo
                 setProducts(prev => prev.map(p =>
                     p.id === updatedProduct.id || p.id === String(updatedProduct.id) ? updatedProduct : p
                 ));
-                // Luego recargamos desde la API para garantizar que los datos son exactos
                 refreshProducts();
             }
         } catch (err) {
@@ -132,9 +158,9 @@ export function ProductProvider({ children }) {
      */
     const deleteProduct = async (id) => {
         try {
-            const response = await fetch(getApiUrl(`/api/products/${id}`), { method: 'DELETE' });
+            const rutaProd = RUTAS_API?.productos || '/api/productos';
+            const response = await fetch(getApiUrl(`${rutaProd}/${id}`), { method: 'DELETE' });
             if (response.ok) {
-                // Quitamos el producto de la lista sin recargar toda la página
                 setProducts(prev => prev.filter(p => p.id !== id && p.id !== String(id)));
                 refreshProducts();
             }
@@ -149,13 +175,13 @@ export function ProductProvider({ children }) {
      */
     const addProduct = async (newProduct) => {
         try {
-            const response = await fetch(getApiUrl('/api/products'), {
+            const rutaProd = RUTAS_API?.productos || '/api/productos';
+            const response = await fetch(getApiUrl(rutaProd), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newProduct)
             });
             if (response.ok) {
-                // Recargamos la lista para incluir el nuevo producto con su ID de la base de datos
                 refreshProducts();
             }
         } catch (err) {

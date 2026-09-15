@@ -40,7 +40,7 @@ function Catalog() {
 
     // Carga los apartados editados por el admin desde la base de datos
     useEffect(() => {
-        fetch(getApiUrl('/api/home-sections'))
+        fetch(getApiUrl('/api/secciones-inicio'))
             .then(res => res.ok ? res.json() : null)
             .then(data => {
                 if (data && data.length > 0) {

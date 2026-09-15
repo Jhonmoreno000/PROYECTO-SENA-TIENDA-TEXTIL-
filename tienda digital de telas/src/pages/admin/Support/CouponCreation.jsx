@@ -69,11 +69,14 @@ function CouponCreation() {
     }, { dependencies: [showCreateModal] });
 
     // Stats
-    const activeCoupons = coupons.filter(c => c.active).length;
-    const totalUsages = coupons.reduce((sum, c) => sum + (c.usageCount || 0), 0);
+    const isCouponActive = (c) => c?.active !== false && c?.activo !== false;
+    const activeCoupons = coupons.filter(isCouponActive).length;
+    const totalUsages = coupons.reduce((sum, c) => sum + Number(c.usageCount || c.conteoUsos || 0), 0);
     const expiringSoon = coupons.filter(c => {
-        const days = Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
-        return c.active && days <= 7 && days > 0;
+        const exp = c.expiresAt || c.fechaExpiracion;
+        if (!exp) return false;
+        const days = Math.ceil((new Date(exp) - new Date()) / (1000 * 60 * 60 * 24));
+        return isCouponActive(c) && days <= 7 && days > 0;
     }).length;
 
     useGSAP(() => {
@@ -87,15 +90,21 @@ function CouponCreation() {
         );
     }, { scope: containerRef });
 
-    const getDiscountLabel = (coupon) => coupon.discountType === 'percentage'
-        ? `${coupon.discountValue}% OFF`
-        : `-${formatCurrency(coupon.discountValue)}`;
+    const getDiscountLabel = (coupon) => {
+        const type = coupon.discountType || coupon.tipoDescuento;
+        const val = Number(coupon.discountValue ?? coupon.valorDescuento ?? 0);
+        return type === 'percentage' || type === 'porcentaje'
+            ? `${val}% OFF`
+            : `-${formatCurrency(val)}`;
+    };
 
     const getExpiryInfo = (coupon) => {
-        const days = Math.ceil((new Date(coupon.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+        const exp = coupon.expiresAt || coupon.fechaExpiracion;
+        if (!exp) return { label: 'Sin límite', style: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20', neon: 'bg-emerald-500' };
+        const days = Math.ceil((new Date(exp) - new Date()) / (1000 * 60 * 60 * 24));
         if (days < 0) return { label: 'Expirado', style: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20', neon: 'bg-rose-500' };
         if (days <= 7) return { label: `${days}d restantes`, style: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20', neon: 'bg-amber-500' };
-        return { label: new Date(coupon.expiresAt).toLocaleDateString('es-CO'), style: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20', neon: 'bg-emerald-500' };
+        return { label: new Date(exp).toLocaleDateString('es-CO'), style: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20', neon: 'bg-emerald-500' };
     };
 
     return (
@@ -176,15 +185,24 @@ function CouponCreation() {
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {coupons.map(coupon => {
                                 const expiry = getExpiryInfo(coupon);
-                                const usagePercent = coupon.rules?.maxUses
-                                    ? Math.min(100, ((coupon.usageCount || 0) / coupon.rules.maxUses) * 100)
+                                const code = coupon.code || coupon.codigo || 'CUPON';
+                                const rules = coupon.rules || coupon.reglas || {};
+                                const maxUses = rules.maxUses ?? rules.usosMaximos;
+                                const minPurchase = rules.minPurchase ?? rules.compraMinima;
+                                const firstTimeOnly = rules.firstTimeOnly ?? rules.soloPrimeravez;
+                                const usageCount = Number(coupon.usageCount ?? coupon.conteoUsos ?? 0);
+                                const usagePercent = maxUses
+                                    ? Math.min(100, (usageCount / maxUses) * 100)
                                     : null;
-                                const isExpired = Math.ceil((new Date(coupon.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)) < 0;
+                                const isExpired = (coupon.expiresAt || coupon.fechaExpiracion)
+                                    ? Math.ceil((new Date(coupon.expiresAt || coupon.fechaExpiracion) - new Date()) / (1000 * 60 * 60 * 24)) < 0
+                                    : false;
+                                const isActive = isCouponActive(coupon);
 
                                 return (
                                     <div
                                         key={coupon.id}
-                                        className={`coupon-card ${glassCard} p-6 flex flex-col hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group ${(!coupon.active || isExpired) ? 'opacity-50 grayscale' : ''}`}
+                                        className={`coupon-card ${glassCard} p-6 flex flex-col hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group ${(!isActive || isExpired) ? 'opacity-50 grayscale' : ''}`}
                                     >
                                         {/* Top: Code + Discount Badge */}
                                         <div className="flex justify-between items-start mb-5">
@@ -192,19 +210,19 @@ function CouponCreation() {
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className={`w-2.5 h-2.5 rounded-full ${expiry.neon} shadow-[0_0_8px_currentColor]`} />
                                                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                                        {isExpired ? 'Expirado' : coupon.active ? 'Activo' : 'Inactivo'}
+                                                        {isExpired ? 'Expirado' : isActive ? 'Activo' : 'Inactivo'}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono font-black text-2xl text-slate-900 dark:text-white tracking-wider group-hover:text-[#f97316] transition-colors">
-                                                        {coupon.code}
+                                                        {code}
                                                     </span>
                                                     <button
-                                                        onClick={() => handleCopyCode(coupon.code)}
-                                                        className={`p-1.5 rounded-lg transition-all ${copiedCode === coupon.code ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200' : 'bg-slate-50 dark:bg-slate-500/10 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'}`}
+                                                        onClick={() => handleCopyCode(code)}
+                                                        className={`p-1.5 rounded-lg transition-all ${copiedCode === code ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200' : 'bg-slate-50 dark:bg-slate-500/10 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'}`}
                                                         title="Copiar código"
                                                     >
-                                                        {copiedCode === coupon.code ? <Check size={13} /> : <Copy size={13} />}
+                                                        {copiedCode === code ? <Check size={13} /> : <Copy size={13} />}
                                                     </button>
                                                 </div>
                                             </div>
@@ -218,7 +236,7 @@ function CouponCreation() {
                                             <div className="mb-5">
                                                 <div className="flex justify-between mb-1.5">
                                                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Uso del Cupón</span>
-                                                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">{coupon.usageCount || 0} / {coupon.rules.maxUses}</span>
+                                                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">{usageCount} / {maxUses}</span>
                                                 </div>
                                                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
                                                     <div
@@ -231,17 +249,17 @@ function CouponCreation() {
 
                                         {/* Rules */}
                                         <div className="flex flex-wrap gap-2 mb-6">
-                                            {coupon.rules?.minPurchase && (
+                                            {minPurchase && (
                                                 <span className="px-2.5 py-1 bg-white border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-500 text-[10px] font-bold rounded-lg shadow-sm">
-                                                    Mín: {formatCurrency(coupon.rules.minPurchase)}
+                                                    Mín: {formatCurrency(minPurchase)}
                                                 </span>
                                             )}
-                                            {coupon.rules?.firstTimeOnly && (
+                                            {firstTimeOnly && (
                                                 <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-lg shadow-sm">
                                                     Primera Compra
                                                 </span>
                                             )}
-                                            {!coupon.rules?.minPurchase && !coupon.rules?.firstTimeOnly && (
+                                            {!minPurchase && !firstTimeOnly && (
                                                 <span className="px-2.5 py-1 bg-slate-50 dark:bg-slate-500/10 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 text-[10px] font-bold rounded-lg shadow-sm">
                                                     Sin restricciones
                                                 </span>
@@ -254,7 +272,7 @@ function CouponCreation() {
                                                 <Clock size={11} /> {expiry.label}
                                             </div>
 
-                                            {coupon.active && !isExpired && (
+                                            {isActive && !isExpired && (
                                                 <button
                                                     onClick={() => deactivateCoupon(coupon.id)}
                                                     className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 border-2 border-rose-200 rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-[0_0_12px_rgba(244,63,94,0.3)] transition-all"

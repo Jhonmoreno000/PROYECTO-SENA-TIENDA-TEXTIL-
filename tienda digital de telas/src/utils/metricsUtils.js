@@ -3,206 +3,160 @@
  * ================================================
  * Este archivo contiene cálculos matemáticos para las métricas clave (KPIs)
  * que se muestran en los paneles de administración y vendedores.
- *
- * Glosario:
- *  - KPI (Key Performance Indicator): indicador clave de rendimiento
- *  - Ticket promedio: el valor promedio que gasta un cliente por pedido
- *  - Tasa de resolución: qué porcentaje de problemas se han resuelto
- *
- * ¿Dónde se usan estas funciones?
- *  - Panel del Administrador: AdminOverview, SellerMetrics, ClientMetrics
- *  - Panel del Vendedor: SellerDashboard
+ * Compatible tanto con propiedades en inglés como en español.
  */
 
 /**
  * calculateTotalSales — Suma el total de ventas de una lista de pedidos
- * @param {Array} orders - Lista de pedidos con campo 'total'
+ * @param {Array} orders - Lista de pedidos con campo 'total' o 'montoTotal'
  * @returns {number} Suma de todos los totales en pesos colombianos
  */
-export const calculateTotalSales = (orders) => {
-    return orders.reduce((total, order) => total + order.total, 0);
+export const calculateTotalSales = (orders = []) => {
+    return (orders || []).reduce((total, order) => total + Number(order.total ?? order.montoTotal ?? 0), 0);
 };
 
 /**
  * calculateAverageTicket — Calcula el ticket promedio (valor promedio por pedido)
- * Si no hay pedidos, devuelve 0 para evitar división por cero.
  * @param {Array} orders - Lista de pedidos
  * @returns {number} Valor promedio en pesos por pedido
  */
-export const calculateAverageTicket = (orders) => {
-    if (orders.length === 0) return 0;
+export const calculateAverageTicket = (orders = []) => {
+    if (!orders || orders.length === 0) return 0;
     return calculateTotalSales(orders) / orders.length;
 };
 
 /**
  * getTopProducts — Devuelve los productos más vendidos con su información
- * Analiza los pedidos para contar cuántas veces aparece cada producto
- * y cuánto dinero ha generado.
- *
- * @param {Array}  orders   - Lista de pedidos (cada uno tiene un array 'productIds')
- * @param {Array}  products - Catálogo completo de productos
- * @param {number} limit    - Cuántos productos devolver (por defecto 5)
- * @returns {Array} Productos ordenados por ventas, con nombre, ventas e ingresos
  */
-export const getTopProducts = (orders, products, limit = 5) => {
-    // Contamos cuántas veces aparece cada producto en los pedidos
+export const getTopProducts = (orders = [], products = [], limit = 5) => {
     const productSales = {};
 
-    orders.forEach(order => {
-        const pIds = order.productIds || [];
+    (orders || []).forEach(order => {
+        const pIds = order.productIds || order.idsProductos || [];
+        const total = Number(order.total ?? order.montoTotal ?? 0);
         pIds.forEach(productId => {
             if (!productSales[productId]) {
                 productSales[productId] = { count: 0, revenue: 0 };
             }
             productSales[productId].count += 1;
-            // Distribuimos los ingresos del pedido entre todos los productos que lo componen
-            productSales[productId].revenue += order.total / pIds.length;
+            productSales[productId].revenue += (pIds.length > 0 ? total / pIds.length : total);
         });
     });
 
-    // Convertimos el objeto a una lista con los datos completos del producto
     return Object.entries(productSales)
         .map(([id, data]) => {
-            // Buscamos el nombre del producto en el catálogo (comparamos como string por seguridad)
-            const product = products.find(p => String(p.id) === String(id));
+            const product = (products || []).find(p => String(p.id) === String(id));
             return {
-                id: parseInt(id),                              // ID numérico
-                name: product?.name || 'Producto Desconocido',// Nombre del producto
-                sales: data.count,                            // Cuántas veces se vendió
-                revenue: data.revenue,                        // Ingresos generados
-                sellerId: product?.sellerId                   // Quién lo vende
+                id: parseInt(id),
+                name: product?.name || product?.nombre || 'Producto Desconocido',
+                sales: data.count,
+                revenue: data.revenue,
+                sellerId: product?.sellerId || product?.idVendedor
             };
         })
-        .sort((a, b) => b.sales - a.sales) // Ordenamos de más vendido a menos
-        .slice(0, limit);                   // Tomamos solo los primeros N
+        .sort((a, b) => b.sales - a.sales)
+        .slice(0, limit);
 };
 
 /**
  * getSellerMetrics — Calcula todos los KPIs de un vendedor específico
- * Filtra solo sus pedidos y reportes para calcular métricas individuales.
- *
- * @param {string|number} sellerId   - ID del vendedor a analizar
- * @param {Array}         orders     - Lista completa de pedidos del sistema
- * @param {Array}         bugReports - Lista de reportes de problemas (por defecto vacío)
- * @returns {Object} {
- *   totalSales: número total de ventas en pesos,
- *   totalOrders: cantidad de pedidos,
- *   averageTicket: valor promedio por pedido,
- *   bugReportsCount: cantidad de reportes de problemas,
- *   completedOrders: pedidos entregados,
- *   pendingOrders: pedidos no entregados aún
- * }
  */
-export const getSellerMetrics = (sellerId, orders, bugReports = []) => {
-    // Filtramos solo los pedidos de este vendedor (comparamos como string para evitar errores de tipo)
-    const sellerOrders = orders.filter(order => String(order.sellerId) === String(sellerId));
-    // Filtramos solo los reportes de este vendedor
-    const sellerBugReports = bugReports.filter(report => String(report.sellerId) === String(sellerId));
+export const getSellerMetrics = (sellerId, orders = [], bugReports = []) => {
+    const sellerOrders = (orders || []).filter(order => {
+        const sId = order.sellerId || order.idVendedor;
+        return String(sId) === String(sellerId);
+    });
+
+    const sellerBugReports = (bugReports || []).filter(report => {
+        const sId = report.sellerId || report.idVendedor;
+        return String(sId) === String(sellerId);
+    });
 
     return {
-        totalSales: calculateTotalSales(sellerOrders),        // Dinero total vendido
-        totalOrders: sellerOrders.length,                     // Número de pedidos
-        averageTicket: calculateAverageTicket(sellerOrders),  // Valor promedio por pedido
-        bugReportsCount: sellerBugReports.length,             // Reportes de problemas
-        completedOrders: sellerOrders.filter(o => o.status === 'delivered').length, // Entregados
-        pendingOrders: sellerOrders.filter(o => o.status !== 'delivered').length,   // En proceso
+        totalSales: calculateTotalSales(sellerOrders),
+        totalOrders: sellerOrders.length,
+        averageTicket: calculateAverageTicket(sellerOrders),
+        bugReportsCount: sellerBugReports.length,
+        completedOrders: sellerOrders.filter(o => (o.status === 'delivered' || o.estado === 'entregado' || o.status === 'completed' || o.estado === 'completado')).length,
+        pendingOrders: sellerOrders.filter(o => (o.status !== 'delivered' && o.estado !== 'entregado' && o.status !== 'completed' && o.estado !== 'completado')).length,
     };
 };
 
 /**
  * getClientMetrics — Calcula las métricas de un cliente específico
- * Analiza su historial de compras para entender su comportamiento.
- *
- * @param {string|number} clientId - ID del cliente a analizar
- * @param {Array}         orders   - Lista completa de pedidos del sistema
- * @returns {Object} {
- *   totalPurchases: cantidad de compras realizadas,
- *   totalSpent: dinero total gastado,
- *   averageOrderValue: valor promedio por compra,
- *   lastPurchaseDate: fecha de la última compra,
- *   purchaseFrequency: días promedio entre compras,
- *   lifetimeValue: valor total del cliente (igual a totalSpent)
- * }
  */
-export const getClientMetrics = (clientId, orders) => {
-    // Filtramos solo los pedidos de este cliente
-    const clientOrders = orders.filter(order => String(order.clientId) === String(clientId));
+export const getClientMetrics = (clientId, orders = []) => {
+    const clientOrders = (orders || []).filter(order => {
+        const cId = order.clientId || order.idCliente || order.userId || order.idUsuario;
+        return String(cId) === String(clientId);
+    });
 
-    // Ordenamos los pedidos por fecha para calcular la frecuencia de compra
-    const sortedOrders = [...clientOrders].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sortedOrders = [...clientOrders].sort((a, b) => {
+        const dateA = new Date(a.date || a.fecha || 0);
+        const dateB = new Date(b.date || b.fecha || 0);
+        return dateA - dateB;
+    });
+
     let averageDaysBetweenPurchases = 0;
 
     if (sortedOrders.length > 1) {
-        // Calculamos cuántos días hay entre cada compra consecutiva
         const daysDiffs = [];
         for (let i = 1; i < sortedOrders.length; i++) {
-            const diff = Math.abs(new Date(sortedOrders[i].date) - new Date(sortedOrders[i - 1].date));
-            daysDiffs.push(diff / (1000 * 60 * 60 * 24)); // Convertimos de ms a días
+            const datePrev = new Date(sortedOrders[i - 1].date || sortedOrders[i - 1].fecha || 0);
+            const dateCurr = new Date(sortedOrders[i].date || sortedOrders[i].fecha || 0);
+            const diff = Math.abs(dateCurr - datePrev);
+            daysDiffs.push(diff / (1000 * 60 * 60 * 24));
         }
-        // Calculamos el promedio de días entre compras
         averageDaysBetweenPurchases = daysDiffs.reduce((a, b) => a + b, 0) / daysDiffs.length;
     }
 
+    const lastDate = sortedOrders.length > 0 ? (sortedOrders[sortedOrders.length - 1].date || sortedOrders[sortedOrders.length - 1].fecha) : null;
+
     return {
-        totalPurchases: clientOrders.length,                               // Cantidad de compras
-        totalSpent: calculateTotalSales(clientOrders),                     // Dinero total gastado
-        averageOrderValue: calculateAverageTicket(clientOrders),           // Promedio por compra
-        lastPurchaseDate: sortedOrders.length > 0 ? sortedOrders[sortedOrders.length - 1].date : null,
-        purchaseFrequency: averageDaysBetweenPurchases,                   // Días entre compras
-        lifetimeValue: calculateTotalSales(clientOrders),                  // Valor total del cliente
+        totalPurchases: clientOrders.length,
+        totalSpent: calculateTotalSales(clientOrders),
+        averageOrderValue: calculateAverageTicket(clientOrders),
+        lastPurchaseDate: lastDate,
+        purchaseFrequency: averageDaysBetweenPurchases,
+        lifetimeValue: calculateTotalSales(clientOrders),
     };
 };
 
 /**
  * calculateGrowthRate — Calcula el porcentaje de crecimiento entre dos valores
- * Ejemplo: calculateGrowthRate(1200, 1000) → 20 (creció un 20%)
- *
- * @param {number} current  - Valor actual
- * @param {number} previous - Valor anterior a comparar
- * @returns {number} Porcentaje de cambio (positivo = creció, negativo = bajó)
  */
 export const calculateGrowthRate = (current, previous) => {
-    if (previous === 0) return current > 0 ? 100 : 0; // Si el valor anterior era 0, el crecimiento es 100%
+    if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
 };
 
 /**
  * groupOrdersByDate — Agrupa los pedidos por fecha para gráficas de línea/barra
- * Convierte una lista de pedidos individuales en datos diarios agrupados.
- *
- * @param {Array} orders - Lista de pedidos
- * @returns {Array} Lista de días con su total de pedidos y ventas, ordenada cronológicamente
  */
-export const groupOrdersByDate = (orders) => {
+export const groupOrdersByDate = (orders = []) => {
     const grouped = {};
 
-    orders.forEach(order => {
-        if (!grouped[order.date]) {
-            grouped[order.date] = {
-                date: order.date,
-                orders: 0,  // Cantidad de pedidos ese día
-                sales: 0    // Total de ventas ese día en pesos
+    (orders || []).forEach(order => {
+        const dateKey = order.date || order.fecha || 'Sin Fecha';
+        if (!grouped[dateKey]) {
+            grouped[dateKey] = {
+                date: dateKey,
+                orders: 0,
+                sales: 0
             };
         }
-        grouped[order.date].orders += 1;
-        grouped[order.date].sales += order.total;
+        grouped[dateKey].orders += 1;
+        grouped[dateKey].sales += Number(order.total ?? order.montoTotal ?? 0);
     });
 
-    // Ordenamos los días de más antiguo a más reciente (para la gráfica izquierda → derecha)
     return Object.values(grouped).sort((a, b) => new Date(a.date) - new Date(b.date));
 };
 
 /**
  * getAllSellersMetrics — Calcula las métricas de todos los vendedores a la vez
- * Se usa en el panel de administración para el ranking de vendedores.
- *
- * @param {Array} sellers    - Lista de usuarios con rol 'seller'
- * @param {Array} orders     - Lista completa de pedidos
- * @param {Array} bugReports - Lista de reportes de problemas
- * @returns {Array} Vendedores con sus métricas, ordenados por ventas totales
  */
-export const getAllSellersMetrics = (sellers, orders, bugReports = []) => {
-    return sellers.map(seller => ({
+export const getAllSellersMetrics = (sellers = [], orders = [], bugReports = []) => {
+    return (sellers || []).map(seller => ({
         ...seller,
         metrics: getSellerMetrics(seller.id, orders, bugReports)
     })).sort((a, b) => b.metrics.totalSales - a.metrics.totalSales);
@@ -210,145 +164,98 @@ export const getAllSellersMetrics = (sellers, orders, bugReports = []) => {
 
 /**
  * getAllClientsMetrics — Calcula las métricas de todos los clientes a la vez
- * Se usa en el panel de administración para el ranking de clientes VIP.
- *
- * @param {Array} clients - Lista de usuarios con rol 'client'
- * @param {Array} orders  - Lista completa de pedidos
- * @returns {Array} Clientes con sus métricas, ordenados por dinero total gastado
  */
-export const getAllClientsMetrics = (clients, orders) => {
-    return clients.map(client => ({
+export const getAllClientsMetrics = (clients = [], orders = []) => {
+    return (clients || []).map(client => ({
         ...client,
         metrics: getClientMetrics(client.id, orders)
     })).sort((a, b) => b.metrics.totalSpent - a.metrics.totalSpent);
 };
 
 /**
- * filterOrdersByDateRange — Filtra pedidos dentro de un rango de fechas
- * @param {Array}  orders    - Lista de pedidos
- * @param {string} startDate - Fecha de inicio (formato 'YYYY-MM-DD')
- * @param {string} endDate   - Fecha de fin (formato 'YYYY-MM-DD')
- * @returns {Array} Solo los pedidos que ocurrieron dentro del rango indicado
+ * calculateConversionRate — Calcula la tasa de conversión
  */
-export const filterOrdersByDateRange = (orders, startDate, endDate) => {
-    return orders.filter(order => {
-        const orderDate = new Date(order.date);
-        return orderDate >= new Date(startDate) && orderDate <= new Date(endDate);
+export const calculateConversionRate = (conversions, totalVisitors) => {
+    if (totalVisitors === 0) return 0;
+    return (conversions / totalVisitors) * 100;
+};
+
+/**
+ * getResolutionRate — Calcula la tasa de resolución de problemas/tickets
+ */
+export const getResolutionRate = (items = []) => {
+    if (!items || items.length === 0) return 0;
+    const resolved = items.filter(item => item.status === 'resolved' || item.status === 'closed' || item.estado === 'resuelto' || item.estado === 'cerrado').length;
+    return (resolved / items.length) * 100;
+};
+
+/**
+ * calculateAverageResolutionTime — Calcula el tiempo promedio de resolución en días
+ */
+export const calculateAverageResolutionTime = (items = []) => {
+    const resolved = (items || []).filter(item => (item.resolvedAt || item.fechaResolucion) && (item.createdAt || item.fechaCreacion || item.reportedAt || item.fechaReporte));
+    if (resolved.length === 0) return 0;
+
+    const totalDays = resolved.reduce((sum, item) => {
+        const start = new Date(item.createdAt || item.fechaCreacion || item.reportedAt || item.fechaReporte);
+        const end = new Date(item.resolvedAt || item.fechaResolucion);
+        return sum + Math.abs(end - start) / (1000 * 60 * 60 * 24);
+    }, 0);
+
+    return totalDays / resolved.length;
+};
+
+/**
+ * getPriorityDistribution — Cuenta cuántos elementos hay de cada prioridad
+ */
+export const getPriorityDistribution = (items = []) => {
+    const distribution = { critical: 0, high: 0, medium: 0, low: 0, critico: 0, alta: 0, media: 0, baja: 0 };
+    (items || []).forEach(item => {
+        const priority = (item.priority || item.prioridad || 'medium').toLowerCase();
+        if (distribution[priority] !== undefined) {
+            distribution[priority]++;
+        } else {
+            distribution.medium++;
+        }
+    });
+    return distribution;
+};
+
+/**
+ * calculateSellerCommission — Calcula la comisión que le corresponde a un vendedor
+ */
+export const calculateSellerCommission = (totalSales, commissionRate = 0.05) => {
+    return totalSales * commissionRate;
+};
+
+/**
+ * filterOrdersByDateRange — Filtra pedidos por rango de fechas
+ */
+export const filterOrdersByDateRange = (orders = [], startDate, endDate) => {
+    const start = startDate ? new Date(startDate) : new Date(0);
+    const end = endDate ? new Date(endDate) : new Date();
+
+    return (orders || []).filter(order => {
+        const orderDate = new Date(order.date || order.fecha);
+        return orderDate >= start && orderDate <= end;
     });
 };
 
 /**
- * calculateQualityMetrics — Calcula estadísticas sobre los reportes de problemas
- * Muestra cuántos reportes hay, cuáles están abiertos y cuál es la tasa de resolución.
- *
- * @param {Array} bugReports - Lista de reportes de errores o devoluciones
- * @returns {Object} { total, open, inReview, resolved, resolutionRate }
+ * getPeriodComparison — Compara las ventas de dos periodos
  */
-export const calculateQualityMetrics = (bugReports) => {
-    const total = bugReports.length;
-    const open = bugReports.filter(r => r.status === 'open').length;         // Sin atender
-    const inReview = bugReports.filter(r => r.status === 'in_review').length;// En revisión
-    const resolved = bugReports.filter(r => r.status === 'resolved').length; // Resueltos
+export const getPeriodComparison = (currentOrders = [], previousOrders = []) => {
+    const currentSales = calculateTotalSales(currentOrders);
+    const previousSales = calculateTotalSales(previousOrders);
+    const growthRate = calculateGrowthRate(currentSales, previousSales);
 
     return {
-        total,
-        open,
-        inReview,
-        resolved,
-        // Porcentaje de reportes que se han resuelto (qué tan eficiente es el equipo)
-        resolutionRate: total > 0 ? (resolved / total) * 100 : 0
+        currentSales,
+        previousSales,
+        growthRate,
+        absoluteDifference: currentSales - previousSales,
+        currentOrdersCount: currentOrders.length,
+        previousOrdersCount: previousOrders.length,
+        ordersGrowthRate: calculateGrowthRate(currentOrders.length, previousOrders.length)
     };
-};
-
-/**
- * segmentClients — Clasifica a los clientes en tres categorías según su gasto total
- * Esta segmentación ayuda a identificar los clientes más valiosos.
- *
- * Segmentos:
- *  - VIP:     gastaron más de $1.000.000
- *  - Regular: gastaron entre $300.000 y $1.000.000
- *  - Nuevo:   gastaron menos de $300.000
- *
- * @param {Array} clients - Lista de clientes
- * @param {Array} orders  - Lista de pedidos
- * @returns {Object} { vip, regular, new } — Tres listas de clientes segmentadas
- */
-export const segmentClients = (clients, orders) => {
-    const clientsWithMetrics = getAllClientsMetrics(clients, orders);
-
-    return {
-        vip: clientsWithMetrics.filter(c => c.metrics.totalSpent > 1000000),
-        regular: clientsWithMetrics.filter(c => c.metrics.totalSpent >= 300000 && c.metrics.totalSpent <= 1000000),
-        new: clientsWithMetrics.filter(c => c.metrics.totalSpent < 300000),
-    };
-};
-
-/**
- * getProductsWithoutSales — Devuelve los productos que nunca han sido vendidos
- * Compara el catálogo con los pedidos para encontrar productos sin ventas.
- *
- * @param {Array} products - Catálogo de productos
- * @param {Array} orders   - Lista de pedidos
- * @returns {Array} Productos que no aparecen en ningún pedido
- */
-export const getProductsWithoutSales = (products, orders) => {
-    // Recopilamos todos los IDs de productos que sí se han vendido (en cualquier formato)
-    const soldProductIds = new Set();
-    orders.forEach(order => {
-        (order.productIds || []).forEach(id => soldProductIds.add(id));
-    });
-
-    // Devolvemos los que no están en ese conjunto (nunca vendidos)
-    return products.filter(product =>
-        !soldProductIds.has(product.id) &&
-        !soldProductIds.has(String(product.id)) &&
-        !soldProductIds.has(Number(product.id))
-    );
-};
-
-/**
- * calculateStockMetrics — Resume el estado del inventario de productos
- * @param {Array}  products          - Lista de productos del catálogo
- * @param {number} lowStockThreshold - Umbral para considerar stock bajo (por defecto 20 metros)
- * @returns {Object} { totalProducts, lowStock, outOfStock, inStock }
- */
-export const calculateStockMetrics = (products, lowStockThreshold = 20) => {
-    return {
-        totalProducts: products.length,                                     // Total de productos
-        lowStock: products.filter(p => p.stock < lowStockThreshold).length, // Stock bajo
-        outOfStock: products.filter(p => p.stock === 0).length,             // Agotados
-        inStock: products.filter(p => p.stock >= lowStockThreshold).length, // Con stock suficiente
-    };
-};
-
-/**
- * formatLineChartData — Convierte datos al formato que necesitan los gráficos de línea
- * Los gráficos de Recharts necesitan objetos con las propiedades 'name' y 'value'.
- *
- * @param {Array}  data - Lista de datos a convertir
- * @param {string} xKey - Nombre de la propiedad que será el eje X (etiqueta)
- * @param {string} yKey - Nombre de la propiedad que será el eje Y (valor)
- * @returns {Array} Lista de objetos { name, value } para Recharts
- */
-export const formatLineChartData = (data, xKey, yKey) => {
-    return data.map(item => ({
-        name: item[xKey],   // Etiqueta del punto en el eje horizontal
-        value: item[yKey]   // Valor del punto en el eje vertical
-    }));
-};
-
-/**
- * formatBarChartData — Convierte datos al formato que necesitan los gráficos de barra
- * Similar a formatLineChartData pero con nombres más descriptivos para gráficas de barra.
- *
- * @param {Array}  data     - Lista de datos a convertir
- * @param {string} labelKey - Nombre de la propiedad que será la etiqueta de cada barra
- * @param {string} valueKey - Nombre de la propiedad que define la altura de cada barra
- * @returns {Array} Lista de objetos { name, value } para Recharts
- */
-export const formatBarChartData = (data, labelKey, valueKey) => {
-    return data.map(item => ({
-        name: item[labelKey],   // Texto debajo de cada barra
-        value: item[valueKey]   // Altura de la barra
-    }));
 };

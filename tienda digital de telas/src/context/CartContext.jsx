@@ -49,7 +49,7 @@ export function CartProvider({ children }) {
      * @param {number} quantity - Cantidad de metros a agregar (por defecto 1)
      */
     const addToCart = (product, quantity = 1) => {
-        const maxStock = Number(product.stock ?? 99);
+        const maxStock = Number(product.stock ?? product.existencias ?? 99);
         const qty = Number(quantity) || 1;
         if (maxStock <= 0) return false;
 
@@ -119,7 +119,7 @@ export function CartProvider({ children }) {
      */
     const getCartTotal = () => {
         const items = Array.isArray(cartItems) ? cartItems : [];
-        return items.reduce((total, item) => total + Number(item.price || 0) * (Number(item.quantity) || 0), 0);
+        return items.reduce((total, item) => total + Number(item.price ?? item.precio ?? 0) * (Number(item.quantity) || 0), 0);
     };
 
     /**
@@ -140,9 +140,11 @@ export function CartProvider({ children }) {
         const subtotal = getCartTotal();
         let discount = 0;
         if (coupon) {
-            discount = coupon.discountType === 'percentage'
-                ? subtotal * (coupon.discountValue / 100)
-                : coupon.discountValue;
+            const isPercentage = (coupon.discountType === 'percentage' || coupon.tipoDescuento === 'porcentaje');
+            const discountVal = Number(coupon.discountValue ?? coupon.valorDescuento ?? 0);
+            discount = isPercentage
+                ? subtotal * (discountVal / 100)
+                : discountVal;
             discount = Math.min(discount, subtotal);
         }
         const afterDiscount = subtotal - discount;

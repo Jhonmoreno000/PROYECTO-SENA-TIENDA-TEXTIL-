@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import BackButton from '../../components/dashboard/BackButton';
 import { useNotification } from '../../context/NotificationContext';
+import { useMetrics } from '../../context/MetricsContext';
 import adminDashboardLinks from '../../data/adminDashboardLinks';
 
 const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl";
@@ -19,14 +20,20 @@ const colorVariants = {
 
 const SEV_CONFIG = {
     high:   { dot: 'bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.9)]', badge: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20',   label: 'Alta' },
+    alta:   { dot: 'bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.9)]', badge: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20',   label: 'Alta' },
     medium: { dot: 'bg-amber-500',  badge: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',   label: 'Media' },
+    media:  { dot: 'bg-amber-500',  badge: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',   label: 'Media' },
     low:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', label: 'Baja' },
+    baja:   { dot: 'bg-emerald-500', badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', label: 'Baja' },
 };
 
 const STATUS_CONFIG = {
     open:        { badge: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/20',   dot: 'bg-indigo-500 animate-pulse', label: 'Abierto' },
+    abierto:     { badge: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/20',   dot: 'bg-indigo-500 animate-pulse', label: 'Abierto' },
     in_progress: { badge: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',      dot: 'bg-amber-500',                label: 'En Progreso' },
+    en_progreso: { badge: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',      dot: 'bg-amber-500',                label: 'En Progreso' },
     resolved:    { badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', dot: 'bg-emerald-500',              label: 'Resuelto' },
+    resuelto:    { badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', dot: 'bg-emerald-500',              label: 'Resuelto' },
 };
 
 const INITIAL_REPORTS = [
@@ -39,17 +46,27 @@ const INITIAL_REPORTS = [
 
 function AdminBugReports() {
     const { showNotification } = useNotification();
+    const { bugReports: contextReports, updateBugReportStatus } = useMetrics();
     const [activeTab, setActiveTab] = useState('all');
     const [selectedTicket, setSelectedTicket] = useState(null);
-    const [reports, setReports] = useState(INITIAL_REPORTS);
+    const [localReports, setLocalReports] = useState(null);
+    
+    const reports = localReports || (contextReports && contextReports.length > 0 ? contextReports : INITIAL_REPORTS);
     
     const containerRef = useRef(null);
     const expansionRefs = useRef({});
 
-    const handleStatusChange = (id, newStatus) => {
-        setReports(r => r.map(rep => rep.id === id ? { ...rep, status: newStatus } : rep));
-        showNotification('success', 'Estado actualizado correctamente');
-        if (selectedTicket?.id === id) setSelectedTicket(p => ({ ...p, status: newStatus }));
+    const handleStatusChange = async (id, newStatus) => {
+        try {
+            if (updateBugReportStatus) {
+                await updateBugReportStatus(id, newStatus);
+            }
+            setLocalReports(r => (r || reports).map(rep => rep.id === id ? { ...rep, status: newStatus, estado: newStatus } : rep));
+            showNotification('success', 'Estado actualizado correctamente');
+            if (selectedTicket?.id === id) setSelectedTicket(p => ({ ...p, status: newStatus, estado: newStatus }));
+        } catch (e) {
+            showNotification('error', 'Error al actualizar el estado');
+        }
     };
 
     const toggleTicket = (report) => {
@@ -87,20 +104,35 @@ function AdminBugReports() {
         );
     }, { scope: containerRef });
 
+    const isPending = (r) => {
+        const s = (r.status || r.estado || '').toLowerCase();
+        return s === 'open' || s === 'abierto' || s === 'in_progress' || s === 'en_progreso';
+    };
+    const isResolved = (r) => {
+        const s = (r.status || r.estado || '').toLowerCase();
+        return s === 'resolved' || s === 'resuelto';
+    };
     const totalTickets = reports.length;
-    const pendingCount = reports.filter(r => r.status === 'open' || r.status === 'in_progress').length;
-    const resolvedCount = reports.filter(r => r.status === 'resolved').length;
-    const highCount = reports.filter(r => r.severity === 'high' && r.status !== 'resolved').length;
+    const pendingCount = reports.filter(isPending).length;
+    const resolvedCount = reports.filter(isResolved).length;
+    const highCount = reports.filter(r => {
+        const sev = (r.severity || r.severidad || '').toLowerCase();
+        return (sev === 'high' || sev === 'alta') && !isResolved(r);
+    }).length;
 
     const filtered = reports.filter(r => {
         if (activeTab === 'all') return true;
-        return r.status === activeTab;
+        const s = (r.status || r.estado || '').toLowerCase();
+        if (activeTab === 'open') return s === 'open' || s === 'abierto';
+        if (activeTab === 'in_progress') return s === 'in_progress' || s === 'en_progreso';
+        if (activeTab === 'resolved') return s === 'resolved' || s === 'resuelto';
+        return s === activeTab;
     });
 
     const TABS = [
         { id: 'all', label: 'Todos', count: totalTickets },
-        { id: 'open', label: 'Abiertos', count: reports.filter(r => r.status === 'open').length },
-        { id: 'in_progress', label: 'En Progreso', count: reports.filter(r => r.status === 'in_progress').length },
+        { id: 'open', label: 'Abiertos', count: reports.filter(r => { const s = (r.status || r.estado || '').toLowerCase(); return s === 'open' || s === 'abierto'; }).length },
+        { id: 'in_progress', label: 'En Progreso', count: reports.filter(r => { const s = (r.status || r.estado || '').toLowerCase(); return s === 'in_progress' || s === 'en_progreso'; }).length },
         { id: 'resolved', label: 'Resueltos', count: resolvedCount },
     ];
 
@@ -151,15 +183,21 @@ function AdminBugReports() {
                                 <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Prueba con otro filtro.</p>
                             </div>
                         ) : filtered.map(report => {
-                            const sev = SEV_CONFIG[report.severity] || SEV_CONFIG.low;
-                            const sta = STATUS_CONFIG[report.status] || STATUS_CONFIG.open;
+                            const sevKey = (report.severity || report.severidad || 'low').toLowerCase();
+                            const staKey = (report.status || report.estado || 'open').toLowerCase();
+                            const sev = SEV_CONFIG[sevKey] || SEV_CONFIG.low;
+                            const sta = STATUS_CONFIG[staKey] || STATUS_CONFIG.open;
+                            const userName = report.user || report.usuario || 'Usuario';
+                            const userEmail = report.email || report.correo || '';
+                            const reportDate = report.date || report.fecha || '';
+
                             return (
                                 <div key={report.id} className={`report-item ${glassCard} overflow-hidden hover:shadow-xl transition-all duration-300`}>
                                     <div className="p-6">
                                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                             <div className="flex gap-4 flex-1 min-w-0">
                                                 <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-lg shadow-sm shrink-0">
-                                                    {report.user.charAt(0)}
+                                                    {userName.charAt(0)}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -171,20 +209,18 @@ function AdminBugReports() {
                                                             <div className={`w-1.5 h-1.5 rounded-full ${sta.dot}`} />{sta.label}
                                                         </span>
                                                     </div>
-                                                    <h3 className="font-black text-slate-900 dark:text-white text-base leading-tight mb-1">{report.title}</h3>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed mb-3">{report.description}</p>
+                                                    <h3 className="font-black text-slate-900 dark:text-white text-base leading-tight mb-1">{report.title || report.titulo}</h3>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed mb-3">{report.description || report.descripcion}</p>
                                                     <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500 font-bold">
-                                                        <span>{report.user}</span>
-                                                        <span className="text-slate-300">·</span>
-                                                        <span>{report.email}</span>
-                                                        <span className="text-slate-300">·</span>
-                                                        <span>{report.date}</span>
+                                                        <span>{userName}</span>
+                                                        {userEmail && <><span className="text-slate-300">·</span><span>{userEmail}</span></>}
+                                                        {reportDate && <><span className="text-slate-300">·</span><span>{reportDate}</span></>}
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex flex-col gap-2 shrink-0 sm:items-end">
-                                                <select value={report.status} onChange={e => handleStatusChange(report.id, e.target.value)}
+                                                <select value={staKey} onChange={e => handleStatusChange(report.id, e.target.value)}
                                                     className="bg-white border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl px-3 py-2.5 outline-none focus:border-[#f97316] cursor-pointer shadow-sm">
                                                     <option value="open">Abierto</option>
                                                     <option value="in_progress">En Progreso</option>

@@ -14,7 +14,7 @@ function AdminInvoices() {
     const fetchInvoices = async () => {
         setLoading(true);
         try {
-            const res = await fetch(getApiUrl('/api/invoices'));
+            const res = await fetch(getApiUrl('/api/facturas'));
             const data = await res.json();
             setInvoices(data);
         } catch (err) {
@@ -30,7 +30,7 @@ function AdminInvoices() {
 
     const handleDownload = async (orderId) => {
         try {
-            const res = await fetch(getApiUrl(`/api/invoices/${orderId}`));
+            const res = await fetch(getApiUrl(`/api/facturas/${orderId}`));
             if (!res.ok) {
                 alert('Error al descargar la factura');
                 return;

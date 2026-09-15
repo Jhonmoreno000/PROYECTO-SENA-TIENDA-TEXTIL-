@@ -49,10 +49,13 @@ function Payment() {
         }));
         const payload = {
             clientId: user?.id || 1,
+            idCliente: user?.id || 1,
             total: calculations.total,
+            montoTotal: calculations.total,
             items,
+            articulos: items
         };
-        const res = await fetch(getApiUrl('/api/orders'), {
+        const res = await fetch(getApiUrl('/api/pedidos'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),

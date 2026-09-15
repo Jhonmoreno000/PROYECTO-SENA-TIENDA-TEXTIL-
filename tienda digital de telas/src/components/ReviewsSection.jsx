@@ -80,10 +80,10 @@ export default function ReviewsSection({ productId }) {
     const fetchReviews = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch(getApiUrl(`/api/reviews?productId=${productId}`));
+            const res = await fetch(getApiUrl(`/api/resenas?productId=${productId}`));
             if (res.ok) {
                 const data = await res.json();
-                setReviews(data);
+                setReviews(data || []);
             }
         } catch (err) {
             console.error('Error cargando reseñas:', err);
@@ -99,10 +99,10 @@ export default function ReviewsSection({ productId }) {
     // ── Resumen calculado (promedio + distribución) ────────────────────────
     const summary = useMemo(() => {
         const count = reviews.length;
-        const avg = count ? reviews.reduce((acc, r) => acc + r.rating, 0) / count : 0;
+        const avg = count ? reviews.reduce((acc, r) => acc + (r.rating ?? r.calificacion ?? 0), 0) / count : 0;
         const distribution = [5, 4, 3, 2, 1].map((stars) => ({
             stars,
-            count: reviews.filter((r) => r.rating === stars).length,
+            count: reviews.filter((r) => (r.rating ?? r.calificacion) === stars).length,
         }));
         return { count, avg, distribution };
     }, [reviews]);
@@ -152,14 +152,18 @@ export default function ReviewsSection({ productId }) {
         }
         setSubmitting(true);
         try {
-            const res = await fetch(getApiUrl('/api/reviews'), {
+            const res = await fetch(getApiUrl('/api/resenas'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     productId: Number(productId),
+                    idProducto: Number(productId),
                     userId: user.id,
+                    idUsuario: user.id,
                     rating,
+                    calificacion: rating,
                     comment: comment.trim(),
+                    comentario: comment.trim(),
                 }),
             });
             const data = await res.json().catch(() => ({}));

@@ -38,8 +38,11 @@ function UserManagement() {
     const containerRef = useRef(null);
 
     const filteredUsers = users.filter(u => {
-        const ms = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const mr = activeTab === 'all' || u.role === activeTab || (activeTab === 'admin' && u.role === 'administrador') || (activeTab === 'seller' && u.role === 'vendedor') || (activeTab === 'client' && u.role === 'cliente');
+        const userName = (u.name || u.nombre || '');
+        const userEmail = (u.email || u.correo || '');
+        const ms = userName.toLowerCase().includes(searchTerm.toLowerCase()) || userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+        const userRole = (u.role || u.rol || 'client');
+        const mr = activeTab === 'all' || userRole === activeTab || (activeTab === 'admin' && (userRole === 'admin' || userRole === 'administrador')) || (activeTab === 'seller' && (userRole === 'seller' || userRole === 'vendedor')) || (activeTab === 'client' && (userRole === 'client' || userRole === 'cliente'));
         return ms && mr;
     });
 
@@ -153,41 +156,41 @@ function UserManagement() {
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div className="flex gap-4">
                                         <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex-shrink-0 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-lg shadow-sm">
-                                            {user.name.charAt(0)}
+                                            {(user.name || user.nombre || 'U').charAt(0).toUpperCase()}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-                                                <h3 className="text-base font-black text-slate-900 dark:text-white">{user.name}</h3>
-                                                <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black tracking-widest uppercase border ${ROLE_BADGE[user.role] || 'bg-slate-50 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
-                                                    {ROLE_LABELS[user.role] || user.role}
+                                                <h3 className="text-base font-black text-slate-900 dark:text-white">{user.name || user.nombre || 'Usuario'}</h3>
+                                                <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black tracking-widest uppercase border ${ROLE_BADGE[user.role || user.rol] || 'bg-slate-50 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
+                                                    {ROLE_LABELS[user.role || user.rol] || user.role || user.rol}
                                                 </span>
-                                                <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black tracking-widest uppercase border ${user.active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'}`}>
-                                                    <div className={`w-1.5 h-1.5 rounded-full ${user.active ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]' : 'bg-rose-500'}`} />
-                                                    {user.active ? 'Activo' : 'Inactivo'}
+                                                <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black tracking-widest uppercase border ${(user.active ?? user.activo) ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'}`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${(user.active ?? user.activo) ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]' : 'bg-rose-500'}`} />
+                                                    {(user.active ?? user.activo) ? 'Activo' : 'Inactivo'}
                                                 </div>
                                             </div>
-                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2">{user.email}</p>
+                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">{user.email || user.correo}</p>
                                             <div className="flex items-center gap-6 text-xs text-slate-400 dark:text-slate-500">
-                                                <span><strong className="font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Último acceso:</strong> {new Date(user.lastLogin).toLocaleDateString('es-CO')}</span>
-                                                <span><strong className="font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Registro:</strong> {new Date(user.registeredAt).toLocaleDateString('es-CO')}</span>
+                                                <span><strong className="font-bold text-slate-500 dark:text-slate-400">Último acceso:</strong> {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('es-CO') : 'Reciente'}</span>
+                                                <span><strong className="font-bold text-slate-500 dark:text-slate-400">Registro:</strong> {(user.registeredAt || user.createdAt || user.fechaCreacion) ? new Date(user.registeredAt || user.createdAt || user.fechaCreacion).toLocaleDateString('es-CO') : 'Reciente'}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-3 shrink-0">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 hidden sm:block">Rol:</span>
-                                            <select value={user.role} onChange={e => handleRoleChange(user.id, e.target.value)} className={`border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-2 outline-none focus:border-indigo-300 cursor-pointer`}>
-                                                <option value="administrador">Administrador</option>
-                                                <option value="vendedor">Vendedor</option>
-                                                <option value="cliente">Cliente</option>
+                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 hidden sm:block">Rol:</span>
+                                            <select value={user.role || user.rol || 'client'} onChange={e => handleRoleChange(user.id, e.target.value)} className={`border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-2 outline-none focus:border-indigo-300 cursor-pointer`}>
+                                                <option value="admin">Administrador</option>
+                                                <option value="seller">Vendedor</option>
+                                                <option value="client">Cliente</option>
                                             </select>
                                         </div>
                                         <button
-                                            onClick={() => handleToggleActive(user.id, user.name, user.active)}
-                                            className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all border-2 flex items-center gap-1.5 ${user.active ? 'text-rose-600 dark:text-rose-400 border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600' : 'text-emerald-600 dark:text-emerald-400 border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'}`}
+                                            onClick={() => handleToggleActive(user.id, user.name || user.nombre, (user.active ?? user.activo))}
+                                            className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all border-2 flex items-center gap-1.5 ${(user.active ?? user.activo) ? 'text-rose-600 dark:text-rose-400 border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600' : 'text-emerald-600 dark:text-emerald-400 border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'}`}
                                         >
-                                            {user.active ? <><ToggleLeft className="w-4 h-4" />Suspender</> : <><ToggleRight className="w-4 h-4" />Activar</>}
+                                            {(user.active ?? user.activo) ? <><ToggleLeft className="w-4 h-4" />Suspender</> : <><ToggleRight className="w-4 h-4" />Activar</>}
                                         </button>
                                     </div>
                                 </div>

@@ -137,7 +137,7 @@ const location = useLocation();
                                             className="p-2 rounded-lg active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100"
                                         >
                                             <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold text-xs border border-primary-200 dark:border-primary-800">
-                                                {user.name.charAt(0)}
+                                                {(user.name || user.nombre || 'U').charAt(0).toUpperCase()}
                                             </div>
                                         </button>
 
@@ -145,8 +145,8 @@ const location = useLocation();
                                             <div className="absolute right-0 top-full mt-1 w-48 z-50">
                                                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
                                                     <div className="p-3 border-b border-gray-100 dark:border-slate-700">
-                                                        <p className="font-bold text-gray-900 dark:text-white truncate text-sm">{user.name}</p>
-                                                        <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                                                        <p className="font-bold text-gray-900 dark:text-white truncate text-sm">{user.name || user.nombre || 'Usuario'}</p>
+                                                        <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'seller' || user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
                                                     </div>
                                                     <div className="p-1">
                                                         <Link
@@ -155,7 +155,7 @@ const location = useLocation();
                                                             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-slate-700 rounded-lg"
                                                         >
                                                             <LayoutDashboard className="w-4 h-4" />
-                                                            Dashboard
+                                                            Panel de Control
                                                         </Link>
                                                         <button
                                                             onClick={() => { setMobileMenuOpen(false); logout(); }}
@@ -304,7 +304,7 @@ const location = useLocation();
                                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold border border-primary-200 dark:border-primary-800">
-                                        {user.name.charAt(0)}
+                                        {(user.name || user.nombre || 'U').charAt(0).toUpperCase()}
                                     </div>
                                 </button>
 
@@ -317,8 +317,8 @@ const location = useLocation();
                                         <div className="absolute right-0 top-full mt-2 w-48 transform origin-top-right z-50">
                                             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
                                                 <div className="p-3 border-b border-gray-100 dark:border-slate-700">
-                                                    <p className="font-bold text-gray-900 dark:text-white truncate">{user.name}</p>
-                                                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                                                    <p className="font-bold text-gray-900 dark:text-white truncate">{user.name || user.nombre || 'Usuario'}</p>
+                                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'seller' || user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
                                                 </div>
 
                                                 <div className="p-1">
@@ -328,7 +328,7 @@ const location = useLocation();
                                                         className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
                                                     >
                                                         <LayoutDashboard className="w-4 h-4" />
-                                                        Dashboard
+                                                        Panel de Control
                                                     </Link>
 
                                                     <button

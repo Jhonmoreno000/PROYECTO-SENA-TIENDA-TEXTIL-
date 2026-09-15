@@ -51,7 +51,7 @@ const adminDashboardLinks = [
         ],
     },
     {
-        label: 'Analytics', icon: TrendingUp,
+        label: 'Analítica', icon: TrendingUp,
         children: [
             { label: 'Mapa de Ventas', path: '/admin/analytics/mapa-ventas', icon: LayoutDashboard },
             { label: 'Rotación de Inventario', path: '/admin/analytics/rotacion', icon: Package },

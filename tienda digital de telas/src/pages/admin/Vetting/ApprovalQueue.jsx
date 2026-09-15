@@ -24,9 +24,16 @@ function ApprovalQueue() {
     const previewModalRef = useRef(null);
     const rejectModalRef = useRef(null);
 
-    const pending = pendingProducts.filter(p => p.status === 'pending');
-    const filteredProducts = filterSeller === 'all' ? pending : pending.filter(p => p.sellerName === filterSeller);
-    const sellers = [...new Set(pendingProducts.map(p => p.sellerName))];
+    const isPending = (p) => {
+        const s = (p?.status || p?.estado || '').toLowerCase();
+        return s === 'pending' || s === 'pendiente';
+    };
+
+    const getSellerName = (p) => p?.sellerName || p?.vendedorNombre || p?.seller || 'Vendedor';
+
+    const pending = pendingProducts.filter(isPending);
+    const filteredProducts = filterSeller === 'all' ? pending : pending.filter(p => getSellerName(p) === filterSeller);
+    const sellers = [...new Set(pendingProducts.map(getSellerName))];
 
     const handleApprove = (productId) => { approveProduct(productId); refreshProducts(); };
     
@@ -99,7 +106,7 @@ function ApprovalQueue() {
                             <Filter size={16} className="text-slate-400 dark:text-slate-500" />
                             <select value={filterSeller} onChange={e => setFilterSeller(e.target.value)} className={`px-4 py-2.5 text-sm font-bold cursor-pointer ${glassInput}`}>
                                 <option value="all">Todos los vendedores ({pending.length})</option>
-                                {sellers.map(s => <option key={s} value={s}>{s} ({pendingProducts.filter(p => p.sellerName === s && p.status === 'pending').length})</option>)}
+                                {sellers.map(s => <option key={s} value={s}>{s} ({pendingProducts.filter(p => getSellerName(p) === s && isPending(p)).length})</option>)}
                             </select>
                         </div>
                     </div>
@@ -112,35 +119,41 @@ function ApprovalQueue() {
                         </div>
                     ) : (
                         <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredProducts.map(product => (
+                            {filteredProducts.map(product => {
+                                const prodPrice = Number(product.price ?? product.precio ?? 0);
+                                const prodImg = product.images?.[0] || product.image || product.imagen || '/placeholder.png';
+                                const prodSeller = getSellerName(product);
+                                const prodDate = product.submittedAt || product.createdAt || product.fechaCreacion || new Date();
+
+                                return (
                                 <div key={product.id} className={`approval-card ${glassCard} flex flex-col overflow-hidden group hover:-translate-y-1.5 transition-all duration-300`}>
                                     {/* Image */}
                                     <div className="relative overflow-hidden" style={{ height: '220px' }}>
-                                        <img src={product.images?.[0] || '/placeholder.png'} alt={product.name} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
+                                        <img src={prodImg} alt={product.name || product.nombre} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
                                         <div className="absolute top-4 right-4">
-                                            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/90  text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg">
+                                            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/90 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg">
                                                 <Clock size={10} /> Pendiente
                                             </span>
                                         </div>
                                         <div className="absolute bottom-4 left-4">
-                                            <p className="text-white font-black text-xl drop-shadow-lg">${(product.price / 1000).toFixed(0)}k<span className="text-xs font-normal opacity-80"> /m</span></p>
+                                            <p className="text-white font-black text-xl drop-shadow-lg">${(prodPrice / 1000).toFixed(0)}k<span className="text-xs font-normal opacity-80"> /m</span></p>
                                         </div>
                                     </div>
 
                                     {/* Info */}
                                     <div className="p-6 flex-1 flex flex-col">
-                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1 group-hover:text-[#f97316] transition-colors">{product.name}</h3>
-                                        <p className="text-[10px] font-bold text-[#f97316] bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 px-2.5 py-1 rounded-xl mb-3 uppercase tracking-widest w-fit">{product.category}</p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-5 line-clamp-2 leading-relaxed">{product.description}</p>
+                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1 group-hover:text-[#f97316] transition-colors">{product.name || product.nombre}</h3>
+                                        <p className="text-[10px] font-bold text-[#f97316] bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 px-2.5 py-1 rounded-xl mb-3 uppercase tracking-widest w-fit">{product.category || product.categoria || 'Telas'}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-5 line-clamp-2 leading-relaxed">{product.description || product.descripcion || ''}</p>
 
                                         <div className="flex items-center gap-3 mb-6 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                                             <div className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-sm shadow-sm">
-                                                {product.sellerName?.charAt(0)}
+                                                {prodSeller.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{product.sellerName}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Enviado: {new Date(product.submittedAt).toLocaleDateString('es-CO')}</p>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{prodSeller}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Enviado: {new Date(prodDate).toLocaleDateString('es-CO')}</p>
                                             </div>
                                         </div>
 
@@ -157,7 +170,8 @@ function ApprovalQueue() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -172,13 +186,13 @@ function ApprovalQueue() {
                                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">Vista Previa</h3>
                                 <button onClick={closePreview} className="p-3 bg-white hover:bg-slate-50 dark:bg-slate-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm transition-all"><X size={20} /></button>
                             </div>
-                            <img src={selectedProduct.images[0]} alt={selectedProduct.name} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
-                            <h4 className="text-xl font-black text-slate-900 dark:text-white mb-1">{selectedProduct.name}</h4>
-                            <p className="text-2xl font-black text-[#f97316] mb-4">{formatCurrency(selectedProduct.price)}<span className="text-sm font-normal text-slate-400 dark:text-slate-500"> /m</span></p>
-                            <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">{selectedProduct.description}</p>
+                            <img src={selectedProduct.images?.[0] || selectedProduct.image || selectedProduct.imagen || '/placeholder.png'} alt={selectedProduct.name || selectedProduct.nombre} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
+                            <h4 className="text-xl font-black text-slate-900 dark:text-white mb-1">{selectedProduct.name || selectedProduct.nombre}</h4>
+                            <p className="text-2xl font-black text-[#f97316] mb-4">{formatCurrency(selectedProduct.price ?? selectedProduct.precio ?? 0)}<span className="text-sm font-normal text-slate-400 dark:text-slate-500"> /m</span></p>
+                            <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">{selectedProduct.description || selectedProduct.descripcion}</p>
                             <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 mb-8">
-                                <div className="w-10 h-10 rounded-full bg-[#f97316] flex items-center justify-center text-white font-black">{selectedProduct.sellerName?.charAt(0)}</div>
-                                <div><p className="font-bold text-slate-900 dark:text-white">Vendedor: {selectedProduct.sellerName}</p><p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Categoría: {selectedProduct.category}</p></div>
+                                <div className="w-10 h-10 rounded-full bg-[#f97316] flex items-center justify-center text-white font-black">{getSellerName(selectedProduct).charAt(0)}</div>
+                                <div><p className="font-bold text-slate-900 dark:text-white">Vendedor: {getSellerName(selectedProduct)}</p><p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Categoría: {selectedProduct.category || selectedProduct.categoria}</p></div>
                             </div>
                             <div className="flex gap-4">
                                 <button onClick={() => { handleApprove(selectedProduct.id); closePreview(); }} className="flex-1 px-6 py-4 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 font-black transition-all shadow-[0_4px_15px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2">

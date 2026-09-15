@@ -395,13 +395,14 @@ export default function AdminOverview() {
                         </h3>
                         <div className="grid grid-cols-3 gap-4">
                             {[
-                                { label: 'Entregados', status: 'delivered', icon: CheckCircle, color: 'text-emerald-500 dark:text-emerald-400' },
-                                { label: 'En proceso', status: ['paid','cutting','packed','shipped','processing'], icon: Clock, color: 'text-amber-500 dark:text-amber-400' },
-                                { label: 'Pendientes', status: 'pending', icon: XCircle, color: 'text-rose-500 dark:text-rose-400' },
+                                { label: 'Entregados', status: ['delivered', 'entregado'], icon: CheckCircle, color: 'text-emerald-500 dark:text-emerald-400' },
+                                { label: 'En proceso', status: ['paid','cutting','packed','shipped','processing','pagado','corte','cortando','empacado','empaque','enviado','envio'], icon: Clock, color: 'text-amber-500 dark:text-amber-400' },
+                                { label: 'Pendientes', status: ['pending', 'pendiente'], icon: XCircle, color: 'text-rose-500 dark:text-rose-400' },
                             ].map(({ label, status, icon: Icon, color }) => {
-                                const count = orders.filter(o =>
-                                    Array.isArray(status) ? status.includes(o.status) : o.status === status
-                                ).length;
+                                const count = orders.filter(o => {
+                                    const st = (o.status || o.estado || '').toLowerCase();
+                                    return Array.isArray(status) ? status.includes(st) : st === status;
+                                }).length;
                                 return (
                                     <div key={label} className="text-center p-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
                                         <Icon size={20} className={`${color} mx-auto mb-1`} />

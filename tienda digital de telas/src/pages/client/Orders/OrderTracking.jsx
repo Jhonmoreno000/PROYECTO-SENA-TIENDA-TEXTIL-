@@ -27,10 +27,31 @@ function OrderTracking() {
     const [trackingInput, setTrackingInput] = useState(orderId || '');
 
     // Encontrar pedido por ID o número de guía
+    const cleanInput = (trackingInput || '').toString().trim().toLowerCase();
     const order = orders.find(o =>
-        o.id.toString() === trackingInput ||
-        o.trackingNumber === trackingInput
+        (o.id && o.id.toString() === cleanInput) ||
+        (o.trackingNumber && o.trackingNumber.toString().toLowerCase() === cleanInput) ||
+        (o.numeroGuia && o.numeroGuia.toString().toLowerCase() === cleanInput)
     );
+
+    const normalizeStatus = (s) => {
+        const map = {
+            'pendiente': 'pending',
+            'pagado': 'paid',
+            'corte': 'cutting',
+            'cortando': 'cutting',
+            'empacado': 'packed',
+            'empaque': 'packed',
+            'enviado': 'shipped',
+            'envio': 'shipped',
+            'entregado': 'delivered',
+            'entrega': 'delivered'
+        };
+        const st = (s || '').toLowerCase();
+        return map[st] || st;
+    };
+
+    const currentStatus = normalizeStatus(order?.status || order?.estado);
 
     const trackingSteps = [
         { key: 'paid', label: 'Pago', icon: CreditCard, description: 'Tu pago ha sido confirmado' },
@@ -43,7 +64,7 @@ function OrderTracking() {
     const getStepStatus = (stepKey) => {
         if (!order) return 'pending';
         const statusOrder = ['pending', 'paid', 'cutting', 'packed', 'shipped', 'delivered'];
-        const currentIndex = statusOrder.indexOf(order.status);
+        const currentIndex = statusOrder.indexOf(currentStatus);
         const stepIndex = statusOrder.indexOf(stepKey);
 
         if (stepIndex < currentIndex) return 'completed';
@@ -51,11 +72,23 @@ function OrderTracking() {
         return 'pending';
     };
 
-    // Mock order items for demo
-    const orderItems = order ? [
+    // Items del pedido dinámicos o de muestra
+    const rawItems = order?.items || order?.detalles || order?.productos || [];
+    const orderItems = order ? (rawItems.length > 0 ? rawItems.map((item, idx) => ({
+        id: item.id || item.productoId || idx,
+        name: item.name || item.nombre || item.productName || 'Tela Premium',
+        meters: Number(item.meters || item.metros || item.quantity || item.cantidad || 1),
+        unitPrice: Number(item.unitPrice || item.precioUnitario || item.price || item.precio || 0),
+        image: item.image || item.imagen || null
+    })) : [
         { id: 1, name: 'Lino Blanco Premium', meters: 3.5, unitPrice: 45000, image: null },
         { id: 2, name: 'Algodón Estampado Flores', meters: 2.0, unitPrice: 32000, image: null }
-    ] : [];
+    ]) : [];
+
+    const orderTotal = Number(order?.total ?? order?.montoTotal ?? 0);
+    const orderDate = order?.date || order?.fecha || order?.createdAt || new Date();
+    const trackingNum = order?.trackingNumber || order?.numeroGuia;
+    const courier = order?.courierName || order?.empresaEnvio || 'Servientrega';
 
     return (
         <DashboardLayout title="Rastreo de Pedido" links={clientDashboardLinks}>
@@ -120,19 +153,19 @@ function OrderTracking() {
                                             Pedido #{String(order.id).padStart(4, '0')}
                                         </h3>
                                         <p className="text-gray-500 font-medium mt-2">
-                                            Fecha de compra: {new Date(order.date).toLocaleDateString('es-CO', {
+                                            Fecha de compra: {new Date(orderDate).toLocaleDateString('es-CO', {
                                                 year: 'numeric', month: 'long', day: 'numeric'
                                             })}
                                         </p>
                                     </div>
-                                    {order.trackingNumber && (
+                                    {trackingNum && (
                                         <div className="text-left md:text-right bg-orange-50 dark:bg-slate-800/80 p-4 rounded-xl border border-orange-100 dark:border-slate-700">
                                             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Guía de Envío</p>
                                             <p className="font-mono font-black text-xl text-orange-600 dark:text-orange-400 tracking-wider">
-                                                {order.trackingNumber}
+                                                {trackingNum}
                                             </p>
                                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-0.5">
-                                                {order.courierName || 'Servientrega'}
+                                                {courier}
                                             </p>
                                         </div>
                                     )}
@@ -145,7 +178,7 @@ function OrderTracking() {
                                         <div
                                             className="h-full bg-gradient-to-r from-orange-400 to-rose-500 rounded-full transition-all duration-1000 ease-out"
                                             style={{
-                                                width: `${(trackingSteps.findIndex(s => s.key === order.status) / (trackingSteps.length - 1)) * 100}%`
+                                                width: `${Math.max(0, (trackingSteps.findIndex(s => s.key === currentStatus) / (trackingSteps.length - 1)) * 100)}%`
                                             }}
                                         />
                                     </div>
@@ -197,9 +230,9 @@ function OrderTracking() {
                                     </div>
                                     <div>
                                         <h4 className="text-orange-800 dark:text-orange-300 font-bold text-lg mb-1 tracking-tight">
-                                            {trackingSteps.find(s => s.key === order.status)?.description || 'Procesando tu pedido'}
+                                            {trackingSteps.find(s => s.key === currentStatus)?.description || 'Procesando tu pedido'}
                                         </h4>
-                                        {order.estimatedDelivery && order.status !== 'delivered' ? (
+                                        {order.estimatedDelivery && currentStatus !== 'delivered' ? (
                                             <p className="text-sm text-orange-600/80 dark:text-orange-400/80 font-medium">
                                                 Fecha estimada de entrega: {new Date(order.estimatedDelivery).toLocaleDateString('es-CO', {
                                                     weekday: 'long', day: 'numeric', month: 'long'
@@ -260,11 +293,11 @@ function OrderTracking() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-gray-500">Subtotal</span>
-                                        <span className="text-gray-900 dark:text-white">{formatCurrency(order.total * 0.81)}</span>
+                                        <span className="text-gray-900 dark:text-white">{formatCurrency(orderTotal * 0.81)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-gray-500">IVA (19%)</span>
-                                        <span className="text-gray-900 dark:text-white">{formatCurrency(order.total * 0.19)}</span>
+                                        <span className="text-gray-900 dark:text-white">{formatCurrency(orderTotal * 0.19)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-gray-500">Envío</span>
@@ -274,7 +307,7 @@ function OrderTracking() {
                                         <div className="flex justify-between items-center">
                                             <span className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-xs">Total Pagado</span>
                                             <span className="font-black text-2xl text-orange-600 dark:text-orange-400">
-                                                {formatCurrency(order.total)}
+                                                {formatCurrency(orderTotal)}
                                             </span>
                                         </div>
                                     </div>

@@ -33,17 +33,36 @@ function ManageCarousel() {
     const formRef = useRef(null);
     const containerRef = useRef(null);
 
+    const normalizarSlide = (s) => ({
+        ...s,
+        id: s.id,
+        title: s.title || s.titulo || '',
+        titulo: s.titulo || s.title || '',
+        subtitle: s.subtitle || s.subtitulo || '',
+        subtitulo: s.subtitulo || s.subtitle || '',
+        image: s.image || s.imagen || '',
+        imagen: s.imagen || s.image || '',
+        cta: s.cta || s.textoBoton || '',
+        textoBoton: s.textoBoton || s.cta || '',
+        sectionKey: s.sectionKey || s.claveSeccion || '',
+        claveSeccion: s.claveSeccion || s.sectionKey || '',
+        active: s.active !== undefined ? s.active : (s.activo !== undefined ? s.activo : true),
+        activo: s.activo !== undefined ? s.activo : (s.active !== undefined ? s.active : true),
+        sortOrder: s.sortOrder ?? s.orden ?? 0,
+        orden: s.orden ?? s.sortOrder ?? 0
+    });
+
     // Carga los slides guardados en la base de datos
     useEffect(() => {
-        fetch(getApiUrl('/api/carousel/all'))
+        fetch(getApiUrl('/api/carrusel/todos'))
             .then(res => res.ok ? res.json() : null)
-            .then(data => { if (data) setCarouselSlides(data); })
+            .then(data => { if (data) setCarouselSlides(data.map(normalizarSlide)); })
             .catch(() => showNotification('error', 'No se pudieron cargar los slides'));
     }, []);
 
     // Carga los apartados del inicio guardados en la base de datos
     useEffect(() => {
-        fetch(getApiUrl('/api/home-sections'))
+        fetch(getApiUrl('/api/secciones-inicio'))
             .then(res => res.ok ? res.json() : null)
             .then(data => { if (data) setHomeSections(data); })
             .catch(() => showNotification('error', 'No se pudieron cargar los apartados'));
@@ -52,7 +71,7 @@ function ManageCarousel() {
     // ── Acciones de los apartados (Nuevas Colecciones, Exclusivas, Ofertas) ──
     const updateHomeSection = async (key, changes) => {
         try {
-            const res = await fetch(getApiUrl(`/api/home-sections/${key}`), {
+            const res = await fetch(getApiUrl(`/api/secciones-inicio/${key}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(changes),
@@ -80,7 +99,7 @@ function ManageCarousel() {
     const handleDelete = async (id) => {
         if (!confirm('¿Eliminar este slide?')) return;
         try {
-            const res = await fetch(getApiUrl(`/api/carousel/${id}`), { method: 'DELETE' });
+            const res = await fetch(getApiUrl(`/api/carrusel/${id}`), { method: 'DELETE' });
             if (res.ok) {
                 setCarouselSlides(prev => prev.filter(s => s.id !== id));
                 showNotification('success', 'Slide eliminado');
@@ -96,13 +115,26 @@ function ManageCarousel() {
 
     const handleSaveEdit = async () => {
         try {
-            const res = await fetch(getApiUrl(`/api/carousel/${isEditing}`), {
+            const payload = {
+                ...editForm,
+                title: editForm.title || editForm.titulo,
+                titulo: editForm.titulo || editForm.title,
+                subtitle: editForm.subtitle || editForm.subtitulo,
+                subtitulo: editForm.subtitulo || editForm.subtitle,
+                image: editForm.image || editForm.imagen,
+                imagen: editForm.imagen || editForm.image,
+                cta: editForm.cta || editForm.textoBoton,
+                textoBoton: editForm.textoBoton || editForm.cta,
+                sectionKey: editForm.sectionKey || editForm.claveSeccion,
+                claveSeccion: editForm.claveSeccion || editForm.sectionKey,
+            };
+            const res = await fetch(getApiUrl(`/api/carrusel/${isEditing}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editForm),
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
-                setCarouselSlides(prev => prev.map(s => s.id === isEditing ? { ...s, ...editForm } : s));
+                setCarouselSlides(prev => prev.map(s => s.id === isEditing ? normalizarSlide({ ...s, ...payload }) : s));
                 setIsEditing(null);
                 showNotification('success', 'Slide actualizado');
             } else {
@@ -116,13 +148,30 @@ function ManageCarousel() {
     const handleAddSlide = async () => {
         if (!newSlide.title || !newSlide.image) { showNotification('error', 'Título e imagen son requeridos'); return; }
         try {
-            const res = await fetch(getApiUrl('/api/carousel'), {
+            const payload = {
+                ...newSlide,
+                title: newSlide.title,
+                titulo: newSlide.title,
+                subtitle: newSlide.subtitle,
+                subtitulo: newSlide.subtitle,
+                image: newSlide.image,
+                imagen: newSlide.image,
+                cta: newSlide.cta,
+                textoBoton: newSlide.cta,
+                sectionKey: newSlide.sectionKey,
+                claveSeccion: newSlide.sectionKey,
+                active: true,
+                activo: true,
+                sortOrder: carouselSlides.length + 1,
+                orden: carouselSlides.length + 1
+            };
+            const res = await fetch(getApiUrl('/api/carrusel'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...newSlide, active: true, sortOrder: carouselSlides.length + 1 }),
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
-                setCarouselSlides(prev => [...prev, { ...newSlide, id: Date.now(), active: true, sortOrder: prev.length + 1 }]);
+                setCarouselSlides(prev => [...prev, normalizarSlide({ ...payload, id: Date.now() })]);
                 setIsAdding(false);
                 setNewSlide({ title: '', subtitle: '', image: '', cta: '', sectionKey: '' });
                 showNotification('success', 'Slide agregado');

@@ -2,6 +2,7 @@ package infraestructura.api.manejadores;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.InputStream;
@@ -32,14 +33,23 @@ public class ManejadorConfiguracion extends ManejadorBase {
         // GET — Recupera configuraciones
         if ("GET".equalsIgnoreCase(metodo)) {
             String ruta = intercambio.getRequestURI().getPath();
-            if (ruta.equals("/api/config") || ruta.equals("/api/configuracion")) {
+            String rutaNormalizada = (ruta.length() > 1 && ruta.endsWith("/")) ? ruta.substring(0, ruta.length() - 1) : ruta;
+
+            if (rutaNormalizada.equals("/api/config") || rutaNormalizada.equals("/api/configuracion")) {
                 Map<String, String> configuraciones = configuracionDAO.obtenerTodaLaConfiguracion();
                 enviarRespuestaJson(intercambio, 200, gson.toJson(configuraciones));
             } else {
-                String clave = ruta.substring(ruta.lastIndexOf("/") + 1);
+                String clave = rutaNormalizada.substring(rutaNormalizada.lastIndexOf("/") + 1);
                 String valor = configuracionDAO.obtenerConfiguracion(clave);
                 if (valor != null) {
-                    enviarRespuestaJson(intercambio, 200, valor);
+                    // Si el valor ya es un JSON válido (objeto o arreglo), lo devolvemos tal cual
+                    String valorTrim = valor.trim();
+                    if ((valorTrim.startsWith("{") && valorTrim.endsWith("}")) ||
+                        (valorTrim.startsWith("[") && valorTrim.endsWith("]"))) {
+                        enviarRespuestaJson(intercambio, 200, valorTrim);
+                    } else {
+                        enviarRespuestaJson(intercambio, 200, gson.toJson(valor));
+                    }
                 } else {
                     enviarRespuestaJson(intercambio, 404, "{}");
                 }
@@ -49,10 +59,34 @@ public class ManejadorConfiguracion extends ManejadorBase {
         } else if ("POST".equalsIgnoreCase(metodo)) {
             InputStream flujoEntrada = intercambio.getRequestBody();
             String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
-            
-            String clave = json.has("key") ? json.get("key").getAsString() : json.get("clave").getAsString();
-            String valor = json.has("value") ? json.get("value").getAsString() : json.get("valor").getAsString();
+            JsonObject json;
+            try {
+                json = JsonParser.parseString(cuerpo).getAsJsonObject();
+            } catch (Exception e) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"JSON inválido\"}");
+                return;
+            }
+
+            String clave = null;
+            if (json.has("key") && !json.get("key").isJsonNull()) {
+                clave = json.get("key").getAsString();
+            } else if (json.has("clave") && !json.get("clave").isJsonNull()) {
+                clave = json.get("clave").getAsString();
+            }
+
+            String valor = null;
+            if (json.has("value") && !json.get("value").isJsonNull()) {
+                JsonElement elem = json.get("value");
+                valor = elem.isJsonPrimitive() ? elem.getAsString() : elem.toString();
+            } else if (json.has("valor") && !json.get("valor").isJsonNull()) {
+                JsonElement elem = json.get("valor");
+                valor = elem.isJsonPrimitive() ? elem.getAsString() : elem.toString();
+            }
+
+            if (clave == null || valor == null) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Faltan campos requeridos: key/clave o value/valor\"}");
+                return;
+            }
 
             if (configuracionDAO.guardarConfiguracion(clave, valor)) {
                 enviarRespuestaJson(intercambio, 200, "{\"success\":true}");
