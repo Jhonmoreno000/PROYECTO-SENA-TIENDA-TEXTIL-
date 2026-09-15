@@ -20,6 +20,7 @@ services:
       retries: 5
 
   backend:
+    image: ddtextil-backend:latest
     build:
       context: ./tienda digital de telas/backend-java/conexionPostgres
       dockerfile: Dockerfile
@@ -31,7 +32,7 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "8081:8081"
+      - "8082:8081"
     depends_on:
       db:
         condition: service_healthy
@@ -39,6 +40,7 @@ services:
       - "./tienda digital de telas/backend-java/conexionPostgres/uploads:/app/uploads"
 
   frontend:
+    image: ddtextil-frontend:latest
     build:
       context: ./tienda digital de telas
       dockerfile: Dockerfile

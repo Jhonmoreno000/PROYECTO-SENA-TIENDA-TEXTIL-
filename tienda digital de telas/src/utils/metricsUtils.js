@@ -259,3 +259,33 @@ export const getPeriodComparison = (currentOrders = [], previousOrders = []) => 
         ordersGrowthRate: calculateGrowthRate(currentOrders.length, previousOrders.length)
     };
 };
+
+/**
+ * segmentClients — Segmenta clientes por nivel de gasto (VIP, Regular, Nuevo)
+ * @param {Array} clients - Lista de clientes
+ * @param {Array} orders - Lista de pedidos
+ * @returns {Object} { vip: [], regular: [], new: [] }
+ */
+export const segmentClients = (clients = [], orders = []) => {
+    const clientsWithMetrics = getAllClientsMetrics(clients, orders);
+    const vip = [];
+    const regular = [];
+    const newClients = [];
+
+    clientsWithMetrics.forEach(client => {
+        const spent = client.metrics?.totalSpent || 0;
+        if (spent >= 1000000) {
+            vip.push(client);
+        } else if (spent >= 300000) {
+            regular.push(client);
+        } else {
+            newClients.push(client);
+        }
+    });
+
+    return {
+        vip,
+        regular,
+        new: newClients
+    };
+};
