@@ -29,7 +29,7 @@ public class PobladorDatosPrueba {
     private static String encriptarContrasena(String contrasenaPlana) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(contrasenaPlana.getBytes());
+            digest.update(contrasenaPlana.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             byte[] resumen = digest.digest();
             StringBuilder cadenaHex = new StringBuilder();
             for (byte b : resumen) {

@@ -94,21 +94,25 @@ public class SoporteDAO {
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {
-                ReporteError b = new ReporteError();
-                b.setId(rs.getInt("id"));
-                b.setIdVendedor((Integer) rs.getObject("seller_id"));
-                b.setNombreVendedor(rs.getString("seller_name"));
-                b.setArea(rs.getString("area"));
-                b.setDescripcion(rs.getString("description"));
-                b.setPasos(rs.getString("steps"));
-                b.setEstado(rs.getString("status"));
-                b.setPrioridad(rs.getString("priority"));
-                b.setAsignadoA((Integer) rs.getObject("assigned_to"));
+                ReporteError reporte = new ReporteError();
+                reporte.setId(rs.getInt("id"));
+                reporte.setIdVendedor((Integer) rs.getObject("seller_id"));
+                reporte.setNombreVendedor(rs.getString("seller_name"));
+                String areaReporte = rs.getString("area");
+                reporte.setArea(areaReporte);
+                reporte.setTitulo(areaReporte);
+                reporte.setDescripcion(rs.getString("description"));
+                reporte.setPasos(rs.getString("steps"));
+                reporte.setEstado(rs.getString("status"));
+                String prioridadReporte = rs.getString("priority");
+                reporte.setPrioridad(prioridadReporte);
+                reporte.setSeveridad(prioridadReporte);
+                reporte.setAsignadoA((Integer) rs.getObject("assigned_to"));
 
-                if (rs.getTimestamp("reported_at") != null) b.setFechaReporte(rs.getTimestamp("reported_at").toString());
-                if (rs.getTimestamp("resolved_at") != null) b.setFechaResolucion(rs.getTimestamp("resolved_at").toString());
+                if (rs.getTimestamp("reported_at") != null) reporte.setFechaReporte(rs.getTimestamp("reported_at").toString());
+                if (rs.getTimestamp("resolved_at") != null) reporte.setFechaResolucion(rs.getTimestamp("resolved_at").toString());
 
-                lista.add(b);
+                lista.add(reporte);
             }
         } catch (SQLException e) { 
             e.printStackTrace(); 
@@ -116,18 +120,20 @@ public class SoporteDAO {
         return lista;
     }
 
-    public boolean agregarReporteError(ReporteError b) {
+    public boolean agregarReporteError(ReporteError reporte) {
         String consulta = "INSERT INTO bug_reports (seller_id, seller_name, area, description, steps, status, priority, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
-            if (b.getIdVendedor() != null) pst.setInt(1, b.getIdVendedor()); else pst.setNull(1, Types.INTEGER);
-            pst.setString(2, b.getNombreVendedor());
-            pst.setString(3, b.getArea());
-            pst.setString(4, b.getDescripcion());
-            pst.setString(5, b.getPasos());
-            pst.setString(6, b.getEstado() != null ? b.getEstado() : "new");
-            pst.setString(7, b.getPrioridad());
-            if (b.getAsignadoA() != null) pst.setInt(8, b.getAsignadoA()); else pst.setNull(8, Types.INTEGER);
+            if (reporte.getIdVendedor() != null) pst.setInt(1, reporte.getIdVendedor()); else pst.setNull(1, Types.INTEGER);
+            pst.setString(2, reporte.getNombreVendedor() != null ? reporte.getNombreVendedor() : "Usuario");
+            String areaFinal = reporte.getArea() != null ? reporte.getArea() : (reporte.getTitulo() != null ? reporte.getTitulo() : "General");
+            pst.setString(3, areaFinal);
+            pst.setString(4, reporte.getDescripcion() != null ? reporte.getDescripcion() : "");
+            pst.setString(5, reporte.getPasos() != null ? reporte.getPasos() : "");
+            pst.setString(6, reporte.getEstado() != null ? reporte.getEstado() : "open");
+            String prioridadFinal = reporte.getPrioridad() != null ? reporte.getPrioridad() : (reporte.getSeveridad() != null ? reporte.getSeveridad() : "low");
+            pst.setString(7, prioridadFinal);
+            if (reporte.getAsignadoA() != null) pst.setInt(8, reporte.getAsignadoA()); else pst.setNull(8, Types.INTEGER);
 
             return pst.executeUpdate() > 0;
         } catch (SQLException e) { 

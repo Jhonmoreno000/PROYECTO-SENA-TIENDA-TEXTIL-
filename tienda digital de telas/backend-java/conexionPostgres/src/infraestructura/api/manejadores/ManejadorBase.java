@@ -31,6 +31,9 @@ public abstract class ManejadorBase implements HttpHandler {
         } catch (ExcepcionDominio e) {
             System.err.println("Error de Regla de Negocio: " + e.getMessage());
             enviarRespuestaError(intercambio, 400, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error en formato o parámetros de la petición: " + e.getMessage());
+            enviarRespuestaError(intercambio, 400, "Parámetros inválidos o formato incorrecto: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             enviarRespuestaError(intercambio, 500, "Error interno del servidor. Por favor contacta soporte.");

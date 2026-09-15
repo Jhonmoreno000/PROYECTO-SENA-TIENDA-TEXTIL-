@@ -29,7 +29,9 @@ public class ManejadorArchivosEstaticos extends ManejadorBase {
         // Prevención de ataques de Path Traversal: asegurar que el archivo esté dentro de uploads/
         File directorioSubidas = new File("uploads").getCanonicalFile();
         File archivoCanonico = archivo.getCanonicalFile();
-        if (!archivoCanonico.getPath().startsWith(directorioSubidas.getPath())) {
+        java.nio.file.Path rutaDirectorioSubidas = directorioSubidas.toPath().normalize();
+        java.nio.file.Path rutaArchivoCanonico = archivoCanonico.toPath().normalize();
+        if (!rutaArchivoCanonico.startsWith(rutaDirectorioSubidas)) {
             enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: ruta no permitida\"}");
             return;
         }

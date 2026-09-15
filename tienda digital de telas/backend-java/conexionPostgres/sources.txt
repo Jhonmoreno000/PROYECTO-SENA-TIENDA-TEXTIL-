@@ -54,3 +54,4 @@ src/infraestructura/api/manejadores/ManejadorResenas.java
 src/infraestructura/api/manejadores/ManejadorSeccionesInicio.java
 src/infraestructura/api/manejadores/ManejadorSoporte.java
 src/infraestructura/api/manejadores/ManejadorUsuarios.java
+src/PruebasSeguridadYBugs.java

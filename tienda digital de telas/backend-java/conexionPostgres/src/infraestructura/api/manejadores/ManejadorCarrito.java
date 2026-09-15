@@ -39,37 +39,96 @@ public class ManejadorCarrito extends ManejadorBase {
 
         // POST /api/cart o /api/carrito
         } else if ("POST".equals(metodo)) {
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
+            InputStream flujoEntrada = intercambio.getRequestBody();
+            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject objetoJson;
+            try {
+                objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
+            } catch (Exception e) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
+                return;
+            }
 
-            int idUsuario = json.has("userId") ? json.get("userId").getAsInt() : json.get("idUsuario").getAsInt();
-            int idProducto = json.has("productId") ? json.get("productId").getAsInt() : json.get("idProducto").getAsInt();
-            int cantidad = json.has("quantity") ? json.get("quantity").getAsInt() : json.get("cantidad").getAsInt();
+            int idUsuario = objetoJson.has("userId") ? objetoJson.get("userId").getAsInt() 
+                          : (objetoJson.has("idUsuario") ? objetoJson.get("idUsuario").getAsInt() : 0);
+            int idProducto = objetoJson.has("productId") ? objetoJson.get("productId").getAsInt() 
+                           : (objetoJson.has("idProducto") ? objetoJson.get("idProducto").getAsInt() : 0);
+            int cantidad = objetoJson.has("quantity") ? objetoJson.get("quantity").getAsInt() 
+                         : (objetoJson.has("cantidad") ? objetoJson.get("cantidad").getAsInt() : 1);
+
+            if (idUsuario <= 0 || idProducto <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Usuario y producto son obligatorios\"}");
+                return;
+            }
+
+            if (cantidad <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"La cantidad debe ser mayor a 0\"}");
+                return;
+            }
 
             boolean exito = carritoDAO.agregarAlCarrito(idUsuario, idProducto, cantidad);
             enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
 
-        // PUT /api/cart/{id}
+        // PUT /api/cart/{id} o /api/carrito/{id}
         } else if ("PUT".equals(metodo)) {
-            int idItem = Integer.parseInt(ruta.split("/")[ruta.split("/").length - 1]);
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
-            int cantidad = json.has("quantity") ? json.get("quantity").getAsInt() : json.get("cantidad").getAsInt();
+            String[] segmentos = ruta.split("/");
+            int idItem = -1;
+            for (String segmento : segmentos) {
+                if (segmento.matches("\\d+")) {
+                    idItem = Integer.parseInt(segmento);
+                    break;
+                }
+            }
+
+            if (idItem <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de ítem inválido\"}");
+                return;
+            }
+
+            InputStream flujoEntrada = intercambio.getRequestBody();
+            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject objetoJson;
+            try {
+                objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
+            } catch (Exception e) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
+                return;
+            }
+
+            int cantidad = objetoJson.has("quantity") ? objetoJson.get("quantity").getAsInt() 
+                         : (objetoJson.has("cantidad") ? objetoJson.get("cantidad").getAsInt() : 1);
+
+            // Si la cantidad es menor o igual a cero, se elimina el producto del carrito
+            if (cantidad <= 0) {
+                boolean exitoEliminar = carritoDAO.eliminarDelCarrito(idItem);
+                enviarRespuestaJson(intercambio, exitoEliminar ? 200 : 500, "{\"success\":" + exitoEliminar + "}");
+                return;
+            }
 
             boolean exito = carritoDAO.actualizarCantidad(idItem, cantidad);
             enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
 
-        // DELETE
+        // DELETE /api/cart/{id} o /api/carrito/vaciar/{idUsuario}
         } else if ("DELETE".equals(metodo)) {
+            String[] segmentos = ruta.split("/");
+            int identificador = -1;
+            for (String segmento : segmentos) {
+                if (segmento.matches("\\d+")) {
+                    identificador = Integer.parseInt(segmento);
+                    break;
+                }
+            }
+
+            if (identificador <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador inválido en la ruta\"}");
+                return;
+            }
+
             if (ruta.contains("/clear/") || ruta.contains("/vaciar/")) {
-                int idUsuario = Integer.parseInt(ruta.split("/")[ruta.split("/").length - 1]);
-                boolean exito = carritoDAO.vaciarCarrito(idUsuario);
+                boolean exito = carritoDAO.vaciarCarrito(identificador);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
             } else {
-                int idItem = Integer.parseInt(ruta.split("/")[ruta.split("/").length - 1]);
-                boolean exito = carritoDAO.eliminarDelCarrito(idItem);
+                boolean exito = carritoDAO.eliminarDelCarrito(identificador);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
             }
         } else {

@@ -23,6 +23,10 @@ public class ReporteError {
     @SerializedName(value = "area", alternate = {"modulo"})
     private String area;
 
+    /** Título del reporte de error. */
+    @SerializedName(value = "title", alternate = {"titulo"})
+    private String titulo;
+
     /** Descripción del error. */
     @SerializedName(value = "description", alternate = {"descripcion"})
     private String descripcion;
@@ -31,13 +35,17 @@ public class ReporteError {
     @SerializedName(value = "steps", alternate = {"pasos"})
     private String pasos;
 
-    /** Estado del reporte: "pending", "reviewing", "fixed", "closed". */
+    /** Estado del reporte: "pending", "reviewing", "fixed", "closed", "open", "resolved". */
     @SerializedName(value = "status", alternate = {"estado"})
     private String estado;
 
     /** Prioridad del error. */
     @SerializedName(value = "priority", alternate = {"prioridad"})
     private String prioridad;
+
+    /** Severidad del error (alta, media, baja / high, medium, low). */
+    @SerializedName(value = "severity", alternate = {"severidad"})
+    private String severidad;
 
     /** ID de la persona asignada. */
     @SerializedName(value = "assignedTo", alternate = {"asignadoA"})
@@ -63,8 +71,11 @@ public class ReporteError {
     public String getNombreVendedor() { return nombreVendedor; }
     public void setNombreVendedor(String nombreVendedor) { this.nombreVendedor = nombreVendedor; }
 
-    public String getArea() { return area; }
-    public void setArea(String area) { this.area = area; }
+    public String getArea() { return (area != null && !area.isBlank()) ? area : titulo; }
+    public void setArea(String area) { this.area = area; if (this.titulo == null) this.titulo = area; }
+
+    public String getTitulo() { return (titulo != null && !titulo.isBlank()) ? titulo : area; }
+    public void setTitulo(String titulo) { this.titulo = titulo; if (this.area == null) this.area = titulo; }
 
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
@@ -75,8 +86,11 @@ public class ReporteError {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
-    public String getPrioridad() { return prioridad; }
-    public void setPrioridad(String prioridad) { this.prioridad = prioridad; }
+    public String getPrioridad() { return prioridad != null ? prioridad : (severidad != null ? severidad : "low"); }
+    public void setPrioridad(String prioridad) { this.prioridad = prioridad; if (this.severidad == null) this.severidad = prioridad; }
+
+    public String getSeveridad() { return severidad != null ? severidad : (prioridad != null ? prioridad : "low"); }
+    public void setSeveridad(String severidad) { this.severidad = severidad; if (this.prioridad == null) this.prioridad = severidad; }
 
     public Integer getAsignadoA() { return asignadoA; }
     public void setAsignadoA(Integer asignadoA) { this.asignadoA = asignadoA; }

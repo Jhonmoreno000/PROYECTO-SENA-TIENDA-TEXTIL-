@@ -70,6 +70,46 @@ public class UsuarioDAO {
         return usuarios;
     }
 
+    /**
+     * Actualiza el estado de activación de un usuario en el sistema.
+     * @param idUsuario Identificador del usuario.
+     * @param activo Estado activo deseado.
+     * @return true si se actualizó exitosamente, false en caso contrario.
+     */
+    public boolean actualizarEstadoUsuario(int idUsuario, boolean activo) {
+        String consulta = "UPDATE users SET active = ? WHERE id = ?";
+        try (Connection conexion = Conexion.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
+            sentencia.setBoolean(1, activo);
+            sentencia.setInt(2, idUsuario);
+            return sentencia.executeUpdate() > 0;
+        } catch (SQLException excepcion) {
+            System.err.println("[ERROR] Error actualizando estado de usuario: " + excepcion.getMessage());
+            excepcion.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Actualiza el rol asignado a un usuario.
+     * @param idUsuario Identificador del usuario.
+     * @param nuevoRol Nombre del nuevo rol (ej: admin, seller, client).
+     * @return true si se actualizó exitosamente, false en caso contrario.
+     */
+    public boolean actualizarRolUsuario(int idUsuario, String nuevoRol) {
+        String consulta = "UPDATE users SET role = ? WHERE id = ?";
+        try (Connection conexion = Conexion.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
+            sentencia.setString(1, nuevoRol);
+            sentencia.setInt(2, idUsuario);
+            return sentencia.executeUpdate() > 0;
+        } catch (SQLException excepcion) {
+            System.err.println("[ERROR] Error actualizando rol de usuario: " + excepcion.getMessage());
+            excepcion.printStackTrace();
+            return false;
+        }
+    }
+
     public List<Usuario> getAllUsers() {
         return obtenerTodosLosUsuarios();
     }

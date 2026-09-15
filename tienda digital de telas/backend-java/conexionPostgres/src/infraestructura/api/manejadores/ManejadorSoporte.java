@@ -61,20 +61,43 @@ public class ManejadorSoporte extends ManejadorBase {
         } else if ("PUT".equalsIgnoreCase(metodo)) {
             InputStream flujoEntrada = intercambio.getRequestBody();
             String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
+            JsonObject objetoJson;
+            try {
+                objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
+            } catch (Exception e) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
+                return;
+            }
             
-            String estado = objetoJson.has("status") ? objetoJson.get("status").getAsString() : objetoJson.get("estado").getAsString();
-            String[] partes = ruta.split("/");
-            int id = Integer.parseInt(partes[4]);
+            String estado = "open";
+            if (objetoJson.has("status") && !objetoJson.get("status").isJsonNull()) {
+                estado = objetoJson.get("status").getAsString();
+            } else if (objetoJson.has("estado") && !objetoJson.get("estado").isJsonNull()) {
+                estado = objetoJson.get("estado").getAsString();
+            }
+
+            String[] segmentosRuta = ruta.split("/");
+            int identificador = -1;
+            for (String segmento : segmentosRuta) {
+                if (segmento.matches("\\d+")) {
+                    identificador = Integer.parseInt(segmento);
+                    break;
+                }
+            }
+
+            if (identificador <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador no numérico o inválido en la ruta\"}");
+                return;
+            }
 
             if (ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets")) {
-                boolean exito = soporteDAO.actualizarEstadoTicket(id, estado);
+                boolean exito = soporteDAO.actualizarEstadoTicket(identificador, estado);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando ticket\"}");
             } else if (ruta.startsWith("/api/support/bugs") || ruta.startsWith("/api/soporte/errores")) {
-                boolean exito = soporteDAO.actualizarEstadoReporteError(id, estado);
+                boolean exito = soporteDAO.actualizarEstadoReporteError(identificador, estado);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando reporte\"}");
             } else {
-                enviarRespuestaJson(intercambio, 404, "{}");
+                enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
             }
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");

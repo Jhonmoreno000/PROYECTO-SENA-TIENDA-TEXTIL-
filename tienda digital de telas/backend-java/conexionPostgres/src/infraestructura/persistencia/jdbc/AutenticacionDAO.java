@@ -17,20 +17,20 @@ import dominio.modelos.Usuario;
 public class AutenticacionDAO {
 
     /**
-     * Genera el hash SHA-256 de una contraseña.
+     * Genera el hash criptográfico SHA-256 de una contraseña usando codificación UTF-8.
      */
     private String generarHashContrasena(String contrasena) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(contrasena.getBytes());
-            byte[] bytes = md.digest();
-            StringBuilder sb = new StringBuilder();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(contrasena.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] bytes = digest.digest();
+            StringBuilder constructorCadena = new StringBuilder();
             for (byte b : bytes) {
-                sb.append(String.format("%02x", b));
+                constructorCadena.append(String.format("%02x", b));
             }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            return constructorCadena.toString();
+        } catch (NoSuchAlgorithmException excepcion) {
+            throw new RuntimeException("Algoritmo SHA-256 no disponible", excepcion);
         }
     }
 

@@ -84,47 +84,58 @@ public class PedidoDAO {
 
         try (Connection con = Conexion.obtenerConexion()) {
             con.setAutoCommit(false);
-            try (PreparedStatement pst = con.prepareStatement(sqlPedido, Statement.RETURN_GENERATED_KEYS)) {
-                int idVendedor = 1;
-                if (articulos != null && !articulos.isEmpty()) {
-                    Object objVendedor = articulos.get(0).get("sellerId");
-                    if (objVendedor instanceof Number) idVendedor = ((Number) objVendedor).intValue();
-                }
-                pst.setInt(1, idCliente);
-                pst.setInt(2, idVendedor);
-                pst.setDouble(3, total);
-                pst.executeUpdate();
-
-                try (ResultSet rs = pst.getGeneratedKeys()) {
-                    if (rs.next()) idPedido = rs.getInt(1);
-                }
-            }
-
-            if (idPedido > 0 && articulos != null) {
-                String sqlArticulo = "INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
-                try (PreparedStatement pst = con.prepareStatement(sqlArticulo)) {
-                    for (Map<String, Object> articulo : articulos) {
-                        pst.setInt(1, idPedido);
-                        Object objProd = articulo.getOrDefault("productId", articulo.get("idProducto"));
-                        Object objCant = articulo.getOrDefault("quantity", articulo.get("cantidad"));
-                        Object objPrecio = articulo.getOrDefault("unitPrice", articulo.get("precioUnitario"));
-
-                        int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
-                        double cant = (objCant instanceof Number) ? ((Number) objCant).doubleValue() : Double.parseDouble(String.valueOf(objCant));
-                        double precio = (objPrecio instanceof Number) ? ((Number) objPrecio).doubleValue() : Double.parseDouble(String.valueOf(objPrecio));
-
-                        pst.setInt(2, idProd);
-                        pst.setDouble(3, cant);
-                        pst.setDouble(4, precio);
-                        pst.addBatch();
+            try {
+                try (PreparedStatement pst = con.prepareStatement(sqlPedido, Statement.RETURN_GENERATED_KEYS)) {
+                    int idVendedor = 1;
+                    if (articulos != null && !articulos.isEmpty()) {
+                        Object objVendedor = articulos.get(0).get("sellerId");
+                        if (objVendedor instanceof Number) idVendedor = ((Number) objVendedor).intValue();
                     }
-                    pst.executeBatch();
-                }
-            }
+                    pst.setInt(1, idCliente);
+                    pst.setInt(2, idVendedor);
+                    pst.setDouble(3, total);
+                    pst.executeUpdate();
 
-            con.commit();
+                    try (ResultSet rs = pst.getGeneratedKeys()) {
+                        if (rs.next()) idPedido = rs.getInt(1);
+                    }
+                }
+
+                if (idPedido > 0 && articulos != null) {
+                    String sqlArticulo = "INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
+                    try (PreparedStatement pst = con.prepareStatement(sqlArticulo)) {
+                        for (Map<String, Object> articulo : articulos) {
+                            pst.setInt(1, idPedido);
+                            Object objProd = articulo.getOrDefault("productId", articulo.get("idProducto"));
+                            Object objCant = articulo.getOrDefault("quantity", articulo.get("cantidad"));
+                            Object objPrecio = articulo.getOrDefault("unitPrice", articulo.get("precioUnitario"));
+
+                            int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
+                            double cant = (objCant instanceof Number) ? ((Number) objCant).doubleValue() : Double.parseDouble(String.valueOf(objCant));
+                            double precio = (objPrecio instanceof Number) ? ((Number) objPrecio).doubleValue() : Double.parseDouble(String.valueOf(objPrecio));
+
+                            pst.setInt(2, idProd);
+                            pst.setDouble(3, cant);
+                            pst.setDouble(4, precio);
+                            pst.addBatch();
+                        }
+                        pst.executeBatch();
+                    }
+                }
+
+                con.commit();
+            } catch (SQLException excepcion) {
+                try {
+                    con.rollback();
+                } catch (SQLException exRollback) {
+                    System.err.println("[ERROR] Error revirtiendo transacción: " + exRollback.getMessage());
+                }
+                System.err.println("[ERROR] Error creando pedido. Transacción revertida: " + excepcion.getMessage());
+                excepcion.printStackTrace();
+                return -1;
+            }
         } catch (SQLException e) {
-            System.err.println("[ERROR] Error creando pedido: " + e.getMessage());
+            System.err.println("[ERROR] Error de conexión al crear pedido: " + e.getMessage());
             e.printStackTrace();
         }
         return idPedido;

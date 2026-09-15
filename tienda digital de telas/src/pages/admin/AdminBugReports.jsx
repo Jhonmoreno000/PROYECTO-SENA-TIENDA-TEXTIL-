@@ -116,7 +116,7 @@ function AdminBugReports() {
     const pendingCount = reports.filter(isPending).length;
     const resolvedCount = reports.filter(isResolved).length;
     const highCount = reports.filter(r => {
-        const sev = (r.severity || r.severidad || '').toLowerCase();
+        const sev = (r.severity || r.severidad || r.priority || r.prioridad || '').toLowerCase();
         return (sev === 'high' || sev === 'alta') && !isResolved(r);
     }).length;
 
@@ -183,7 +183,7 @@ function AdminBugReports() {
                                 <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Prueba con otro filtro.</p>
                             </div>
                         ) : filtered.map(report => {
-                            const sevKey = (report.severity || report.severidad || 'low').toLowerCase();
+                            const sevKey = (report.severity || report.severidad || report.priority || report.prioridad || 'low').toLowerCase();
                             const staKey = (report.status || report.estado || 'open').toLowerCase();
                             const sev = SEV_CONFIG[sevKey] || SEV_CONFIG.low;
                             const sta = STATUS_CONFIG[staKey] || STATUS_CONFIG.open;
@@ -241,7 +241,7 @@ function AdminBugReports() {
                                             <div className="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 grid sm:grid-cols-2 gap-4">
                                                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                                                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Descripción completa</p>
-                                                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{report.description}</p>
+                                                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{report.description || report.descripcion}</p>
                                                 </div>
                                                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                                                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Cambiar estado</p>

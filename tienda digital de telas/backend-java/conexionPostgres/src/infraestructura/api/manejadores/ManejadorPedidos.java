@@ -86,15 +86,34 @@ public class ManejadorPedidos extends ManejadorBase {
         } else if ("PUT".equalsIgnoreCase(metodo)) {
             String ruta = intercambio.getRequestURI().getPath();
             if (ruta.contains("/status") || ruta.contains("/estado")) {
-                String[] partes = ruta.split("/");
-                int idPedido = Integer.parseInt(partes[3]);
-                InputStream entrada = intercambio.getRequestBody();
-                String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
-                JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
-                String estado = json.has("status") ? json.get("status").getAsString() 
-                              : (json.has("estado") ? json.get("estado").getAsString() : "pending");
+                String[] segmentos = ruta.split("/");
+                int idPedido = -1;
+                for (String segmento : segmentos) {
+                    if (segmento.matches("\\d+")) {
+                        idPedido = Integer.parseInt(segmento);
+                        break;
+                    }
+                }
+
+                if (idPedido <= 0) {
+                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de pedido inválido en la ruta\"}");
+                    return;
+                }
+
+                InputStream flujoEntrada = intercambio.getRequestBody();
+                String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+                JsonObject objetoJson;
+                try {
+                    objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
+                } catch (Exception e) {
+                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
+                    return;
+                }
+
+                String estado = objetoJson.has("status") ? objetoJson.get("status").getAsString() 
+                              : (objetoJson.has("estado") ? objetoJson.get("estado").getAsString() : "pending");
                 boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado);
-                enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando\"}");
+                enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando estado del pedido\"}");
             } else {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
             }

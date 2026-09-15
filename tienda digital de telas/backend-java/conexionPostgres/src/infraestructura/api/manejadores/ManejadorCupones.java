@@ -49,8 +49,21 @@ public class ManejadorCupones extends ManejadorBase {
             String ruta = intercambio.getRequestURI().getPath();
             if ((ruta.startsWith("/api/coupons/") && ruta.endsWith("/deactivate")) ||
                 (ruta.startsWith("/api/cupones/") && ruta.endsWith("/desactivar"))) {
-                int id = Integer.parseInt(ruta.split("/")[3]);
-                if (cuponDAO.desactivarCupon(id)) {
+                String[] segmentos = ruta.split("/");
+                int idCupon = -1;
+                for (String segmento : segmentos) {
+                    if (segmento.matches("\\d+")) {
+                        idCupon = Integer.parseInt(segmento);
+                        break;
+                    }
+                }
+
+                if (idCupon <= 0) {
+                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de cupón inválido\"}");
+                    return;
+                }
+
+                if (cuponDAO.desactivarCupon(idCupon)) {
                     enviarRespuestaJson(intercambio, 200, "{\"success\":true}");
                 } else {
                     enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error actualizando estado del cupón\"}");

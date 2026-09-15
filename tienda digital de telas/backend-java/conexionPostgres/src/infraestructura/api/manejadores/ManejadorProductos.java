@@ -37,20 +37,21 @@ public class ManejadorProductos extends ManejadorBase {
 
     private void manejarGet(HttpExchange intercambio, String ruta, ProductoDAO dao, Gson gson) throws Exception {
         List<Producto> productos;
-        String parametrosConsulta = intercambio.getRequestURI().getQuery();
+        int idVendedor = obtenerParametroConsultaEntero(intercambio, "sellerId", -1);
+        if (idVendedor <= 0) {
+            idVendedor = obtenerParametroConsultaEntero(intercambio, "idVendedor", -1);
+        }
+
+        String seccion = obtenerParametroConsulta(intercambio, "section");
+        if (seccion == null) {
+            seccion = obtenerParametroConsulta(intercambio, "seccion");
+        }
 
         if (ruta.endsWith("/pending") || ruta.endsWith("/pendientes")) {
             productos = dao.obtenerProductosPendientes();
-        } else if (parametrosConsulta != null && parametrosConsulta.contains("sellerId=")) {
-            int idVendedor = Integer.parseInt(parametrosConsulta.split("sellerId=")[1].split("&")[0]);
+        } else if (idVendedor > 0) {
             productos = dao.obtenerProductosPorVendedor(idVendedor);
-        } else if (parametrosConsulta != null && parametrosConsulta.contains("idVendedor=")) {
-            int idVendedor = Integer.parseInt(parametrosConsulta.split("idVendedor=")[1].split("&")[0]);
-            productos = dao.obtenerProductosPorVendedor(idVendedor);
-        } else if (parametrosConsulta != null && (parametrosConsulta.contains("section=") || parametrosConsulta.contains("seccion="))) {
-            String seccion = parametrosConsulta.contains("section=") 
-                ? parametrosConsulta.split("section=")[1].split("&")[0]
-                : parametrosConsulta.split("seccion=")[1].split("&")[0];
+        } else if (seccion != null && !seccion.isBlank()) {
             productos = dao.obtenerProductosPorSeccion(seccion);
         } else {
             productos = dao.obtenerTodosLosProductos();

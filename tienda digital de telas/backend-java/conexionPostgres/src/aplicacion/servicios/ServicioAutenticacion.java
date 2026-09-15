@@ -66,22 +66,22 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Genera un hash criptográfico SHA-256 a partir de una contraseña en texto plano.
+     * Genera un hash criptográfico SHA-256 a partir de una contraseña en texto plano con UTF-8.
      * @param contrasena Contraseña en texto plano.
      * @return Cadena en formato hexadecimal con el hash SHA-256.
      */
     public static String generarHashContrasena(String contrasena) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(contrasena.getBytes());
-            byte[] bytes = md.digest();
-            StringBuilder sb = new StringBuilder();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(contrasena.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] bytes = digest.digest();
+            StringBuilder constructorCadena = new StringBuilder();
             for (byte b : bytes) {
-                sb.append(String.format("%02x", b));
+                constructorCadena.append(String.format("%02x", b));
             }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 no disponible en la plataforma JVM", e);
+            return constructorCadena.toString();
+        } catch (NoSuchAlgorithmException excepcion) {
+            throw new RuntimeException("SHA-256 no disponible en la plataforma JVM", excepcion);
         }
     }
 }
