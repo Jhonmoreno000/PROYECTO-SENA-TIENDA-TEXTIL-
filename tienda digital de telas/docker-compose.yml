@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Base de Datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: dndtextil_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: tienda_digital_textiles_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Autoejecutar esquema_espanol.sql al crear la DB por primera vez
+      - ./backend-java/conexionPostgres/src/infraestructura/persistencia/esquema_espanol.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # Backend Java
+  backend:
+    build: 
+      context: ./backend-java/conexionPostgres
+      dockerfile: Dockerfile
+    container_name: dndtextil_backend
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_URL=jdbc:postgresql://db:5432/tienda_digital_textiles_db
+      - DB_USER=postgres
+      - DB_PASSWORD=mysecretpassword
+    depends_on:
+      - db
+    volumes:
+      # Volumén para que las imágenes subidas persistan
+      - uploads_data:/app/uploads
+
+  # Frontend React (Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dndtextil_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:

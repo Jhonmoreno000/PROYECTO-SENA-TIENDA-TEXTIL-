@@ -4,6 +4,7 @@ COPY src ./src
 COPY lib ./lib
 COPY sources.txt ./sources.txt
 RUN mkdir -p bin && \
+    find src -name "*.java" > sources.txt && \
     javac -encoding UTF-8 -cp "lib/*" -d bin @sources.txt
 
 FROM eclipse-temurin:17-jre
