@@ -12,7 +12,7 @@ import dominio.modelos.Usuario;
 
 /**
  * DAO (Data Access Object) para la entidad Usuario.
- * Gestiona las operaciones de consulta sobre la tabla 'users'.
+ * Gestiona las operaciones de consulta sobre la tabla 'usuarios'.
  */
 public class UsuarioDAO {
 
@@ -22,8 +22,8 @@ public class UsuarioDAO {
      */
     public List<Usuario> obtenerTodosLosUsuarios() {
         List<Usuario> usuarios = new ArrayList<>();
-        String consulta = "SELECT id, name, email, role, active, suspended, suspension_reason, commission_rate, " +
-                "registered_at, last_login FROM users ORDER BY id ASC";
+        String consulta = "SELECT id, nombre, correo, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
+                "registrado_en, ultimo_acceso FROM usuarios ORDER BY id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta);
@@ -32,23 +32,23 @@ public class UsuarioDAO {
             while (resultado.next()) {
                 Usuario usuario = new Usuario();
                 usuario.setId(resultado.getInt("id"));
-                usuario.setNombre(resultado.getString("name"));
-                usuario.setCorreo(resultado.getString("email"));
-                usuario.setRol(resultado.getString("role"));
-                usuario.setActivo(resultado.getBoolean("active"));
-                usuario.setSuspendido(resultado.getBoolean("suspended"));
-                usuario.setMotivoSuspension(resultado.getString("suspension_reason"));
+                usuario.setNombre(resultado.getString("nombre"));
+                usuario.setCorreo(resultado.getString("correo"));
+                usuario.setRol(resultado.getString("rol"));
+                usuario.setActivo(resultado.getBoolean("activo"));
+                usuario.setSuspendido(resultado.getBoolean("suspendido"));
+                usuario.setMotivoSuspension(resultado.getString("motivo_suspension"));
 
-                double comision = resultado.getDouble("commission_rate");
+                double comision = resultado.getDouble("tasa_comision");
                 if (!resultado.wasNull()) {
                     usuario.setPorcentajeComision(comision);
                 }
 
-                if (resultado.getTimestamp("registered_at") != null) {
-                    usuario.setFechaRegistro(resultado.getTimestamp("registered_at").toString());
+                if (resultado.getTimestamp("registrado_en") != null) {
+                    usuario.setFechaRegistro(resultado.getTimestamp("registrado_en").toString());
                 }
-                if (resultado.getTimestamp("last_login") != null) {
-                    usuario.setUltimoAcceso(resultado.getTimestamp("last_login").toString());
+                if (resultado.getTimestamp("ultimo_acceso") != null) {
+                    usuario.setUltimoAcceso(resultado.getTimestamp("ultimo_acceso").toString());
                 }
 
                 if (usuario.isSuspendido()) {
@@ -77,7 +77,7 @@ public class UsuarioDAO {
      * @return true si se actualizó exitosamente, false en caso contrario.
      */
     public boolean actualizarEstadoUsuario(int idUsuario, boolean activo) {
-        String consulta = "UPDATE users SET active = ? WHERE id = ?";
+        String consulta = "UPDATE usuarios SET activo = ? WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setBoolean(1, activo);
@@ -93,11 +93,11 @@ public class UsuarioDAO {
     /**
      * Actualiza el rol asignado a un usuario.
      * @param idUsuario Identificador del usuario.
-     * @param nuevoRol Nombre del nuevo rol (ej: admin, seller, client).
+     * @param nuevoRol Nombre del nuevo rol (ej: administrador, vendedor, cliente).
      * @return true si se actualizó exitosamente, false en caso contrario.
      */
     public boolean actualizarRolUsuario(int idUsuario, String nuevoRol) {
-        String consulta = "UPDATE users SET role = ? WHERE id = ?";
+        String consulta = "UPDATE usuarios SET rol = ? WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setString(1, nuevoRol);
@@ -108,9 +108,5 @@ public class UsuarioDAO {
             excepcion.printStackTrace();
             return false;
         }
-    }
-
-    public List<Usuario> getAllUsers() {
-        return obtenerTodosLosUsuarios();
     }
 }

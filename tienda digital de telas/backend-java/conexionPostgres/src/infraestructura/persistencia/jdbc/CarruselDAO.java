@@ -13,7 +13,7 @@ import dominio.modelos.DiapositivaCarrusel;
 
 /**
  * DAO para las diapositivas del carrusel de inicio.
- * Opera sobre la tabla 'carousel_slides'.
+ * Opera sobre la tabla 'diapositivas_carrusel'.
  */
 public class CarruselDAO {
 
@@ -22,7 +22,7 @@ public class CarruselDAO {
      */
     public List<DiapositivaCarrusel> obtenerDiapositivasActivas() {
         List<DiapositivaCarrusel> diapositivas = new ArrayList<>();
-        String consulta = "SELECT * FROM carousel_slides WHERE active = true ORDER BY sort_order ASC, id ASC";
+        String consulta = "SELECT * FROM diapositivas_carrusel WHERE active = true ORDER BY orden ASC, id ASC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -42,7 +42,7 @@ public class CarruselDAO {
      */
     public List<DiapositivaCarrusel> obtenerTodasLasDiapositivas() {
         List<DiapositivaCarrusel> diapositivas = new ArrayList<>();
-        String consulta = "SELECT * FROM carousel_slides ORDER BY sort_order ASC, id ASC";
+        String consulta = "SELECT * FROM diapositivas_carrusel ORDER BY orden ASC, id ASC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -61,7 +61,7 @@ public class CarruselDAO {
      * Inserta una nueva diapositiva en la base de datos.
      */
     public boolean agregarDiapositiva(DiapositivaCarrusel diapositiva) {
-        String consulta = "INSERT INTO carousel_slides (title, subtitle, image, cta, section_key, active, sort_order) " +
+        String consulta = "INSERT INTO diapositivas_carrusel (titulo, subtitulo, image, cta, clave_seccion, active, orden) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta, Statement.RETURN_GENERATED_KEYS)) {
@@ -83,14 +83,14 @@ public class CarruselDAO {
      * Actualiza una diapositiva existente.
      */
     public boolean actualizarDiapositiva(int id, DiapositivaCarrusel diapositiva, Boolean activo) {
-        String consulta = "UPDATE carousel_slides SET " +
-                "title = COALESCE(?, title), " +
-                "subtitle = COALESCE(?, subtitle), " +
+        String consulta = "UPDATE diapositivas_carrusel SET " +
+                "titulo = COALESCE(?, titulo), " +
+                "subtitulo = COALESCE(?, subtitulo), " +
                 "image = COALESCE(?, image), " +
                 "cta = COALESCE(?, cta), " +
-                "section_key = COALESCE(?, section_key), " +
+                "clave_seccion = COALESCE(?, clave_seccion), " +
                 "active = COALESCE(?, active), " +
-                "sort_order = COALESCE(?, sort_order) " +
+                "orden = COALESCE(?, orden) " +
                 "WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
@@ -113,7 +113,7 @@ public class CarruselDAO {
      * Elimina una diapositiva.
      */
     public boolean eliminarDiapositiva(int id) {
-        String consulta = "DELETE FROM carousel_slides WHERE id = ?";
+        String consulta = "DELETE FROM diapositivas_carrusel WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, id);
@@ -127,13 +127,13 @@ public class CarruselDAO {
     private DiapositivaCarrusel mapearFila(ResultSet rs) throws SQLException {
         DiapositivaCarrusel slide = new DiapositivaCarrusel();
         slide.setId(rs.getInt("id"));
-        slide.setTitulo(rs.getString("title"));
-        slide.setSubtitulo(rs.getString("subtitle"));
+        slide.setTitulo(rs.getString("titulo"));
+        slide.setSubtitulo(rs.getString("subtitulo"));
         slide.setImagen(rs.getString("image"));
         slide.setTextoBoton(rs.getString("cta"));
-        slide.setClaveSeccion(rs.getString("section_key"));
+        slide.setClaveSeccion(rs.getString("clave_seccion"));
         slide.setActivo(rs.getBoolean("active"));
-        slide.setOrden(rs.getInt("sort_order"));
+        slide.setOrden(rs.getInt("orden"));
         return slide;
     }
 
@@ -144,3 +144,4 @@ public class CarruselDAO {
     public boolean updateSlide(int id, DiapositivaCarrusel slide, Boolean active) { return actualizarDiapositiva(id, slide, active); }
     public boolean deleteSlide(int id) { return eliminarDiapositiva(id); }
 }
+

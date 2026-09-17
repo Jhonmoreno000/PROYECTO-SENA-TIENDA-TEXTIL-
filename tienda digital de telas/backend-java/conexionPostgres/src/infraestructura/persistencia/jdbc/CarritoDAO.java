@@ -8,7 +8,7 @@ import dominio.modelos.ItemCarrito;
 
 /**
  * DAO para el Carrito de Compras.
- * Gestiona las operaciones CRUD sobre la tabla 'cart_items'.
+ * Gestiona las operaciones CRUD sobre la tabla 'items_carrito'.
  */
 public class CarritoDAO {
 
@@ -18,9 +18,9 @@ public class CarritoDAO {
     public List<ItemCarrito> obtenerCarritoPorUsuario(int idUsuario) {
         List<ItemCarrito> items = new ArrayList<>();
         String consulta = "SELECT ci.*, p.name as product_name, p.price as product_price, " +
-                "(SELECT pi.image_url FROM product_images pi WHERE pi.product_id = ci.product_id ORDER BY pi.display_order LIMIT 1) as product_image " +
-                "FROM cart_items ci JOIN products p ON ci.product_id = p.id " +
-                "WHERE ci.user_id = ? ORDER BY ci.added_at DESC";
+                "(SELECT pi.image_url FROM product_images pi WHERE pi.producto_id = ci.producto_id ORDER BY pi.display_order LIMIT 1) as product_image " +
+                "FROM items_carrito ci JOIN products p ON ci.producto_id = p.id " +
+                "WHERE ci.usuario_id = ? ORDER BY ci.added_at DESC";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, idUsuario);
@@ -28,8 +28,8 @@ public class CarritoDAO {
                 while (rs.next()) {
                     ItemCarrito item = new ItemCarrito();
                     item.setId(rs.getInt("id"));
-                    item.setIdUsuario(rs.getInt("user_id"));
-                    item.setIdProducto(rs.getInt("product_id"));
+                    item.setIdUsuario(rs.getInt("usuario_id"));
+                    item.setIdProducto(rs.getInt("producto_id"));
                     item.setCantidad(rs.getInt("quantity"));
                     item.setNombreProducto(rs.getString("product_name"));
                     item.setPrecioProducto(rs.getDouble("product_price"));
@@ -48,8 +48,8 @@ public class CarritoDAO {
      * Agrega un producto al carrito o incrementa su cantidad.
      */
     public boolean agregarAlCarrito(int idUsuario, int idProducto, int cantidad) {
-        String consulta = "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?) " +
-                "ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity, updated_at = NOW()";
+        String consulta = "INSERT INTO items_carrito (usuario_id, producto_id, quantity) VALUES (?, ?, ?) " +
+                "ON CONFLICT (usuario_id, producto_id) DO UPDATE SET quantity = items_carrito.quantity + EXCLUDED.quantity, actualizado_en = NOW()";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, idUsuario);
@@ -57,7 +57,7 @@ public class CarritoDAO {
             pst.setInt(3, cantidad);
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
-            String fallback = "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)";
+            String fallback = "INSERT INTO items_carrito (usuario_id, producto_id, quantity) VALUES (?, ?, ?)";
             try (Connection fallbackCon = Conexion.obtenerConexion();
                  PreparedStatement pst2 = fallbackCon.prepareStatement(fallback)) {
                 pst2.setInt(1, idUsuario);
@@ -75,7 +75,7 @@ public class CarritoDAO {
      * Actualiza la cantidad de un ítem del carrito.
      */
     public boolean actualizarCantidad(int idItem, int cantidad) {
-        String consulta = "UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ?";
+        String consulta = "UPDATE items_carrito SET quantity = ?, actualizado_en = NOW() WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, cantidad);
@@ -91,7 +91,7 @@ public class CarritoDAO {
      * Elimina un ítem específico del carrito.
      */
     public boolean eliminarDelCarrito(int idItem) {
-        String consulta = "DELETE FROM cart_items WHERE id = ?";
+        String consulta = "DELETE FROM items_carrito WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, idItem);
@@ -106,7 +106,7 @@ public class CarritoDAO {
      * Vacía completamente el carrito de un usuario.
      */
     public boolean vaciarCarrito(int idUsuario) {
-        String consulta = "DELETE FROM cart_items WHERE user_id = ?";
+        String consulta = "DELETE FROM items_carrito WHERE usuario_id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, idUsuario);
@@ -124,3 +124,4 @@ public class CarritoDAO {
     public boolean removeFromCart(int cartItemId) { return eliminarDelCarrito(cartItemId); }
     public boolean clearCart(int userId) { return vaciarCarrito(userId); }
 }
+

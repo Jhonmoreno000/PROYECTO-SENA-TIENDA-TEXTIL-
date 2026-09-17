@@ -12,7 +12,7 @@ import dominio.modelos.SeccionInicio;
 
 /**
  * DAO para la gestión de las secciones del inicio.
- * Opera sobre la tabla 'home_sections'.
+ * Opera sobre la tabla 'secciones_inicio'.
  */
 public class SeccionesInicioDAO {
 
@@ -21,7 +21,7 @@ public class SeccionesInicioDAO {
      */
     public List<SeccionInicio> obtenerTodasLasSecciones() {
         List<SeccionInicio> secciones = new ArrayList<>();
-        String consulta = "SELECT * FROM home_sections ORDER BY sort_order ASC, key ASC";
+        String consulta = "SELECT * FROM secciones_inicio ORDER BY orden ASC, clave ASC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -41,7 +41,7 @@ public class SeccionesInicioDAO {
      */
     public List<SeccionInicio> obtenerSeccionesActivas() {
         List<SeccionInicio> secciones = new ArrayList<>();
-        String consulta = "SELECT * FROM home_sections WHERE active = true ORDER BY sort_order ASC, key ASC";
+        String consulta = "SELECT * FROM secciones_inicio WHERE active = true ORDER BY orden ASC, clave ASC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -60,12 +60,12 @@ public class SeccionesInicioDAO {
      * Actualiza una sección del inicio.
      */
     public boolean actualizarSeccion(String clave, SeccionInicio seccion, Boolean activa) {
-        String consulta = "UPDATE home_sections SET " +
-                "title = COALESCE(?, title), " +
-                "subtitle = COALESCE(?, subtitle), " +
+        String consulta = "UPDATE secciones_inicio SET " +
+                "titulo = COALESCE(?, titulo), " +
+                "subtitulo = COALESCE(?, subtitulo), " +
                 "active = COALESCE(?, active), " +
-                "sort_order = COALESCE(?, sort_order) " +
-                "WHERE key = ?";
+                "orden = COALESCE(?, orden) " +
+                "WHERE clave = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, seccion.getTitulo());
@@ -82,16 +82,17 @@ public class SeccionesInicioDAO {
 
     private SeccionInicio mapearFila(ResultSet rs) throws SQLException {
         SeccionInicio seccion = new SeccionInicio();
-        seccion.setClave(rs.getString("key"));
-        seccion.setTitulo(rs.getString("title"));
-        seccion.setSubtitulo(rs.getString("subtitle"));
+        seccion.setClave(rs.getString("clave"));
+        seccion.setTitulo(rs.getString("titulo"));
+        seccion.setSubtitulo(rs.getString("subtitulo"));
         seccion.setActiva(rs.getBoolean("active"));
-        seccion.setOrden(rs.getInt("sort_order"));
+        seccion.setOrden(rs.getInt("orden"));
         return seccion;
     }
 
     // Métodos alias para compatibilidad
     public List<SeccionInicio> getAllSections() { return obtenerTodasLasSecciones(); }
     public List<SeccionInicio> getActiveSections() { return obtenerSeccionesActivas(); }
-    public boolean updateSection(String key, SeccionInicio section, Boolean active) { return actualizarSeccion(key, section, active); }
+    public boolean updateSection(String clave, SeccionInicio section, Boolean active) { return actualizarSeccion(clave, section, active); }
 }
+

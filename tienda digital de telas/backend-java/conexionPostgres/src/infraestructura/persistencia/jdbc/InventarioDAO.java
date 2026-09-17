@@ -11,23 +11,23 @@ import dominio.modelos.*;
  */
 public class InventarioDAO {
 
-    // --- inventory_batches ---------------------------------------------------
+    // --- lotes_inventario ---------------------------------------------------
 
     public List<LoteInventario> obtenerTodosLosLotes() {
         List<LoteInventario> lista = new ArrayList<>();
-        String consulta = "SELECT * FROM inventory_batches ORDER BY id";
+        String consulta = "SELECT * FROM lotes_inventario ORDER BY id";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 LoteInventario b = new LoteInventario();
                 b.setId(rs.getString("id"));
-                b.setTipoTela(rs.getString("fabric_type"));
-                b.setProveedor(rs.getString("supplier"));
+                b.setTipoTela(rs.getString("tipo_tela"));
+                b.setProveedor(rs.getString("proveedor"));
                 b.setMetrosIniciales(rs.getDouble("initial_meters"));
-                b.setMetrosActuales(rs.getDouble("current_meters"));
+                b.setMetrosActuales(rs.getDouble("metros_actuales"));
                 b.setEstado(rs.getString("status"));
-                if (rs.getTimestamp("created_at") != null) b.setFechaCreacion(rs.getTimestamp("created_at").toString().split(" ")[0]);
+                if (rs.getTimestamp("creado_en") != null) b.setFechaCreacion(rs.getTimestamp("creado_en").toString().split(" ")[0]);
                 if (rs.getTimestamp("last_update") != null) b.setUltimaActualizacion(rs.getTimestamp("last_update").toString().split(" ")[0]);
                 lista.add(b);
             }
@@ -38,7 +38,7 @@ public class InventarioDAO {
     }
 
     public boolean agregarLote(LoteInventario b) {
-        String consulta = "INSERT INTO inventory_batches (id, fabric_type, supplier, initial_meters, current_meters, status) VALUES (?, ?, ?, ?, ?, ?)";
+        String consulta = "INSERT INTO lotes_inventario (id, tipo_tela, proveedor, initial_meters, metros_actuales, status) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, b.getId());
@@ -55,7 +55,7 @@ public class InventarioDAO {
     }
 
     public boolean actualizarLote(String idLote, double metrosActuales, String estado) {
-        String consulta = "UPDATE inventory_batches SET current_meters = ?, status = ?, last_update = NOW() WHERE id = ?";
+        String consulta = "UPDATE lotes_inventario SET metros_actuales = ?, status = ?, last_update = NOW() WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setDouble(1, metrosActuales);
@@ -68,11 +68,11 @@ public class InventarioDAO {
         }
     }
 
-    // --- waste_events --------------------------------------------------------
+    // --- eventos_merma --------------------------------------------------------
 
     public List<EventoMerma> obtenerTodosLosEventosMerma() {
         List<EventoMerma> lista = new ArrayList<>();
-        String consulta = "SELECT * FROM waste_events ORDER BY id DESC";
+        String consulta = "SELECT * FROM eventos_merma ORDER BY id DESC";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
@@ -81,12 +81,12 @@ public class InventarioDAO {
                 w.setId(rs.getInt("id"));
                 w.setIdLote(rs.getString("batch_id"));
                 w.setMetros(rs.getDouble("meters"));
-                w.setMotivo(rs.getString("reason"));
-                w.setDescripcion(rs.getString("description"));
+                w.setMotivo(rs.getString("motivo"));
+                w.setDescripcion(rs.getString("descripcion"));
                 w.setResponsable(rs.getString("responsible"));
                 if (rs.getDate("event_date") != null) w.setFechaEvento(rs.getDate("event_date").toString());
-                if (rs.getTimestamp("created_at") != null) w.setFechaCreacion(rs.getTimestamp("created_at").toString().split(" ")[0]);
-                w.setIdUsuario(rs.getInt("user_id"));
+                if (rs.getTimestamp("creado_en") != null) w.setFechaCreacion(rs.getTimestamp("creado_en").toString().split(" ")[0]);
+                w.setIdUsuario(rs.getInt("usuario_id"));
                 lista.add(w);
             }
         } catch (SQLException e) { 
@@ -96,7 +96,7 @@ public class InventarioDAO {
     }
 
     public boolean agregarEventoMerma(EventoMerma w) {
-        String consulta = "INSERT INTO waste_events (batch_id, meters, reason, description, responsible, event_date, user_id) VALUES (?, ?, ?, ?, ?, CURRENT_DATE, ?)";
+        String consulta = "INSERT INTO eventos_merma (batch_id, meters, motivo, descripcion, responsible, event_date, usuario_id) VALUES (?, ?, ?, ?, ?, CURRENT_DATE, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, w.getIdLote());
@@ -112,19 +112,19 @@ public class InventarioDAO {
         }
     }
 
-    // --- stock_thresholds ----------------------------------------------------
+    // --- umbrales_stock ----------------------------------------------------
 
     public List<UmbralStock> obtenerTodosLosUmbrales() {
         List<UmbralStock> lista = new ArrayList<>();
-        String consulta = "SELECT * FROM stock_thresholds ORDER BY id";
+        String consulta = "SELECT * FROM umbrales_stock ORDER BY id";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 UmbralStock t = new UmbralStock();
                 t.setId(rs.getInt("id"));
-                t.setTipoTela(rs.getString("fabric_type"));
-                t.setMetrosMinimos(rs.getDouble("min_meters"));
+                t.setTipoTela(rs.getString("tipo_tela"));
+                t.setMetrosMinimos(rs.getDouble("metros_minimos"));
                 t.setAlertaHabilitada(rs.getBoolean("alert_enabled"));
                 lista.add(t);
             }
@@ -135,7 +135,7 @@ public class InventarioDAO {
     }
 
     public boolean actualizarUmbral(String tipoTela, double metrosMinimos) {
-        String consulta = "UPDATE stock_thresholds SET min_meters = ? WHERE fabric_type = ?";
+        String consulta = "UPDATE umbrales_stock SET metros_minimos = ? WHERE tipo_tela = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setDouble(1, metrosMinimos);
@@ -147,18 +147,18 @@ public class InventarioDAO {
         }
     }
 
-    // --- daily_sales ---------------------------------------------------------
+    // --- ventas_diarias ---------------------------------------------------------
 
     public List<VentaDiaria> obtenerVentasDiarias() {
         List<VentaDiaria> lista = new ArrayList<>();
-        String consulta = "SELECT * FROM daily_sales ORDER BY sale_date DESC LIMIT 30";
+        String consulta = "SELECT * FROM ventas_diarias ORDER BY fecha_venta DESC LIMIT 30";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 VentaDiaria d = new VentaDiaria();
                 d.setId(rs.getInt("id"));
-                d.setFechaVenta(rs.getDate("sale_date").toString());
+                d.setFechaVenta(rs.getDate("fecha_venta").toString());
                 d.setTotalVentas(rs.getDouble("total_sales"));
                 d.setTotalPedidos(rs.getInt("total_orders"));
                 lista.add(d);
@@ -169,20 +169,20 @@ public class InventarioDAO {
         return lista;
     }
 
-    // --- global_banner -------------------------------------------------------
+    // --- banner_global -------------------------------------------------------
 
     public BannerGlobal obtenerBanner() {
-        String consulta = "SELECT * FROM global_banner ORDER BY id LIMIT 1";
+        String consulta = "SELECT * FROM banner_global ORDER BY id LIMIT 1";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
                 BannerGlobal b = new BannerGlobal();
                 b.setId(rs.getInt("id"));
-                b.setHabilitado(rs.getBoolean("enabled"));
-                b.setMensaje(rs.getString("message"));
-                b.setTipoBanner(rs.getString("banner_type"));
-                if (rs.getTimestamp("updated_at") != null) b.setFechaActualizacion(rs.getTimestamp("updated_at").toString());
+                b.setHabilitado(rs.getBoolean("activo"));
+                b.setMensaje(rs.getString("mensaje"));
+                b.setTipoBanner(rs.getString("tipo_banner"));
+                if (rs.getTimestamp("actualizado_en") != null) b.setFechaActualizacion(rs.getTimestamp("actualizado_en").toString());
                 return b;
             }
         } catch (SQLException e) { 
@@ -192,7 +192,7 @@ public class InventarioDAO {
     }
 
     public boolean actualizarBanner(boolean habilitado, String mensaje, String tipoBanner) {
-        String consulta = "UPDATE global_banner SET enabled = ?, message = ?, banner_type = ?, updated_at = NOW() WHERE id = (SELECT id FROM global_banner ORDER BY id LIMIT 1)";
+        String consulta = "UPDATE banner_global SET activo = ?, mensaje = ?, tipo_banner = ?, actualizado_en = NOW() WHERE id = (SELECT id FROM banner_global ORDER BY id LIMIT 1)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setBoolean(1, habilitado);
@@ -200,7 +200,7 @@ public class InventarioDAO {
             pst.setString(3, tipoBanner);
             int filas = pst.executeUpdate();
             if (filas == 0) {
-                String consultaInsertar = "INSERT INTO global_banner (enabled, message, banner_type) VALUES (?, ?, ?)";
+                String consultaInsertar = "INSERT INTO banner_global (activo, mensaje, tipo_banner) VALUES (?, ?, ?)";
                 try (PreparedStatement ins = con.prepareStatement(consultaInsertar)) {
                     ins.setBoolean(1, habilitado);
                     ins.setString(2, mensaje);
@@ -215,11 +215,11 @@ public class InventarioDAO {
         }
     }
 
-    // --- region_sales --------------------------------------------------------
+    // --- ventas_region --------------------------------------------------------
 
     public List<VentaRegion> obtenerVentasPorRegion() {
         List<VentaRegion> lista = new ArrayList<>();
-        String consulta = "SELECT * FROM region_sales ORDER BY sales DESC";
+        String consulta = "SELECT * FROM ventas_region ORDER BY ventas_totales DESC";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
@@ -227,7 +227,7 @@ public class InventarioDAO {
                 VentaRegion r = new VentaRegion();
                 r.setId(rs.getInt("id"));
                 r.setDepartamento(rs.getString("department"));
-                r.setVentas(rs.getDouble("sales"));
+                r.setVentas(rs.getDouble("ventas_totales"));
                 r.setPedidos(rs.getInt("orders"));
                 r.setCapital(rs.getString("capital"));
                 lista.add(r);
@@ -238,11 +238,11 @@ public class InventarioDAO {
         return lista;
     }
 
-    // --- recent_activity -----------------------------------------------------
+    // --- actividad_reciente -----------------------------------------------------
 
     public List<ActividadReciente> obtenerActividadReciente() {
         List<ActividadReciente> lista = new ArrayList<>();
-        String consulta = "SELECT * FROM recent_activity ORDER BY created_at DESC LIMIT 20";
+        String consulta = "SELECT * FROM actividad_reciente ORDER BY creado_en DESC LIMIT 20";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
@@ -250,13 +250,13 @@ public class InventarioDAO {
                 ActividadReciente a = new ActividadReciente();
                 a.setId(rs.getInt("id"));
                 a.setTipo(rs.getString("type"));
-                a.setIdUsuario(rs.getInt("user_id"));
-                a.setNombreUsuario(rs.getString("user_name"));
-                a.setAccion(rs.getString("action"));
-                double monto = rs.getDouble("amount");
+                a.setIdUsuario(rs.getInt("usuario_id"));
+                a.setNombreUsuario(rs.getString("nombre_usuario"));
+                a.setAccion(rs.getString("accion"));
+                double monto = rs.getDouble("monto");
                 if (!rs.wasNull()) a.setMonto(monto);
-                if (rs.getTimestamp("created_at") != null) a.setFechaCreacion(rs.getTimestamp("created_at").toString());
-                a.setIcono(rs.getString("icon"));
+                if (rs.getTimestamp("creado_en") != null) a.setFechaCreacion(rs.getTimestamp("creado_en").toString());
+                a.setIcono(rs.getString("icono"));
                 lista.add(a);
             }
         } catch (SQLException e) { 
@@ -266,7 +266,7 @@ public class InventarioDAO {
     }
 
     public boolean agregarActividad(ActividadReciente a) {
-        String consulta = "INSERT INTO recent_activity (type, user_id, user_name, action, amount, icon) VALUES (?, ?, ?, ?, ?, ?)";
+        String consulta = "INSERT INTO actividad_reciente (type, usuario_id, nombre_usuario, accion, monto, icono) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, a.getTipo());
@@ -282,20 +282,20 @@ public class InventarioDAO {
         }
     }
 
-    // --- erp_sales_metrics ---------------------------------------------------
+    // --- metricas_ventas_erp ---------------------------------------------------
 
     public List<java.util.Map<String, Object>> obtenerMetricasVentasErp() {
         List<java.util.Map<String, Object>> lista = new ArrayList<>();
-        String consulta = "SELECT record_date, actual_sales, target_sales, profit_margin FROM erp_sales_metrics ORDER BY record_date ASC LIMIT 30";
+        String consulta = "SELECT fecha_registro, ventas_reales, ventas_objetivo, margen_ganancia FROM metricas_ventas_erp ORDER BY fecha_registro ASC LIMIT 30";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 java.util.Map<String, Object> fila = new java.util.LinkedHashMap<>();
-                fila.put("recordDate", rs.getDate("record_date").toString());
-                fila.put("actualSales", rs.getDouble("actual_sales"));
-                fila.put("targetSales", rs.getDouble("target_sales"));
-                fila.put("profitMargin", rs.getDouble("profit_margin"));
+                fila.put("recordDate", rs.getDate("fecha_registro").toString());
+                fila.put("actualSales", rs.getDouble("ventas_reales"));
+                fila.put("targetSales", rs.getDouble("ventas_objetivo"));
+                fila.put("profitMargin", rs.getDouble("margen_ganancia"));
                 lista.add(fila);
             }
         } catch (SQLException e) { 
@@ -304,11 +304,11 @@ public class InventarioDAO {
         return lista;
     }
 
-    // --- erp_system_notifications --------------------------------------------
+    // --- notificaciones_sistema_erp --------------------------------------------
 
     public List<java.util.Map<String, Object>> obtenerNotificacionesErp() {
         List<java.util.Map<String, Object>> lista = new ArrayList<>();
-        String consulta = "SELECT id, type, title, message, is_read, created_at FROM erp_system_notifications ORDER BY created_at DESC LIMIT 20";
+        String consulta = "SELECT id, type, titulo, mensaje, leido, creado_en FROM notificaciones_sistema_erp ORDER BY creado_en DESC LIMIT 20";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
@@ -316,11 +316,11 @@ public class InventarioDAO {
                 java.util.Map<String, Object> fila = new java.util.LinkedHashMap<>();
                 fila.put("id", rs.getInt("id"));
                 fila.put("type", rs.getString("type"));
-                fila.put("title", rs.getString("title"));
-                fila.put("message", rs.getString("message"));
-                fila.put("isRead", rs.getBoolean("is_read"));
-                if (rs.getTimestamp("created_at") != null)
-                    fila.put("createdAt", rs.getTimestamp("created_at").toString());
+                fila.put("titulo", rs.getString("titulo"));
+                fila.put("mensaje", rs.getString("mensaje"));
+                fila.put("isRead", rs.getBoolean("leido"));
+                if (rs.getTimestamp("creado_en") != null)
+                    fila.put("createdAt", rs.getTimestamp("creado_en").toString());
                 lista.add(fila);
             }
         } catch (SQLException e) { 
@@ -329,11 +329,11 @@ public class InventarioDAO {
         return lista;
     }
 
-    // --- erp_fabric_inventory ------------------------------------------------
+    // --- inventario_telas_erp ------------------------------------------------
 
     public List<java.util.Map<String, Object>> obtenerInventarioTelasErp() {
         List<java.util.Map<String, Object>> lista = new ArrayList<>();
-        String consulta = "SELECT id, sku, fabric_name, category, supplier, current_meters, min_threshold_meters, cost_per_meter, last_restock_date FROM erp_fabric_inventory ORDER BY fabric_name ASC";
+        String consulta = "SELECT id, sku, nombre_tela, categoria, proveedor, metros_actuales, metros_minimos, costo_por_metro, fecha_ultima_reposicion FROM inventario_telas_erp ORDER BY nombre_tela ASC";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
@@ -341,17 +341,17 @@ public class InventarioDAO {
                 java.util.Map<String, Object> fila = new java.util.LinkedHashMap<>();
                 fila.put("id", rs.getInt("id"));
                 fila.put("sku", rs.getString("sku"));
-                fila.put("fabricName", rs.getString("fabric_name"));
-                fila.put("category", rs.getString("category"));
-                fila.put("supplier", rs.getString("supplier"));
-                double actual = rs.getDouble("current_meters");
-                double umbral = rs.getDouble("min_threshold_meters");
+                fila.put("fabricName", rs.getString("nombre_tela"));
+                fila.put("categoria", rs.getString("categoria"));
+                fila.put("proveedor", rs.getString("proveedor"));
+                double actual = rs.getDouble("metros_actuales");
+                double umbral = rs.getDouble("metros_minimos");
                 fila.put("currentMeters", actual);
                 fila.put("minThresholdMeters", umbral);
-                fila.put("costPerMeter", rs.getDouble("cost_per_meter"));
+                fila.put("costPerMeter", rs.getDouble("costo_por_metro"));
                 fila.put("lowStock", actual <= umbral);
-                if (rs.getDate("last_restock_date") != null)
-                    fila.put("lastRestockDate", rs.getDate("last_restock_date").toString());
+                if (rs.getDate("fecha_ultima_reposicion") != null)
+                    fila.put("lastRestockDate", rs.getDate("fecha_ultima_reposicion").toString());
                 lista.add(fila);
             }
         } catch (SQLException e) { 
@@ -370,7 +370,7 @@ public class InventarioDAO {
     public boolean updateThreshold(String fabricType, double minMeters) { return actualizarUmbral(fabricType, minMeters); }
     public List<VentaDiaria> getDailySales() { return obtenerVentasDiarias(); }
     public BannerGlobal getBanner() { return obtenerBanner(); }
-    public boolean updateBanner(boolean enabled, String message, String bannerType) { return actualizarBanner(enabled, message, bannerType); }
+    public boolean updateBanner(boolean activo, String mensaje, String bannerType) { return actualizarBanner(activo, mensaje, bannerType); }
     public List<VentaRegion> getRegionSales() { return obtenerVentasPorRegion(); }
     public List<ActividadReciente> getRecentActivity() { return obtenerActividadReciente(); }
     public boolean addActivity(ActividadReciente a) { return agregarActividad(a); }
@@ -378,3 +378,4 @@ public class InventarioDAO {
     public List<java.util.Map<String, Object>> getErpNotifications() { return obtenerNotificacionesErp(); }
     public List<java.util.Map<String, Object>> getErpFabricInventory() { return obtenerInventarioTelasErp(); }
 }
+

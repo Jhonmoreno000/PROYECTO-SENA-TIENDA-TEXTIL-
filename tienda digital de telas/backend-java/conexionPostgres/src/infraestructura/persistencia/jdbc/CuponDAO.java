@@ -13,7 +13,7 @@ import dominio.modelos.Cupon;
 
 /**
  * DAO para Cupones de Descuento.
- * Opera sobre la tabla 'coupons'.
+ * Opera sobre la tabla 'cupones'.
  */
 public class CuponDAO {
 
@@ -22,7 +22,7 @@ public class CuponDAO {
      */
     public List<Cupon> obtenerTodosLosCupones() {
         List<Cupon> cupones = new ArrayList<>();
-        String consulta = "SELECT id, code, discount_type, discount_value, expires_at, min_purchase, max_uses, first_time_only, usage_count, active FROM coupons ORDER BY id DESC";
+        String consulta = "SELECT id, code, tipo_descuento, valor_descuento, expira_en, compra_minima, usos_maximos, solo_primera_vez, conteo_usos, active FROM cupones ORDER BY id DESC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -32,27 +32,27 @@ public class CuponDAO {
                 Cupon cupon = new Cupon();
                 cupon.setId(rs.getInt("id"));
                 cupon.setCodigo(rs.getString("code"));
-                cupon.setTipoDescuento(rs.getString("discount_type"));
-                cupon.setValorDescuento(rs.getDouble("discount_value"));
+                cupon.setTipoDescuento(rs.getString("tipo_descuento"));
+                cupon.setValorDescuento(rs.getDouble("valor_descuento"));
                 
-                if (rs.getTimestamp("expires_at") != null) {
-                    cupon.setFechaExpiracion(rs.getTimestamp("expires_at").toString());
+                if (rs.getTimestamp("expira_en") != null) {
+                    cupon.setFechaExpiracion(rs.getTimestamp("expira_en").toString());
                 }
 
-                cupon.setConteoUso(rs.getInt("usage_count"));
+                cupon.setConteoUso(rs.getInt("conteo_usos"));
                 cupon.setActivo(rs.getBoolean("active"));
 
-                double minP = rs.getDouble("min_purchase");
+                double minP = rs.getDouble("compra_minima");
                 if (!rs.wasNull()) {
                     cupon.getReglas().setCompraMinima(minP);
                 }
 
-                int maxU = rs.getInt("max_uses");
+                int maxU = rs.getInt("usos_maximos");
                 if (!rs.wasNull()) {
                     cupon.getReglas().setUsosMaximos(maxU);
                 }
 
-                cupon.getReglas().setSoloPrimeraCompra(rs.getBoolean("first_time_only"));
+                cupon.getReglas().setSoloPrimeraCompra(rs.getBoolean("solo_primera_vez"));
 
                 cupones.add(cupon);
             }
@@ -66,7 +66,7 @@ public class CuponDAO {
      * Inserta un nuevo cupón en la base de datos.
      */
     public boolean agregarCupon(Cupon cupon) {
-        String consulta = "INSERT INTO coupons (code, discount_type, discount_value, expires_at, min_purchase, max_uses, first_time_only, active) VALUES (?, ?, ?, CAST(? AS TIMESTAMP), ?, ?, ?, ?)";
+        String consulta = "INSERT INTO cupones (code, tipo_descuento, valor_descuento, expira_en, compra_minima, usos_maximos, solo_primera_vez, active) VALUES (?, ?, ?, CAST(? AS TIMESTAMP), ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, cupon.getCodigo());
@@ -105,7 +105,7 @@ public class CuponDAO {
      * Desactiva un cupón existente (soft-delete).
      */
     public boolean desactivarCupon(int id) {
-        String consulta = "UPDATE coupons SET active = false WHERE id = ?";
+        String consulta = "UPDATE cupones SET active = false WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, id);
@@ -121,3 +121,4 @@ public class CuponDAO {
     public boolean addCoupon(Cupon coupon) { return agregarCupon(coupon); }
     public boolean deactivateCoupon(int id) { return desactivarCupon(id); }
 }
+

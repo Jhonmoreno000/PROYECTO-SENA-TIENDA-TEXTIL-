@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS categorias_cupon (
 CREATE TABLE IF NOT EXISTS pedidos (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    vendedor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     nombre_cliente VARCHAR(150) NOT NULL,
     correo_cliente VARCHAR(150) NOT NULL,
     telefono_cliente VARCHAR(50),
@@ -321,3 +322,26 @@ INSERT INTO banner_global (activo, mensaje, tipo_banner) VALUES
 INSERT INTO configuracion_sistema (clave, valor) VALUES
 ('system_config', '{"siteName":"D&D Textil","defaultDarkMode":false,"primaryColor":"#8B5CF6","secondaryColor":"#EC4899","accentColor":"#F59E0B","taxRate":0.19,"shippingCost":15000,"freeShippingThreshold":200000,"lowStockThreshold":20,"maintenanceMode":false}')
 ON CONFLICT (clave) DO NOTHING;
+
+-- 24. TABLA: notificaciones_sistema_erp
+CREATE TABLE IF NOT EXISTS notificaciones_sistema_erp (
+    id SERIAL PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    mensaje TEXT NOT NULL,
+    leido BOOLEAN DEFAULT false,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 25. TABLA: inventario_telas_erp
+CREATE TABLE IF NOT EXISTS inventario_telas_erp (
+    id SERIAL PRIMARY KEY,
+    sku VARCHAR(50) NOT NULL UNIQUE,
+    nombre_tela VARCHAR(150) NOT NULL,
+    categoria VARCHAR(100),
+    proveedor VARCHAR(150),
+    metros_actuales NUMERIC(10,2) DEFAULT 0.00,
+    metros_minimos NUMERIC(10,2) DEFAULT 20.00,
+    costo_por_metro NUMERIC(12,2) DEFAULT 0.00,
+    fecha_ultima_reposicion DATE
+);

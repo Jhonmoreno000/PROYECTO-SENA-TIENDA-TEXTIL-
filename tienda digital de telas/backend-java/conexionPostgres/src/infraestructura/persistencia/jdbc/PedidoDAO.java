@@ -15,7 +15,7 @@ import dominio.modelos.Pedido;
 
 /**
  * DAO para la entidad Pedido.
- * Gestiona las consultas y actualizaciones sobre las tablas 'orders' y 'order_items'.
+ * Gestiona las consultas y actualizaciones sobre las tablas 'pedidos' e 'items_pedido'.
  */
 public class PedidoDAO {
 
@@ -26,10 +26,10 @@ public class PedidoDAO {
     public List<Pedido> obtenerTodosLosPedidos() {
         Map<Integer, Pedido> mapaPedidos = new LinkedHashMap<>();
 
-        String consulta = "SELECT o.id, o.client_id, o.seller_id, o.total, o.status, o.order_date, " +
-                "oi.product_id, oi.quantity " +
-                "FROM orders o " +
-                "LEFT JOIN order_items oi ON o.id = oi.order_id " +
+        String consulta = "SELECT o.id, o.usuario_id, o.vendedor_id, o.monto_total, o.estado, o.creado_en, " +
+                "oi.producto_id, oi.cantidad " +
+                "FROM pedidos o " +
+                "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "ORDER BY o.id ASC";
 
         try (Connection con = Conexion.obtenerConexion();
@@ -43,23 +43,23 @@ public class PedidoDAO {
                 if (pedido == null) {
                     pedido = new Pedido();
                     pedido.setId(idPedido);
-                    pedido.setIdCliente(rs.getInt("client_id"));
-                    pedido.setIdVendedor(rs.getInt("seller_id"));
-                    pedido.setTotal(rs.getDouble("total"));
-                    pedido.setEstado(rs.getString("status"));
+                    pedido.setIdCliente(rs.getInt("usuario_id"));
+                    pedido.setIdVendedor(rs.getInt("vendedor_id"));
+                    pedido.setTotal(rs.getDouble("monto_total"));
+                    pedido.setEstado(rs.getString("estado"));
 
-                    if (rs.getTimestamp("order_date") != null) {
-                        pedido.setFecha(rs.getTimestamp("order_date").toString().split(" ")[0]);
+                    if (rs.getTimestamp("creado_en") != null) {
+                        pedido.setFecha(rs.getTimestamp("creado_en").toString().split(" ")[0]);
                     }
 
                     pedido.setCantidadArticulos(0);
                     mapaPedidos.put(idPedido, pedido);
                 }
 
-                int idProducto = rs.getInt("product_id");
+                int idProducto = rs.getInt("producto_id");
                 if (!rs.wasNull()) {
                     pedido.agregarIdProducto(idProducto);
-                    pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("quantity"));
+                    pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("cantidad"));
                 }
             }
 
@@ -80,7 +80,9 @@ public class PedidoDAO {
      */
     public int crearPedido(int idCliente, double total, List<Map<String, Object>> articulos) {
         int idPedido = -1;
-        String sqlPedido = "INSERT INTO orders (client_id, seller_id, total, status, order_date, updated_at) VALUES (?, ?, ?, 'pending', NOW(), NOW())";
+        // Se asumen valores por defecto para nombre, correo, etc. ya que no vienen en la firma antigua.
+        String sqlPedido = "INSERT INTO pedidos (usuario_id, vendedor_id, monto_total, nombre_cliente, correo_cliente, direccion_envio, estado, creado_en, actualizado_en) " +
+                           "VALUES (?, ?, ?, 'Cliente', 'cliente@tienda.com', 'N/A', 'pending', NOW(), NOW())";
 
         try (Connection con = Conexion.obtenerConexion()) {
             con.setAutoCommit(false);
@@ -102,7 +104,7 @@ public class PedidoDAO {
                 }
 
                 if (idPedido > 0 && articulos != null) {
-                    String sqlArticulo = "INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
+                    String sqlArticulo = "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) VALUES (?, ?, ?, ?, ?)";
                     try (PreparedStatement pst = con.prepareStatement(sqlArticulo)) {
                         for (Map<String, Object> articulo : articulos) {
                             pst.setInt(1, idPedido);
@@ -117,6 +119,7 @@ public class PedidoDAO {
                             pst.setInt(2, idProd);
                             pst.setDouble(3, cant);
                             pst.setDouble(4, precio);
+                            pst.setDouble(5, cant * precio);
                             pst.addBatch();
                         }
                         pst.executeBatch();
@@ -145,10 +148,10 @@ public class PedidoDAO {
      * Obtiene un pedido por su ID.
      */
     public Pedido obtenerPedidoPorId(int idPedido) {
-        String consulta = "SELECT o.id, o.client_id, o.seller_id, o.total, o.status, o.order_date, " +
-                "oi.product_id, oi.quantity, oi.unit_price " +
-                "FROM orders o " +
-                "LEFT JOIN order_items oi ON o.id = oi.order_id " +
+        String consulta = "SELECT o.id, o.usuario_id, o.vendedor_id, o.monto_total, o.estado, o.creado_en, " +
+                "oi.producto_id, oi.cantidad, oi.precio_por_metro " +
+                "FROM pedidos o " +
+                "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "WHERE o.id = ?";
         Pedido pedido = null;
         try (Connection con = Conexion.obtenerConexion();
@@ -159,19 +162,19 @@ public class PedidoDAO {
                     if (pedido == null) {
                         pedido = new Pedido();
                         pedido.setId(rs.getInt("id"));
-                        pedido.setIdCliente(rs.getInt("client_id"));
-                        pedido.setIdVendedor(rs.getInt("seller_id"));
-                        pedido.setTotal(rs.getDouble("total"));
-                        pedido.setEstado(rs.getString("status"));
-                        if (rs.getTimestamp("order_date") != null) {
-                            pedido.setFecha(rs.getTimestamp("order_date").toString().split(" ")[0]);
+                        pedido.setIdCliente(rs.getInt("usuario_id"));
+                        pedido.setIdVendedor(rs.getInt("vendedor_id"));
+                        pedido.setTotal(rs.getDouble("monto_total"));
+                        pedido.setEstado(rs.getString("estado"));
+                        if (rs.getTimestamp("creado_en") != null) {
+                            pedido.setFecha(rs.getTimestamp("creado_en").toString().split(" ")[0]);
                         }
                         pedido.setCantidadArticulos(0);
                     }
-                    int idProducto = rs.getInt("product_id");
+                    int idProducto = rs.getInt("producto_id");
                     if (!rs.wasNull()) {
                         pedido.agregarIdProducto(idProducto);
-                        pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("quantity"));
+                        pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("cantidad"));
                     }
                 }
             }
@@ -185,7 +188,7 @@ public class PedidoDAO {
      * Actualiza el estado de un pedido.
      */
     public boolean actualizarEstadoPedido(int idPedido, String estado) {
-        String consulta = "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?";
+        String consulta = "UPDATE pedidos SET estado = ?, actualizado_en = NOW() WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, estado);
@@ -198,10 +201,4 @@ public class PedidoDAO {
             return false;
         }
     }
-
-    // Métodos alias para compatibilidad
-    public List<Pedido> getAllOrders() { return obtenerTodosLosPedidos(); }
-    public int createOrder(int clientId, double total, List<Map<String, Object>> items) { return crearPedido(clientId, total, items); }
-    public Pedido getOrderById(int orderId) { return obtenerPedidoPorId(orderId); }
-    public boolean updateOrderStatus(int orderId, String status) { return actualizarEstadoPedido(orderId, status); }
 }

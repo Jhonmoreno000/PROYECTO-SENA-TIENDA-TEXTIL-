@@ -15,7 +15,7 @@ import dominio.modelos.Producto;
 
 /**
  * DAO (Data Access Object) para la entidad Producto.
- * Gestiona todas las operaciones CRUD sobre la tabla 'products' y 'product_images'.
+ * Gestiona todas las operaciones CRUD sobre la tabla 'productos' e 'imagenes_producto'.
  */
 public class ProductoDAO {
 
@@ -26,10 +26,10 @@ public class ProductoDAO {
     public List<Producto> obtenerTodosLosProductos() {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.name as category_name " +
-                "FROM products p " +
-                "LEFT JOIN categories c ON p.category_id = c.id " +
-                "WHERE p.active = true";
+        String consulta = "SELECT p.*, c.nombre as nombre_categoria " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "WHERE p.activo = true";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta);
@@ -40,25 +40,26 @@ public class ProductoDAO {
                 int idProducto = resultado.getInt("id");
 
                 producto.setId(String.valueOf(idProducto));
-                producto.setNombre(resultado.getString("name"));
-                producto.setCategoria(resultado.getString("category_name"));
-                producto.setPrecio(resultado.getDouble("price"));
-                producto.setIdVendedor(resultado.getInt("seller_id"));
-                producto.setDescripcion(resultado.getString("description"));
+                producto.setNombre(resultado.getString("nombre"));
+                producto.setCategoria(resultado.getString("nombre_categoria"));
+                producto.setPrecio(resultado.getDouble("precio"));
+                producto.setIdVendedor(resultado.getInt("vendedor_id"));
+                producto.setDescripcion(resultado.getString("descripcion"));
                 producto.setMaterial(resultado.getString("material"));
-                producto.setAncho(resultado.getString("width"));
-                producto.setPeso(resultado.getString("weight"));
-                producto.setCuidado(resultado.getString("care"));
+                producto.setAncho(resultado.getString("ancho"));
+                producto.setPeso(resultado.getString("peso"));
+                producto.setCuidado(resultado.getString("cuidados"));
                 producto.setExistencias(resultado.getInt("stock"));
-                producto.setDestacado(resultado.getBoolean("featured"));
-                producto.setEsNuevaColeccion(resultado.getBoolean("is_new_collection"));
-                producto.setEsExclusivo(resultado.getBoolean("is_exclusive"));
-                producto.setEsOferta(resultado.getBoolean("is_offer"));
+                producto.setDestacado(resultado.getBoolean("destacado"));
+                producto.setEsNuevaColeccion(resultado.getBoolean("es_nueva_coleccion"));
+                producto.setEsExclusivo(resultado.getBoolean("es_exclusivo"));
+                producto.setEsOferta(resultado.getBoolean("es_oferta"));
                 producto.setImagenes(obtenerImagenesProducto(conexion, idProducto));
 
                 productos.add(producto);
             }
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo todos los productos: " + e.getMessage());
             e.printStackTrace();
         }
         return productos;
@@ -72,10 +73,10 @@ public class ProductoDAO {
     public List<Producto> obtenerProductosPorVendedor(int idVendedor) {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.name as category_name " +
-                "FROM products p " +
-                "LEFT JOIN categories c ON p.category_id = c.id " +
-                "WHERE p.seller_id = ? AND p.active = true";
+        String consulta = "SELECT p.*, c.nombre as nombre_categoria " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "WHERE p.vendedor_id = ? AND p.activo = true";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
@@ -86,26 +87,27 @@ public class ProductoDAO {
                     int idProducto = resultado.getInt("id");
 
                     producto.setId(String.valueOf(idProducto));
-                    producto.setNombre(resultado.getString("name"));
-                    producto.setCategoria(resultado.getString("category_name"));
-                    producto.setPrecio(resultado.getDouble("price"));
-                    producto.setIdVendedor(resultado.getInt("seller_id"));
-                    producto.setDescripcion(resultado.getString("description"));
+                    producto.setNombre(resultado.getString("nombre"));
+                    producto.setCategoria(resultado.getString("nombre_categoria"));
+                    producto.setPrecio(resultado.getDouble("precio"));
+                    producto.setIdVendedor(resultado.getInt("vendedor_id"));
+                    producto.setDescripcion(resultado.getString("descripcion"));
                     producto.setMaterial(resultado.getString("material"));
-                    producto.setAncho(resultado.getString("width"));
-                    producto.setPeso(resultado.getString("weight"));
-                    producto.setCuidado(resultado.getString("care"));
+                    producto.setAncho(resultado.getString("ancho"));
+                    producto.setPeso(resultado.getString("peso"));
+                    producto.setCuidado(resultado.getString("cuidados"));
                     producto.setExistencias(resultado.getInt("stock"));
-                    producto.setDestacado(resultado.getBoolean("featured"));
-                    producto.setEsNuevaColeccion(resultado.getBoolean("is_new_collection"));
-                    producto.setEsExclusivo(resultado.getBoolean("is_exclusive"));
-                    producto.setEsOferta(resultado.getBoolean("is_offer"));
+                    producto.setDestacado(resultado.getBoolean("destacado"));
+                    producto.setEsNuevaColeccion(resultado.getBoolean("es_nueva_coleccion"));
+                    producto.setEsExclusivo(resultado.getBoolean("es_exclusivo"));
+                    producto.setEsOferta(resultado.getBoolean("es_oferta"));
                     producto.setImagenes(obtenerImagenesProducto(conexion, idProducto));
 
                     productos.add(producto);
                 }
             }
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo productos por vendedor: " + e.getMessage());
             e.printStackTrace();
         }
         return productos;
@@ -116,16 +118,17 @@ public class ProductoDAO {
      */
     private List<String> obtenerImagenesProducto(Connection conexion, int idProducto) {
         List<String> imagenes = new ArrayList<>();
-        String consulta = "SELECT image_url FROM product_images WHERE product_id = ? ORDER BY display_order ASC";
+        String consulta = "SELECT url_imagen FROM imagenes_producto WHERE producto_id = ? ORDER BY orden_visualizacion ASC";
 
         try (PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setInt(1, idProducto);
             try (ResultSet resultado = sentencia.executeQuery()) {
                 while (resultado.next()) {
-                    imagenes.add(resultado.getString("image_url"));
+                    imagenes.add(resultado.getString("url_imagen"));
                 }
             }
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo imágenes de producto: " + e.getMessage());
             e.printStackTrace();
         }
         return imagenes;
@@ -163,13 +166,13 @@ public class ProductoDAO {
             String urlImagen = "/uploads/" + nombreArchivo;
 
             try (Connection conexion = Conexion.obtenerConexion()) {
-                String consultaEliminar = "DELETE FROM product_images WHERE product_id = ?";
+                String consultaEliminar = "DELETE FROM imagenes_producto WHERE producto_id = ?";
                 try (PreparedStatement sentenciaEliminar = conexion.prepareStatement(consultaEliminar)) {
                     sentenciaEliminar.setInt(1, idProducto);
                     sentenciaEliminar.executeUpdate();
                 }
 
-                String consultaInsertar = "INSERT INTO product_images (product_id, image_url, display_order) VALUES (?, ?, 0)";
+                String consultaInsertar = "INSERT INTO imagenes_producto (producto_id, url_imagen, orden_visualizacion) VALUES (?, ?, 0)";
                 try (PreparedStatement sentenciaInsertar = conexion.prepareStatement(consultaInsertar)) {
                     sentenciaInsertar.setInt(1, idProducto);
                     sentenciaInsertar.setString(2, urlImagen);
@@ -179,6 +182,7 @@ public class ProductoDAO {
 
             return urlImagen;
         } catch (Exception e) {
+            System.err.println("[ERROR] Error guardando imagen de producto: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -188,7 +192,7 @@ public class ProductoDAO {
      * Actualiza el precio y existencias de un producto.
      */
     public boolean actualizarProducto(int idProducto, double precio, int existencias) {
-        String consulta = "UPDATE products SET price = ?, stock = ?, updated_at = NOW() WHERE id = ?";
+        String consulta = "UPDATE productos SET precio = ?, stock = ?, actualizado_en = NOW() WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setDouble(1, precio);
@@ -197,6 +201,7 @@ public class ProductoDAO {
             sentencia.executeUpdate();
             return true;
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error actualizando precio/stock de producto: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -210,17 +215,17 @@ public class ProductoDAO {
 
         String columna;
         if ("exclusivas".equals(seccion)) {
-            columna = "is_exclusive";
+            columna = "es_exclusivo";
         } else if ("ofertas".equals(seccion)) {
-            columna = "is_offer";
+            columna = "es_oferta";
         } else {
-            columna = "is_new_collection";
+            columna = "es_nueva_coleccion";
         }
 
-        String consulta = "SELECT p.*, c.name as category_name " +
-                "FROM products p " +
-                "LEFT JOIN categories c ON p.category_id = c.id " +
-                "WHERE p.active = true AND p." + columna + " = true";
+        String consulta = "SELECT p.*, c.nombre as nombre_categoria " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "WHERE p.activo = true AND p." + columna + " = true";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta);
@@ -231,25 +236,26 @@ public class ProductoDAO {
                 int idProducto = resultado.getInt("id");
 
                 producto.setId(String.valueOf(idProducto));
-                producto.setNombre(resultado.getString("name"));
-                producto.setCategoria(resultado.getString("category_name"));
-                producto.setPrecio(resultado.getDouble("price"));
-                producto.setIdVendedor(resultado.getInt("seller_id"));
-                producto.setDescripcion(resultado.getString("description"));
+                producto.setNombre(resultado.getString("nombre"));
+                producto.setCategoria(resultado.getString("nombre_categoria"));
+                producto.setPrecio(resultado.getDouble("precio"));
+                producto.setIdVendedor(resultado.getInt("vendedor_id"));
+                producto.setDescripcion(resultado.getString("descripcion"));
                 producto.setMaterial(resultado.getString("material"));
-                producto.setAncho(resultado.getString("width"));
-                producto.setPeso(resultado.getString("weight"));
-                producto.setCuidado(resultado.getString("care"));
+                producto.setAncho(resultado.getString("ancho"));
+                producto.setPeso(resultado.getString("peso"));
+                producto.setCuidado(resultado.getString("cuidados"));
                 producto.setExistencias(resultado.getInt("stock"));
-                producto.setDestacado(resultado.getBoolean("featured"));
-                producto.setEsNuevaColeccion(resultado.getBoolean("is_new_collection"));
-                producto.setEsExclusivo(resultado.getBoolean("is_exclusive"));
-                producto.setEsOferta(resultado.getBoolean("is_offer"));
+                producto.setDestacado(resultado.getBoolean("destacado"));
+                producto.setEsNuevaColeccion(resultado.getBoolean("es_nueva_coleccion"));
+                producto.setEsExclusivo(resultado.getBoolean("es_exclusivo"));
+                producto.setEsOferta(resultado.getBoolean("es_oferta"));
                 producto.setImagenes(obtenerImagenesProducto(conexion, idProducto));
 
                 productos.add(producto);
             }
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo productos por sección: " + e.getMessage());
             e.printStackTrace();
         }
         return productos;
@@ -261,10 +267,10 @@ public class ProductoDAO {
     public List<Producto> obtenerProductosPendientes() {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.name as category_name " +
-                "FROM products p " +
-                "LEFT JOIN categories c ON p.category_id = c.id " +
-                "WHERE p.moderation_status = 'pending'";
+        String consulta = "SELECT p.*, c.nombre as nombre_categoria " +
+                "FROM productos p " +
+                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                "WHERE p.estado_moderacion = 'pending'";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta);
@@ -275,25 +281,26 @@ public class ProductoDAO {
                 int idProducto = resultado.getInt("id");
 
                 producto.setId(String.valueOf(idProducto));
-                producto.setNombre(resultado.getString("name"));
-                producto.setCategoria(resultado.getString("category_name"));
-                producto.setPrecio(resultado.getDouble("price"));
-                producto.setIdVendedor(resultado.getInt("seller_id"));
-                producto.setDescripcion(resultado.getString("description"));
+                producto.setNombre(resultado.getString("nombre"));
+                producto.setCategoria(resultado.getString("nombre_categoria"));
+                producto.setPrecio(resultado.getDouble("precio"));
+                producto.setIdVendedor(resultado.getInt("vendedor_id"));
+                producto.setDescripcion(resultado.getString("descripcion"));
                 producto.setMaterial(resultado.getString("material"));
-                producto.setAncho(resultado.getString("width"));
-                producto.setPeso(resultado.getString("weight"));
-                producto.setCuidado(resultado.getString("care"));
+                producto.setAncho(resultado.getString("ancho"));
+                producto.setPeso(resultado.getString("peso"));
+                producto.setCuidado(resultado.getString("cuidados"));
                 producto.setExistencias(resultado.getInt("stock"));
-                producto.setDestacado(resultado.getBoolean("featured"));
-                producto.setEsNuevaColeccion(resultado.getBoolean("is_new_collection"));
-                producto.setEsExclusivo(resultado.getBoolean("is_exclusive"));
-                producto.setEsOferta(resultado.getBoolean("is_offer"));
+                producto.setDestacado(resultado.getBoolean("destacado"));
+                producto.setEsNuevaColeccion(resultado.getBoolean("es_nueva_coleccion"));
+                producto.setEsExclusivo(resultado.getBoolean("es_exclusivo"));
+                producto.setEsOferta(resultado.getBoolean("es_oferta"));
                 producto.setImagenes(obtenerImagenesProducto(conexion, idProducto));
 
                 productos.add(producto);
             }
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo productos pendientes: " + e.getMessage());
             e.printStackTrace();
         }
         return productos;
@@ -304,7 +311,7 @@ public class ProductoDAO {
      */
     public boolean actualizarEstadoModeracion(int idProducto, String estado, String motivo) {
         boolean activo = "approved".equals(estado) || "aprobado".equals(estado);
-        String consulta = "UPDATE products SET moderation_status = ?, rejection_reason = ?, active = ?, updated_at = NOW() WHERE id = ?";
+        String consulta = "UPDATE productos SET estado_moderacion = ?, motivo_rechazo = ?, activo = ?, actualizado_en = NOW() WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setString(1, estado);
@@ -314,6 +321,7 @@ public class ProductoDAO {
             sentencia.executeUpdate();
             return true;
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error actualizando estado de moderación: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -323,8 +331,8 @@ public class ProductoDAO {
      * Agrega un nuevo producto a la base de datos.
      */
     public boolean agregarProducto(Producto producto) {
-        String consulta = "INSERT INTO products (name, category_id, price, seller_id, description, material, width, weight, care, stock, featured, active, moderation_status) " +
-                       "VALUES (?, (SELECT id FROM categories WHERE name = ? LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, true, 'pending')";
+        String consulta = "INSERT INTO productos (nombre, categoria_id, precio, vendedor_id, descripcion, material, ancho, peso, cuidados, stock, destacado, activo, estado_moderacion) " +
+                       "VALUES (?, (SELECT id FROM categorias WHERE nombre = ? LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, true, 'pending')";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setString(1, producto.getNombre());
@@ -340,6 +348,7 @@ public class ProductoDAO {
             sentencia.setBoolean(11, producto.isDestacado());
             return sentencia.executeUpdate() > 0;
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error agregando nuevo producto: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -349,20 +358,20 @@ public class ProductoDAO {
      * Actualiza un producto de forma selectiva (solo campos no nulos).
      */
     public boolean actualizarProducto(int id, Producto actualizaciones, Boolean destacado) {
-        String consulta = "UPDATE products SET " +
-                "name = COALESCE(?, name), " +
-                "price = COALESCE(NULLIF(?, 0), price), " +
-                "description = COALESCE(?, description), " +
+        String consulta = "UPDATE productos SET " +
+                "nombre = COALESCE(?, nombre), " +
+                "precio = COALESCE(NULLIF(?, 0), precio), " +
+                "descripcion = COALESCE(?, descripcion), " +
                 "material = COALESCE(?, material), " +
-                "width = COALESCE(?, width), " +
-                "weight = COALESCE(?, weight), " +
-                "care = COALESCE(?, care), " +
+                "ancho = COALESCE(?, ancho), " +
+                "peso = COALESCE(?, peso), " +
+                "cuidados = COALESCE(?, cuidados), " +
                 "stock = COALESCE(NULLIF(?, -1), stock), " +
-                "featured = COALESCE(?, featured), " +
-                "is_new_collection = COALESCE(?, is_new_collection), " +
-                "is_exclusive = COALESCE(?, is_exclusive), " +
-                "is_offer = COALESCE(?, is_offer), " +
-                "updated_at = NOW() " +
+                "destacado = COALESCE(?, destacado), " +
+                "es_nueva_coleccion = COALESCE(?, es_nueva_coleccion), " +
+                "es_exclusivo = COALESCE(?, es_exclusivo), " +
+                "es_oferta = COALESCE(?, es_oferta), " +
+                "actualizado_en = NOW() " +
                 "WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
@@ -381,6 +390,7 @@ public class ProductoDAO {
             sentencia.setInt(13, id);
             return sentencia.executeUpdate() > 0;
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error actualizando producto selectivamente: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -390,26 +400,15 @@ public class ProductoDAO {
      * Desactiva un producto (soft-delete).
      */
     public boolean eliminarProducto(int id) {
-        String consulta = "UPDATE products SET active = false WHERE id = ?";
+        String consulta = "UPDATE productos SET activo = false WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
             sentencia.setInt(1, id);
             return sentencia.executeUpdate() > 0;
         } catch (SQLException e) {
+            System.err.println("[ERROR] Error eliminando producto (soft-delete): " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
-
-    // Métodos alias para compatibilidad
-    public List<Producto> getAllProducts() { return obtenerTodosLosProductos(); }
-    public List<Producto> getProductsBySeller(int sellerId) { return obtenerProductosPorVendedor(sellerId); }
-    public List<Producto> getProductsBySection(String section) { return obtenerProductosPorSeccion(section); }
-    public List<Producto> getPendingProducts() { return obtenerProductosPendientes(); }
-    public boolean updateModerationStatus(int productId, String status, String reason) { return actualizarEstadoModeracion(productId, status, reason); }
-    public boolean addProduct(Producto product) { return agregarProducto(product); }
-    public boolean updateProduct(int id, Producto updates, Boolean featured) { return actualizarProducto(id, updates, featured); }
-    public boolean updateProduct(int productId, double price, int stock) { return actualizarProducto(productId, price, stock); }
-    public boolean deleteProduct(int id) { return eliminarProducto(id); }
-    public String saveProductImage(int productId, String base64Data) { return guardarImagenProducto(productId, base64Data); }
 }
