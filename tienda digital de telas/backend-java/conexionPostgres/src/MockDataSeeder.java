@@ -3,7 +3,7 @@
  * Redirige la ejecución a la clase oficial en español {@link PobladorDatosPrueba}.
  */
 public class MockDataSeeder {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         PobladorDatosPrueba.main(args);
     }
 }

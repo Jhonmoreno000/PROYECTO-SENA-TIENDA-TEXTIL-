@@ -41,8 +41,8 @@ public class PobladorDatosPrueba {
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println("=== Poblando Base de Datos PostgreSQL para D&D Textil ===");
+    public static void main(String[] args) throws Exception {
+        System.out.println("Iniciando poblado de datos de prueba...");
 
         Connection conexion = Conexion.obtenerConexion();
         if (conexion == null) {

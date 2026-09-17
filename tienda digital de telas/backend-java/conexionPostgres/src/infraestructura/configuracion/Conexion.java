@@ -37,24 +37,11 @@ public class Conexion {
 
     private Conexion() {}
 
-    /**
-     * Obtiene una nueva conexión a la base de datos PostgreSQL.
-     * @return Conexión activa a PostgreSQL, o null si falla.
-     */
-    public static Connection obtenerConexion() {
-        try {
-            return DriverManager.getConnection(URL_BD, USUARIO_BD, CONTRASENA_BD);
-        } catch (SQLException e) {
-            System.err.println("[ERROR BD] Fallo al conectar con PostgreSQL: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
+    public static Connection obtenerConexion() throws SQLException {
+        return DriverManager.getConnection(URL_BD, USUARIO_BD, CONTRASENA_BD);
     }
 
-    /**
-     * Alias en inglés para compatibilidad.
-     */
-    public static Connection getConnection() {
+    public static Connection getConnection() throws SQLException {
         return obtenerConexion();
     }
 }
