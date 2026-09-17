@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNotification } from '../context';
-import { useProducts } from '../context';
+import { useNotificacion } from '../contextos';
+import { useProductos } from '../contextos';
 
 export function useProductManager() {
-    const { showNotification } = useNotification();
-    const { products, updateProduct, deleteProduct, addProduct } = useProducts();
+    const { showNotification } = useNotificacion();
+    const { products, updateProduct, deleteProduct, addProduct } = useProductos();
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
 

@@ -1,3 +1,0 @@
-@echo off
-echo Iniciando servidor backend Java D&D Textil (Espanol)...
-java -cp "bin;lib/*" App

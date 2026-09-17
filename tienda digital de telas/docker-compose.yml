@@ -17,15 +17,16 @@ services:
       # Autoejecutar esquema_espanol.sql al crear la DB por primera vez
       - ./backend-java/conexionPostgres/src/infraestructura/persistencia/esquema_espanol.sql:/docker-entrypoint-initdb.d/init.sql
 
-  # Backend Java
+  # Backend Java (Cluster Escalonable)
   backend:
     build: 
       context: ./backend-java/conexionPostgres
       dockerfile: Dockerfile
-    container_name: dndtextil_backend
     restart: always
-    ports:
-      - "8081:8081"
+    deploy:
+      replicas: 3
+    expose:
+      - "8081"
     environment:
       - DB_URL=jdbc:postgresql://db:5432/tienda_digital_textiles_db
       - DB_USER=postgres

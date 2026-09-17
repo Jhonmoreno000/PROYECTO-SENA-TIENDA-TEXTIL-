@@ -1,0 +1,117 @@
+import React, { useRef } from 'react';
+import { Link } from 'react-router-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TriangleAlert, RefreshCw } from 'lucide-react';
+import TarjetaProducto from './TarjetaProducto';
+import { ProductGridSkeleton } from './Skeleton';
+import { useProductos } from '../contextos/ContextoProducto';
+
+gsap.registerPlugin(ScrollTrigger);
+
+function ProductosDestacados() {
+    const { products, getFeaturedProducts, loading, error, refreshProducts } = useProductos();
+    const containerRef = useRef(null);
+
+    const featuredProducts = (() => {
+        const featured = getFeaturedProducts();
+        return featured.length > 0 ? featured : products.slice(0, 6);
+    })();
+
+    useGSAP(() => {
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top 85%",
+                once: true
+            }
+        });
+
+        tl.fromTo('.fp-header',
+            { opacity: 0, y: 30 },
+            {
+                opacity: 1, y: 0,
+                duration: 0.8, stagger: 0.1, ease: "power2.out"
+            }
+        );
+
+        if (featuredProducts.length > 0 && !loading && !error) {
+            tl.fromTo('.fp-card',
+                {
+                    opacity: 0,
+                    y: 40,
+                    scale: 0.97
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.7,
+                    force3D: true,
+                    stagger: 0.08,
+                    ease: "power3.out"
+                },
+                "-=0.4"
+            );
+        }
+
+        tl.fromTo('.fp-btn',
+            { opacity: 0, scale: 0.9 },
+            {
+                opacity: 1, scale: 1,
+                duration: 0.5, ease: "back.out(1.4)"
+            },
+            "-=0.3"
+        );
+
+    }, { scope: containerRef, dependencies: [featuredProducts.length, loading, error] });
+
+    return (
+        <section ref={containerRef} className="section-container bg-[var(--color-bg-secondary)] overflow-hidden">
+            <div className="text-center mb-12">
+                <h2 className="fp-header text-3xl md:text-4xl font-display font-bold mb-4 dark:text-white">
+                    Productos <span className="text-gradient">Destacados</span>
+                </h2>
+                <p className="fp-header text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
+                    Descubre nuestra selección especial de telas premium para tus proyectos
+                </p>
+            </div>
+
+            {loading ? (
+                <ProductGridSkeleton count={3} />
+            ) : error ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <TriangleAlert className="w-14 h-14 text-amber-400" />
+                    <p className="text-gray-500 dark:text-gray-400 font-medium text-center max-w-sm">
+                        No se pudo conectar con el servidor. Verifica que el backend esté activo.
+                    </p>
+                    <button onClick={refreshProducts} className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors">
+                        <RefreshCw className="w-5 h-5" /> Reintentar
+                    </button>
+                </div>
+            ) : featuredProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                    <p className="text-gray-400 font-medium">No hay productos disponibles aún.</p>
+                    <Link to="/catalogo" className="text-primary-600 hover:underline font-bold">Explorar catálogo</Link>
+                </div>
+            ) : (
+                <div className="fp-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
+                    {featuredProducts.map((product) => (
+                        <div key={product.id} className="fp-card">
+                            <TarjetaProducto product={product} />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div className="fp-btn-container text-center">
+                <Link to="/catalogo" className="fp-btn btn-primary inline-flex items-center hover:scale-105 active:scale-95 transition-transform">
+                    Ver Catálogo Completo
+                </Link>
+            </div>
+        </section>
+    );
+}
+
+export default ProductosDestacados;

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
-import { staggerItems, EASES, DURATIONS } from '../utils/animations';
+import { staggerItems, EASES, DURATIONS } from '../utilidades/animations';
 
 export function useAnimatedList(deps = []) {
   const containerRef = useRef(null);
@@ -8,7 +8,7 @@ export function useAnimatedList(deps = []) {
 
   const getItems = () => {
     if (containerRef.current) {
-      return containerRef.current.querySelectorAll('[data-animate]');
+      return containerRef.current.querySelectorAll('[datos-animate]');
     }
     return [];
   };
