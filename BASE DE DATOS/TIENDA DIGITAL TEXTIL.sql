@@ -1,11 +1,14 @@
 --
--- PostgreSQL database dump
+-- ============================================================================
+-- VOLCADO DE BASE DE DATOS POSTGRESQL - D&D TEXTIL
+-- PROYECTO FORMATIVO SENA: TIENDA DIGITAL DE TELAS Y GESTIÓN TEXTIL
+-- ============================================================================
 --
 
 \restrict N0ZrrFfSENKgOisUPO7tzvkaLla9MuffG8eNBphhCJihO2oabNvhZjzFhMAyfyU
 
--- Dumped from database version 18.3
--- Dumped by pg_dump version 18.3
+-- Volcado generado desde base de datos versión: 18.3
+-- Volcado extraído mediante herramienta pg_dump versión: 18.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,16 +23,16 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+-- Nombre: public; Tipo: ESQUEMA; Esquema: -; Propietario: postgres
 --
 
--- *not* creating schema, since initdb creates it
+-- *Nota*: No se crea el esquema directamente, ya que la inicialización de la base de datos (initdb) lo crea por defecto.
 
 
 ALTER SCHEMA public OWNER TO postgres;
 
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+-- Nombre: SCHEMA public; Tipo: COMENTARIO; Esquema: -; Propietario: postgres
 --
 
 COMMENT ON SCHEMA public IS '';
@@ -40,7 +43,11 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: bug_reports; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: bug_reports
+-- Propósito: Módulo de Soporte y Calidad: Almacena los reportes de incidencias técnicas y errores presentados por los vendedores, facilitando su priorización, asignación y resolución por el equipo técnico.
+-- ============================================================================
+-- Nombre: bug_reports; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.bug_reports (
@@ -61,7 +68,7 @@ CREATE TABLE public.bug_reports (
 ALTER TABLE public.bug_reports OWNER TO postgres;
 
 --
--- Name: bug_reports_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: bug_reports_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.bug_reports_id_seq
@@ -76,14 +83,18 @@ CREATE SEQUENCE public.bug_reports_id_seq
 ALTER SEQUENCE public.bug_reports_id_seq OWNER TO postgres;
 
 --
--- Name: bug_reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: bug_reports_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.bug_reports_id_seq OWNED BY public.bug_reports.id;
 
 
 --
--- Name: cart_items; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: cart_items
+-- Propósito: Módulo de Carrito de Compras: Permite la persistencia de productos y metros de tela añadidos por cada cliente antes de formalizar y pagar la orden.
+-- ============================================================================
+-- Nombre: cart_items; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.cart_items (
@@ -99,7 +110,7 @@ CREATE TABLE public.cart_items (
 ALTER TABLE public.cart_items OWNER TO postgres;
 
 --
--- Name: cart_items_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: cart_items_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.cart_items_id_seq
@@ -114,14 +125,18 @@ CREATE SEQUENCE public.cart_items_id_seq
 ALTER SEQUENCE public.cart_items_id_seq OWNER TO postgres;
 
 --
--- Name: cart_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: cart_items_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.cart_items_id_seq OWNED BY public.cart_items.id;
 
 
 --
--- Name: categories; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: categories
+-- Propósito: Módulo de Catálogo de Telas: Define las categorías taxonómicas de textiles (ej. Algodón, Seda, Lino, Lana, Poliéster, Terciopelo, Dril, Mezclilla).
+-- ============================================================================
+-- Nombre: categories; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.categories (
@@ -135,7 +150,7 @@ CREATE TABLE public.categories (
 ALTER TABLE public.categories OWNER TO postgres;
 
 --
--- Name: categories_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: categories_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.categories_id_seq
@@ -150,14 +165,18 @@ CREATE SEQUENCE public.categories_id_seq
 ALTER SEQUENCE public.categories_id_seq OWNER TO postgres;
 
 --
--- Name: categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: categories_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.categories_id_seq OWNED BY public.categories.id;
 
 
 --
--- Name: coupon_categories; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: coupon_categories
+-- Propósito: Módulo de Promociones (Relación N:M): Tabla intermedia que asocia cupones promocionales con las categorías específicas de telas a las que aplican.
+-- ============================================================================
+-- Nombre: coupon_categories; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.coupon_categories (
@@ -170,7 +189,7 @@ CREATE TABLE public.coupon_categories (
 ALTER TABLE public.coupon_categories OWNER TO postgres;
 
 --
--- Name: coupon_categories_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: coupon_categories_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.coupon_categories_id_seq
@@ -185,14 +204,18 @@ CREATE SEQUENCE public.coupon_categories_id_seq
 ALTER SEQUENCE public.coupon_categories_id_seq OWNER TO postgres;
 
 --
--- Name: coupon_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: coupon_categories_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.coupon_categories_id_seq OWNED BY public.coupon_categories.id;
 
 
 --
--- Name: coupons; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: coupons
+-- Propósito: Módulo de Marketing y Promociones: Gestiona cupones de descuento (porcentuales o de monto fijo), con reglas de vigencia, compra mínima y límites de uso.
+-- ============================================================================
+-- Nombre: coupons; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.coupons (
@@ -213,7 +236,7 @@ CREATE TABLE public.coupons (
 ALTER TABLE public.coupons OWNER TO postgres;
 
 --
--- Name: coupons_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: coupons_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.coupons_id_seq
@@ -228,14 +251,18 @@ CREATE SEQUENCE public.coupons_id_seq
 ALTER SEQUENCE public.coupons_id_seq OWNER TO postgres;
 
 --
--- Name: coupons_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: coupons_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.coupons_id_seq OWNED BY public.coupons.id;
 
 
 --
--- Name: daily_sales; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: daily_sales
+-- Propósito: Módulo de Analítica Comercial: Registra el acumulado diario de ventas monetarias y número de pedidos para la generación de gráficas de rendimiento financiero.
+-- ============================================================================
+-- Nombre: daily_sales; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.daily_sales (
@@ -250,7 +277,7 @@ CREATE TABLE public.daily_sales (
 ALTER TABLE public.daily_sales OWNER TO postgres;
 
 --
--- Name: daily_sales_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: daily_sales_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.daily_sales_id_seq
@@ -265,14 +292,18 @@ CREATE SEQUENCE public.daily_sales_id_seq
 ALTER SEQUENCE public.daily_sales_id_seq OWNER TO postgres;
 
 --
--- Name: daily_sales_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: daily_sales_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.daily_sales_id_seq OWNED BY public.daily_sales.id;
 
 
 --
--- Name: global_banner; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: global_banner
+-- Propósito: Módulo de Comunicación Visual: Controla el banner superior del portal para anuncios globales (ej. envíos gratis, novedades o alertas de mantenimiento).
+-- ============================================================================
+-- Nombre: global_banner; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.global_banner (
@@ -287,7 +318,7 @@ CREATE TABLE public.global_banner (
 ALTER TABLE public.global_banner OWNER TO postgres;
 
 --
--- Name: global_banner_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: global_banner_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.global_banner_id_seq
@@ -302,14 +333,18 @@ CREATE SEQUENCE public.global_banner_id_seq
 ALTER SEQUENCE public.global_banner_id_seq OWNER TO postgres;
 
 --
--- Name: global_banner_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: global_banner_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.global_banner_id_seq OWNED BY public.global_banner.id;
 
 
 --
--- Name: inventory_batches; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: inventory_batches
+-- Propósito: Módulo de Logística e Inventario: Control de lotes de rollos de tela recibidos en bodega, registrando proveedor, metros ingresados, costo por metro y fecha.
+-- ============================================================================
+-- Nombre: inventory_batches; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.inventory_batches (
@@ -327,7 +362,11 @@ CREATE TABLE public.inventory_batches (
 ALTER TABLE public.inventory_batches OWNER TO postgres;
 
 --
--- Name: order_items; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: order_items
+-- Propósito: Módulo de Detalle de Ventas: Registra el desglose de cada producto dentro de un pedido, incluyendo la cantidad en metros, precio unitario y subtotal.
+-- ============================================================================
+-- Nombre: order_items; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.order_items (
@@ -342,7 +381,7 @@ CREATE TABLE public.order_items (
 ALTER TABLE public.order_items OWNER TO postgres;
 
 --
--- Name: order_items_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: order_items_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.order_items_id_seq
@@ -357,14 +396,18 @@ CREATE SEQUENCE public.order_items_id_seq
 ALTER SEQUENCE public.order_items_id_seq OWNER TO postgres;
 
 --
--- Name: order_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: order_items_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.order_items_id_seq OWNED BY public.order_items.id;
 
 
 --
--- Name: orders; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: orders
+-- Propósito: Módulo Central de Pedidos: Registra la cabecera de las órdenes de compra efectuadas por los clientes, asociando cliente, vendedor, valor total y estado de despacho.
+-- ============================================================================
+-- Nombre: orders; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.orders (
@@ -381,7 +424,7 @@ CREATE TABLE public.orders (
 ALTER TABLE public.orders OWNER TO postgres;
 
 --
--- Name: orders_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: orders_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.orders_id_seq
@@ -396,14 +439,18 @@ CREATE SEQUENCE public.orders_id_seq
 ALTER SEQUENCE public.orders_id_seq OWNER TO postgres;
 
 --
--- Name: orders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: orders_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.orders_id_seq OWNED BY public.orders.id;
 
 
 --
--- Name: product_images; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: product_images
+-- Propósito: Módulo Multimedia de Catálogo: Almacena las URLs y recursos gráficos de cada tela, ordenados secuencialmente para la galería del cliente.
+-- ============================================================================
+-- Nombre: product_images; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.product_images (
@@ -417,7 +464,7 @@ CREATE TABLE public.product_images (
 ALTER TABLE public.product_images OWNER TO postgres;
 
 --
--- Name: product_images_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: product_images_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.product_images_id_seq
@@ -432,14 +479,18 @@ CREATE SEQUENCE public.product_images_id_seq
 ALTER SEQUENCE public.product_images_id_seq OWNER TO postgres;
 
 --
--- Name: product_images_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: product_images_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.product_images_id_seq OWNED BY public.product_images.id;
 
 
 --
--- Name: reviews; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: reviews
+-- Propósito: Módulo de Valoraciones y Experiencia: Guarda las calificaciones de 1 a 5 estrellas y comentarios de los clientes sobre la calidad de las telas adquiridas.
+-- ============================================================================
+-- Nombre: reviews; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.reviews (
@@ -455,7 +506,7 @@ CREATE TABLE public.reviews (
 ALTER TABLE public.reviews OWNER TO postgres;
 
 --
--- Name: reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: reviews_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.reviews_id_seq
@@ -470,40 +521,40 @@ CREATE SEQUENCE public.reviews_id_seq
 ALTER SEQUENCE public.reviews_id_seq OWNER TO postgres;
 
 --
--- Name: reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: reviews_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.reviews_id_seq OWNED BY public.reviews.id;
 
 --
--- Name: reviews id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: reviews id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.reviews ALTER COLUMN id SET DEFAULT nextval('public.reviews_id_seq'::regclass);
 
 --
--- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: reviews reviews_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.reviews
     ADD CONSTRAINT reviews_pkey PRIMARY KEY (id);
 
 --
--- Name: reviews reviews_rating_check; Type: CHECK; Schema: public; Owner: postgres
+-- Nombre: reviews reviews_rating_check; Tipo: RESTRICCIÓN DE VALIDACIÓN (CHECK); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.reviews
     ADD CONSTRAINT reviews_rating_check CHECK ((rating >= 1) AND (rating <= 5));
 
 --
--- Name: reviews reviews_product_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: reviews reviews_product_fk; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.reviews
     ADD CONSTRAINT reviews_product_fk FOREIGN KEY (product_id) REFERENCES public.products(id);
 
 --
--- Name: reviews reviews_user_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: reviews reviews_user_fk; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.reviews
@@ -511,7 +562,11 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: home_sections; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: home_sections
+-- Propósito: Módulo de Personalización del Portal: Parametriza el orden, visibilidad y títulos de las secciones dinámicas de la página de inicio (Nuevas, Exclusivas, Ofertas).
+-- ============================================================================
+-- Nombre: home_sections; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.home_sections (
@@ -527,14 +582,18 @@ CREATE TABLE public.home_sections (
 ALTER TABLE public.home_sections OWNER TO postgres;
 
 --
--- Name: home_sections home_sections_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: home_sections home_sections_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.home_sections
     ADD CONSTRAINT home_sections_pkey PRIMARY KEY (key);
 
 --
--- Data for Name: home_sections; Type: TABLE DATA; Schema: public; Owner: postgres
+-- ============================================================================
+-- SECCIÓN 5: CARGA DE REGISTROS Y DATOS INICIALES (DML / SEMILLAS DEL SISTEMA)
+-- ============================================================================
+--
+-- Datos iniciales para la tabla: home_sections | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.home_sections (key, title, subtitle, active, sort_order, created_at) FROM stdin;
@@ -544,7 +603,11 @@ ofertas	Ofertas Especiales	Precios especiales en telas seleccionadas por tiempo 
 \.
 
 --
--- Name: carousel_slides; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: carousel_slides
+-- Propósito: Módulo de Banners y Marketing: Gestiona las diapositivas interactivas del carrusel principal, con llamadas a la acción (CTA) y enlaces promocionales.
+-- ============================================================================
+-- Nombre: carousel_slides; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.carousel_slides (
@@ -563,7 +626,7 @@ CREATE TABLE public.carousel_slides (
 ALTER TABLE public.carousel_slides OWNER TO postgres;
 
 --
--- Name: carousel_slides_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: carousel_slides_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.carousel_slides_id_seq
@@ -578,26 +641,26 @@ CREATE SEQUENCE public.carousel_slides_id_seq
 ALTER SEQUENCE public.carousel_slides_id_seq OWNER TO postgres;
 
 --
--- Name: carousel_slides_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: carousel_slides_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.carousel_slides_id_seq OWNED BY public.carousel_slides.id;
 
 --
--- Name: carousel_slides id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: carousel_slides id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.carousel_slides ALTER COLUMN id SET DEFAULT nextval('public.carousel_slides_id_seq'::regclass);
 
 --
--- Name: carousel_slides carousel_slides_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: carousel_slides carousel_slides_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.carousel_slides
     ADD CONSTRAINT carousel_slides_pkey PRIMARY KEY (id);
 
 --
--- Data for Name: carousel_slides; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: carousel_slides | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.carousel_slides (id, title, subtitle, image, cta, section_key, active, sort_order, created_at) FROM stdin;
@@ -607,14 +670,18 @@ COPY public.carousel_slides (id, title, subtitle, image, cta, section_key, activ
 \.
 
 --
--- Name: carousel_slides_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: carousel_slides_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.carousel_slides_id_seq', 3, true);
 
 
 --
--- Name: products; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: products
+-- Propósito: Módulo Maestro de Productos: Catálogo general de telas con ficha técnica completa (material, ancho, peso, cuidados), stock en metros, precios y estado de moderación.
+-- ============================================================================
+-- Nombre: products; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.products (
@@ -644,7 +711,7 @@ CREATE TABLE public.products (
 ALTER TABLE public.products OWNER TO postgres;
 
 --
--- Name: products_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: products_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.products_id_seq
@@ -659,14 +726,18 @@ CREATE SEQUENCE public.products_id_seq
 ALTER SEQUENCE public.products_id_seq OWNER TO postgres;
 
 --
--- Name: products_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: products_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.products_id_seq OWNED BY public.products.id;
 
 
 --
--- Name: recent_activity; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: recent_activity
+-- Propósito: Módulo de Auditoría del Sistema: Bitácora cronológica de eventos relevantes y acciones ejecutadas por usuarios en la plataforma para trazabilidad.
+-- ============================================================================
+-- Nombre: recent_activity; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.recent_activity (
@@ -684,7 +755,7 @@ CREATE TABLE public.recent_activity (
 ALTER TABLE public.recent_activity OWNER TO postgres;
 
 --
--- Name: recent_activity_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: recent_activity_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.recent_activity_id_seq
@@ -699,14 +770,18 @@ CREATE SEQUENCE public.recent_activity_id_seq
 ALTER SEQUENCE public.recent_activity_id_seq OWNER TO postgres;
 
 --
--- Name: recent_activity_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: recent_activity_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.recent_activity_id_seq OWNED BY public.recent_activity.id;
 
 
 --
--- Name: region_sales; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: region_sales
+-- Propósito: Módulo de Inteligencia Geográfica: Almacena las ventas segmentadas por región geográfica (departamento/ciudad) y porcentaje de participación.
+-- ============================================================================
+-- Nombre: region_sales; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.region_sales (
@@ -722,7 +797,7 @@ CREATE TABLE public.region_sales (
 ALTER TABLE public.region_sales OWNER TO postgres;
 
 --
--- Name: region_sales_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: region_sales_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.region_sales_id_seq
@@ -737,14 +812,18 @@ CREATE SEQUENCE public.region_sales_id_seq
 ALTER SEQUENCE public.region_sales_id_seq OWNER TO postgres;
 
 --
--- Name: region_sales_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: region_sales_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.region_sales_id_seq OWNED BY public.region_sales.id;
 
 
 --
--- Name: stock_thresholds; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: stock_thresholds
+-- Propósito: Módulo de Alertas de Abastecimiento: Define los metros mínimos de seguridad requeridos por tipo de tela para disparar alertas automáticas de reabastecimiento.
+-- ============================================================================
+-- Nombre: stock_thresholds; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.stock_thresholds (
@@ -758,7 +837,7 @@ CREATE TABLE public.stock_thresholds (
 ALTER TABLE public.stock_thresholds OWNER TO postgres;
 
 --
--- Name: stock_thresholds_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: stock_thresholds_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.stock_thresholds_id_seq
@@ -773,14 +852,18 @@ CREATE SEQUENCE public.stock_thresholds_id_seq
 ALTER SEQUENCE public.stock_thresholds_id_seq OWNER TO postgres;
 
 --
--- Name: stock_thresholds_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: stock_thresholds_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.stock_thresholds_id_seq OWNED BY public.stock_thresholds.id;
 
 
 --
--- Name: support_tickets; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: support_tickets
+-- Propósito: Módulo de Servicio al Cliente: Mesa de ayuda para registro, seguimiento y resolución de requerimientos, quejas y reclamos (PQR) de clientes.
+-- ============================================================================
+-- Nombre: support_tickets; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.support_tickets (
@@ -802,7 +885,7 @@ CREATE TABLE public.support_tickets (
 ALTER TABLE public.support_tickets OWNER TO postgres;
 
 --
--- Name: support_tickets_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: support_tickets_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.support_tickets_id_seq
@@ -817,14 +900,18 @@ CREATE SEQUENCE public.support_tickets_id_seq
 ALTER SEQUENCE public.support_tickets_id_seq OWNER TO postgres;
 
 --
--- Name: support_tickets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: support_tickets_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.support_tickets_id_seq OWNED BY public.support_tickets.id;
 
 
 --
--- Name: system_config; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: system_config
+-- Propósito: Módulo de Configuración Global: Almacena configuraciones del sistema en formato JSON clave/valor (tasas de impuestos, costos de envío, políticas comerciales).
+-- ============================================================================
+-- Nombre: system_config; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.system_config (
@@ -837,7 +924,7 @@ CREATE TABLE public.system_config (
 ALTER TABLE public.system_config OWNER TO postgres;
 
 --
--- Name: system_config_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: system_config_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.system_config_id_seq
@@ -852,14 +939,18 @@ CREATE SEQUENCE public.system_config_id_seq
 ALTER SEQUENCE public.system_config_id_seq OWNER TO postgres;
 
 --
--- Name: system_config_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: system_config_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.system_config_id_seq OWNED BY public.system_config.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: users
+-- Propósito: Módulo de Gestión de Usuarios y Seguridad: Almacena las cuentas de usuarios con control de roles (cliente, vendedor, administrador), contraseñas cifradas en SHA-256 y comisiones.
+-- ============================================================================
+-- Nombre: users; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.users (
@@ -880,7 +971,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: users_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -895,14 +986,18 @@ CREATE SEQUENCE public.users_id_seq
 ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
 
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: users_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: waste_events; Type: TABLE; Schema: public; Owner: postgres
+-- ============================================================================
+-- TABLA: waste_events
+-- Propósito: Módulo de Control de Mermas: Registra el desperdicio y retazos de tela resultantes del corte o almacenamiento, cuantificando metros perdidos e impacto económico.
+-- ============================================================================
+-- Nombre: waste_events; Tipo: TABLA; Esquema: public; Propietario: postgres
 --
 
 CREATE TABLE public.waste_events (
@@ -921,7 +1016,7 @@ CREATE TABLE public.waste_events (
 ALTER TABLE public.waste_events OWNER TO postgres;
 
 --
--- Name: waste_events_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Nombre: waste_events_id_seq; Tipo: SECUENCIA (GENERADOR AUTOINCREMENTAL); Esquema: public; Propietario: postgres
 --
 
 CREATE SEQUENCE public.waste_events_id_seq
@@ -936,140 +1031,144 @@ CREATE SEQUENCE public.waste_events_id_seq
 ALTER SEQUENCE public.waste_events_id_seq OWNER TO postgres;
 
 --
--- Name: waste_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Nombre: waste_events_id_seq; Tipo: SECUENCIA VINCULADA A TABLA; Esquema: public; Propietario: postgres
 --
 
 ALTER SEQUENCE public.waste_events_id_seq OWNED BY public.waste_events.id;
 
 
 --
--- Name: bug_reports id; Type: DEFAULT; Schema: public; Owner: postgres
+-- ============================================================================
+-- SECCIÓN 4: ASIGNACIÓN DE VALORES PREDETERMINADOS (SECUENCIAS AUTOINCREMENTALES)
+-- ============================================================================
+--
+-- Nombre: bug_reports id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.bug_reports ALTER COLUMN id SET DEFAULT nextval('public.bug_reports_id_seq'::regclass);
 
 
 --
--- Name: cart_items id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: cart_items id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.cart_items ALTER COLUMN id SET DEFAULT nextval('public.cart_items_id_seq'::regclass);
 
 
 --
--- Name: categories id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: categories id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.categories ALTER COLUMN id SET DEFAULT nextval('public.categories_id_seq'::regclass);
 
 
 --
--- Name: coupon_categories id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: coupon_categories id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupon_categories ALTER COLUMN id SET DEFAULT nextval('public.coupon_categories_id_seq'::regclass);
 
 
 --
--- Name: coupons id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: coupons id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupons ALTER COLUMN id SET DEFAULT nextval('public.coupons_id_seq'::regclass);
 
 
 --
--- Name: daily_sales id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: daily_sales id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.daily_sales ALTER COLUMN id SET DEFAULT nextval('public.daily_sales_id_seq'::regclass);
 
 
 --
--- Name: global_banner id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: global_banner id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.global_banner ALTER COLUMN id SET DEFAULT nextval('public.global_banner_id_seq'::regclass);
 
 
 --
--- Name: order_items id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: order_items id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.order_items ALTER COLUMN id SET DEFAULT nextval('public.order_items_id_seq'::regclass);
 
 
 --
--- Name: orders id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: orders id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.orders ALTER COLUMN id SET DEFAULT nextval('public.orders_id_seq'::regclass);
 
 
 --
--- Name: product_images id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: product_images id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.product_images ALTER COLUMN id SET DEFAULT nextval('public.product_images_id_seq'::regclass);
 
 
 --
--- Name: products id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: products id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq'::regclass);
 
 
 --
--- Name: recent_activity id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: recent_activity id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.recent_activity ALTER COLUMN id SET DEFAULT nextval('public.recent_activity_id_seq'::regclass);
 
 
 --
--- Name: region_sales id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: region_sales id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.region_sales ALTER COLUMN id SET DEFAULT nextval('public.region_sales_id_seq'::regclass);
 
 
 --
--- Name: stock_thresholds id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: stock_thresholds id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.stock_thresholds ALTER COLUMN id SET DEFAULT nextval('public.stock_thresholds_id_seq'::regclass);
 
 
 --
--- Name: support_tickets id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: support_tickets id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.support_tickets ALTER COLUMN id SET DEFAULT nextval('public.support_tickets_id_seq'::regclass);
 
 
 --
--- Name: system_config id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: system_config id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.system_config ALTER COLUMN id SET DEFAULT nextval('public.system_config_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: users id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Name: waste_events id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Nombre: waste_events id; Tipo: VALOR PREDETERMINADO (DEFAULT); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.waste_events ALTER COLUMN id SET DEFAULT nextval('public.waste_events_id_seq'::regclass);
 
 
 --
--- Data for Name: bug_reports; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: bug_reports | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.bug_reports (id, seller_id, seller_name, area, description, steps, status, priority, assigned_to, reported_at, resolved_at) FROM stdin;
@@ -1079,7 +1178,7 @@ COPY public.bug_reports (id, seller_id, seller_name, area, description, steps, s
 
 
 --
--- Data for Name: cart_items; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: cart_items | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.cart_items (id, user_id, product_id, quantity, added_at, updated_at) FROM stdin;
@@ -1087,7 +1186,7 @@ COPY public.cart_items (id, user_id, product_id, quantity, added_at, updated_at)
 
 
 --
--- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: categories | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.categories (id, name, description, created_at) FROM stdin;
@@ -1100,7 +1199,7 @@ COPY public.categories (id, name, description, created_at) FROM stdin;
 
 
 --
--- Data for Name: coupon_categories; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: coupon_categories | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.coupon_categories (id, coupon_id, category_id) FROM stdin;
@@ -1108,7 +1207,7 @@ COPY public.coupon_categories (id, coupon_id, category_id) FROM stdin;
 
 
 --
--- Data for Name: coupons; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: coupons | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.coupons (id, code, discount_type, discount_value, expires_at, min_purchase, max_uses, first_time_only, usage_count, active, created_at) FROM stdin;
@@ -1119,7 +1218,7 @@ COPY public.coupons (id, code, discount_type, discount_value, expires_at, min_pu
 
 
 --
--- Data for Name: daily_sales; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: daily_sales | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.daily_sales (id, sale_date, total_sales, total_orders, created_at) FROM stdin;
@@ -1158,7 +1257,7 @@ COPY public.daily_sales (id, sale_date, total_sales, total_orders, created_at) F
 
 
 --
--- Data for Name: global_banner; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: global_banner | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.global_banner (id, enabled, message, banner_type, updated_at) FROM stdin;
@@ -1167,7 +1266,7 @@ COPY public.global_banner (id, enabled, message, banner_type, updated_at) FROM s
 
 
 --
--- Data for Name: inventory_batches; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: inventory_batches | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.inventory_batches (id, fabric_type, supplier, initial_meters, current_meters, status, created_at, last_update) FROM stdin;
@@ -1180,7 +1279,7 @@ BTN-2026-05	Dril Elastico	Drilones Industriales	400.00	380.00	active	2026-03-31 
 
 
 --
--- Data for Name: order_items; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: order_items | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.order_items (id, order_id, product_id, quantity, unit_price) FROM stdin;
@@ -1194,7 +1293,7 @@ COPY public.order_items (id, order_id, product_id, quantity, unit_price) FROM st
 
 
 --
--- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: orders | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.orders (id, client_id, seller_id, total, status, order_date, updated_at) FROM stdin;
@@ -1207,7 +1306,7 @@ COPY public.orders (id, client_id, seller_id, total, status, order_date, updated
 
 
 --
--- Data for Name: product_images; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: product_images | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.product_images (id, product_id, image_url, display_order) FROM stdin;
@@ -1228,7 +1327,7 @@ COPY public.product_images (id, product_id, image_url, display_order) FROM stdin
 
 
 --
--- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: products | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.products (id, name, category_id, price, seller_id, description, material, width, weight, care, stock, featured, active, created_at, updated_at, moderation_status, rejection_reason) FROM stdin;
@@ -1249,7 +1348,7 @@ COPY public.products (id, name, category_id, price, seller_id, description, mate
 
 
 --
--- Data for Name: recent_activity; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: recent_activity | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.recent_activity (id, type, user_id, user_name, action, amount, icon, created_at) FROM stdin;
@@ -1263,7 +1362,7 @@ COPY public.recent_activity (id, type, user_id, user_name, action, amount, icon,
 
 
 --
--- Data for Name: region_sales; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: region_sales | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.region_sales (id, department, capital, sales, orders, updated_at) FROM stdin;
@@ -1279,7 +1378,7 @@ COPY public.region_sales (id, department, capital, sales, orders, updated_at) FR
 
 
 --
--- Data for Name: stock_thresholds; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: stock_thresholds | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.stock_thresholds (id, fabric_type, min_meters, alert_enabled) FROM stdin;
@@ -1292,7 +1391,7 @@ COPY public.stock_thresholds (id, fabric_type, min_meters, alert_enabled) FROM s
 
 
 --
--- Data for Name: support_tickets; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: support_tickets | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.support_tickets (id, user_id, user_name, user_email, subject, description, status, priority, assigned_to, created_at, updated_at, resolved_at) FROM stdin;
@@ -1303,7 +1402,7 @@ COPY public.support_tickets (id, user_id, user_name, user_email, subject, descri
 
 
 --
--- Data for Name: system_config; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: system_config | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.system_config (id, key, value) FROM stdin;
@@ -1312,7 +1411,7 @@ COPY public.system_config (id, key, value) FROM stdin;
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: users | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.users (id, name, email, password_hash, role, active, suspended, suspension_reason, commission_rate, registered_at, last_login) FROM stdin;
@@ -1326,7 +1425,7 @@ COPY public.users (id, name, email, password_hash, role, active, suspended, susp
 
 
 --
--- Data for Name: waste_events; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Datos iniciales para la tabla: waste_events | Tipo: DATOS DE TABLA | Esquema: public | Propietario: postgres
 --
 
 COPY public.waste_events (id, batch_id, meters, reason, description, responsible, event_date, created_at, user_id) FROM stdin;
@@ -1337,133 +1436,137 @@ COPY public.waste_events (id, batch_id, meters, reason, description, responsible
 
 
 --
--- Name: bug_reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: bug_reports_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.bug_reports_id_seq', 2, true);
 
 
 --
--- Name: cart_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: cart_items_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.cart_items_id_seq', 1, false);
 
 
 --
--- Name: categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: categories_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.categories_id_seq', 5, true);
 
 
 --
--- Name: coupon_categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: coupon_categories_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.coupon_categories_id_seq', 1, false);
 
 
 --
--- Name: coupons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: coupons_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.coupons_id_seq', 3, true);
 
 
 --
--- Name: daily_sales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: daily_sales_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.daily_sales_id_seq', 31, true);
 
 
 --
--- Name: global_banner_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: global_banner_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.global_banner_id_seq', 1, true);
 
 
 --
--- Name: order_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: order_items_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.order_items_id_seq', 6, true);
 
 
 --
--- Name: orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: orders_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.orders_id_seq', 5, true);
 
 
 --
--- Name: product_images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: product_images_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.product_images_id_seq', 14, true);
 
 
 --
--- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: products_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.products_id_seq', 13, true);
 
 
 --
--- Name: recent_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: recent_activity_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.recent_activity_id_seq', 6, true);
 
 
 --
--- Name: region_sales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: region_sales_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.region_sales_id_seq', 8, true);
 
 
 --
--- Name: stock_thresholds_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: stock_thresholds_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.stock_thresholds_id_seq', 5, true);
 
 
 --
--- Name: support_tickets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: support_tickets_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.support_tickets_id_seq', 3, true);
 
 
 --
--- Name: system_config_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: system_config_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.system_config_id_seq', 1, true);
 
 
 --
--- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: users_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.users_id_seq', 6, true);
 
 
 --
--- Name: waste_events_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Nombre: waste_events_id_seq; Tipo: ACTUALIZACIÓN DEL VALOR DE SECUENCIA; Esquema: public; Propietario: postgres
 --
 
 SELECT pg_catalog.setval('public.waste_events_id_seq', 3, true);
 
 
 --
--- Name: bug_reports bug_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- ============================================================================
+-- SECCIÓN 6: RESTRICCIONES DE LLAVES PRIMARIAS Y UNICIDAD (PRIMARY & UNIQUE KEYS)
+-- ============================================================================
+--
+-- Nombre: bug_reports bug_reports_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.bug_reports
@@ -1471,7 +1574,7 @@ ALTER TABLE ONLY public.bug_reports
 
 
 --
--- Name: cart_items cart_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: cart_items cart_items_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.cart_items
@@ -1479,7 +1582,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- Name: cart_items cart_items_user_id_product_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: cart_items cart_items_user_id_product_id_key; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.cart_items
@@ -1487,7 +1590,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: categories categories_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.categories
@@ -1495,7 +1598,7 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- Name: coupon_categories coupon_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: coupon_categories coupon_categories_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupon_categories
@@ -1503,7 +1606,7 @@ ALTER TABLE ONLY public.coupon_categories
 
 
 --
--- Name: coupons coupons_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: coupons coupons_code_key; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupons
@@ -1511,7 +1614,7 @@ ALTER TABLE ONLY public.coupons
 
 
 --
--- Name: coupons coupons_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: coupons coupons_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupons
@@ -1519,7 +1622,7 @@ ALTER TABLE ONLY public.coupons
 
 
 --
--- Name: daily_sales daily_sales_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: daily_sales daily_sales_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.daily_sales
@@ -1527,7 +1630,7 @@ ALTER TABLE ONLY public.daily_sales
 
 
 --
--- Name: global_banner global_banner_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: global_banner global_banner_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.global_banner
@@ -1535,7 +1638,7 @@ ALTER TABLE ONLY public.global_banner
 
 
 --
--- Name: inventory_batches inventory_batches_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: inventory_batches inventory_batches_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.inventory_batches
@@ -1543,7 +1646,7 @@ ALTER TABLE ONLY public.inventory_batches
 
 
 --
--- Name: order_items order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: order_items order_items_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.order_items
@@ -1551,7 +1654,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: orders orders_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.orders
@@ -1559,7 +1662,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- Name: product_images product_images_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: product_images product_images_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.product_images
@@ -1567,7 +1670,7 @@ ALTER TABLE ONLY public.product_images
 
 
 --
--- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: products products_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.products
@@ -1575,7 +1678,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- Name: recent_activity recent_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: recent_activity recent_activity_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.recent_activity
@@ -1583,7 +1686,7 @@ ALTER TABLE ONLY public.recent_activity
 
 
 --
--- Name: region_sales region_sales_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: region_sales region_sales_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.region_sales
@@ -1591,7 +1694,7 @@ ALTER TABLE ONLY public.region_sales
 
 
 --
--- Name: stock_thresholds stock_thresholds_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: stock_thresholds stock_thresholds_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.stock_thresholds
@@ -1599,7 +1702,7 @@ ALTER TABLE ONLY public.stock_thresholds
 
 
 --
--- Name: support_tickets support_tickets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: support_tickets support_tickets_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.support_tickets
@@ -1607,7 +1710,7 @@ ALTER TABLE ONLY public.support_tickets
 
 
 --
--- Name: system_config system_config_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: system_config system_config_key_key; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.system_config
@@ -1615,7 +1718,7 @@ ALTER TABLE ONLY public.system_config
 
 
 --
--- Name: system_config system_config_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: system_config system_config_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.system_config
@@ -1623,7 +1726,7 @@ ALTER TABLE ONLY public.system_config
 
 
 --
--- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: users users_email_key; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.users
@@ -1631,7 +1734,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: users users_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.users
@@ -1639,7 +1742,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: waste_events waste_events_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: waste_events waste_events_pkey; Tipo: RESTRICCIÓN (LLAVE PRIMARIA / ÚNICA); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.waste_events
@@ -1647,63 +1750,71 @@ ALTER TABLE ONLY public.waste_events
 
 
 --
--- Name: idx_cart_user; Type: INDEX; Schema: public; Owner: postgres
+-- ============================================================================
+-- SECCIÓN 7: ÍNDICES PARA OPTIMIZACIÓN DE RENDIMIENTO Y CONSULTAS FRECUENTES
+-- ============================================================================
+--
+-- Nombre: idx_cart_user; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_cart_user ON public.cart_items USING btree (user_id);
 
 
 --
--- Name: idx_daily_sales_date; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_daily_sales_date; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_daily_sales_date ON public.daily_sales USING btree (sale_date);
 
 
 --
--- Name: idx_order_items_order; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_order_items_order; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_order_items_order ON public.order_items USING btree (order_id);
 
 
 --
--- Name: idx_orders_client; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_orders_client; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_orders_client ON public.orders USING btree (client_id);
 
 
 --
--- Name: idx_orders_seller; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_orders_seller; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_orders_seller ON public.orders USING btree (seller_id);
 
 
 --
--- Name: idx_products_active; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_products_active; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_products_active ON public.products USING btree (active);
 
 
 --
--- Name: idx_products_category; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_products_category; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_products_category ON public.products USING btree (category_id);
 
 
 --
--- Name: idx_products_seller; Type: INDEX; Schema: public; Owner: postgres
+-- Nombre: idx_products_seller; Tipo: ÍNDICE (OPTIMIZACIÓN DE CONSULTAS); Esquema: public; Propietario: postgres
 --
 
 CREATE INDEX idx_products_seller ON public.products USING btree (seller_id);
 
 
 --
--- Name: cart_items cart_items_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- ============================================================================
+-- SECCIÓN 8: RESTRICCIONES DE LLAVES FORÁNEAS (INTEGRIDAD REFERENCIAL / RELACIONES)
+-- ============================================================================
+--
+-- Nombre: cart_items cart_items_product_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.cart_items
@@ -1711,7 +1822,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- Name: cart_items cart_items_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: cart_items cart_items_user_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.cart_items
@@ -1719,7 +1830,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- Name: coupon_categories coupon_categories_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: coupon_categories coupon_categories_category_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupon_categories
@@ -1727,7 +1838,7 @@ ALTER TABLE ONLY public.coupon_categories
 
 
 --
--- Name: coupon_categories coupon_categories_coupon_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: coupon_categories coupon_categories_coupon_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.coupon_categories
@@ -1735,7 +1846,7 @@ ALTER TABLE ONLY public.coupon_categories
 
 
 --
--- Name: order_items order_items_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: order_items order_items_order_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.order_items
@@ -1743,7 +1854,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- Name: order_items order_items_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: order_items order_items_product_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.order_items
@@ -1751,7 +1862,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- Name: orders orders_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: orders orders_client_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.orders
@@ -1759,7 +1870,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- Name: orders orders_seller_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: orders orders_seller_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.orders
@@ -1767,7 +1878,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- Name: product_images product_images_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: product_images product_images_product_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.product_images
@@ -1775,7 +1886,7 @@ ALTER TABLE ONLY public.product_images
 
 
 --
--- Name: products products_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: products products_category_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.products
@@ -1783,7 +1894,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- Name: products products_seller_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: products products_seller_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.products
@@ -1791,7 +1902,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- Name: waste_events waste_events_batch_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Nombre: waste_events waste_events_batch_id_fkey; Tipo: RESTRICCIÓN DE LLAVE FORÁNEA (RELACIÓN REFERENCIAL); Esquema: public; Propietario: postgres
 --
 
 ALTER TABLE ONLY public.waste_events
@@ -1799,16 +1910,23 @@ ALTER TABLE ONLY public.waste_events
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+-- Nombre: SCHEMA public; Tipo: LISTA DE CONTROL DE ACCESO (PERMISOS); Esquema: -; Propietario: postgres
 --
 
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 
 
 --
--- ERP Tables (added for analytics dashboard)
+-- ============================================================================
+-- SECCIÓN 9: TABLAS DEL MÓDULO ERP (PANEL DE CONTROL Y ANALÍTICA EMPRESARIAL)
+-- ============================================================================
 --
 
+-- ============================================================================
+-- TABLA: erp_sales_metrics
+-- Propósito: Módulo ERP - Indicadores Financieros: Monitorea las ventas reales versus los objetivos presupuestados y el margen de ganancia porcentual.
+-- ============================================================================
+-- Nombre: erp_sales_metrics; Tipo: TABLA; Esquema: public; Propietario: postgres
 CREATE TABLE IF NOT EXISTS public.erp_sales_metrics (
     id integer NOT NULL,
     record_date date NOT NULL,
@@ -1825,6 +1943,11 @@ ALTER TABLE ONLY public.erp_sales_metrics ALTER COLUMN id SET DEFAULT nextval('p
 ALTER TABLE ONLY public.erp_sales_metrics ADD CONSTRAINT erp_sales_metrics_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.erp_sales_metrics ADD CONSTRAINT erp_sales_metrics_record_date_key UNIQUE (record_date);
 
+-- ============================================================================
+-- TABLA: erp_system_notifications
+-- Propósito: Módulo ERP - Alertas del Sistema: Notificaciones operativas automáticas (fallos en pasarela de pagos, pedidos mayoristas B2B, retrasos de proveedores).
+-- ============================================================================
+-- Nombre: erp_system_notifications; Tipo: TABLA; Esquema: public; Propietario: postgres
 CREATE TABLE IF NOT EXISTS public.erp_system_notifications (
     id integer NOT NULL,
     type character varying(50) NOT NULL,
@@ -1840,6 +1963,11 @@ ALTER SEQUENCE public.erp_system_notifications_id_seq OWNED BY public.erp_system
 ALTER TABLE ONLY public.erp_system_notifications ALTER COLUMN id SET DEFAULT nextval('public.erp_system_notifications_id_seq'::regclass);
 ALTER TABLE ONLY public.erp_system_notifications ADD CONSTRAINT erp_system_notifications_pkey PRIMARY KEY (id);
 
+-- ============================================================================
+-- TABLA: erp_fabric_inventory
+-- Propósito: Módulo ERP - Inventario Físico Centralizado: Catálogo sincronizado para el ERP con código SKU, proveedor, existencia en metros, umbral mínimo y costos.
+-- ============================================================================
+-- Nombre: erp_fabric_inventory; Tipo: TABLA; Esquema: public; Propietario: postgres
 CREATE TABLE IF NOT EXISTS public.erp_fabric_inventory (
     id integer NOT NULL,
     sku character varying(50) NOT NULL,
@@ -1860,7 +1988,9 @@ ALTER TABLE ONLY public.erp_fabric_inventory ADD CONSTRAINT erp_fabric_inventory
 ALTER TABLE ONLY public.erp_fabric_inventory ADD CONSTRAINT erp_fabric_inventory_sku_key UNIQUE (sku);
 
 --
--- Seed data for ERP tables
+-- ============================================================================
+-- SECCIÓN 10: DATOS INICIALES (SEMILLAS) PARA EL MÓDULO ERP
+-- ============================================================================
 --
 
 COPY public.erp_sales_metrics (id, record_date, actual_sales, target_sales, profit_margin, created_at) FROM stdin;
@@ -1897,7 +2027,9 @@ COPY public.erp_fabric_inventory (id, sku, fabric_name, category, supplier, curr
 \.
 
 --
--- PostgreSQL database dump complete
+-- ============================================================================
+-- FIN DEL VOLCADO DE BASE DE DATOS POSTGRESQL (DUMP COMPLETADO EXITOSAMENTE)
+-- ============================================================================
 --
 
 \unrestrict N0ZrrFfSENKgOisUPO7tzvkaLla9MuffG8eNBphhCJihO2oabNvhZjzFhMAyfyU
