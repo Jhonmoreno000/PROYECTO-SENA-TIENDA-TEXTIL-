@@ -1,0 +1,64 @@
+@startuml sec_corte
+!include estilo.iuml
+autonumber "<b>0."
+title D&D Textil — Secuencia: motor de corte textil
+
+participant "PruebasReglasNegocioTextil" as T
+participant "ServicioCorteTextil" as S
+participant "RolloTextil" as R
+participant "EventoMerma" as M
+
+== 1. Validar metraje continuo ==
+T -> S : validarMetrajeContinuo(rollos, metros, loteTintoreria)
+activate S
+loop rollos con estado "disponible" del mismo lote
+  S -> R : getMetrajeRemanente()
+  S -> S : suma el metraje del lote y busca\nel primer rollo con remanente ≥ metros
+end
+alt hay un rollo que alcanza solo
+  S --> T : CORTE_CONTINUO_OK + rollo asignado
+else el lote alcanza, pero repartido
+  S --> T : FRAGMENTED_STOCK (requiere empates)
+else no alcanza
+  S --> T : INSUFFICIENT_STOCK
+end
+deactivate S
+
+== 2. Procesar el corte ==
+T -> S : procesarCorteYRemanente(rollo, metros, precioBase)
+activate S
+alt metros > remanente
+  S --> T : IllegalStateException (sobrecorte)
+else
+  S -> R : setMetrajeRemanente(remanente − metros)
+  alt remanente = 0
+    S -> R : setEstado("agotado")
+  else 0 < remanente < 1,0 m
+    S -> R : setEstado("retazo_liquidado")
+    S -> M ** : new EventoMerma(remanente, "remanente_sub_metro")
+    S -> S : precio retazo = precioBase × 0,60
+  else remanente ≥ 1,0 m
+    S -> R : setEstado("disponible")
+  end
+  S --> T : ResultadoProcesamientoCorte
+end
+deactivate S
+
+== 3. Liquidar precio por volumen ==
+T -> S : calcularPrecioEscalonado(precioBase, metros)
+activate S
+alt metros ≥ 50
+  S -> S : ROLLO_CERRADO, 25 % de descuento
+else metros ≥ 15
+  S -> S : MAYORISTA, 15 % de descuento
+else
+  S -> S : DETAL, sin descuento
+end
+S --> T : TarifaCalculada
+deactivate S
+
+note over T, M
+  Ningún endpoint de la API usa este servicio ni existe tabla de rollos:
+  hoy el motor solo se ejecuta dentro de la suite de pruebas automatizadas.
+end note
+@enduml

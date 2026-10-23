@@ -83,8 +83,29 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Matriz de Pruebas de Seguridad y Casos Extremos:** Detalle de los 12 casos de prueba ejecutados en `PruebasSeguridadYBugs.java` (100% aprobados).
 *   **Certificacion de Resultados:** Registro oficial de ejecucion de las 26 pruebas automatizadas.
 
-### 8. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
+### 8. [08. Modelo Entidad-Relacion](documentacion/08-modelo-entidad-relacion.md)
+*   **DER completo y simplificado:** Las 25 tablas del esquema `01_esquema_espanol.sql` con sus 20 llaves foraneas, cardinalidades y diccionario resumido.
+
+### 9. [09. Mapa de Navegacion](documentacion/09-mapa-de-navegacion.md)
+*   **Rutas por rol:** Las 50 rutas de `App.jsx` agrupadas en sitio publico, proceso de compra y paneles de cliente, vendedor y administrador, con su proteccion por `ProtectedRoute`.
+
+### 10. [10. Casos de Uso](documentacion/10-casos-de-uso.md)
+*   **Diagramas y especificaciones:** Actores, diagramas de casos de uso de la tienda y de la gestion, y fichas con flujo principal, alternos y postcondiciones.
+
+### 11. [11. Diagrama de Clases](documentacion/11-diagrama-de-clases.md)
+*   **Backend Java:** Clases de dominio y vista por capas (`dominio`, `aplicacion`, `infraestructura`) generadas desde el codigo fuente.
+
+### 12. [12. Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)
+*   **Flujos clave:** Inicio de sesion, registro, compra con bloqueo de stock, factura en PDF y motor de corte textil.
+
+### 13. [13. Manual de Usuario](documentacion/13-manual-de-usuario.md)
+*   **Guia por rol con capturas:** Cliente, vendedor y administrador, paso a paso. Version en [PDF](documentacion/pdf/Manual%20de%20usuario%20-%20D%26D%20Textil.pdf).
+
+### 14. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
 *   Especificacion Swagger / OpenAPI v3.0 completa y estandarizada de todos los endpoints de la API REST, con esquemas de peticion, esquemas de respuesta y codigos de error HTTP.
+
+### 15. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx)
+*   Requerimientos funcionales y no funcionales (ISO/IEC 25010) y matriz de trazabilidad hacia casos de uso y clases de diseno.
 
 ---
 

@@ -1,0 +1,62 @@
+@startuml sec_login
+!include estilo.iuml
+autonumber "<b>0."
+title D&D Textil — Secuencia: iniciar sesión (CU-04)
+
+actor "Usuario" as U
+box "Frontend (React)" #F3F6FC
+  participant "IniciarSesion.jsx" as UI
+  participant "ContextoAutenticacion" as CTX
+end box
+box "Backend (Java)" #FBF7FA
+  participant "ManejadorBase\n(handle)" as BASE
+  participant "ManejadorAutenticacion" as MA
+  participant "ServicioAutenticacion" as SA
+  participant "JdbcRepositorioUsuarioImpl" as REPO
+end box
+database "PostgreSQL" as DB
+
+U -> UI : escribe correo y contraseña
+UI -> CTX : login(email, password)
+CTX -> BASE : POST /api/iniciar-sesion\n{email, password}
+activate BASE
+BASE -> BASE : límite de 120 peticiones/min por IP
+alt límite superado
+  BASE --> CTX : 429 Demasiadas peticiones
+end
+BASE -> MA : procesarPeticion()
+activate MA
+MA -> SA : iniciarSesion(correo, contrasena)
+activate SA
+SA -> SA : generarHashContrasena()\nSHA-256
+SA -> REPO : buscarPorCorreoYValidarContrasena(correo, hash)
+REPO -> DB : SELECT … FROM usuarios\nWHERE correo = ? AND contrasena_hash = ?\nAND activo = true
+DB --> REPO : fila o vacío
+REPO --> SA : Optional<Usuario>
+alt credenciales incorrectas, cuenta inactiva o suspendida
+  SA --> MA : ExcepcionDominio
+  MA --> BASE : (excepción)
+  BASE --> CTX : 400 {error}
+  CTX --> UI : success = false
+  UI --> U : "Credenciales incorrectas"
+else credenciales válidas
+  SA -> REPO : actualizarUltimoAcceso(id)
+  REPO -> DB : UPDATE usuarios SET ultimo_acceso = NOW()
+  SA --> MA : Usuario
+  deactivate SA
+  MA --> BASE : 200 {success, user}
+  deactivate MA
+  BASE -> BASE : registrarLogJson(INFO)
+  BASE --> CTX : 200 {success, user}
+  deactivate BASE
+  CTX -> CTX : normaliza el rol y guarda\nauthUser en localStorage
+  CTX --> UI : success = true
+  UI -> UI : navega según rol\ncliente → /cliente · vendedor → /vendedor · admin → /admin
+  UI --> U : panel de su rol
+end
+
+note over CTX, BASE
+  El backend no emite token ni sesión: el frontend guarda el usuario
+  en localStorage y las demás rutas de la API no verifican el rol.
+end note
+@enduml

@@ -1,0 +1,58 @@
+@startuml sec_registro
+!include estilo.iuml
+autonumber "<b>0."
+title D&D Textil — Secuencia: registrarse (CU-03)
+
+actor "Visitante" as U
+box "Frontend (React)" #F3F6FC
+  participant "Registro.jsx" as UI
+  participant "ContextoAutenticacion" as CTX
+end box
+box "Backend (Java)" #FBF7FA
+  participant "ManejadorAutenticacion" as MA
+  participant "ServicioAutenticacion" as SA
+  participant "JdbcRepositorioUsuarioImpl" as REPO
+end box
+database "PostgreSQL" as DB
+
+U -> UI : nombre, correo, contraseña\ny confirmación
+UI -> UI : valida con zod\n(nombre ≥ 2, correo válido, clave ≥ 6)
+alt datos inválidos
+  UI --> U : mensajes en el formulario
+else datos válidos
+  UI -> CTX : register(datos)
+  CTX -> MA : POST /api/registro\n{name, email, password}
+  activate MA
+  MA -> MA : aceptaHabeasData = true\n(no viene en la petición)
+  MA -> SA : registrarCliente(nombre, correo, contrasena, true)
+  activate SA
+  alt faltan campos
+    SA --> MA : ExcepcionDominio
+    MA --> CTX : 400 {error}
+    CTX --> UI : muestra el error
+  else
+    SA -> SA : rol = "cliente"\nhash SHA-256
+    SA -> REPO : guardar(usuario, hash)
+    REPO -> DB : INSERT INTO usuarios
+    alt correo repetido (UNIQUE)
+      DB --> REPO : error
+      REPO --> SA : false
+      SA --> MA : ExcepcionDominio("…el correo ya exista")
+      MA --> CTX : 400 {error}
+    else
+      DB --> REPO : ok
+      REPO --> SA : true
+      SA --> MA : ok
+      deactivate SA
+      MA --> CTX : 201 {success}
+      deactivate MA
+      CTX --> UI : cuenta creada
+      UI --> U : redirige a Inicio (/)
+    end
+  end
+end
+note over UI, MA
+  El formulario no tiene casilla de autorización de datos (Ley 1581 de 2012)
+  y el frontend no envía el campo; el backend lo da por aceptado.
+end note
+@enduml

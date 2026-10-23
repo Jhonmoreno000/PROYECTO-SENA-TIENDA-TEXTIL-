@@ -1,0 +1,47 @@
+@startuml sec_factura
+!include estilo.iuml
+autonumber "<b>0."
+title D&D Textil — Secuencia: descargar factura PDF (CU-26)
+
+actor "Administrador\no Cliente" as U
+box "Frontend (React)" #F3F6FC
+  participant "FacturasAdmin.jsx /\nHistorialPedidos.jsx" as UI
+end box
+box "Backend (Java)" #FBF7FA
+  participant "ManejadorFactura" as MF
+  participant "PedidoDAO" as DAO
+  participant "ServicioFactura\n(PDFBox)" as SF
+end box
+database "PostgreSQL" as DB
+
+U -> UI : "Descargar factura" del pedido N
+UI -> MF : GET /api/facturas/N
+activate MF
+MF -> DAO : obtenerPedidoPorId(N)
+DAO -> DB : SELECT … FROM pedidos WHERE id = N
+DB --> DAO : pedido
+DAO --> MF : Pedido
+alt pedido no existe
+  MF --> UI : 404 {error}
+else
+  MF -> DB : SELECT name, email FROM <b>users</b> WHERE id = ?
+  DB --> MF : cliente (tabla en inglés)
+  MF -> DB : SELECT … FROM <b>order_items</b> JOIN <b>products</b>\nWHERE order_id = N
+  DB --> MF : artículos (tablas en inglés)
+  MF -> MF : subtotal = Σ cantidad × precio\nIVA = subtotal × 19 %\ntotal = pedido.total
+  MF -> SF : generarFactura(N, cliente, artículos, subtotal, IVA, total)
+  activate SF
+  SF -> SF : encabezado, datos del cliente,\ntabla de artículos, totales,\nvalor en letras, marca de agua
+  SF --> MF : byte[] PDF
+  deactivate SF
+  MF --> UI : 200 application/pdf\nFAC-00000N.pdf
+  deactivate MF
+  UI --> U : descarga el archivo
+end
+
+note over MF, DB
+  El pedido se lee de <b>pedidos</b> (español), pero el cliente y los artículos
+  se leen de <b>users</b> y <b>order_items</b> (inglés). Para un pedido creado desde
+  la tienda la factura sale sin artículos y con datos de cliente equivocados.
+end note
+@enduml

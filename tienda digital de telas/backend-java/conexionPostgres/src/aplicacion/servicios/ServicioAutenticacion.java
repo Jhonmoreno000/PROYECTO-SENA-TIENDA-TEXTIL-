@@ -13,9 +13,15 @@ import java.util.Optional;
  */
 public class ServicioAutenticacion {
     private final RepositorioUsuario repositorioUsuario;
+    private final VerificadorIdentidadSSO verificadorSSO;
 
     public ServicioAutenticacion(RepositorioUsuario repositorioUsuario) {
+        this(repositorioUsuario, null);
+    }
+
+    public ServicioAutenticacion(RepositorioUsuario repositorioUsuario, VerificadorIdentidadSSO verificadorSSO) {
         this.repositorioUsuario = repositorioUsuario;
+        this.verificadorSSO = verificadorSSO;
     }
 
     /**
@@ -78,7 +84,24 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Autentica o auto-registra un usuario validado por SSO (Google / Microsoft).
+     * Inicia sesión con Google o Microsoft.
+     * El token se valida primero con el proveedor y se usa únicamente el correo que el proveedor certifica;
+     * el correo que envíe el navegador se ignora.
+     * @param proveedor "google" o "microsoft".
+     * @param tokenAcceso Token de acceso emitido por el proveedor.
+     * @return Usuario autenticado (o creado con rol cliente si es su primer ingreso).
+     */
+    public Usuario autenticarConSSO(String proveedor, String tokenAcceso) {
+        if (verificadorSSO == null) {
+            throw new ExcepcionDominio("El inicio de sesión con Google o Microsoft no está disponible en este servidor.");
+        }
+        VerificadorIdentidadSSO.IdentidadSSO identidad = verificadorSSO.verificar(proveedor, tokenAcceso);
+        return autenticarOAutoRegistrarSSO(identidad.correo(), identidad.nombre());
+    }
+
+    /**
+     * Autentica o auto-registra un usuario cuyo correo ya fue validado por el proveedor SSO.
+     * Solo debe llamarse con un correo verificado (ver {@link #autenticarConSSO}).
      * Si el usuario ya existe, actualiza su último acceso.
      * Si no existe, se crea con rol 'cliente'.
      * @param correo Correo electrónico validado por el proveedor SSO.

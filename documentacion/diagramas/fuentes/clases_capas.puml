@@ -1,0 +1,262 @@
+@startuml clases_capas
+!include estilo.iuml
+hide empty members
+skinparam nodesep 25
+skinparam ranksep 70
+left to right direction
+title D&D Textil — Diagrama de clases: arquitectura por capas del backend
+package "infraestructura.api" #E8EEF9 {
+  class ServidorApi {
+    + {static} iniciarServidor(int) : void
+  }
+  abstract class ManejadorBase {
+    - MAX_PETICIONES_POR_VENTANA = 120
+    + handle(HttpExchange) : void
+    # registrarLogJson(String, String, String, HttpExchange, int) : void
+    # procesarPeticion(HttpExchange) : void
+    # enviarRespuestaJson(HttpExchange, int, String) : void
+    # enviarRespuestaError(HttpExchange, int, String) : void
+    # obtenerParametroConsulta(HttpExchange, String) : String
+  }
+  interface HttpHandler <<JDK>>
+  HttpHandler <|.. ManejadorBase
+  class ManejadorArchivosEstaticos {
+    .. rutas ..
+    /uploads
+  }
+  ManejadorBase <|-- ManejadorArchivosEstaticos
+  class ManejadorAutenticacion {
+    .. rutas ..
+    /api/iniciar-sesion
+    /api/registro
+  }
+  ManejadorBase <|-- ManejadorAutenticacion
+  class ManejadorCarrito {
+    .. rutas ..
+    /api/carrito
+  }
+  ManejadorBase <|-- ManejadorCarrito
+  class ManejadorCarrusel {
+    .. rutas ..
+    /api/carrusel
+  }
+  ManejadorBase <|-- ManejadorCarrusel
+  class ManejadorConfiguracion {
+    .. rutas ..
+    /api/configuracion
+  }
+  ManejadorBase <|-- ManejadorConfiguracion
+  class ManejadorCupones {
+    .. rutas ..
+    /api/cupones
+  }
+  ManejadorBase <|-- ManejadorCupones
+  class ManejadorFactura {
+    .. rutas ..
+    /api/facturas
+  }
+  ManejadorBase <|-- ManejadorFactura
+  class ManejadorInventario {
+    .. rutas ..
+    /api/inventario
+    /api/metricas
+    /api/actividad
+    /api/banner
+  }
+  ManejadorBase <|-- ManejadorInventario
+  class ManejadorPedidos {
+    .. rutas ..
+    /api/pedidos
+  }
+  ManejadorBase <|-- ManejadorPedidos
+  class ManejadorProductos {
+    .. rutas ..
+    /api/productos
+  }
+  ManejadorBase <|-- ManejadorProductos
+  class ManejadorResenas {
+    .. rutas ..
+    /api/resenas
+  }
+  ManejadorBase <|-- ManejadorResenas
+  class ManejadorSalud {
+    .. rutas ..
+    /health/live
+    /health/ready
+    /api/salud
+  }
+  ManejadorBase <|-- ManejadorSalud
+  class ManejadorSeccionesInicio {
+    .. rutas ..
+    /api/secciones-inicio
+  }
+  ManejadorBase <|-- ManejadorSeccionesInicio
+  class ManejadorSoporte {
+    .. rutas ..
+    /api/soporte
+  }
+  ManejadorBase <|-- ManejadorSoporte
+  class ManejadorUsuarios {
+    .. rutas ..
+    /api/usuarios
+  }
+  ManejadorBase <|-- ManejadorUsuarios
+  ServidorApi ..> ManejadorBase : registra rutas
+}
+package "aplicacion.servicios" #F6EAF3 {
+  class ServicioAutenticacion {
+    + iniciarSesion(String, String) : Usuario
+    + registrarCliente(String, String, String, boolean) : void
+    + registrarCliente(String, String, String) : void
+    + contieneDatosTarjetaSensibles(String) : boolean
+    + generarHashContrasena(String) : String
+  }
+  class ServicioCorteTextil <<solo pruebas>> {
+    + validarMetrajeContinuo(List<RolloTextil>, double, String) : ServicioCorteTextil.ResultadoValidacionCorte
+    + procesarCorteYRemanente(RolloTextil, double, double) : ServicioCorteTextil.ResultadoProcesamientoCorte
+    + calcularPrecioEscalonado(double, double) : ServicioCorteTextil.TarifaCalculada
+  }
+  class ServicioFactura {
+    + generarFactura(int, String, String, String, String, String, List<Map<String, Object>>, double, double, double, double, double, String) : byte[]
+  }
+}
+package "dominio.repositorios" #EAF5EC {
+  interface RepositorioUsuario {
+    + buscarPorCorreoYActivo(String) : Optional<Usuario>
+    + buscarPorCorreoYValidarContrasena(String, String) : Optional<Usuario>
+    + guardar(Usuario, String) : boolean
+    + actualizarUltimoAcceso(int) : void
+  }
+}
+package "infraestructura.persistencia.jdbc" #FBF1E3 {
+  class CarritoDAO {
+    + obtenerCarritoPorUsuario(int) : List<ItemCarrito>
+    + agregarAlCarrito(int, int, int) : boolean
+    + actualizarCantidad(int, int) : boolean
+    + eliminarDelCarrito(int) : boolean
+    + vaciarCarrito(int) : boolean
+  }
+  class CarruselDAO {
+    + obtenerDiapositivasActivas() : List<DiapositivaCarrusel>
+    + obtenerTodasLasDiapositivas() : List<DiapositivaCarrusel>
+    + agregarDiapositiva(DiapositivaCarrusel) : boolean
+    + actualizarDiapositiva(int, DiapositivaCarrusel, Boolean) : boolean
+    + eliminarDiapositiva(int) : boolean
+  }
+  class ConfiguracionDAO {
+    + obtenerTodaLaConfiguracion() : Map<String, String>
+    + obtenerConfiguracion(String) : String
+    + guardarConfiguracion(String, String) : boolean
+  }
+  class CuponDAO {
+    + obtenerTodosLosCupones() : List<Cupon>
+    + agregarCupon(Cupon) : boolean
+    + desactivarCupon(int) : boolean
+  }
+  class InventarioDAO {
+    + obtenerTodosLosLotes() : List<LoteInventario>
+    + agregarLote(LoteInventario) : boolean
+    + actualizarLote(String, double, String) : boolean
+    + obtenerTodosLosEventosMerma() : List<EventoMerma>
+    + agregarEventoMerma(EventoMerma) : boolean
+    + obtenerTodosLosUmbrales() : List<UmbralStock>
+    + actualizarUmbral(String, double) : boolean
+    + obtenerVentasDiarias() : List<VentaDiaria>
+    + obtenerBanner() : BannerGlobal
+    + actualizarBanner(boolean, String, String) : boolean
+    + obtenerVentasPorRegion() : List<VentaRegion>
+    + obtenerActividadReciente() : List<ActividadReciente>
+    + agregarActividad(ActividadReciente) : boolean
+    + obtenerMetricasVentasErp() : List<Map<String, Object>>
+    + obtenerNotificacionesErp() : List<Map<String, Object>>
+    + obtenerInventarioTelasErp() : List<Map<String, Object>>
+  }
+  class JdbcRepositorioUsuarioImpl {
+    + buscarPorCorreoYActivo(String) : Optional<Usuario>
+    + buscarPorCorreoYValidarContrasena(String, String) : Optional<Usuario>
+    + guardar(Usuario, String) : boolean
+    + actualizarUltimoAcceso(int) : void
+  }
+  class PedidoDAO {
+    + obtenerTodosLosPedidos() : List<Pedido>
+    + crearPedido(int, double, List<Map<String, Object>>) : int
+    + obtenerPedidoPorId(int) : Pedido
+    + actualizarEstadoPedido(int, String) : boolean
+  }
+  class ProductoDAO {
+    + obtenerTodosLosProductos() : List<Producto>
+    + obtenerProductosPorVendedor(int) : List<Producto>
+    + guardarImagenProducto(int, String) : String
+    + actualizarProducto(int, double, int) : boolean
+    + obtenerProductosPorSeccion(String) : List<Producto>
+    + obtenerProductosPendientes() : List<Producto>
+    + actualizarEstadoModeracion(int, String, String) : boolean
+    + agregarProducto(Producto) : boolean
+    + actualizarProducto(int, Producto, Boolean) : boolean
+    + eliminarProducto(int) : boolean
+  }
+  class ResenasDAO {
+    + obtenerResenasPorProducto(int) : List<Resena>
+    + agregarResena(Resena) : boolean
+    + usuarioYaReseno(int, int) : boolean
+  }
+  class SeccionesInicioDAO {
+    + obtenerTodasLasSecciones() : List<SeccionInicio>
+    + obtenerSeccionesActivas() : List<SeccionInicio>
+    + actualizarSeccion(String, SeccionInicio, Boolean) : boolean
+  }
+  class SoporteDAO {
+    + obtenerTodosLosTickets() : List<TicketSoporte>
+    + agregarTicket(TicketSoporte) : boolean
+    + actualizarEstadoTicket(int, String) : boolean
+    + obtenerTodosLosReportesError() : List<ReporteError>
+    + agregarReporteError(ReporteError) : boolean
+    + actualizarEstadoReporteError(int, String) : boolean
+  }
+  class UsuarioDAO {
+    + obtenerTodosLosUsuarios() : List<Usuario>
+    + actualizarEstadoUsuario(int, boolean) : boolean
+    + actualizarRolUsuario(int, String) : boolean
+  }
+}
+package "infraestructura.configuracion" #EFEFEF {
+  class Conexion {
+    + {static} obtenerConexion() : Connection
+  }
+}
+RepositorioUsuario <|.. JdbcRepositorioUsuarioImpl
+ServicioAutenticacion --> RepositorioUsuario
+ManejadorAutenticacion --> ServicioAutenticacion
+ManejadorCarrito --> CarritoDAO
+ManejadorCarrusel --> CarruselDAO
+ManejadorConfiguracion --> ConfiguracionDAO
+ManejadorCupones --> CuponDAO
+ManejadorFactura --> PedidoDAO
+ManejadorFactura --> ServicioFactura
+ManejadorInventario --> InventarioDAO
+ManejadorPedidos --> PedidoDAO
+ManejadorProductos --> ProductoDAO
+ManejadorResenas --> ResenasDAO
+ManejadorSeccionesInicio --> SeccionesInicioDAO
+ManejadorSoporte --> SoporteDAO
+ManejadorUsuarios --> UsuarioDAO
+CarritoDAO ..> Conexion
+CarruselDAO ..> Conexion
+ConfiguracionDAO ..> Conexion
+CuponDAO ..> Conexion
+InventarioDAO ..> Conexion
+JdbcRepositorioUsuarioImpl ..> Conexion
+PedidoDAO ..> Conexion
+ProductoDAO ..> Conexion
+ResenasDAO ..> Conexion
+SeccionesInicioDAO ..> Conexion
+SoporteDAO ..> Conexion
+UsuarioDAO ..> Conexion
+legend right
+  Cada DAO repite sus métodos con nombre en inglés (getAllCoupons, addCoupon…); se omiten.
+  Todas las rutas existen también en inglés (/api/products, /api/orders…).
+  ManejadorFactura además consulta directamente las tablas en inglés orders, users,
+  order_items y products con Conexion, sin pasar por un DAO.
+  ServicioCorteTextil no lo usa ningún manejador: solo PruebasReglasNegocioTextil.
+endlegend
+@enduml

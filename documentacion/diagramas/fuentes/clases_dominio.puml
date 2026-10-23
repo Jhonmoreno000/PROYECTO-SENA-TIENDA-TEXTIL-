@@ -1,0 +1,242 @@
+@startuml clases_dominio
+!include estilo.iuml
+hide empty methods
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 60
+title D&D Textil — Diagrama de clases: modelo de dominio (paquete dominio.modelos)
+package "Usuarios" #E8EEF9 {
+  class Usuario {
+    - id : int
+    - nombre : String
+    - correo : String
+    - rol : String
+    - activo : boolean
+    - suspendido : boolean
+    - motivoSuspension : String
+    - porcentajeComision : Double
+    - fechaRegistro : String
+    - ultimoAcceso : String
+    - estado : String
+  }
+  class ActividadReciente {
+    - id : int
+    - tipo : String
+    - idUsuario : int
+    - nombreUsuario : String
+    - accion : String
+    - monto : Double
+    - fechaCreacion : String
+    - icono : String
+  }
+}
+package "Catálogo y ventas" #F6EAF3 {
+  class Producto {
+    - id : String
+    - nombre : String
+    - categoria : String
+    - precio : double
+    - idVendedor : int
+    - descripcion : String
+    - material : String
+    - ancho : String
+    - peso : String
+    - cuidado : String
+    - existencias : int
+    - destacado : boolean
+    - esNuevaColeccion : boolean
+    - esExclusivo : boolean
+    - esOferta : boolean
+    - imagenes : List<String>
+  }
+  class Resena {
+    - id : int
+    - idProducto : int
+    - idUsuario : int
+    - nombreUsuario : String
+    - calificacion : int
+    - comentario : String
+    - fechaCreacion : String
+  }
+  class ItemCarrito {
+    - id : int
+    - idUsuario : int
+    - idProducto : int
+    - cantidad : int
+    - fechaAgregado : String
+    - fechaModificacion : String
+    - nombreProducto : String
+    - precioProducto : double
+    - imagenProducto : String
+  }
+  class Pedido {
+    - id : int
+    - idCliente : int
+    - idVendedor : int
+    - total : double
+    - estado : String
+    - fecha : String
+    - cantidadArticulos : int
+    - idsProductos : List<Integer>
+    + agregarIdProducto(int) : void
+  }
+  class Cupon {
+    - id : int
+    - codigo : String
+    - tipoDescuento : String
+    - valorDescuento : double
+    - fechaExpiracion : String
+    - activo : boolean
+    - conteoUso : int
+    - reglas : Cupon.Reglas
+  }
+  class "Cupon.Reglas" as Reglas {
+    - compraMinima : Double
+    - usosMaximos : Integer
+    - soloPrimeraCompra : boolean
+  }
+}
+package "Inventario" #FBF1E3 {
+  class LoteInventario {
+    - id : String
+    - tipoTela : String
+    - proveedor : String
+    - metrosIniciales : double
+    - metrosActuales : double
+    - estado : String
+    - fechaCreacion : String
+    - ultimaActualizacion : String
+  }
+  class EventoMerma {
+    - id : int
+    - idLote : String
+    - metros : double
+    - motivo : String
+    - descripcion : String
+    - responsable : String
+    - fechaEvento : String
+    - fechaCreacion : String
+    - idUsuario : int
+  }
+  class UmbralStock {
+    - id : int
+    - tipoTela : String
+    - metrosMinimos : double
+    - alertaHabilitada : boolean
+  }
+  class RolloTextil <<solo pruebas>> {
+    - id : int
+    - productoId : int
+    - codigoRollo : String
+    - metrajeInicial : double
+    - metrajeRemanente : double
+    - loteTintoreria : String
+    - estado : String
+    - ubicacionBodega : String
+  }
+}
+package "Soporte" #EFEFEF {
+  class TicketSoporte {
+    - id : int
+    - idCliente : Integer
+    - nombreCliente : String
+    - correoCliente : String
+    - idPedido : Integer
+    - asunto : String
+    - descripcion : String
+    - prioridad : String
+    - estado : String
+    - categoria : String
+    - asignadoA : Integer
+    - fechaCreacion : String
+    - fechaModificacion : String
+    - fechaResolucion : String
+  }
+  class ReporteError {
+    - id : int
+    - idVendedor : Integer
+    - nombreVendedor : String
+    - area : String
+    - titulo : String
+    - descripcion : String
+    - pasos : String
+    - estado : String
+    - prioridad : String
+    - severidad : String
+    - asignadoA : Integer
+    - fechaReporte : String
+    - fechaResolucion : String
+  }
+}
+package "Contenido y configuración" #E6F4F5 {
+  class SeccionInicio {
+    - clave : String
+    - titulo : String
+    - subtitulo : String
+    - activa : boolean
+    - orden : int
+  }
+  class DiapositivaCarrusel {
+    - id : int
+    - titulo : String
+    - subtitulo : String
+    - imagen : String
+    - textoBoton : String
+    - claveSeccion : String
+    - activo : boolean
+    - orden : int
+  }
+  class BannerGlobal {
+    - id : int
+    - habilitado : boolean
+    - mensaje : String
+    - tipoBanner : String
+    - fechaActualizacion : String
+  }
+  class ItemConfiguracion {
+    - clave : String
+    - valor : String
+  }
+}
+package "Analítica" #F3EFE6 {
+  class VentaDiaria {
+    - id : int
+    - fechaVenta : String
+    - totalVentas : double
+    - totalPedidos : int
+    - fechaCreacion : String
+  }
+  class VentaRegion {
+    - id : int
+    - departamento : String
+    - ventas : double
+    - pedidos : int
+    - capital : String
+  }
+}
+Cupon *-- "1" Reglas : reglas
+Producto "0..*" --> "0..1" Usuario : vendedor
+Resena "0..*" --> "1" Producto : califica
+Resena "0..*" --> "1" Usuario : autor
+ItemCarrito "0..*" --> "1" Usuario : dueño
+ItemCarrito "0..*" --> "1" Producto : producto
+Pedido "0..*" --> "0..1" Usuario : cliente
+Pedido "0..*" --> "1..*" Producto : productos
+LoteInventario "0..*" ..> Producto : tipoTela
+EventoMerma "0..*" --> "0..1" LoteInventario : lote
+RolloTextil "0..*" --> "1" Producto : producto
+TicketSoporte "0..*" --> "0..1" Usuario : cliente
+TicketSoporte "0..*" --> "0..1" Pedido : pedido
+ReporteError "0..*" --> "0..1" Usuario : vendedor
+ActividadReciente "0..*" --> "0..1" Usuario : usuario
+DiapositivaCarrusel "0..*" --> "0..1" SeccionInicio : sección
+class ExcepcionDominio <<exception>> extends RuntimeException
+hide RuntimeException
+legend right
+  Todas las clases tienen constructor vacío, getters y setters (se omiten).
+  Varias repiten getters en inglés (getTitle, getCode…) para el JSON del frontend.
+  Las relaciones se guardan como atributos id, igual que en la base de datos.
+  Línea punteada: relación por texto (tipoTela), sin id.
+  RolloTextil solo lo usan ServicioCorteTextil y las pruebas; no tiene tabla.
+endlegend
+@enduml

@@ -1,0 +1,74 @@
+@startuml cu_tienda
+!include estilo.iuml
+left to right direction
+title D&D Textil — Casos de uso: tienda en línea
+
+actor "Visitante" as V
+actor "Cliente" as C
+C -up-|> V
+
+rectangle "D&D Textil" {
+  package "Catálogo" {
+    usecase "CU-01 Explorar catálogo" as CU01
+    usecase "CU-02 Consultar ficha\nde tela" as CU02
+    usecase "Leer reseñas" as LR
+  }
+  package "Cuenta" {
+    usecase "CU-03 Registrarse" as CU03
+    usecase "CU-04 Iniciar sesión" as CU04
+    usecase "Aceptar Habeas Data" as HD
+  }
+  package "Institucional" {
+    usecase "CU-13 Contactar a la tienda" as CU13
+    usecase "CU-14 Reportar un fallo\nde la plataforma" as CU14
+  }
+  package "Compra" {
+    usecase "CU-05 Gestionar carrito" as CU05
+    usecase "Aplicar cupón" as CUP
+    usecase "CU-06 Realizar compra" as CU06
+    usecase "Registrar datos\nde envío" as ENV
+    usecase "Pagar con tarjeta" as TAR
+    usecase "Pagar con PSE" as PSE
+  }
+  package "Posventa" {
+    usecase "CU-07 Consultar pedidos\ny rastrear envío" as CU07
+    usecase "CU-08 Calificar tela\n(reseña)" as CU08
+    usecase "CU-09 Gestionar soporte\n(tickets)" as CU09
+  }
+  package "Mi cuenta" {
+    usecase "CU-10 Gestionar lista\nde deseos" as CU10
+    usecase "CU-11 Calcular metraje\nde un proyecto" as CU11
+    usecase "CU-12 Gestionar perfil\ny direcciones" as CU12
+  }
+}
+
+V --> CU01
+V --> CU02
+V --> CU03
+V --> CU04
+V --> CU05
+V --> CU13
+V --> CU14
+
+C --> CU06
+C --> CU07
+C --> CU08
+C --> CU09
+C --> CU10
+C --> CU11
+C --> CU12
+
+CU02 ..> LR : <<include>>
+CU03 ..> HD : <<include>>
+CU05 <.. CUP : <<extend>>
+CU06 ..> ENV : <<include>>
+CU06 <.. TAR : <<extend>>
+CU06 <.. PSE : <<extend>>
+
+legend right
+  Cliente hereda todo lo que hace el Visitante.
+  <<include>>: siempre ocurre como parte del caso.
+  <<extend>>: ocurre solo si el usuario lo elige.
+  CU-06 a CU-12 exigen sesión iniciada (CU-04).
+endlegend
+@enduml

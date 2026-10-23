@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 
 import aplicacion.servicios.ServicioAutenticacion;
 import dominio.repositorios.RepositorioUsuario;
+import infraestructura.seguridad.VerificadorIdentidadSSOHttp;
 import infraestructura.persistencia.jdbc.JdbcRepositorioUsuarioImpl;
 import infraestructura.api.manejadores.*;
 
@@ -38,7 +39,7 @@ public class ServidorApi {
 
         // --- Configuración de Inyección de Dependencias (Manual DI) ---
         RepositorioUsuario repositorioUsuario = new JdbcRepositorioUsuarioImpl();
-        ServicioAutenticacion servicioAutenticacion = new ServicioAutenticacion(repositorioUsuario);
+        ServicioAutenticacion servicioAutenticacion = new ServicioAutenticacion(repositorioUsuario, new VerificadorIdentidadSSOHttp());
         ManejadorAutenticacion manejadorAutenticacion = new ManejadorAutenticacion(servicioAutenticacion);
 
         // --- Instancias de Manejadores ---

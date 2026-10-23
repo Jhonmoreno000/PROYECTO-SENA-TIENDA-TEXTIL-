@@ -1,0 +1,63 @@
+@startuml sec_compra
+!include estilo.iuml
+autonumber "<b>0."
+title D&D Textil — Secuencia: realizar compra (CU-06)
+
+actor "Cliente" as U
+box "Frontend (React)" #F3F6FC
+  participant "Carrito.jsx" as CAR
+  participant "Pago.jsx\n(/checkout)" as CHK
+  participant "Payment.jsx\n(/pago)" as PAY
+  participant "localStorage" as LS
+end box
+box "Backend (Java)" #FBF7FA
+  participant "ManejadorPedidos" as MP
+  participant "PedidoDAO" as DAO
+end box
+database "PostgreSQL" as DB
+
+U -> CAR : "Proceder al pago"
+CAR -> CHK : navega a /checkout\n(si no hay sesión, ProtectedRoute envía a /login)
+U -> CHK : datos de envío y cupón
+CHK -> CHK : subtotal − descuento\n+ envío ($15.000 si < $100.000) + IVA 19 %
+CHK -> LS : guarda lastOrder
+CHK -> PAY : "Confirmar pedido" → /pago
+U -> PAY : datos de tarjeta o banco PSE
+note right of PAY
+  No hay pasarela de pago: el formulario
+  solo se valida en el navegador y pasa
+  directo a crear el pedido.
+end note
+PAY -> MP : POST /api/pedidos\n{clientId, total, items[productId, quantity, unitPrice]}
+activate MP
+MP -> DAO : crearPedido(idCliente, total, articulos)
+activate DAO
+DAO -> DB : BEGIN
+DAO -> DB : INSERT INTO pedidos (…, 'Cliente', 'cliente@tienda.com', 'N/A', 'pending')
+DB --> DAO : id del pedido
+loop por cada artículo
+  DAO -> DB : SELECT stock FROM productos\nWHERE id = ? FOR UPDATE
+  alt producto inexistente o stock < cantidad
+    DAO -> DB : ROLLBACK
+    DAO --> MP : -1
+    MP --> PAY : 500 {error: "Error al crear el pedido"}
+    PAY --> U : (no se muestra ningún mensaje)
+  else hay stock
+    DAO -> DB : UPDATE productos SET stock = stock − cantidad
+    DAO -> DAO : agrega INSERT items_pedido al lote
+  end
+end
+DAO -> DB : INSERT INTO items_pedido (lote)
+DAO -> DB : COMMIT
+DAO --> MP : idPedido
+deactivate DAO
+MP --> PAY : 201 {success, orderId}
+deactivate MP
+PAY -> LS : vacía el carrito
+PAY --> U : /confirmacion?orderId=…
+
+note over DAO, DB
+  El total lo calcula el navegador y el backend lo guarda tal cual.
+  Los datos de envío del formulario no llegan a la base de datos.
+end note
+@enduml

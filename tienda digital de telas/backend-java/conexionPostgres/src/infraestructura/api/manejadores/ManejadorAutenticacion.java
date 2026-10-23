@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dominio.excepciones.ExcepcionDominio;
 import dominio.modelos.Usuario;
 
 import java.io.InputStream;
@@ -76,10 +77,22 @@ public class ManejadorAutenticacion extends ManejadorBase {
 
         // --- POST /api/autenticacion/sso o /api/sso ---
         } else if (ruta.endsWith("/sso")) {
-            String correo = extraerTexto(jsonObjeto, "email", extraerTexto(jsonObjeto, "correo", null));
-            String nombre = extraerTexto(jsonObjeto, "nombre", extraerTexto(jsonObjeto, "name", null));
+            // El correo y el nombre que envíe el navegador no se usan: la identidad sale del token,
+            // que se valida directamente con Google o Microsoft.
+            String proveedor = extraerTexto(jsonObjeto, "proveedor", extraerTexto(jsonObjeto, "provider", null));
+            String token = extraerTexto(jsonObjeto, "token", extraerTexto(jsonObjeto, "accessToken", null));
+            if (proveedor == null || token == null) {
+                enviarRespuestaError(intercambio, 401, "Falta el proveedor o el token de inicio de sesión.");
+                return;
+            }
 
-            Usuario usuario = servicioAutenticacion.autenticarOAutoRegistrarSSO(correo, nombre);
+            Usuario usuario;
+            try {
+                usuario = servicioAutenticacion.autenticarConSSO(proveedor, token);
+            } catch (ExcepcionDominio e) {
+                enviarRespuestaError(intercambio, 401, e.getMessage());
+                return;
+            }
             String jsonUsuario = gson.toJson(usuario);
             enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"user\": " + jsonUsuario + "}");
 
@@ -93,6 +106,5 @@ public class ManejadorAutenticacion extends ManejadorBase {
             return obj.get(clave).getAsString();
         }
         return valorPorDefecto;
-    }
     }
 }

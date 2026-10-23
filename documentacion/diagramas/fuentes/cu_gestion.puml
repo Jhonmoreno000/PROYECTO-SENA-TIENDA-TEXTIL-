@@ -1,0 +1,68 @@
+@startuml cu_gestion
+!include estilo.iuml
+left to right direction
+title D&D Textil — Casos de uso: paneles de vendedor y administrador
+
+actor "Vendedor" as VE
+actor "Administrador" as AD
+AD -up-|> VE
+
+rectangle "D&D Textil" {
+  package "Panel del vendedor" {
+    usecase "CU-15 Gestionar mis\nproductos" as CU15
+    usecase "Enviar producto a\nmoderación" as MODQ
+    usecase "CU-16 Consultar alertas\nde stock" as CU16
+    usecase "CU-17 Gestionar pedidos\nde mis productos" as CU17
+  }
+  package "Usuarios y moderación" {
+    usecase "CU-18 Gestionar usuarios\n(rol, suspensión)" as CU18
+    usecase "CU-19 Moderar productos\n(aprobar / rechazar)" as CU19
+    usecase "CU-20 Evaluar rendimiento\nde vendedores" as CU20
+  }
+  package "Catálogo y contenido" {
+    usecase "CU-21 Gestionar catálogo\ncompleto" as CU21
+    usecase "CU-22 Gestionar contenido\ndel inicio" as CU22
+  }
+  package "Inventario" {
+    usecase "CU-23 Gestionar lotes\nde inventario" as CU23
+    usecase "CU-24 Registrar merma" as CU24
+    usecase "CU-25 Configurar umbrales\nde stock" as CU25
+  }
+  package "Ventas y soporte" {
+    usecase "CU-26 Gestionar facturas" as CU26
+    usecase "Descargar factura PDF" as PDF
+    usecase "CU-27 Crear cupones" as CU27
+    usecase "CU-28 Atender tickets\ny reportes de fallo" as CU28
+  }
+  package "Analítica y sistema" {
+    usecase "CU-29 Consultar analítica\ny reportes" as CU29
+    usecase "CU-30 Configurar el sistema" as CU30
+  }
+}
+
+VE --> CU15
+VE --> CU16
+VE --> CU17
+CU15 ..> MODQ : <<include>>
+
+AD --> CU18
+AD --> CU19
+AD --> CU20
+AD --> CU21
+AD --> CU22
+AD --> CU23
+AD --> CU24
+AD --> CU25
+AD --> CU26
+AD --> CU27
+AD --> CU28
+AD --> CU29
+AD --> CU30
+CU26 ..> PDF : <<include>>
+
+legend right
+  El administrador hereda los casos del vendedor:
+  las rutas /vendedor/* aceptan los roles vendedor y admin.
+  Ambos actores deben haber iniciado sesión (CU-04).
+endlegend
+@enduml

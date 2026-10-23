@@ -39,10 +39,12 @@ Plataforma integral para la comercialización, distribución y gestión de inven
 
 Un solo ecosistema que une tienda en línea, paneles de administración y control de inventario. Los tres bloques comparten una misma base de datos y una API REST, de modo que cada cambio en catálogo, reseñas o apartados del inicio se refleja al instante en todas las interfaces.
 
+
 **Lo esencial en pocas líneas**
 
-- Tienda pública con carrito, reseñas de clientes y apartados dinámicos (nuevas colecciones, telas exclusivas y ofertas).
-- Panel administrativo para gestionar usuarios, productos, carrusel, apartados del inicio, inventario, pedidos y facturación.
+- Tienda pública con catálogo filtrable, fichas de tela, reseñas reales guardadas en base de datos, carrito con cupones y pago en línea con **Wompi** (tarjeta, Bancolombia, Nequi y PSE).
+- Inicio de sesión con correo y contraseña o con cuentas de **Google** y **Microsoft**.
+- Paneles para tres roles: cliente (pedidos, soporte, calculadora de metraje), vendedor (sus telas, pedidos y alertas de stock) y administrador (usuarios, moderación, inventario, contenido, cupones, facturación y analítica).
 - Despliegue completo con Docker Compose: tres contenedores listos en un solo comando.
 
 ## Arquitectura
@@ -57,21 +59,31 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 ┌────────────────────────────────────────────────────────────┐
 │              Backend  Java (HTTPServer + JDBC)             │
 │                http://localhost:8081/api/*                 │
-└────────────────────────────┬───────────────────────────────┘
-                             │  JDBC
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│              PostgreSQL 17 (Docker volume)                 │
-└────────────────────────────────────────────────────────────┘
+└──────────────┬─────────────────────────────┬───────────────┘
+               │  JDBC                       │  HTTPS + webhook
+               ▼                             ▼
+┌──────────────────────────────┐   ┌──────────────────────────┐
+│ PostgreSQL 17 (Docker volume)│   │  Pasarela Wompi (sandbox)│
+└──────────────────────────────┘   └──────────────────────────┘
 ```
+
+| Capa | En cifras |
+| :--- | :--- |
+| Frontend | 50 rutas en `App.jsx` repartidas entre sitio público, proceso de compra y tres paneles por rol |
+| Backend | Manejadores HTTP sobre `ManejadorBase` (CORS, límite de 120 peticiones/min por IP y logs JSON), servicios de aplicación y DAO sobre JDBC, en capas `dominio`, `aplicacion` e `infraestructura` |
+| Base de datos | 25 tablas y 20 llaves foráneas en `BASE DE DATOS/01_esquema_espanol.sql`, más la tabla `eventos_pago_wompi` y las columnas de pago de `pedidos`, que el backend agrega al iniciar |
 
 ## Características
 
 | Área | Detalle |
 | :--- | :--- |
-| Tienda | Catálogo con filtros, fichas de tela, reseñas reales guardadas en base de datos, carrito y checkout. |
-| Home dinámico | Carrusel y apartados del inicio (nuevas colecciones, exclusivas, ofertas) editables desde el panel admin. |
-| Gestión | Productos, usuarios, inventario por lotes, alertas de stock, pedidos y facturación electrónica con PDF. |
+| Tienda | Catálogo con filtros por apartado, proyecto, precio y orden; fichas de tela; reseñas de 1 a 5 estrellas; carrito con cupones. |
+| Pagos | Checkout con el widget de Wompi: firma de integridad SHA-256, total recalculado en el backend (IVA 19 % y envío), webhook idempotente y página de confirmación con el estado del pago. |
+| Acceso | Registro con autorización de datos personales (Ley 1581 de 2012), inicio de sesión con correo o SSO de Google y Microsoft. El backend valida cada token directamente con el proveedor y usa el correo que este certifica; la cuenta SSO se crea sola la primera vez. |
+| Home dinámico | Carrusel, banner global y apartados del inicio (nuevas colecciones, exclusivas, ofertas) editables desde el panel admin. |
+| Cliente | Historial y rastreo de pedidos, factura en PDF, tickets de soporte, lista de deseos y calculadora de metraje por proyecto. |
+| Vendedor | Edición de precio, stock e imagen de sus telas, gestión de pedidos y alertas de stock bajo. |
+| Gestión | Usuarios y roles, moderación de productos, lotes de inventario, mermas, umbrales de stock, cupones, tickets, configuración de marca y analítica de ventas. |
 | Roles | Cliente, vendedor y administrador con accesos diferenciados a cada panel. |
 | Despliegue | Docker Compose levanta frontend, backend y base de datos con una sola orden. |
 
@@ -104,6 +116,20 @@ docker compose up -d
 | Backend API (REST) | http://localhost:8081 |
 | Base de Datos PostgreSQL | localhost:5432 |
 
+### Variables de pagos y SSO
+
+Se definen en el archivo `.env`. Sin ellas la tienda funciona, pero no se puede pagar con Wompi ni entrar con Google o Microsoft.
+
+| Variable | Uso |
+| :--- | :--- |
+| `WOMPI_PUBLIC_KEY` / `WOMPI_PRIVATE_KEY` | Llaves del comercio en Wompi |
+| `WOMPI_INTEGRITY_SECRET` / `WOMPI_EVENTS_SECRET` | Firma de la intención de pago y verificación del webhook |
+| `WOMPI_ENV` | `sandbox` (pruebas, sin cobro real) o `production` |
+| `VITE_GOOGLE_CLIENT_ID` | Client ID de Google Cloud Console. El backend también lo usa para verificar que cada token de Google fue emitido para esta aplicación |
+| `VITE_AZURE_CLIENT_ID` / `VITE_AZURE_TENANT_ID` | Aplicación de Microsoft Entra ID (tenant por defecto: `common`). El backend verifica con este ID los tokens de Microsoft |
+
+> `docker-compose.yml` trae llaves de prueba de Wompi como valor por defecto. Antes de un despliegue real, reemplázalas en el `.env` y no las subas al repositorio.
+
 ### Detener y limpiar
 
 ```bash
@@ -120,13 +146,23 @@ Usuarios sembrados en la base de datos para validar los niveles de acceso del so
 
 | Rol | Correo electronico | Contrasena |
 | :--- | :--- | :--- |
-| Cliente | `cliente@ddtextil.com` | `cliente123` |
-| Vendedor | `vendedor@ddtextil.com` | `vendedor123` |
 | Administrador | `admin@ddtextil.com` | `admin123` |
+| Vendedor | `vendedor@ddtextil.com` | `vendedor123` |
+| Vendedor | `maria.gonzalez@ddtextil.com` | `vendedor123` |
+| Cliente | `cliente@gmail.com` | `cliente123` |
+
+> **Nota:** con los datos iniciales actuales solo funciona la cuenta del administrador. Los hash de vendedor y cliente en `01_esquema_espanol.sql` no corresponden a esas contraseñas, y el botón de acceso rápido "Cliente" llena `cliente@ddtextil.com`, que no existe. Mientras se corrige, ejecuta en la base:
+>
+> ```sql
+> UPDATE usuarios SET contrasena_hash = encode(sha256('vendedor123'), 'hex')
+>  WHERE correo IN ('vendedor@ddtextil.com', 'maria.gonzalez@ddtextil.com');
+> UPDATE usuarios SET contrasena_hash = encode(sha256('cliente123'), 'hex')
+>  WHERE correo = 'cliente@gmail.com';
+> ```
 
 ## Calidad de Software y Suite de Pruebas Automatizadas
 
-El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con una suite integral de 26 pruebas automatizadas (14 de reglas de negocio textiles y 12 de seguridad y casos extremos):
+El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con una suite integral de 29 pruebas automatizadas (14 de reglas de negocio textiles y 15 de seguridad y casos extremos):
 
 ```bash
 # Navegar al directorio del backend
@@ -154,7 +190,16 @@ El cuerpo documental oficial del sistema esta estructurado de forma modular en l
 * 05. **[Politicas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)**
 * 06. **[Manual Tecnico de Instalacion, Configuracion y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)**
 * 07. **[Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)**
-* 08. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
+* 08. **[Modelo Entidad-Relacion (DER completo de las 25 tablas)](documentacion/08-modelo-entidad-relacion.md)**
+* 09. **[Mapa de Navegacion por Rol](documentacion/09-mapa-de-navegacion.md)**
+* 10. **[Casos de Uso](documentacion/10-casos-de-uso.md)**
+* 11. **[Diagrama de Clases del Backend](documentacion/11-diagrama-de-clases.md)**
+* 12. **[Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)**
+* 13. **[Manual de Usuario](documentacion/13-manual-de-usuario.md)**
+* **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
+* **[Matriz de Requerimientos (RF, RNF y Trazabilidad)](documentacion/Matriz_de_requerimientos_v2.xlsx)**
+
+Version para imprimir: **[Manual de usuario (PDF)](documentacion/pdf/Manual%20de%20usuario%20-%20D%26D%20Textil.pdf)**
 
 ---
 
@@ -162,4 +207,4 @@ El cuerpo documental oficial del sistema esta estructurado de forma modular en l
 
 <sub>Proyecto formativo SENA · D&D Textil · Calidad ISO/IEC 25010 & DevSecOps</sub>
 
-</div>
+</div>
