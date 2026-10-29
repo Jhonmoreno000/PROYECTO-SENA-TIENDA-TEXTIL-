@@ -113,6 +113,9 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 ### 16. [Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)
 *   Protocolo formal de sustentacion paso a paso (25 minutos): roles de cliente, operario de corte en bodega, vendedor y administrador, emision de factura PDF con CUFE, impresion de etiquetas termicas con QR, ejecucion de pruebas automatizadas y banco de preguntas tecnicas del jurado evaluador.
 
+### 17. [Modelo de Negocio y Estrategia de Producto](MODELO_DE_NEGOCIO.md)
+*   Estructuracion ejecutiva y comercial del proyecto: Resumen Ejecutivo, Propuesta de Valor (dolores del sector textil y solucion tecnologica), Segmentacion de Clientes (B2B, B2C y Aliados), Modelo de Ingresos y Monetizacion, Estructura de Costos (CAPEX/OPEX), Canales de Distribucion y Adquisicion, Ventaja Competitiva (Matriz Comparativa y Foso Tecnologico) y Metricas Clave (KPIs financieros, comerciales, logísticos y SLA).
+
 ---
 
 ## Certificacion de Conformidad Tecnica

@@ -190,6 +190,7 @@ Disponibles en el directorio [`pruebas-carga/`](pruebas-carga/README.md):
 El cuerpo documental oficial del sistema esta estructurado de forma modular en la carpeta `documentacion/`:
 
 * **[Indice General de Documentacion](DOCUMENTACION.md)**
+* **[Modelo de Negocio y Estrategia de Producto (B2B/B2C)](MODELO_DE_NEGOCIO.md)**
 * 01. **[Especificacion de Requerimientos de Software (IEEE 830 y BDD)](documentacion/01-especificacion-requerimientos-ieee830.md)**
 * 02. **[Arquitectura de Software, Modelo C4 y Backend Java](documentacion/02-arquitectura-software-c4-y-backend.md)**
 * 03. **[Arquitectura del Frontend y Gestion de Roles de Usuario](documentacion/03-arquitectura-frontend-y-roles.md)**
