@@ -165,3 +165,4 @@ Para evaluar objetivamente la salud comercial, operativa y tecnológica del nego
 * **Latencia de API en Percentil 95 ($P_{95}$):** Tiempo de respuesta en consultas de catálogo y cálculo de corte bajo carga concurrente (Meta validada con k6: $P_{95} \le 200\text{ ms}$).
 * **Tasa de Errores Transaccionales y Sobreventa:** Cantidad de inconsistencias de stock en concurrencia alta (Meta: **0.0 %** garantizado por bloqueo `FOR UPDATE` y suite de 44 pruebas automatizadas).
 * **Disponibilidad del Servicio (*Uptime SLA*) y Resiliencia DRP:** Disponibilidad operativa del contenedor API/Frontend (Meta: $\ge 99.5\text{ \%}$ con **RPO $\le 24\text{h}$** y **RTO $\le 15\text{ min}$**).
+
