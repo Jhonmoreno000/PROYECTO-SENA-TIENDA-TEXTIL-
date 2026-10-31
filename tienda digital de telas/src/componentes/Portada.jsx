@@ -110,7 +110,7 @@ export default function Portada() {
                 <div ref={textRef} className="text-left order-2 lg:order-1 pt-10 lg:pt-0">
                     <h1 className="text-4xl sm:text-5xl lg:text-7xl font-display font-bold mb-8 leading-tight text-gray-900 dark:text-white">
                         <span>Telas de </span><br className="hidden lg:block"/>
-                        <span className="text-gradient inline-block ml-0 lg:ml-2 pb-2">Calidad alta gama</span>
+                        <span className="text-gradient inline-block ml-0 lg:ml-2 pb-2">Alta Gama y Calidad</span>
                     </h1>
                     <p className="text-lg text-gray-500 dark:text-gray-300 mb-12 max-w-xl leading-relaxed">
                         Descubre nuestra exclusiva colección de telas importadas y nacionales.
@@ -170,7 +170,7 @@ export default function Portada() {
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
                         </div>
                         <span className="text-xs font-semibold text-gray-900 uppercase tracking-widest">
-                            Envío Gratis +100k
+                            Envío Gratis +$100.000
                         </span>
                     </div>
                 </div>
