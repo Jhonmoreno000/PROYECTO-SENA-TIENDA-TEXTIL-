@@ -60,10 +60,10 @@ const DIRECCIONES_CENTRO_MEDELLIN = [
 ];
 
 const INFO_CONTACTO_BASE = {
-    phone: '+57 (604) 444 5678',
-    phone2: '+57 300 123 4567',
-    email: 'info@ddtextil.com',
-    email2: 'ventas@ddtextil.com',
+    phone: '+57 302 705 8951',
+    phone2: 'WhatsApp: 302 705 8951',
+    email: 'dydtextil222medellin@gmail.com',
+    email2: 'Atención comercial y cotizaciones',
     hours: 'Lun - Vie: 8:00 AM - 6:00 PM',
     hours2: 'Sáb: 9:00 AM - 3:00 PM',
 };
@@ -93,7 +93,7 @@ const SOCIAL_LINKS = [
     },
     {
         name: 'WhatsApp',
-        url: 'https://wa.me/573001234567?text=Hola%20D%26D%20Textil,%20quiero%20cotizar%20telas',
+        url: 'https://wa.me/573027058951?text=Hola%20D%26D%20Textil,%20quiero%20cotizar%20telas',
         bg: 'from-emerald-500 to-green-600',
         icon: (
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -274,8 +274,8 @@ function Contact() {
 
     const contactInfo = [
         { icon: MapPin, title: 'Dirección Exacta', info: currentLocation.address, info2: currentLocation.city, color: 'from-blue-500 to-cyan-500' },
-        { icon: Phone, title: 'Teléfono', info: INFO_CONTACTO_BASE.phone, info2: INFO_CONTACTO_BASE.phone2, color: 'from-green-500 to-emerald-500' },
-        { icon: Mail, title: 'Email', info: INFO_CONTACTO_BASE.email, info2: INFO_CONTACTO_BASE.email2, color: 'from-purple-500 to-pink-500' },
+        { icon: Phone, title: 'Teléfono', info: INFO_CONTACTO_BASE.phone, info2: INFO_CONTACTO_BASE.phone2, href: 'tel:+573027058951', color: 'from-green-500 to-emerald-500' },
+        { icon: Mail, title: 'Email', info: INFO_CONTACTO_BASE.email, info2: INFO_CONTACTO_BASE.email2, href: 'mailto:dydtextil222medellin@gmail.com', color: 'from-purple-500 to-pink-500' },
         { icon: Clock, title: 'Horario', info: INFO_CONTACTO_BASE.hours, info2: INFO_CONTACTO_BASE.hours2, color: 'from-orange-500 to-red-500' },
     ];
 
@@ -326,7 +326,7 @@ function Contact() {
                                             <Icon className="w-8 h-8 text-white" />
                                         </div>
                                         <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{item.info}</p>
+                                        {item.href ? <a href={item.href} className="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm font-medium block break-all transition-colors">{item.info}</a> : <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{item.info}</p>}
                                         <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{item.info2}</p>
                                     </div>
                                 );
@@ -358,7 +358,7 @@ function Contact() {
                                     </div>
                                     <div>
                                         <label htmlFor="phone" className="block font-semibold mb-2">Teléfono</label>
-                                        <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className="input-field" placeholder="300 123 4567" />
+                                        <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className="input-field" placeholder="302 705 8951" />
                                     </div>
                                 </div>
 
