@@ -37,7 +37,7 @@ export function UIProvider({ children }) {
     const [carouselSlides, setCarouselSlides] = useState([
         {
             id: 1,
-            title: 'Nueva Colección 2024',
+            title: 'Nueva Colección 2026',
             subtitle: 'Tendencias exclusivas en telas premium',
             image: '/images/carousel-nueva-coleccion.png',
             cta: 'Ver Más'

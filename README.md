@@ -42,7 +42,7 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 
 **Lo esencial en pocas líneas**
 
-- Tienda pública con catálogo filtrable, fichas de tela, reseñas reales guardadas en base de datos, carrito con cupones y pago en línea con **Wompi** (tarjeta, Bancolombia, Nequi y PSE).
+- Tienda pública con catálogo filtrable, fichas de tela, reseñas reales guardadas en base de datos, carrito con cupones y ecosistema multi-pasarela con tarjeta 3D interactiva (**Wompi Bancolombia**, **Mercado Pago Checkout Pro**, **Nequi / Daviplata / Llave Bre-B**, **ePayco / PayU Efecty-Baloto-Gana**, **Tarjeta Crédito/Débito** y **PSE ACH / Contraentrega**).
 - Inicio de sesión con correo y contraseña o con cuentas de **Google** y **Microsoft**.
 - Paneles para tres roles: cliente (pedidos, soporte, calculadora de metraje), vendedor (sus telas, pedidos y alertas de stock) y administrador (usuarios, moderación, inventario, contenido, cupones, facturación y analítica).
 - Despliegue completo con Docker Compose: tres contenedores listos en un solo comando.
@@ -70,7 +70,7 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 | Capa | En cifras |
 | :--- | :--- |
 | Frontend | 50 rutas en `App.jsx` repartidas entre sitio público, proceso de compra y tres paneles por rol |
-| Backend | Manejadores HTTP sobre `ManejadorBase` (CORS, límite de 120 peticiones/min por IP y logs JSON), servicios de aplicación y DAO sobre JDBC, en capas `dominio`, `aplicacion` e `infraestructura` |
+| Backend | Manejadores HTTP sobre `ManejadorBase` (CORS, límite de 1200 peticiones/min por IP y logs JSON), servicios de aplicación y DAO sobre JDBC, en capas `dominio`, `aplicacion` e `infraestructura` |
 | Base de datos | 25 tablas y 20 llaves foráneas en `BASE DE DATOS/01_esquema_espanol.sql`, más la tabla `eventos_pago_wompi` y las columnas de pago de `pedidos`, que el backend agrega al iniciar |
 
 ## Características
@@ -78,7 +78,7 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 | Área | Detalle |
 | :--- | :--- |
 | Tienda | Catálogo con filtros por apartado, proyecto, precio y orden; fichas de tela; reseñas de 1 a 5 estrellas; carrito con cupones. |
-| Pagos | Checkout con el widget de Wompi: firma de integridad SHA-256, total recalculado en el backend (IVA 19 % y envío), webhook idempotente y página de confirmación con el estado del pago. |
+| Pagos | Checkout multi-pasarela con tarjeta holográfica 3D: Wompi (firma SHA-256), Mercado Pago Checkout Pro, Nequi / Daviplata / Llave Bre-B (`302 705 8951` + QR), ePayco Efecty/Baloto/Gana, Tarjeta 3D-Secure y PSE ACH. |
 | Acceso | Registro con autorización de datos personales (Ley 1581 de 2012), inicio de sesión con correo o SSO de Google y Microsoft. El backend valida cada token directamente con el proveedor y usa el correo que este certifica; la cuenta SSO se crea sola la primera vez. |
 | Home dinámico | Carrusel, banner global y apartados del inicio (nuevas colecciones, exclusivas, ofertas) editables desde el panel admin. |
 | Cliente | Historial y rastreo de pedidos, factura en PDF, tickets de soporte, lista de deseos y calculadora de metraje por proyecto. |

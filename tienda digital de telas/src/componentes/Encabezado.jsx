@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react';
 
 import {
     ShoppingCart,
+    Heart,
     Menu,
     X,
     Sun,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 import { useCarrito } from '../contextos/ContextoCarrito';
+import { useMetricas } from '../contextos/ContextoMetricas';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useAutenticacion } from '../contextos/ContextoAutenticacion';
 import { microPress, microRelease, EASES } from '../utilidades/animations';
@@ -37,10 +39,12 @@ function Encabezado() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const { getCartItemCount } = useCarrito();
+    const { wishlistItems } = useMetricas();
     const [darkMode, toggleDarkMode] = useDarkMode();
     const { user, logout } = useAutenticacion();
     const cartCount = getCartItemCount();
-const containerRef = useRef(null);
+    const wishlistCount = Array.isArray(wishlistItems) ? wishlistItems.length : 0;
+    const containerRef = useRef(null);
 
     const navLinks = [
         { name: 'Inicio', path: '/' },
@@ -49,7 +53,7 @@ const containerRef = useRef(null);
         { name: 'Contacto', path: '/contacto' },
     ];
 
-const location = useLocation();
+    const location = useLocation();
     const logoRef = useRef(null);
     const navRef = useRef(null);
     const mobileMenuRef = useRef(null);
@@ -146,11 +150,11 @@ const location = useLocation();
                                                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
                                                     <div className="p-3 border-b border-gray-100 dark:border-slate-700">
                                                         <p className="font-bold text-gray-900 dark:text-white truncate text-sm">{user.name || user.nombre || 'Usuario'}</p>
-                                                        <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' || user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
+                                                        <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
                                                     </div>
                                                     <div className="p-1">
                                                         <Link
-                                                            to={(user.role === 'cliente' || user.role === 'cliente') ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
+                                                            to={user.role === 'cliente' ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
                                                             onClick={() => setMobileMenuOpen(false)}
                                                             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-slate-700 rounded-lg"
                                                         >
@@ -240,20 +244,20 @@ const location = useLocation();
 
                     <Link to="/" className="flex items-center group">
                         <div className="relative">
-                    <span
-                            ref={logoRef}
-                            className="logo-gradient-anim text-3xl md:text-4xl font-black tracking-tighter inline-block group-hover:scale-105 transition-transform duration-300"
-                            style={{
-                                background: 'linear-gradient(135deg, var(--theme-primary, #f97316) 0%, var(--theme-accent, #ea580c) 50%, var(--theme-primary, #fb923c) 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text',
-                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
-                                backgroundSize: '200% auto'
-                            }}
-                        >
-                            D&D
-                        </span>
+                            <span
+                                ref={logoRef}
+                                className="logo-gradient-anim text-3xl md:text-4xl font-black tracking-tighter inline-block group-hover:scale-105 transition-transform duration-300"
+                                style={{
+                                    background: 'linear-gradient(135deg, var(--theme-primary, #f97316) 0%, var(--theme-accent, #ea580c) 50%, var(--theme-primary, #fb923c) 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    backgroundClip: 'text',
+                                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                                    backgroundSize: '200% auto'
+                                }}
+                            >
+                                D&D
+                            </span>
 
                             <div
                                 className="logo-gradient-anim absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"
@@ -265,7 +269,7 @@ const location = useLocation();
                         </span>
                     </Link>
 
-{/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
+                    {/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
                     <div ref={navRef} className="hidden md:flex items-center space-x-8">
                         {navLinks.map((link) => (
                             <Link
@@ -279,7 +283,7 @@ const location = useLocation();
                         ))}
                     </div>
 
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-3 md:space-x-4">
 
                         <button
                             onClick={toggleDarkMode}
@@ -318,12 +322,12 @@ const location = useLocation();
                                             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
                                                 <div className="p-3 border-b border-gray-100 dark:border-slate-700">
                                                     <p className="font-bold text-gray-900 dark:text-white truncate">{user.name || user.nombre || 'Usuario'}</p>
-                                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' || user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
+                                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
                                                 </div>
 
                                                 <div className="p-1">
                                                     <Link
-                                                        to={(user.role === 'cliente' || user.role === 'cliente') ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
+                                                        to={user.role === 'cliente' ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
                                                         onClick={() => setUserMenuOpen(false)}
                                                         className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
                                                     >
@@ -351,16 +355,34 @@ const location = useLocation();
                             </Link>
                         )}
 
-                        <Link to="/carrito" className="relative group">
-                            <div
-                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group-hover:scale-105 active:scale-95"
-                            >
+                        <Link
+                            to={user ? "/cliente/coleccion" : "/catalogo"}
+                            className="relative group"
+                            aria-label="Mis telas favoritas"
+                            title={wishlistCount > 0 ? `${wishlistCount} tela(s) en favoritos` : 'Mis telas favoritas'}
+                        >
+                            <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group-hover:scale-105 active:scale-95">
+                                <Heart
+                                    className={`w-5 h-5 transition-colors ${
+                                        wishlistCount > 0
+                                            ? 'text-red-500 fill-red-500'
+                                            : 'text-gray-700 dark:text-gray-300'
+                                    }`}
+                                />
+                                {wishlistCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                        {wishlistCount}
+                                    </span>
+                                )}
+                            </div>
+                        </Link>
+
+                        <Link to="/carrito" className="relative group" aria-label="Carrito de compras">
+                            <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group-hover:scale-105 active:scale-95">
                                 <ShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 
                                 {cartCount > 0 && (
-                                    <span
-                                        className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce"
-                                    >
+                                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
                                         {cartCount}
                                     </span>
                                 )}

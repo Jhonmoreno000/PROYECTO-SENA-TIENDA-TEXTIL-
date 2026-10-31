@@ -1,0 +1,13 @@
+{
+  "name": "proyecto-sena-tienda-textil",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ecosistema E-Commerce y ERP Textil D&D Textil — SENA ADSO",
+  "scripts": {
+    "dev": "npm --prefix \"tienda digital de telas\" run dev",
+    "build": "npm --prefix \"tienda digital de telas\" run build",
+    "preview": "npm --prefix \"tienda digital de telas\" run preview",
+    "test": "npm --prefix \"tienda digital de telas\" test"
+  }
+}
+

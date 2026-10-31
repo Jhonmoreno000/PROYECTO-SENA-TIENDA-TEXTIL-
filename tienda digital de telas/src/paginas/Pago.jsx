@@ -21,7 +21,7 @@ function Pago() {
     const [formData, setFormData] = useState({
         fullName: user?.nombre || user?.name || '',
         email: user?.email || user?.correo || '',
-        phone: user?.telefono || '3001234567',
+        phone: user?.telefono || '3027058951',
         address: 'Cra. 52 (Carabobo) # 48-30',
         city: 'Medellín',
         state: 'Antioquia',
@@ -91,7 +91,7 @@ function Pago() {
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-primary-500 text-primary-600 dark:text-primary-400 font-bold text-sm hover:bg-primary-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
                     >
                         <Zap className="w-4 h-4" />
-                        <span>2. Ir a Pagar con Wompi / PSE / Tarjeta →</span>
+                        <span>2. Ir a Pagar (Wompi / Mercado Pago / Nequi / PSE) →</span>
                     </button>
                 </div>
 

@@ -4,21 +4,26 @@ import { AppProviders } from './componentes/AppProviders';
 import { ProtectedRoute, DesplazarArriba, SmoothScrollProvider } from './componentes';
 import CursorFoco from './componentes/CursorFoco';
 import TruckLoader from './componentes/TruckLoader';
+import BotonWhatsAppFlotante from './componentes/common/BotonWhatsAppFlotante';
 
-// Pages (eager - always needed)
+// Páginas principales de carga inmediata (Eager)
 import Inicio from './paginas/Inicio';
 import Catalogo from './paginas/Catalogo';
 import DetalleProducto from './paginas/DetalleProducto';
 import Carrito from './paginas/Carrito';
-import Pago from './paginas/Pago';
-import ConfirmacionPedido from './paginas/ConfirmacionPedido';
-import About from './paginas/About';
-import IniciarSesion from './paginas/IniciarSesion';
-import Registro from './paginas/Registro';
-import BugReport from './paginas/BugReport';
-import Payment from './paginas/payment/Payment';
 
-// Dashboard paginas (lazy - only loaded when needed)
+// Páginas públicas y de proceso de compra con carga diferida (Lazy Loading)
+const Pago = lazy(() => import('./paginas/Pago'));
+const ConfirmacionPedido = lazy(() => import('./paginas/ConfirmacionPedido'));
+const About = lazy(() => import('./paginas/About'));
+const IniciarSesion = lazy(() => import('./paginas/IniciarSesion'));
+const Registro = lazy(() => import('./paginas/Registro'));
+const BugReport = lazy(() => import('./paginas/BugReport'));
+const Payment = lazy(() => import('./paginas/payment/Payment'));
+const Contact = lazy(() => import('./paginas/Contact'));
+const NoEncontrado = lazy(() => import('./paginas/NoEncontrado'));
+
+// Paneles por rol (Lazy Loading)
 const PanelCliente = lazy(() => import('./paginas/cliente/PanelCliente'));
 const ClientOrderHistory = lazy(() => import('./paginas/cliente/Orders/HistorialPedidos'));
 const SeguimientoPedido = lazy(() => import('./paginas/cliente/Orders/SeguimientoPedido'));
@@ -55,7 +60,6 @@ const AnalisisDevoluciones = lazy(() => import('./paginas/admin/Analiticas/Anali
 const ProyeccionIngresos = lazy(() => import('./paginas/admin/Analiticas/ProyeccionIngresos'));
 const GestionTickets = lazy(() => import('./paginas/admin/Soporte/GestionTickets'));
 const CreacionCupones = lazy(() => import('./paginas/admin/Soporte/CreacionCupones'));
-const Contact = lazy(() => import('./paginas/Contact'));
 const FacturasAdmin = lazy(() => import('./paginas/admin/FacturasAdmin'));
 
 function DashboardFallback() {
@@ -68,443 +72,338 @@ function DashboardFallback() {
 
 function AppRoutes() {
     const location = useLocation();
-    
+
     return (
-        <Routes location={location} key={location.pathname}>
-                {/* Public Routes */}
+        <Suspense fallback={<DashboardFallback />}>
+            <Routes location={location} key={location.pathname}>
+                {/* Rutas Públicas y Flujo de Compra */}
                 <Route path="/" element={<Inicio />} />
-                    <Route path="/catalogo" element={<Catalogo />} />
-                    <Route path="/producto/:id" element={<DetalleProducto />} />
-                    <Route path="/carrito" element={<Carrito />} />
-                    <Route path="/nosotros" element={<About />} />
-                    <Route path="/contacto" element={<Suspense fallback={<TruckLoader text="Cargando..." />}><Contact /></Suspense>} />
-                    <Route path="/login" element={<IniciarSesion />} />
-                    <Route path="/registro" element={<Registro />} />
-                    <Route path="/reportar-fallo" element={<BugReport />} />
-                    <Route path="/pago" element={<Payment />} />
-                    <Route path="/checkout" element={<Pago />} />
-                    <Route path="/confirmacion" element={<ConfirmacionPedido />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/producto/:id" element={<DetalleProducto />} />
+                <Route path="/carrito" element={<Carrito />} />
+                <Route path="/nosotros" element={<About />} />
+                <Route path="/contacto" element={<Contact />} />
+                <Route path="/login" element={<IniciarSesion />} />
+                <Route path="/registro" element={<Registro />} />
+                <Route path="/reportar-fallo" element={<BugReport />} />
+                <Route path="/checkout" element={<Pago />} />
+                <Route path="/pago" element={<Payment />} />
+                <Route path="/confirmacion" element={<ConfirmacionPedido />} />
 
-                    {/* Payment */}
-                    <Route
-                        path="/pago"
-                        element={
-                            <ProtectedRoute>
-                                <Payment />
-                            </ProtectedRoute>
-                        }
-                    />
+                {/* Panel de Cliente */}
+                <Route
+                    path="/cliente"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <PanelCliente />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/perfil"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <Perfil />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/pedidos"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <ClientOrderHistory />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/pedidos/rastreo"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <SeguimientoPedido />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/coleccion"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <Wishlist />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/coleccion/calculadora"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <ProjectCalculator />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/soporte/nuevo"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <NewReport />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/soporte/tickets"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <MyTickets />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/configuracion"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <Perfil />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/cliente/configuracion/direcciones"
+                    element={
+                        <ProtectedRoute roles="cliente">
+                            <AddressBook />
+                        </ProtectedRoute>
+                    }
+                />
 
-                    {/* Protected Routes */}
-                    <Route
-                        path="/checkout"
-                        element={
-                            <ProtectedRoute>
-                                <Pago />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/confirmacion"
-                        element={
-                            <ProtectedRoute>
-                                <ConfirmacionPedido />
-                            </ProtectedRoute>
-                        }
-                    />
+                {/* Panel de Vendedor */}
+                <Route
+                    path="/vendedor"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <ProductosVendedor />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendedor/productos"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <ProductosVendedor />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendedor/pedidos"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <PedidosVendedor />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendedor/stock"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <StockAlerts />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendedor/configuracion"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <Perfil />
+                        </ProtectedRoute>
+                    }
+                />
 
-                    <Route
-                        path="/cliente"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <PanelCliente />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/cliente/perfil"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <Perfil />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
+                {/* Panel de Administrador */}
+                <Route
+                    path="/admin"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ResumenAdmin />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/usuarios"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <GestionUsuarios />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/vendedores"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <MetricasVendedor />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/clientes"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <MetricasCliente />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/productos"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ProductosAdmin />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/carrusel"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <GestionarCarrusel />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/home"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <GestionarInicio />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/facturas"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <FacturasAdmin />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/reportes"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ReportesAdmin />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/actividad"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ActividadAdmin />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/inventario/lotes"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ControlLotes />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/inventario/merma"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <CalculadoraMerma />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/inventario/alertas"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ConfiguracionStock />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/inventario/historial"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <HistorialMovimientos />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/moderacion/aprobacion"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ColaAprobacion />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/moderacion/vendedores"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <RendimientoVendedores />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/analytics/mapa-ventas"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <MapaVentas />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/analytics/rotacion"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <RankingRotacion />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/analytics/devoluciones"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <AnalisisDevoluciones />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/analytics/proyeccion"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ProyeccionIngresos />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/soporte/tickets"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <GestionTickets />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/soporte/cupones"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <CreacionCupones />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/configuracion"
+                    element={
+                        <ProtectedRoute roles="admin">
+                            <ConfiguracionSistema />
+                        </ProtectedRoute>
+                    }
+                />
 
-                    <Route
-                        path="/cliente/pedidos"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ClientOrderHistory />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/cliente/pedidos/rastreo"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <SeguimientoPedido />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/cliente/coleccion"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <Wishlist />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/cliente/coleccion/calculadora"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ProjectCalculator />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/cliente/soporte/nuevo"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <NewReport />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/cliente/soporte/tickets"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <MyTickets />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/cliente/configuracion"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <Perfil />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/cliente/configuracion/direcciones"
-                        element={
-                            <ProtectedRoute roles="cliente">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <AddressBook />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/vendedor"
-                        element={
-                            <ProtectedRoute roles={['vendedor', 'admin']}>
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosVendedor />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/vendedor/productos"
-                        element={
-                            <ProtectedRoute roles={['vendedor', 'admin']}>
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosVendedor />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/vendedor/pedidos"
-                        element={
-                            <ProtectedRoute roles={['vendedor', 'admin']}>
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <PedidosVendedor />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/vendedor/stock"
-                        element={
-                            <ProtectedRoute roles={['vendedor', 'admin']}>
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <StockAlerts />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/vendedor/configuracion"
-                        element={
-                            <ProtectedRoute roles={['vendedor', 'admin']}>
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <Perfil />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/admin"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ResumenAdmin />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/usuarios"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <GestionUsuarios />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/vendedores"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <MetricasVendedor />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/clientes"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <MetricasCliente />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/productos"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosAdmin />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/carrusel"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <GestionarCarrusel />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/home"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <GestionarInicio />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/facturas"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <FacturasAdmin />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/reportes"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ReportesAdmin />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/actividad"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ActividadAdmin />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/admin/inventario/lotes"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ControlLotes />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/inventario/merma"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <CalculadoraMerma />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/inventario/alertas"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ConfiguracionStock />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/inventario/historial"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <HistorialMovimientos />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/admin/moderacion/aprobacion"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ColaAprobacion />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/moderacion/vendedores"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <RendimientoVendedores />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/admin/analytics/mapa-ventas"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <MapaVentas />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/analytics/rotacion"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <RankingRotacion />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/analytics/devoluciones"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <AnalisisDevoluciones />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/analytics/proyeccion"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ProyeccionIngresos />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/admin/soporte/tickets"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <GestionTickets />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/soporte/cupones"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <CreacionCupones />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    <Route
-                        path="/admin/configuracion"
-                        element={
-                            <ProtectedRoute roles="admin">
-                                <Suspense fallback={<DashboardFallback />}>
-                                    <ConfiguracionSistema />
-                                </Suspense>
-                            </ProtectedRoute>
-                        }
-                    />
+                {/* Ruta 404 para cualquier URL no existente */}
+                <Route path="*" element={<NoEncontrado />} />
             </Routes>
+        </Suspense>
     );
 }
 
@@ -516,6 +415,7 @@ function App() {
                 <CursorFoco />
                 <SmoothScrollProvider>
                     <AppRoutes />
+                    <BotonWhatsAppFlotante />
                 </SmoothScrollProvider>
             </Router>
         </AppProviders>
