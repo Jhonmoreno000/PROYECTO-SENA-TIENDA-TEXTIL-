@@ -211,7 +211,8 @@ export function MetricsProvider({ children }) {
     // Configuración del sistema (nombre, colores, tasas, etc.)
     const [systemConfig,      setSystemConfig]      = useState(defaultSystemConfig);
     // Lista de deseos de usuarios
-    const [wishlistItems,     setWishlistItems]     = useState([]);
+    const [wishlistItems,     setWishlistItems]     = useState(() => { try { const saved = window.localStorage.getItem('dd_wishlist_items'); return saved ? JSON.parse(saved) : []; } catch { return []; } });
+    useEffect(() => { try { window.localStorage.setItem('dd_wishlist_items', JSON.stringify(wishlistItems)); } catch {} }, [wishlistItems]);
     // Métricas de ventas para ERP (si aplica)
     const [erpSalesMetrics,   setErpSalesMetrics]   = useState([]);
     // Notificaciones del ERP
