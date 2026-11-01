@@ -10,6 +10,7 @@ import Encabezado from '../componentes/Encabezado';
 import { useAutenticacion } from '../contextos/ContextoAutenticacion';
 import { EASES, microPress, microRelease } from '../utilidades/animations';
 import { redirigirAGoogleAccounts, redirigirAMicrosoft, procesarRetornoSSO } from '../servicios/servicioOAuth';
+import ModalSSOCorreo from '../componentes/common/ModalSSOCorreo';
 
 
 
@@ -21,6 +22,7 @@ const loginSchema = z.object({
 function IniciarSesion() {
     const { login, loginConSSO } = useAutenticacion();
     const [ssoLoading, setSsoLoading] = useState(null); // 'google' | 'microsoft' | null
+    const [modalSSO, setModalSSO] = useState(null); // 'google' | 'microsoft' | null
     const navigate = useNavigate();
     const location = useLocation();
     const from = (() => {
@@ -116,7 +118,7 @@ function IniciarSesion() {
         try {
             redirigirAGoogleAccounts();
         } catch (e) {
-            setAuthError(e.message || 'Error al iniciar conexión con Google');
+            setModalSSO('google');
         }
     };
 
@@ -125,7 +127,23 @@ function IniciarSesion() {
         try {
             redirigirAMicrosoft();
         } catch (e) {
-            setAuthError(e.message || 'Error al iniciar conexión con Microsoft');
+            setModalSSO('microsoft');
+        }
+    };
+
+    const handleExitoModalSSO = async (ssoData) => {
+        setSsoLoading(ssoData.proveedor);
+        const authResult = await loginConSSO(ssoData);
+        setSsoLoading(null);
+        if (authResult.success) {
+            setModalSSO(null);
+            const user = authResult.user || JSON.parse(localStorage.getItem('authUser')) || {};
+            const userRole = user.role || user.rol || 'cliente';
+            const roleRedirects = { admin: '/admin', administrador: '/admin', vendedor: '/vendedor', cliente: '/cliente' };
+            const destination = (from && from !== '/') ? from : (roleRedirects[userRole] || '/cliente');
+            navigate(destination, { replace: true });
+        } else {
+            throw new Error(authResult.message || 'No se pudo completar el acceso.');
         }
     };
 
@@ -398,6 +416,13 @@ function IniciarSesion() {
                     </div>
                 </div>
             </main>
+
+            <ModalSSOCorreo
+                isOpen={!!modalSSO}
+                proveedor={modalSSO || 'google'}
+                onClose={() => setModalSSO(null)}
+                onSuccess={handleExitoModalSSO}
+            />
 
             <div className="relative z-10 py-4 px-6 flex items-center justify-center">
                 <div className="inline-flex items-center gap-4 px-6 py-2.5 rounded-full bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/30 dark:border-slate-700/40 shadow-sm">

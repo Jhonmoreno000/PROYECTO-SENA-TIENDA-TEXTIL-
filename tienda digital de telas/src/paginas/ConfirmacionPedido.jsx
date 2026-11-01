@@ -26,7 +26,7 @@ function ConfirmacionPedido() {
             if (referencia && referencia.trim() !== '') {
                 try {
                     const datos = await consultarEstadoPagoWompi(referencia.trim());
-                    if (datos) {
+                    if (datos && (datos.orderNumber || datos.reference)) {
                         let items = [];
                         try {
                             items = typeof datos.itemsRaw === 'string' ? JSON.parse(datos.itemsRaw) : (datos.itemsRaw || []);
@@ -141,7 +141,7 @@ function ConfirmacionPedido() {
                             esAprobado ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
                             (esPendiente ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-red-100 text-red-800')
                         }`}>
-                            {esAprobado ? 'Wompi: Transacción Aprobada' : (esPendiente ? 'Wompi: Esperando confirmación bancaria' : 'Transacción ' + orderData.paymentStatus)}
+                            {esAprobado ? `${orderData.paymentMethod || 'Pasarela'}: Transacción Aprobada` : (esPendiente ? `${orderData.paymentMethod || 'Pedido'}: Confirmación Pendiente` : 'Transacción ' + orderData.paymentStatus)}
                         </span>
                     </div>
 
@@ -160,7 +160,7 @@ function ConfirmacionPedido() {
                         </div>
                         {orderData.wompiTransactionId && (
                             <p className="text-xs text-gray-500 font-mono mb-2">
-                                ID Transacción Wompi: {orderData.wompiTransactionId}
+                                ID Transacción ({orderData.paymentMethod || 'Pasarela'}): {orderData.wompiTransactionId}
                             </p>
                         )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">

@@ -136,7 +136,7 @@ function PSEForm({ onSubmit, isProcessing }) {
                         </>
                     ) : (
                         <>
-                            <FiDollarSign className="w-5 h-5" />
+                            <DollarSign className="w-5 h-5" />
                             Pagar con PSE
                         </>
                     )}

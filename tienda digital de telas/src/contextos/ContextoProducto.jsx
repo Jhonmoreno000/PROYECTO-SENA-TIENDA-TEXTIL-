@@ -61,7 +61,7 @@ export function ProductProvider({ children }) {
             const formattedData = (datos || []).map(p => {
                 const nombre = p.name || p.nombre || '';
                 const precio = Number(p.price ?? p.precio ?? 0);
-                const existencias = Number(p.stock ?? p.existencias ?? 0);
+                const rawStock = p.stock ?? p.existencias; const existencias = rawStock !== undefined && rawStock !== null ? Number(rawStock) : 50;
                 const categoria = p.category || p.categoria || '';
                 const imagenes = (p.images || p.imagenes || []).map(img =>
                     img && typeof img === 'string' && img.startsWith('http://localhost:8081/uploads/')

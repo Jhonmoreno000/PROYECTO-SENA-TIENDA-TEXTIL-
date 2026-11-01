@@ -10,7 +10,7 @@ import { getApiUrl } from '../config';
 
 // Slides de respaldo si el backend no responde (los mismos apartados por defecto)
 const FALLBACK_SLIDES = [
-    { id: 1, title: 'Nueva Colección 2024', subtitle: 'Tendencias exclusivas en telas premium', image: '/images/carousel-nueva-coleccion.png', cta: 'Ver Más', sectionKey: 'nuevas' },
+    { id: 1, title: 'Nueva Colección 2026', subtitle: 'Tendencias exclusivas en telas premium', image: '/images/carousel-nueva-coleccion.png', cta: 'Ver Más', sectionKey: 'nuevas' },
     { id: 2, title: 'Telas Exclusivas', subtitle: 'Diseños únicos para proyectos especiales', image: '/images/carousel-telas-exclusivas.png', cta: 'Explorar', sectionKey: 'exclusivas' },
     { id: 3, title: 'Ofertas Especiales', subtitle: 'Descuentos increíbles en telas seleccionadas', image: '/images/carousel-ofertas-especiales.png', cta: 'Ver Ofertas', sectionKey: 'ofertas' },
 ];

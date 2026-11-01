@@ -25,7 +25,7 @@ import infraestructura.configuracion.ConfiguracionEntorno;
 public abstract class ManejadorBase implements HttpHandler {
 
     private static final String NOMBRE_SERVICIO = "ddtextil-backend";
-    private static final int MAX_PETICIONES_POR_VENTANA = 120; // 120 req/min por IP
+    private static final int MAX_PETICIONES_POR_VENTANA = 1200; // 1200 req/min por IP (evita falsos 429 en SPA con carga paralela)
     private static final long VENTANA_TIEMPO_MS = 60_000L; // 1 minuto
     public static final int TAMANO_MAXIMO_CUERPO_BYTES = 5 * 1024 * 1024; // 5 MB límite de carga útil (OWASP DoS)
 

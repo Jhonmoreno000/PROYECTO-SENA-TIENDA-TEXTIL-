@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node iniciar-entorno-dev.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node ejecutar-pruebas-frontend.mjs"
