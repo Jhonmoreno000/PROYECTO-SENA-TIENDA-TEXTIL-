@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 /**
  * Modelo que representa un usuario del sistema (clientes, vendedores, administradores).
- * Mapea a la tabla "users" (o "usuarios") en la base de datos PostgreSQL.
+ * Mapea a la tabla "usuarios" en la base de datos PostgreSQL.
  */
 public class Usuario {
     /** Identificador único del usuario. */
@@ -19,7 +19,7 @@ public class Usuario {
     @SerializedName(value = "email", alternate = {"correo"})
     private String correo;
 
-    /** Rol del usuario en el sistema: "admin", "seller" o "client". */
+    /** Rol del usuario en el sistema: "administrador", "vendedor" o "cliente". */
     @SerializedName(value = "role", alternate = {"rol"})
     private String rol;
 
@@ -87,7 +87,7 @@ public class Usuario {
     /** Asigna el correo electrónico del usuario. */
     public void setCorreo(String correo) { this.correo = correo; }
 
-    /** Obtiene el rol del usuario (admin, seller, client). */
+    /** Obtiene el rol del usuario (administrador, vendedor, cliente). */
     public String getRol() { return rol; }
     /** Asigna el rol del usuario. */
     public void setRol(String rol) { this.rol = rol; }
