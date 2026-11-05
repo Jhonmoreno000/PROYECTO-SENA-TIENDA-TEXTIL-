@@ -259,7 +259,7 @@ public class PagoWompiDAO {
             return false;
         }
 
-        String sqlBloqueo = "SELECT id, estado, estado_pago, codigo_cupon FROM pedidos WHERE referencia_pago = ? FOR UPDATE";
+        String sqlBloqueo = "SELECT id, estado, estado_pago, codigo_cupon, monto_centavos, moneda FROM pedidos WHERE referencia_pago = ? FOR UPDATE";
 
         try (Connection con = Conexion.obtenerConexion()) {
             con.setAutoCommit(false);
@@ -268,6 +268,8 @@ public class PagoWompiDAO {
                 String estadoActual = null;
                 String estadoPagoActual = null;
                 String codigoCuponUsado = null;
+                long montoCentavosEsperado = 0L;
+                String monedaEsperada = "COP";
 
                 try (PreparedStatement pst = con.prepareStatement(sqlBloqueo)) {
                     pst.setString(1, tx.referencia());
@@ -277,6 +279,10 @@ public class PagoWompiDAO {
                             estadoActual = rs.getString("estado");
                             estadoPagoActual = rs.getString("estado_pago");
                             codigoCuponUsado = rs.getString("codigo_cupon");
+                            montoCentavosEsperado = rs.getLong("monto_centavos");
+                            if (rs.getString("moneda") != null) {
+                                monedaEsperada = rs.getString("moneda");
+                            }
                         }
                     }
                 }
@@ -299,6 +305,14 @@ public class PagoWompiDAO {
                 String nuevoEstadoWompi = tx.estado() != null ? tx.estado().toUpperCase() : "PENDING";
 
                 if ("APPROVED".equals(nuevoEstadoWompi)) {
+                    if (montoCentavosEsperado > 0 && (tx.montoEnCentavos() != montoCentavosEsperado || !monedaEsperada.equalsIgnoreCase(tx.moneda()))) {
+                        System.err.println("[WOMPI SEGURIDAD] Monto o moneda discordante en webhook para " + tx.referencia()
+                                + ". Esperado: " + montoCentavosEsperado + " " + monedaEsperada
+                                + ", Recibido: " + tx.montoEnCentavos() + " " + tx.moneda());
+                        registrarEvento(con, tx.referencia(), tx.id(), nuevoEstadoWompi, "webhook", "MONTO_O_MONEDA_DISCORDANTE", payloadRaw);
+                        con.commit();
+                        return false;
+                    }
                     // Actualizar pedido a PAGADO
                     String sqlActualizarPedido = "UPDATE pedidos SET estado = 'paid', estado_pago = 'APPROVED', " +
                             "wompi_transaccion_id = ?, metodo_pago = ?, pagado_en = NOW(), actualizado_en = NOW() WHERE id = ?";
