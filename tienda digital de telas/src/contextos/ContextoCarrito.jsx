@@ -103,9 +103,12 @@ export function CartProvider({ children }) {
 
         setCartItems((prevItems) => {
             const items = Array.isArray(prevItems) ? prevItems : [];
-            return items.map((item) =>
-                item.id === productId ? { ...item, quantity: parsedQuantity } : item
-            );
+            return items.map((item) => {
+                if (item.id !== productId) return item;
+                const maxStock = Number(item.stock ?? item.existencias ?? 99);
+                const limitedQuantity = maxStock > 0 ? Math.min(parsedQuantity, maxStock) : parsedQuantity;
+                return { ...item, quantity: limitedQuantity };
+            });
         });
     }, [removeFromCart, setCartItems]);
 
