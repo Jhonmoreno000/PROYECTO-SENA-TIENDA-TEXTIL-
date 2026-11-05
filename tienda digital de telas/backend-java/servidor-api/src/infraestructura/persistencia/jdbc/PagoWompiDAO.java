@@ -103,7 +103,7 @@ public class PagoWompiDAO {
                                 throw new ExcepcionDominio("El producto '" + rs.getString("nombre") + "' no está disponible.");
                             }
 
-                            int stockDisponible = rs.getInt("stock");
+                            double stockDisponible = rs.getDouble("stock");
                             if (stockDisponible < metros) {
                                 throw new ExcepcionDominio("Stock insuficiente para '" + rs.getString("nombre") + "'. Disponibles: " + stockDisponible + " metros.");
                             }
@@ -344,7 +344,7 @@ public class PagoWompiDAO {
 
                     // Descontar inventario de metros en PostgreSQL
                     String sqlItems = "SELECT producto_id, cantidad FROM items_pedido WHERE pedido_id = ?";
-                    String sqlDescontarStock = "UPDATE productos SET stock = GREATEST(0, stock - CAST(? AS INTEGER)), actualizado_en = NOW() WHERE id = ?";
+                    String sqlDescontarStock = "UPDATE productos SET stock = GREATEST(0, stock - ?), actualizado_en = NOW() WHERE id = ?";
 
                     try (PreparedStatement pstItems = con.prepareStatement(sqlItems);
                          PreparedStatement pstStock = con.prepareStatement(sqlDescontarStock)) {

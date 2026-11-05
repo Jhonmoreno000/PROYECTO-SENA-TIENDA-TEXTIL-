@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS productos (
     ancho VARCHAR(50),
     peso VARCHAR(50),
     cuidados TEXT,
-    stock INTEGER DEFAULT 0 CHECK (stock >= 0),
+    stock NUMERIC(10,2) DEFAULT 0.00 CHECK (stock >= 0),
     destacado BOOLEAN DEFAULT false,
     activo BOOLEAN DEFAULT true,
     estado_moderacion VARCHAR(50) DEFAULT 'approved',
@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS items_carrito (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-    cantidad INTEGER DEFAULT 1 NOT NULL,
+    cantidad NUMERIC(10,2) DEFAULT 1.00 NOT NULL CHECK (cantidad > 0),
     agregado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP,
     UNIQUE (usuario_id, producto_id)

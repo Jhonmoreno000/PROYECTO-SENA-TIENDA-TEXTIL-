@@ -19,9 +19,9 @@ public class ItemCarrito {
     @SerializedName(value = "productId", alternate = {"idProducto"})
     private int idProducto;
 
-    /** Cantidad de unidades del producto. */
+    /** Cantidad de metros del producto. */
     @SerializedName(value = "quantity", alternate = {"cantidad"})
-    private int cantidad;
+    private double cantidad;
 
     /** Fecha y hora en que se agregó el producto al carrito. */
     @SerializedName(value = "addedAt", alternate = {"fechaAgregado"})
@@ -62,9 +62,9 @@ public class ItemCarrito {
     public void setIdProducto(int idProducto) { this.idProducto = idProducto; }
 
     /** Obtiene la cantidad. */
-    public int getCantidad() { return cantidad; }
+    public double getCantidad() { return cantidad; }
     /** Asigna la cantidad. */
-    public void setCantidad(int cantidad) { this.cantidad = cantidad; }
+    public void setCantidad(double cantidad) { this.cantidad = cantidad; }
 
     /** Obtiene la fecha en que se agregó. */
     public String getFechaAgregado() { return fechaAgregado; }
