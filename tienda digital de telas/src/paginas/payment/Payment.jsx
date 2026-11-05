@@ -73,6 +73,18 @@ function Payment() {
             return;
         }
 
+        if (!user?.id) {
+            showNotification('error', 'Debes iniciar sesión para procesar el pago.');
+            navigate('/login');
+            return;
+        }
+
+        if (!customerInfo || !customerInfo.address || !customerInfo.phone || !customerInfo.city) {
+            showNotification('error', 'Completa primero los datos de envío en el checkout.');
+            navigate('/checkout');
+            return;
+        }
+
         setIsProcessing(true);
         try {
             const intencion = await crearIntencionPagoWompi({
@@ -80,16 +92,9 @@ function Payment() {
                     productId: it.id,
                     quantity: it.quantity || 1
                 })),
-                customerInfo: customerInfo || {
-                    fullName: user?.nombre || user?.name || 'Cliente D&D Textil',
-                    email: user?.email || user?.correo || 'cliente@tienda.com',
-                    phone: user?.telefono || '3001234567',
-                    address: 'Cra. 52 (Carabobo) # 48-30',
-                    city: 'Medellín',
-                    state: 'Antioquia'
-                },
+                customerInfo,
                 couponCode: appliedCoupon?.code || null,
-                userId: user?.id || 1
+                userId: user.id
             });
 
             // Guardar para respaldo local
