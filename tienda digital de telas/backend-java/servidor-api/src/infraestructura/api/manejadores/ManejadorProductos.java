@@ -108,13 +108,17 @@ public class ManejadorProductos extends ManejadorBase {
             }
 
         } else if (ruta.matches("^/api/(products|productos)/\\d+/?$")) {
+            if (dao.obtenerProductoPorId(idProducto) == null) {
+                enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
+                return;
+            }
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             Producto actualizaciones = gson.fromJson(json, Producto.class);
             Boolean destacado = json.has("featured") ? json.get("featured").getAsBoolean()
                               : (json.has("destacado") ? json.get("destacado").getAsBoolean() : null);
             boolean exito = dao.actualizarProducto(idProducto, actualizaciones, destacado);
-            enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error al actualizar\"}");
+            enviarRespuestaJson(intercambio, exito ? 200 : 404, exito ? "{\"success\":true}" : "{\"error\":\"Producto no encontrado\"}");
 
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
@@ -135,8 +139,12 @@ public class ManejadorProductos extends ManejadorBase {
     private void manejarDelete(HttpExchange intercambio, String ruta, ProductoDAO dao, Gson gson) throws Exception {
         int idProducto = extraerIdRuta(ruta);
         if (idProducto > 0) {
+            if (dao.obtenerProductoPorId(idProducto) == null) {
+                enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
+                return;
+            }
             boolean exito = dao.eliminarProducto(idProducto);
-            enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error al eliminar producto\"}");
+            enviarRespuestaJson(intercambio, exito ? 200 : 404, exito ? "{\"success\":true}" : "{\"error\":\"Producto no encontrado\"}");
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
         }
