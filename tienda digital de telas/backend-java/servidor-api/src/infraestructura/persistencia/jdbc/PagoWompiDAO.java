@@ -324,10 +324,10 @@ public class PagoWompiDAO {
                 String nuevoEstadoWompi = tx.estado() != null ? tx.estado().toUpperCase() : "PENDING";
 
                 if ("APPROVED".equals(nuevoEstadoWompi)) {
-                    if (montoCentavosEsperado > 0 && (tx.montoEnCentavos() != montoCentavosEsperado || !monedaEsperada.equalsIgnoreCase(tx.moneda()))) {
+                    if (montoCentavosEsperado > 0 && (tx.montoCentavos() != montoCentavosEsperado || !monedaEsperada.equalsIgnoreCase(tx.moneda()))) {
                         System.err.println("[WOMPI SEGURIDAD] Monto o moneda discordante en webhook para " + tx.referencia()
                                 + ". Esperado: " + montoCentavosEsperado + " " + monedaEsperada
-                                + ", Recibido: " + tx.montoEnCentavos() + " " + tx.moneda());
+                                + ", Recibido: " + tx.montoCentavos() + " " + tx.moneda());
                         registrarEvento(con, tx.referencia(), tx.id(), nuevoEstadoWompi, "webhook", "MONTO_O_MONEDA_DISCORDANTE", payloadRaw);
                         con.commit();
                         return false;
