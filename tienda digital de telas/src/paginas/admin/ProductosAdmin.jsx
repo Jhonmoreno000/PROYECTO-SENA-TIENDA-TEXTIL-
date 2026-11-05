@@ -226,9 +226,9 @@ export default function ProductosAdmin() {
     reader.readAsDataURL(file);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      deleteProduct(id);
+  const handleDelete = async (id) => {
+    const eliminado = await deleteProduct(id);
+    if (eliminado) {
       showNotification('success', 'Producto eliminado exitosamente');
     }
   };

@@ -170,10 +170,10 @@ export default function PanelVendedor() {
 
   // ── Handlers de edición inline ─────────────────────────────────────────
 
-  /** Elimina un producto tras confirmación del usuario */
-  const deleteItem = (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
-      deleteProduct(id);
+  /** Elimina un producto y notifica el resultado */
+  const deleteItem = async (id) => {
+    const eliminado = await deleteProduct(id);
+    if (eliminado) {
       showNotification('success', 'Producto eliminado');
     }
   };

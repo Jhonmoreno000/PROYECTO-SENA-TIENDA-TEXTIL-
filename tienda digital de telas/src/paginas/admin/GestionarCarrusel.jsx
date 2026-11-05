@@ -97,7 +97,6 @@ function GestionarCarrusel() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('¿Eliminar este slide?')) return;
         try {
             const res = await fetch(getApiUrl(`/api/carrusel/${id}`), { method: 'DELETE' });
             if (res.ok) {
