@@ -117,9 +117,17 @@ public class ManejadorPedidos extends ManejadorBase {
                     return;
                 }
 
-                String estado = objetoJson.has("status") ? objetoJson.get("status").getAsString() 
-                              : (objetoJson.has("estado") ? objetoJson.get("estado").getAsString() : "pending");
-                boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado);
+                String estado = (objetoJson.has("status") && !objetoJson.get("status").isJsonNull()) ? objetoJson.get("status").getAsString()
+                              : ((objetoJson.has("estado") && !objetoJson.get("estado").isJsonNull()) ? objetoJson.get("estado").getAsString() : null);
+                java.util.Set<String> estadosValidos = java.util.Set.of(
+                        "pending", "paid", "confirmed", "cutting", "packed", "shipped", "delivered", "cancelled",
+                        "pendiente", "pagado", "confirmado", "en corte", "empacado", "enviado", "entregado", "cancelado"
+                );
+                if (estado == null || !estadosValidos.contains(estado.trim().toLowerCase())) {
+                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Estado de pedido inválido o faltante\"}");
+                    return;
+                }
+                boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado.trim().toLowerCase());
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando estado del pedido\"}");
             } else {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
