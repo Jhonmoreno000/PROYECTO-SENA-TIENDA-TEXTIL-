@@ -214,8 +214,33 @@ export function MetricsProvider({ children }) {
     const [productDiscounts,  setProductDiscounts]  = useState({});
     // Configuración del sistema (nombre, colores, tasas, etc.)
     const [systemConfig,      setSystemConfig]      = useState(defaultSystemConfig);
-    // Lista de deseos de usuarios
-    const [wishlistItems,     setWishlistItems]     = useState([]);
+    // Lista de deseos persistida en localStorage por usuario
+    const wishlistStorageKey = user?.id ? `wishlist_${user.id}` : 'wishlist_guest';
+    const [wishlistItems, setWishlistItems] = useState(() => {
+        try {
+            const raw = window.localStorage.getItem(wishlistStorageKey);
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        try {
+            const raw = window.localStorage.getItem(wishlistStorageKey);
+            setWishlistItems(raw ? JSON.parse(raw) : []);
+        } catch {
+            setWishlistItems([]);
+        }
+    }, [wishlistStorageKey]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(wishlistStorageKey, JSON.stringify(wishlistItems));
+        } catch (e) {
+            console.error('Error guardando wishlist en localStorage:', e);
+        }
+    }, [wishlistStorageKey, wishlistItems]);
     // Métricas de ventas para ERP (si aplica)
     const [erpSalesMetrics,   setErpSalesMetrics]   = useState([]);
     // Notificaciones del ERP
