@@ -8,7 +8,7 @@
  *
  * ¿Cómo funciona?
  *  1. Cuando el usuario escribe su correo y contraseña, llamamos a la API
- *     del backend Java (POST /api/login) para verificar que son correctos.
+ *     del backend Java (POST /api/iniciar-sesion) para verificar que son correctos.
  *  2. Si el login es exitoso, guardamos los datos del usuario en localStorage
  *     (la memoria del navegador) para que no se pierdan al recargar la página.
  *  3. Los datos del usuario están disponibles en toda la app a través del hook

@@ -12,7 +12,7 @@
  * ¿Cómo se usa?
  *  const { products, loading, updateProduct } = useProductos();
  *
- * Endpoint de la API: GET http://localhost:8081/api/products
+ * Endpoint de la API: GET /api/productos
  */
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';

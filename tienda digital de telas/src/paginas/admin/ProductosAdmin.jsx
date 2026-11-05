@@ -12,7 +12,7 @@
  *  - Eliminar un producto de la tienda
  *
  * ¿De dónde vienen los datos?
- *  - useProductos() → se conecta al backend Java (http://localhost:8081/api/products)
+ *  - useProductos() → se conecta al backend Java (/api/productos)
  *    y trae todos los productos que están en la base de datos PostgreSQL
  *  - useNotificacion() → para mostrar mensajes de "Guardado exitosamente" o errores
  *
