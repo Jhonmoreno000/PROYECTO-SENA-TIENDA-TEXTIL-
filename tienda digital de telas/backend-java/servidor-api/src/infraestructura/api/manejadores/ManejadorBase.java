@@ -91,7 +91,8 @@ public abstract class ManejadorBase implements HttpHandler {
         try {
             procesarPeticion(intercambio);
             long duracionMs = System.currentTimeMillis() - tiempoInicio;
-            registrarLogJson("INFO", "Petición procesada exitosamente en " + duracionMs + " ms", correlationId, intercambio, 200);
+            int codigoReal = intercambio.getResponseCode() > 0 ? intercambio.getResponseCode() : 200;
+            registrarLogJson("INFO", "Petición procesada en " + duracionMs + " ms", correlationId, intercambio, codigoReal);
         } catch (ExcepcionDominio e) {
             registrarLogJson("WARN", "Error de Regla de Negocio: " + e.getMessage(), correlationId, intercambio, 400);
             enviarRespuestaError(intercambio, 400, e.getMessage());
