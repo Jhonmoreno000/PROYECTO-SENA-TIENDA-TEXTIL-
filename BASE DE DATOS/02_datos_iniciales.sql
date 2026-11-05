@@ -2,39 +2,9 @@
 -- 02_datos_iniciales.sql — Población de Datos Iniciales para D&D Textil
 -- ============================================================================
 
--- Compatibilidad de columnas alias en caso de consultas en inglés/español
-DO $$
-BEGIN
-    -- usuarios
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS name VARCHAR(100);
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email VARCHAR(150);
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS role VARCHAR(50);
-    UPDATE usuarios SET name = nombre, email = correo, role = rol;
-
-    -- Actualizar contrasenas por defecto con sus hashes SHA-256 en UTF-8
-    UPDATE usuarios SET contrasena_hash = '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044' WHERE correo IN ('vendedor@ddtextil.com', 'maria.gonzalez@ddtextil.com');
-    UPDATE usuarios SET contrasena_hash = '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9' WHERE correo IN ('cliente@gmail.com', 'cliente@ddtextil.com');
-    INSERT INTO usuarios (nombre, correo, contrasena_hash, rol, activo) VALUES
-    ('Cliente Demo', 'cliente@ddtextil.com', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true)
-    ON CONFLICT (correo) DO UPDATE SET contrasena_hash = EXCLUDED.contrasena_hash;
-
-    -- diapositivas_carrusel
-    ALTER TABLE diapositivas_carrusel ADD COLUMN IF NOT EXISTS image TEXT;
-    ALTER TABLE diapositivas_carrusel ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
-
-    -- cupones
-    ALTER TABLE cupones ADD COLUMN IF NOT EXISTS code VARCHAR(50);
-    ALTER TABLE cupones ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
-    UPDATE cupones SET code = codigo, active = activo;
-
-    -- secciones_inicio
-    ALTER TABLE secciones_inicio ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
-    UPDATE secciones_inicio SET active = activo;
-
-    -- notificaciones_sistema_erp
-    ALTER TABLE notificaciones_sistema_erp ADD COLUMN IF NOT EXISTS type VARCHAR(50);
-    UPDATE notificaciones_sistema_erp SET type = tipo;
-END $$;
+-- Asegurar hashes SHA-256 en UTF-8 para las cuentas iniciales
+UPDATE usuarios SET contrasena_hash = '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044' WHERE correo IN ('vendedor@ddtextil.com', 'maria.gonzalez@ddtextil.com');
+UPDATE usuarios SET contrasena_hash = '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9' WHERE correo IN ('cliente@gmail.com', 'cliente@ddtextil.com');
 
 -- 1. PRODUCTOS
 INSERT INTO productos (id, nombre, categoria_id, precio, vendedor_id, descripcion, material, ancho, peso, cuidados, stock, destacado, activo, estado_moderacion, es_nueva_coleccion, es_exclusivo, es_oferta) VALUES
@@ -82,19 +52,17 @@ INSERT INTO imagenes_producto (producto_id, url_imagen, orden_visualizacion) VAL
 (13, '/uploads/product_13_1777056293881.jpg', 0);
 
 -- 3. DIAPOSITIVAS DEL CARRUSEL
-INSERT INTO diapositivas_carrusel (id, titulo, subtitulo, imagen, image, cta, clave_seccion, activo, active, orden) VALUES
-(1, 'Nueva Colección 2026', 'Tendencias exclusivas en telas premium', '/images/carousel-nueva-coleccion.png', '/images/carousel-nueva-coleccion.png', 'Ver Más', 'nuevas', true, true, 1),
-(2, 'Telas Exclusivas', 'Diseños únicos para proyectos especiales', '/images/carousel-telas-exclusivas.png', '/images/carousel-telas-exclusivas.png', 'Explorar', 'exclusivas', true, true, 2),
-(3, 'Ofertas Especiales', 'Descuentos increíbles en telas seleccionadas', '/images/carousel-ofertas-especiales.png', '/images/carousel-ofertas-especiales.png', 'Ver Ofertas', 'ofertas', true, true, 3)
+INSERT INTO diapositivas_carrusel (id, titulo, subtitulo, imagen, cta, clave_seccion, activo, orden) VALUES
+(1, 'Nueva Colección 2026', 'Tendencias exclusivas en telas premium', '/images/carousel-nueva-coleccion.webp', 'Ver Más', 'nuevas', true, 1),
+(2, 'Telas Exclusivas', 'Diseños únicos para proyectos especiales', '/images/carousel-telas-exclusivas.webp', 'Explorar', 'exclusivas', true, 2),
+(3, 'Ofertas Especiales', 'Descuentos increíbles en telas seleccionadas', '/images/carousel-ofertas-especiales.webp', 'Ver Ofertas', 'ofertas', true, 3)
 ON CONFLICT (id) DO UPDATE SET
     titulo = EXCLUDED.titulo,
     subtitulo = EXCLUDED.subtitulo,
     imagen = EXCLUDED.imagen,
-    image = EXCLUDED.image,
     cta = EXCLUDED.cta,
     clave_seccion = EXCLUDED.clave_seccion,
     activo = EXCLUDED.activo,
-    active = EXCLUDED.active,
     orden = EXCLUDED.orden;
 
 SELECT pg_catalog.setval('public.diapositivas_carrusel_id_seq', 3, true);
@@ -135,7 +103,7 @@ INSERT INTO inventario_telas_erp (sku, nombre_tela, categoria, proveedor, metros
 ON CONFLICT (sku) DO NOTHING;
 
 -- 8. NOTIFICACIONES ERP
-INSERT INTO notificaciones_sistema_erp (tipo, type, titulo, mensaje, leido) VALUES
-('warning', 'warning', 'Retraso de Proveedor', 'El envío de Seda Pura desde Italia presenta 2 días de retraso.', false),
-('success', 'success', 'Pedido Mayorista B2B', 'Textiles Premium SAS solicitó 500m de Lino Blanco.', false),
-('info', 'info', 'Reporte Semanal Generado', 'El balance de ventas semanales está listo para descarga.', false);
+INSERT INTO notificaciones_sistema_erp (tipo, titulo, mensaje, leido) VALUES
+('warning', 'Retraso de Proveedor', 'El envío de Seda Pura desde Italia presenta 2 días de retraso.', false),
+('success', 'Pedido Mayorista B2B', 'Textiles Premium SAS solicitó 500m de Lino Blanco.', false),
+('info', 'Reporte Semanal Generado', 'El balance de ventas semanales está listo para descarga.', false);

@@ -12,9 +12,9 @@
  * Orden actual (de afuera hacia adentro):
  *  1. NotificationProvider → debe ser el primero porque los demás lo usan para mostrar errores
  *  2. AuthProvider         → gestiona la sesión del usuario (necesita las notificaciones)
- *  3. MetricsProvider      → trae datos de pedidos y usuarios de la API
- *  4. CartProvider         → maneja el carrito de compras
- *  5. ProductProvider      → trae el catálogo de productos de la API
+ *  3. ProductProvider      → trae el catálogo de productos de la API
+ *  4. MetricsProvider      → trae datos de pedidos y usuarios de la API
+ *  5. CartProvider         → maneja el carrito de compras
  *  6. UIProvider           → controla el carrusel y la visibilidad de secciones del Inicio
  */
 

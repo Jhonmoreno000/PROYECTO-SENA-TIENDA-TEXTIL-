@@ -8,7 +8,7 @@
  *
  * ¿Cómo funciona?
  *  1. Cuando el usuario escribe su correo y contraseña, llamamos a la API
- *     del backend Java (POST /api/login) para verificar que son correctos.
+ *     del backend Java (POST /api/iniciar-sesion) para verificar que son correctos.
  *  2. Si el login es exitoso, guardamos los datos del usuario en localStorage
  *     (la memoria del navegador) para que no se pierdan al recargar la página.
  *  3. Los datos del usuario están disponibles en toda la app a través del hook
@@ -131,7 +131,8 @@ export function AuthProvider({ children }) {
                     email: userData.email || userData.correo,
                     correo: userData.email || userData.correo,
                     password: userData.password || userData.contrasena,
-                    contrasena: userData.password || userData.contrasena
+                    contrasena: userData.password || userData.contrasena,
+                    aceptaHabeasData: Boolean(userData.aceptaHabeasData)
                 })
             });
 
@@ -218,32 +219,6 @@ export function AuthProvider({ children }) {
         } catch (error) {
             console.error('Error al iniciar sesión con SSO:', error);
             const isNetworkError = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError');
-
-            // Si estamos en desarrollo o el backend local no responde, permitir sesión de desarrollo
-            if (isNetworkError || import.meta.env.DEV) {
-                const nombreUsuario = ssoData.nombre || ssoData.name || ('Usuario ' + (ssoData.proveedor || 'SSO'));
-                const loggedInUser = {
-                    id: 9999,
-                    name: nombreUsuario,
-                    nombre: nombreUsuario,
-                    email: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
-                    correo: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
-                    role: 'cliente',
-                    rol: 'cliente',
-                    proveedor: ssoData.proveedor
-                };
-
-                try {
-                    window.localStorage.setItem('authUser', JSON.stringify(loggedInUser));
-                } catch (e) {
-                    console.error('Error guardando en localStorage:', e);
-                }
-
-                setUser(loggedInUser);
-                showNotification('success', `¡Bienvenido ${loggedInUser.name}! (Conectado con ${ssoData.proveedor || 'SSO'})`);
-                return { success: true, user: loggedInUser };
-            }
-
             const msg = isNetworkError
                 ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : 'Error al conectar con el servidor';
@@ -260,6 +235,13 @@ export function AuthProvider({ children }) {
         setIsLoggingOut(true);
         setTimeout(() => {
             setUser(null);           // Borramos el usuario del estado y del localStorage
+            try {
+                window.localStorage.removeItem('cart');
+                window.localStorage.removeItem('applied_coupon');
+                window.dispatchEvent(new Event('auth-logout'));
+            } catch (e) {
+                console.error('Error limpiando carrito en logout:', e);
+            }
             setIsLoggingOut(false);  // Ocultamos la animación de logout
             showNotification('info', 'Has cerrado sesión');
         }, 2500); // Esperamos 2.5 segundos para que se vea la animación

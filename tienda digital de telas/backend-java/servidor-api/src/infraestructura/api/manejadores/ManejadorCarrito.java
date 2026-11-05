@@ -39,8 +39,7 @@ public class ManejadorCarrito extends ManejadorBase {
 
         // POST /api/cart o /api/carrito
         } else if ("POST".equals(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -71,22 +70,14 @@ public class ManejadorCarrito extends ManejadorBase {
 
         // PUT /api/cart/{id} o /api/carrito/{id}
         } else if ("PUT".equals(metodo)) {
-            String[] segmentos = ruta.split("/");
-            int idItem = -1;
-            for (String segmento : segmentos) {
-                if (segmento.matches("\\d+")) {
-                    idItem = Integer.parseInt(segmento);
-                    break;
-                }
-            }
+            int idItem = extraerIdRuta(ruta);
 
             if (idItem <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de ítem inválido\"}");
                 return;
             }
 
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -110,14 +101,7 @@ public class ManejadorCarrito extends ManejadorBase {
 
         // DELETE /api/cart/{id} o /api/carrito/vaciar/{idUsuario}
         } else if ("DELETE".equals(metodo)) {
-            String[] segmentos = ruta.split("/");
-            int identificador = -1;
-            for (String segmento : segmentos) {
-                if (segmento.matches("\\d+")) {
-                    identificador = Integer.parseInt(segmento);
-                    break;
-                }
-            }
+            int identificador = extraerIdRuta(ruta);
 
             if (identificador <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador inválido en la ruta\"}");

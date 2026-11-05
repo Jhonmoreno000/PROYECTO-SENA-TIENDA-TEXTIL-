@@ -20,12 +20,14 @@ import { useGSAP } from '@gsap/react';
 import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { calculateWastePercentage } from '../../../utilidades/inventoryUtils';
 import enlacesAdmin from '../../../datos/enlacesAdmin';
 import { formatCurrency } from '../../../utilidades/formateadores';
 
 function ControlLotes() {
     const { inventoryBatches, wasteEvents, updateBatch, addBatch } = useMetricas();
+    const { showNotification } = useNotificacion();
     
     const [filterType, setFilterType] = useState('all');
     const [deadStockThreshold, setDeadStockThreshold] = useState(30); 
@@ -119,7 +121,7 @@ function ControlLotes() {
                             </p>
                         </div>
                         <button
-                            onClick={() => alert('Abrir modal de Nuevo Lote')}
+                            onClick={() => showNotification('info', 'Usa el registro de lotes para ingresar un nuevo rollo al almacén')}
                             className="flex items-center gap-2 px-6 py-3 bg-[#f97316] text-white rounded-xl hover:bg-[#ea580c] transition-colors shadow-[0_0_20px_rgba(249,115,22,0.3)] font-bold shrink-0 w-full sm:w-auto justify-center"
                         >
                             <Plus className="w-5 h-5" />

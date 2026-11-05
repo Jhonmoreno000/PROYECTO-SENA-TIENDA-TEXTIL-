@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.UUID;
 
 import aplicacion.servicios.ServicioCriptoWompi;
 import dominio.excepciones.ExcepcionDominio;
@@ -103,7 +103,7 @@ public class PagoWompiDAO {
                                 throw new ExcepcionDominio("El producto '" + rs.getString("nombre") + "' no está disponible.");
                             }
 
-                            int stockDisponible = rs.getInt("stock");
+                            double stockDisponible = rs.getDouble("stock");
                             if (stockDisponible < metros) {
                                 throw new ExcepcionDominio("Stock insuficiente para '" + rs.getString("nombre") + "'. Disponibles: " + stockDisponible + " metros.");
                             }
@@ -154,16 +154,35 @@ public class PagoWompiDAO {
 
                 double subtotalConDescuento = Math.max(0.0, subtotal - descuento);
 
-                // 3. Envío e IVA
-                // Envío gratis si el subtotal con descuento supera los $100.000 COP
-                double costoEnvio = subtotalConDescuento >= 100000.0 ? 0.0 : 15000.0;
-                double iva = Math.round((subtotalConDescuento * 0.19) * 100.0) / 100.0;
+                // 3. Envío e IVA (leídos desde configuracion_sistema con respaldo en $200.000 / $15.000 / 19%)
+                double umbralEnvioGratis = 200000.0;
+                double costoEnvioBase = 15000.0;
+                double tasaImpuesto = 0.19;
+                try (PreparedStatement pstCfg = con.prepareStatement("SELECT valor FROM configuracion_sistema WHERE clave = 'system_config'");
+                     ResultSet rsCfg = pstCfg.executeQuery()) {
+                    if (rsCfg.next() && rsCfg.getString("valor") != null) {
+                        com.google.gson.JsonObject cfg = com.google.gson.JsonParser.parseString(rsCfg.getString("valor")).getAsJsonObject();
+                        if (cfg.has("freeShippingThreshold") && !cfg.get("freeShippingThreshold").isJsonNull()) {
+                            umbralEnvioGratis = cfg.get("freeShippingThreshold").getAsDouble();
+                        }
+                        if (cfg.has("shippingCost") && !cfg.get("shippingCost").isJsonNull()) {
+                            costoEnvioBase = cfg.get("shippingCost").getAsDouble();
+                        }
+                        if (cfg.has("taxRate") && !cfg.get("taxRate").isJsonNull()) {
+                            tasaImpuesto = cfg.get("taxRate").getAsDouble();
+                        }
+                    }
+                } catch (Exception ignored) {}
+
+                double costoEnvio = subtotalConDescuento >= umbralEnvioGratis ? 0.0 : costoEnvioBase;
+                double iva = Math.round((subtotalConDescuento * tasaImpuesto) * 100.0) / 100.0;
                 double total = Math.round((subtotalConDescuento + costoEnvio + iva) * 100.0) / 100.0;
 
                 long montoCentavos = Math.round(total * 100.0);
 
                 // 4. Generar referencia única
-                String referencia = "DD-" + System.currentTimeMillis() + "-" + String.format("%04d", new Random().nextInt(10000));
+                String sufijoUuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+                String referencia = "DD-" + System.currentTimeMillis() + "-" + sufijoUuid;
 
                 // 5. Guardar Pedido en PostgreSQL con estado 'pending'
                 String sqlInsertPedido = "INSERT INTO pedidos (" +
@@ -259,7 +278,7 @@ public class PagoWompiDAO {
             return false;
         }
 
-        String sqlBloqueo = "SELECT id, estado, estado_pago, codigo_cupon FROM pedidos WHERE referencia_pago = ? FOR UPDATE";
+        String sqlBloqueo = "SELECT id, estado, estado_pago, codigo_cupon, monto_centavos, moneda FROM pedidos WHERE referencia_pago = ? FOR UPDATE";
 
         try (Connection con = Conexion.obtenerConexion()) {
             con.setAutoCommit(false);
@@ -268,6 +287,8 @@ public class PagoWompiDAO {
                 String estadoActual = null;
                 String estadoPagoActual = null;
                 String codigoCuponUsado = null;
+                long montoCentavosEsperado = 0L;
+                String monedaEsperada = "COP";
 
                 try (PreparedStatement pst = con.prepareStatement(sqlBloqueo)) {
                     pst.setString(1, tx.referencia());
@@ -277,6 +298,10 @@ public class PagoWompiDAO {
                             estadoActual = rs.getString("estado");
                             estadoPagoActual = rs.getString("estado_pago");
                             codigoCuponUsado = rs.getString("codigo_cupon");
+                            montoCentavosEsperado = rs.getLong("monto_centavos");
+                            if (rs.getString("moneda") != null) {
+                                monedaEsperada = rs.getString("moneda");
+                            }
                         }
                     }
                 }
@@ -299,6 +324,14 @@ public class PagoWompiDAO {
                 String nuevoEstadoWompi = tx.estado() != null ? tx.estado().toUpperCase() : "PENDING";
 
                 if ("APPROVED".equals(nuevoEstadoWompi)) {
+                    if (montoCentavosEsperado > 0 && (tx.montoCentavos() != montoCentavosEsperado || !monedaEsperada.equalsIgnoreCase(tx.moneda()))) {
+                        System.err.println("[WOMPI SEGURIDAD] Monto o moneda discordante en webhook para " + tx.referencia()
+                                + ". Esperado: " + montoCentavosEsperado + " " + monedaEsperada
+                                + ", Recibido: " + tx.montoCentavos() + " " + tx.moneda());
+                        registrarEvento(con, tx.referencia(), tx.id(), nuevoEstadoWompi, "webhook", "MONTO_O_MONEDA_DISCORDANTE", payloadRaw);
+                        con.commit();
+                        return false;
+                    }
                     // Actualizar pedido a PAGADO
                     String sqlActualizarPedido = "UPDATE pedidos SET estado = 'paid', estado_pago = 'APPROVED', " +
                             "wompi_transaccion_id = ?, metodo_pago = ?, pagado_en = NOW(), actualizado_en = NOW() WHERE id = ?";
@@ -311,7 +344,7 @@ public class PagoWompiDAO {
 
                     // Descontar inventario de metros en PostgreSQL
                     String sqlItems = "SELECT producto_id, cantidad FROM items_pedido WHERE pedido_id = ?";
-                    String sqlDescontarStock = "UPDATE productos SET stock = GREATEST(0, stock - CAST(? AS INTEGER)), actualizado_en = NOW() WHERE id = ?";
+                    String sqlDescontarStock = "UPDATE productos SET stock = GREATEST(0, stock - ?), actualizado_en = NOW() WHERE id = ?";
 
                     try (PreparedStatement pstItems = con.prepareStatement(sqlItems);
                          PreparedStatement pstStock = con.prepareStatement(sqlDescontarStock)) {

@@ -21,6 +21,7 @@ public class App {
         } catch (Exception e) {
             System.err.println("Error al iniciar el servidor de backend: " + e.getMessage());
             e.printStackTrace();
+            System.exit(1);
         }
     }
 }

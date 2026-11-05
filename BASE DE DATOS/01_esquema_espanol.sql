@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre VARCHAR(100) NOT NULL,
     correo VARCHAR(150) NOT NULL UNIQUE,
     contrasena_hash VARCHAR(255) NOT NULL,
-    rol VARCHAR(50) DEFAULT 'cliente',
+    rol VARCHAR(50) DEFAULT 'cliente' CHECK (rol IN ('administrador', 'vendedor', 'cliente')),
     activo BOOLEAN DEFAULT true,
     suspendido BOOLEAN DEFAULT false,
     motivo_suspension TEXT,
@@ -37,14 +37,14 @@ CREATE TABLE IF NOT EXISTS productos (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
     categoria_id INTEGER REFERENCES categorias(id) ON DELETE SET NULL,
-    precio NUMERIC(12,2) NOT NULL,
+    precio NUMERIC(12,2) NOT NULL CHECK (precio >= 0),
     vendedor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     descripcion TEXT,
     material VARCHAR(100),
     ancho VARCHAR(50),
     peso VARCHAR(50),
     cuidados TEXT,
-    stock INTEGER DEFAULT 0,
+    stock NUMERIC(10,2) DEFAULT 0.00 CHECK (stock >= 0),
     destacado BOOLEAN DEFAULT false,
     activo BOOLEAN DEFAULT true,
     estado_moderacion VARCHAR(50) DEFAULT 'approved',
@@ -158,9 +158,10 @@ CREATE TABLE IF NOT EXISTS items_carrito (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-    cantidad INTEGER DEFAULT 1 NOT NULL,
+    cantidad NUMERIC(10,2) DEFAULT 1.00 NOT NULL CHECK (cantidad > 0),
     agregado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP
+    actualizado_en TIMESTAMP,
+    UNIQUE (usuario_id, producto_id)
 );
 
 -- 13. TABLA: resenas
@@ -170,7 +171,8 @@ CREATE TABLE IF NOT EXISTS resenas (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     calificacion INTEGER CHECK (calificacion >= 1 AND calificacion <= 5),
     comentario TEXT NOT NULL,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (producto_id, usuario_id)
 );
 
 -- 14. TABLA: tickets_soporte
@@ -283,6 +285,14 @@ CREATE TABLE IF NOT EXISTS actividad_reciente (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Índices en claves foráneas de alta frecuencia de consulta
+CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_id ON pedidos(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_items_pedido_pedido_id ON items_pedido(pedido_id);
+CREATE INDEX IF NOT EXISTS idx_items_carrito_usuario_id ON items_carrito(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_resenas_producto_id ON resenas(producto_id);
+CREATE INDEX IF NOT EXISTS idx_productos_vendedor_id ON productos(vendedor_id);
+CREATE INDEX IF NOT EXISTS idx_imagenes_producto_producto_id ON imagenes_producto(producto_id);
+
 -- ============================================================================
 -- DATOS INICIALES EN ESPAÑOL
 -- ============================================================================
@@ -317,8 +327,9 @@ INSERT INTO cupones (codigo, valor_descuento, usos_maximos, activo) VALUES
 ('BIENVENIDA20', 20.0, 50, true)
 ON CONFLICT (codigo) DO NOTHING;
 
-INSERT INTO banner_global (activo, mensaje, tipo_banner) VALUES
-(true, '¡Envío gratis en compras superiores a $200.000 COP a todo el país!', 'info');
+INSERT INTO banner_global (activo, mensaje, tipo_banner)
+SELECT true, '¡Envío gratis en compras superiores a $200.000 COP a todo el país!', 'info'
+WHERE NOT EXISTS (SELECT 1 FROM banner_global);
 
 INSERT INTO configuracion_sistema (clave, valor) VALUES
 ('system_config', '{"siteName":"D&D Textil","defaultDarkMode":false,"primaryColor":"#8B5CF6","secondaryColor":"#EC4899","accentColor":"#F59E0B","taxRate":0.19,"shippingCost":15000,"freeShippingThreshold":200000,"lowStockThreshold":20,"maintenanceMode":false}')
@@ -345,4 +356,18 @@ CREATE TABLE IF NOT EXISTS inventario_telas_erp (
     metros_minimos NUMERIC(10,2) DEFAULT 20.00,
     costo_por_metro NUMERIC(12,2) DEFAULT 0.00,
     fecha_ultima_reposicion DATE
+);
+
+-- 26. TABLA: rollos_textil
+CREATE TABLE IF NOT EXISTS rollos_textil (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    codigo_rollo VARCHAR(50) NOT NULL UNIQUE,
+    metraje_inicial NUMERIC(10,2) NOT NULL CHECK (metraje_inicial >= 0),
+    metraje_remanente NUMERIC(10,2) NOT NULL CHECK (metraje_remanente >= 0),
+    lote_tintoreria VARCHAR(50),
+    estado VARCHAR(50) DEFAULT 'disponible',
+    ubicacion_bodega VARCHAR(100),
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

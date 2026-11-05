@@ -57,8 +57,7 @@ public class ManejadorConfiguracion extends ManejadorBase {
 
         // POST — Crea o actualiza una configuración (key/value o clave/valor en el cuerpo)
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json;
             try {
                 json = JsonParser.parseString(cuerpo).getAsJsonObject();

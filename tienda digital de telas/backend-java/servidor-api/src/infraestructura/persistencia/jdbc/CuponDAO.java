@@ -22,7 +22,7 @@ public class CuponDAO {
      */
     public List<Cupon> obtenerTodosLosCupones() {
         List<Cupon> cupones = new ArrayList<>();
-        String consulta = "SELECT id, code, tipo_descuento, valor_descuento, expira_en, compra_minima, usos_maximos, solo_primera_vez, conteo_usos, active FROM cupones ORDER BY id DESC";
+        String consulta = "SELECT id, codigo, tipo_descuento, valor_descuento, expira_en, compra_minima, usos_maximos, solo_primera_vez, conteo_usos, activo FROM cupones ORDER BY id DESC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -31,7 +31,7 @@ public class CuponDAO {
             while (rs.next()) {
                 Cupon cupon = new Cupon();
                 cupon.setId(rs.getInt("id"));
-                cupon.setCodigo(rs.getString("code"));
+                cupon.setCodigo(rs.getString("codigo"));
                 cupon.setTipoDescuento(rs.getString("tipo_descuento"));
                 cupon.setValorDescuento(rs.getDouble("valor_descuento"));
                 
@@ -40,7 +40,7 @@ public class CuponDAO {
                 }
 
                 cupon.setConteoUso(rs.getInt("conteo_usos"));
-                cupon.setActivo(rs.getBoolean("active"));
+                cupon.setActivo(rs.getBoolean("activo"));
 
                 double minP = rs.getDouble("compra_minima");
                 if (!rs.wasNull()) {
@@ -66,35 +66,33 @@ public class CuponDAO {
      * Inserta un nuevo cupón en la base de datos.
      */
     public boolean agregarCupon(Cupon cupon) {
-        String consulta = "INSERT INTO cupones (codigo, code, tipo_descuento, valor_descuento, expira_en, compra_minima, usos_maximos, solo_primera_vez, activo, active) VALUES (?, ?, ?, ?, CAST(? AS TIMESTAMP), ?, ?, ?, ?, ?)";
+        String consulta = "INSERT INTO cupones (codigo, tipo_descuento, valor_descuento, expira_en, compra_minima, usos_maximos, solo_primera_vez, activo) VALUES (?, ?, ?, CAST(? AS TIMESTAMP), ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, cupon.getCodigo());
-            pst.setString(2, cupon.getCodigo());
-            pst.setString(3, cupon.getTipoDescuento());
-            pst.setDouble(4, cupon.getValorDescuento());
+            pst.setString(2, cupon.getTipoDescuento());
+            pst.setDouble(3, cupon.getValorDescuento());
             
             if (cupon.getFechaExpiracion() != null && !cupon.getFechaExpiracion().isEmpty()) {
-                pst.setString(5, cupon.getFechaExpiracion() + " 23:59:59");
+                pst.setString(4, cupon.getFechaExpiracion() + " 23:59:59");
             } else {
-                pst.setNull(5, Types.TIMESTAMP);
+                pst.setNull(4, Types.TIMESTAMP);
             }
 
             if (cupon.getReglas().getCompraMinima() != null) {
-                pst.setDouble(6, cupon.getReglas().getCompraMinima());
+                pst.setDouble(5, cupon.getReglas().getCompraMinima());
             } else {
-                pst.setNull(6, Types.NUMERIC);
+                pst.setNull(5, Types.NUMERIC);
             }
 
             if (cupon.getReglas().getUsosMaximos() != null) {
-                pst.setInt(7, cupon.getReglas().getUsosMaximos());
+                pst.setInt(6, cupon.getReglas().getUsosMaximos());
             } else {
-                pst.setNull(7, Types.INTEGER);
+                pst.setNull(6, Types.INTEGER);
             }
 
-            pst.setBoolean(8, cupon.getReglas().isSoloPrimeraCompra());
-            pst.setBoolean(9, true);
-            pst.setBoolean(10, true);
+            pst.setBoolean(7, cupon.getReglas().isSoloPrimeraCompra());
+            pst.setBoolean(8, true);
 
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -107,7 +105,7 @@ public class CuponDAO {
      * Desactiva un cupón existente (soft-delete).
      */
     public boolean desactivarCupon(int id) {
-        String consulta = "UPDATE cupones SET activo = false, active = false WHERE id = ?";
+        String consulta = "UPDATE cupones SET activo = false WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, id);

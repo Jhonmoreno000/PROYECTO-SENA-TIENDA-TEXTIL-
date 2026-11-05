@@ -91,10 +91,14 @@ public abstract class ManejadorBase implements HttpHandler {
         try {
             procesarPeticion(intercambio);
             long duracionMs = System.currentTimeMillis() - tiempoInicio;
-            registrarLogJson("INFO", "Petición procesada exitosamente en " + duracionMs + " ms", correlationId, intercambio, 200);
+            int codigoReal = intercambio.getResponseCode() > 0 ? intercambio.getResponseCode() : 200;
+            registrarLogJson("INFO", "Petición procesada en " + duracionMs + " ms", correlationId, intercambio, codigoReal);
         } catch (ExcepcionDominio e) {
             registrarLogJson("WARN", "Error de Regla de Negocio: " + e.getMessage(), correlationId, intercambio, 400);
             enviarRespuestaError(intercambio, 400, e.getMessage());
+        } catch (com.google.gson.JsonParseException e) {
+            registrarLogJson("WARN", "JSON inválido en la petición: " + e.getMessage(), correlationId, intercambio, 400);
+            enviarRespuestaError(intercambio, 400, "El cuerpo de la petición no contiene un JSON válido.");
         } catch (IllegalArgumentException e) {
             registrarLogJson("WARN", "Parámetros inválidos: " + e.getMessage(), correlationId, intercambio, 400);
             enviarRespuestaError(intercambio, 400, "Parámetros inválidos o formato incorrecto: " + e.getMessage());
@@ -130,36 +134,37 @@ public abstract class ManejadorBase implements HttpHandler {
      * Extrae la IP de origen, considerando cabeceras de proxy inverso (X-Forwarded-For).
      */
     private String obtenerIpCliente(HttpExchange intercambio) {
-        String xForwarded = intercambio.getRequestHeaders().getFirst("X-Forwarded-For");
-        if (xForwarded != null && !xForwarded.isBlank()) {
-            return xForwarded.split(",")[0].trim();
-        }
+        String ipRemota = "127.0.0.1";
+        boolean esProxyConfiable = false;
         if (intercambio.getRemoteAddress() != null && intercambio.getRemoteAddress().getAddress() != null) {
-            return intercambio.getRemoteAddress().getAddress().getHostAddress();
+            java.net.InetAddress addr = intercambio.getRemoteAddress().getAddress();
+            ipRemota = addr.getHostAddress();
+            esProxyConfiable = addr.isLoopbackAddress() || addr.isSiteLocalAddress();
         }
-        return "127.0.0.1";
+        if (esProxyConfiable) {
+            String xRealIp = intercambio.getRequestHeaders().getFirst("X-Real-IP");
+            if (xRealIp != null && !xRealIp.isBlank()) {
+                return xRealIp.trim();
+            }
+        }
+        return ipRemota;
     }
 
     /**
      * Emite un log estructurado en formato JSON estándar para Observabilidad / SIEM / ELK / Grafana Loki.
      */
     protected void registrarLogJson(String nivel, String mensaje, String correlationId, HttpExchange intercambio, int codigoEstado) {
-        String timestamp = Instant.now().toString();
-        String metodo = intercambio != null ? intercambio.getRequestMethod() : "N/A";
-        String ruta = intercambio != null ? intercambio.getRequestURI().getPath() : "N/A";
-        String mensajeEscapado = mensaje != null ? mensaje.replace("\"", "\\\"").replace("\n", " ") : "";
+        com.google.gson.JsonObject logObj = new com.google.gson.JsonObject();
+        logObj.addProperty("timestamp", Instant.now().toString());
+        logObj.addProperty("level", nivel);
+        logObj.addProperty("service_name", NOMBRE_SERVICIO);
+        logObj.addProperty("trace_id", correlationId != null ? correlationId : "N/A");
+        logObj.addProperty("method", intercambio != null ? intercambio.getRequestMethod() : "N/A");
+        logObj.addProperty("path", intercambio != null ? intercambio.getRequestURI().getPath() : "N/A");
+        logObj.addProperty("status", codigoEstado);
+        logObj.addProperty("message", mensaje != null ? mensaje : "");
 
-        String jsonLog = "{"
-                + "\"timestamp\":\"" + timestamp + "\","
-                + "\"level\":\"" + nivel + "\","
-                + "\"service_name\":\"" + NOMBRE_SERVICIO + "\","
-                + "\"trace_id\":\"" + (correlationId != null ? correlationId : "N/A") + "\","
-                + "\"method\":\"" + metodo + "\","
-                + "\"path\":\"" + ruta + "\","
-                + "\"status\":" + codigoEstado + ","
-                + "\"message\":\"" + mensajeEscapado + "\""
-                + "}";
-
+        String jsonLog = logObj.toString();
         if ("ERROR".equalsIgnoreCase(nivel)) {
             System.err.println(jsonLog);
         } else {
@@ -191,9 +196,9 @@ public abstract class ManejadorBase implements HttpHandler {
      * Envía una respuesta de error en JSON.
      */
     protected void enviarRespuestaError(HttpExchange intercambio, int codigoEstado, String mensaje) throws IOException {
-        String mensajeSeguro = mensaje != null ? mensaje.replace("\"", "\\\"") : "Error";
-        String json = "{\"error\": \"" + mensajeSeguro + "\"}";
-        enviarRespuestaJson(intercambio, codigoEstado, json);
+        com.google.gson.JsonObject errorObj = new com.google.gson.JsonObject();
+        errorObj.addProperty("error", mensaje != null ? mensaje : "Error");
+        enviarRespuestaJson(intercambio, codigoEstado, errorObj.toString());
     }
 
     /**
@@ -222,6 +227,23 @@ public abstract class ManejadorBase implements HttpHandler {
         } catch (NumberFormatException e) {
             return valorPorDefecto;
         }
+    }
+
+    /**
+     * Extrae el primer segmento numérico positivo de una ruta URI.
+     */
+    protected int extraerIdRuta(String ruta) {
+        if (ruta == null) return -1;
+        for (String segmento : ruta.split("/")) {
+            if (segmento.matches("\\d+")) {
+                try {
+                    return Integer.parseInt(segmento);
+                } catch (NumberFormatException e) {
+                    return -1;
+                }
+            }
+        }
+        return -1;
     }
 
     /**

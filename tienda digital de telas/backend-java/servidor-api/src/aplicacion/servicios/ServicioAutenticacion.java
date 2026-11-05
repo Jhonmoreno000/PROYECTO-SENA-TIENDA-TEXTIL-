@@ -35,6 +35,7 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("El correo y la contraseña son obligatorios.");
         }
 
+        correo = correo.trim().toLowerCase();
         String hash = generarHashContrasena(contrasena);
         Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYValidarContrasena(correo, hash);
 
@@ -67,20 +68,21 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("Todos los campos obligatorios deben ser completados.");
         }
 
-        Usuario nuevoUsuario = new Usuario(0, nombre, correo, "cliente", true, false, null, null, null, null, null);
+        correo = correo.trim().toLowerCase();
+        if (!correo.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new ExcepcionDominio("El formato del correo electrónico no es válido.");
+        }
+        if (contrasena.length() < 8) {
+            throw new ExcepcionDominio("La contraseña debe tener al menos 8 caracteres.");
+        }
+
+        Usuario nuevoUsuario = new Usuario(0, nombre.trim(), correo, "cliente", true, false, null, null, null, null, null);
         String contrasenaCifrada = generarHashContrasena(contrasena);
 
         boolean guardadoExitoso = repositorioUsuario.guardar(nuevoUsuario, contrasenaCifrada);
         if (!guardadoExitoso) {
             throw new ExcepcionDominio("Error al registrar usuario. Es posible que el correo ya exista.");
         }
-    }
-
-    /**
-     * Sobrecarga de compatibilidad para registrar cliente.
-     */
-    public void registrarCliente(String nombre, String correo, String contrasena) {
-        registrarCliente(nombre, correo, contrasena, true);
     }
 
     /**
@@ -113,6 +115,7 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("El correo electrónico del proveedor SSO es obligatorio.");
         }
 
+        correo = correo.trim().toLowerCase();
         Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYActivo(correo);
         if (usuarioOpt.isPresent()) {
             Usuario usuario = usuarioOpt.get();

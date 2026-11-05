@@ -34,9 +34,23 @@ public class ManejadorCupones extends ManejadorBase {
 
         // POST — Crea un nuevo cupón a partir del cuerpo JSON
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             Cupon nuevoCupon = gson.fromJson(cuerpo, Cupon.class);
+            if (nuevoCupon == null || nuevoCupon.getCodigo() == null || nuevoCupon.getCodigo().isBlank()) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"El código del cupón es obligatorio\"}");
+                return;
+            }
+            String tipoDesc = nuevoCupon.getTipoDescuento() != null ? nuevoCupon.getTipoDescuento().trim().toLowerCase() : "percentage";
+            boolean esPorcentaje = "percentage".equals(tipoDesc) || "porcentaje".equals(tipoDesc);
+            boolean esFijo = "fixed".equals(tipoDesc) || "fijo".equals(tipoDesc);
+            if (!esPorcentaje && !esFijo) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Tipo de descuento inválido\"}");
+                return;
+            }
+            if (nuevoCupon.getValorDescuento() <= 0 || (esPorcentaje && nuevoCupon.getValorDescuento() > 100)) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Valor de descuento fuera de rango permitido\"}");
+                return;
+            }
 
             if (cuponDAO.agregarCupon(nuevoCupon)) {
                 enviarRespuestaJson(intercambio, 201, "{\"success\":true}");
@@ -49,14 +63,7 @@ public class ManejadorCupones extends ManejadorBase {
             String ruta = intercambio.getRequestURI().getPath();
             if ((ruta.startsWith("/api/coupons/") && ruta.endsWith("/deactivate")) ||
                 (ruta.startsWith("/api/cupones/") && ruta.endsWith("/desactivar"))) {
-                String[] segmentos = ruta.split("/");
-                int idCupon = -1;
-                for (String segmento : segmentos) {
-                    if (segmento.matches("\\d+")) {
-                        idCupon = Integer.parseInt(segmento);
-                        break;
-                    }
-                }
+                int idCupon = extraerIdRuta(ruta);
 
                 if (idCupon <= 0) {
                     enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de cupón inválido\"}");

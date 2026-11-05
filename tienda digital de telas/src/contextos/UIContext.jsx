@@ -39,21 +39,21 @@ export function UIProvider({ children }) {
             id: 1,
             title: 'Nueva Colección 2026',
             subtitle: 'Tendencias exclusivas en telas premium',
-            image: '/images/carousel-nueva-coleccion.png',
+            image: '/images/carousel-nueva-coleccion.webp',
             cta: 'Ver Más'
         },
         {
             id: 2,
             title: 'Telas Exclusivas',
             subtitle: 'Diseños únicos para proyectos especiales',
-            image: '/images/carousel-telas-exclusivas.png',
+            image: '/images/carousel-telas-exclusivas.webp',
             cta: 'Explorar'
         },
         {
             id: 3,
             title: 'Ofertas Especiales',
             subtitle: 'Descuentos increíbles en telas seleccionadas',
-            image: '/images/carousel-ofertas-especiales.png',
+            image: '/images/carousel-ofertas-especiales.webp',
             cta: 'Ver Ofertas'
         },
     ]);

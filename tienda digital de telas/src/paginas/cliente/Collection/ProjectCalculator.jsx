@@ -17,6 +17,7 @@ import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 
 const PROJECTS = {
@@ -105,6 +106,7 @@ const FABRIC_WIDTHS = [
 ];
 
 function ProjectCalculator() {
+    const { showNotification } = useNotificacion();
     const [selectedProject, setSelectedProject] = useState('skirt_circular');
     const [fabricWidth, setFabricWidth] = useState(1.50);
     const [fabricPrice, setFabricPrice] = useState(45000);
@@ -142,7 +144,7 @@ function ProjectCalculator() {
     const calculateFabric = () => {
         const allFieldsFilled = project.fields.every(f => measures[f]);
         if (!allFieldsFilled) {
-            alert('Por favor completa todas las medidas obligatorias.');
+            showNotification('warning', 'Por favor completa todas las medidas obligatorias.');
             return;
         }
 

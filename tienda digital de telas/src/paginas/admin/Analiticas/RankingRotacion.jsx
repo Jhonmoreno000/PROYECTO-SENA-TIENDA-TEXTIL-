@@ -11,6 +11,7 @@ import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useProductos } from '../../../contextos/ContextoProducto';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { identifyDeadStock, identifyBestsellers } from '../../../utilidades/analyticsUtils';
 import { formatCurrency } from '../../../utilidades/formateadores';
 import enlacesAdmin from '../../../datos/enlacesAdmin';
@@ -26,6 +27,7 @@ const MEDAL_STYLES = [
 function RankingRotacion() {
     const { orders } = useMetricas();
     const { products } = useProductos();
+    const { showNotification } = useNotificacion();
 
     const [deadStockThreshold, setDeadStockThreshold] = useState(60);
     const containerRef = useRef(null);
@@ -34,7 +36,7 @@ function RankingRotacion() {
     const deadStock = identifyDeadStock(products, orders, deadStockThreshold);
 
     const handleCreateOffer = (product) => {
-        alert(`Iniciando flujo de oferta para: ${product.name}\nDescuento agresivo sugerido por inactividad de ${product.daysWithoutSale} días.`);
+        showNotification('info', `Oferta sugerida para ${product.name} (${product.daysWithoutSale} días sin ventas).`);
     };
 
     useGSAP(() => {

@@ -41,7 +41,7 @@ public class SeccionesInicioDAO {
      */
     public List<SeccionInicio> obtenerSeccionesActivas() {
         List<SeccionInicio> secciones = new ArrayList<>();
-        String consulta = "SELECT * FROM secciones_inicio WHERE active = true ORDER BY orden ASC, clave ASC";
+        String consulta = "SELECT * FROM secciones_inicio WHERE activo = true ORDER BY orden ASC, clave ASC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -63,7 +63,7 @@ public class SeccionesInicioDAO {
         String consulta = "UPDATE secciones_inicio SET " +
                 "titulo = COALESCE(?, titulo), " +
                 "subtitulo = COALESCE(?, subtitulo), " +
-                "active = COALESCE(?, active), " +
+                "activo = COALESCE(?, activo), " +
                 "orden = COALESCE(?, orden) " +
                 "WHERE clave = ?";
         try (Connection con = Conexion.obtenerConexion();
@@ -85,7 +85,7 @@ public class SeccionesInicioDAO {
         seccion.setClave(rs.getString("clave"));
         seccion.setTitulo(rs.getString("titulo"));
         seccion.setSubtitulo(rs.getString("subtitulo"));
-        seccion.setActiva(rs.getBoolean("active"));
+        seccion.setActiva(rs.getBoolean("activo"));
         seccion.setOrden(rs.getInt("orden"));
         return seccion;
     }

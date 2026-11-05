@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+﻿import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -179,6 +179,18 @@ function Payment() {
         if (!cartItems || cartItems.length === 0) {
             showNotification('error', 'El carrito está vacío.');
             navigate('/carrito');
+            return;
+        }
+
+        if (!user?.id) {
+            showNotification('error', 'Debes iniciar sesión para procesar el pago.');
+            navigate('/login');
+            return;
+        }
+
+        if (!customerInfo || !customerInfo.address || !customerInfo.phone || !customerInfo.city) {
+            showNotification('error', 'Completa primero los datos de envío en el checkout.');
+            navigate('/checkout');
             return;
         }
 

@@ -99,7 +99,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.webp'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
@@ -132,7 +132,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.webp'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h4 className="font-semibold text-gray-900 dark:text-white">{item.name}</h4>
@@ -165,7 +165,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 opacity-60">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover grayscale" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.webp'} alt="" className="w-full h-full object-cover grayscale" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>

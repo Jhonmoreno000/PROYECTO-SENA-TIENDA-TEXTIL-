@@ -20,6 +20,7 @@ import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
 import { useProductos } from '../../../contextos/ContextoProducto';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 import { getApiUrl } from '../../../config';
 
@@ -58,6 +59,7 @@ function HistorialPedidos() {
     const { orders } = useMetricas();
     const { products } = useProductos();
     const { user } = useAutenticacion();
+    const { showNotification } = useNotificacion();
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -80,7 +82,7 @@ function HistorialPedidos() {
         try {
             const res = await fetch(getApiUrl(`/api/facturas/${orderId}`));
             if (!res.ok) {
-                alert('Error al descargar la factura');
+                showNotification('error', 'Error al descargar la factura');
                 return;
             }
             const blob = await res.blob();
@@ -94,7 +96,7 @@ function HistorialPedidos() {
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Error downloading invoice:', err);
-            alert('Error al descargar la factura');
+            showNotification('error', 'Error al descargar la factura');
         }
     };
 

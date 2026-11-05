@@ -32,8 +32,7 @@ public class ManejadorAutenticacion extends ManejadorBase {
         }
 
         String ruta = intercambio.getRequestURI().getPath();
-        InputStream cuerpoEntrada = intercambio.getRequestBody();
-        String cuerpoTexto = new String(cuerpoEntrada.readAllBytes(), StandardCharsets.UTF_8).trim();
+        String cuerpoTexto = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8).trim();
 
         if (cuerpoTexto.isEmpty()) {
             enviarRespuestaError(intercambio, 400, "El cuerpo de la petición no puede estar vacío");
@@ -63,7 +62,7 @@ public class ManejadorAutenticacion extends ManejadorBase {
             String correo = extraerTexto(jsonObjeto, "email", extraerTexto(jsonObjeto, "correo", null));
             String contrasena = extraerTexto(jsonObjeto, "password", extraerTexto(jsonObjeto, "contrasena", null));
 
-            boolean aceptaHabeasData = true;
+            boolean aceptaHabeasData = false;
             if (jsonObjeto.has("aceptaHabeasData") && !jsonObjeto.get("aceptaHabeasData").isJsonNull()) {
                 aceptaHabeasData = jsonObjeto.get("aceptaHabeasData").getAsBoolean();
             } else if (jsonObjeto.has("acceptsTerms") && !jsonObjeto.get("acceptsTerms").isJsonNull()) {

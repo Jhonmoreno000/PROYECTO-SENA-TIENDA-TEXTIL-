@@ -100,8 +100,7 @@ public class ManejadorInventario extends ManejadorBase {
     }
 
     private void manejarPost(String ruta, HttpExchange intercambio) throws Exception {
-        InputStream entrada = intercambio.getRequestBody();
-        String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         if (ruta.endsWith("/batches") || ruta.endsWith("/lotes")) {
             LoteInventario lote = gson.fromJson(cuerpo, LoteInventario.class);
@@ -118,8 +117,7 @@ public class ManejadorInventario extends ManejadorBase {
     }
 
     private void manejarPut(String ruta, HttpExchange intercambio) throws Exception {
-        InputStream entrada = intercambio.getRequestBody();
-        String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
         JsonObject json;
         try {
             json = JsonParser.parseString(cuerpo).getAsJsonObject();

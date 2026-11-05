@@ -21,7 +21,7 @@ public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
     @Override
     public Optional<Usuario> buscarPorCorreoYActivo(String correo) {
         String consulta = "SELECT id, nombre, correo, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
-                "registrado_en, ultimo_acceso, contrasena_hash FROM usuarios WHERE correo = ? AND activo = true";
+                "registrado_en, ultimo_acceso FROM usuarios WHERE correo = ? AND activo = true";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
@@ -54,7 +54,7 @@ public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
     @Override
     public Optional<Usuario> buscarPorCorreoYValidarContrasena(String correo, String hashPlano) {
         String consulta = "SELECT id, nombre, correo, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
-                "registrado_en, ultimo_acceso, contrasena_hash FROM usuarios WHERE correo = ? AND contrasena_hash = ? AND activo = true";
+                "registrado_en, ultimo_acceso FROM usuarios WHERE correo = ? AND contrasena_hash = ? AND activo = true";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {

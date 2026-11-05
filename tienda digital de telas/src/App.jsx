@@ -12,6 +12,7 @@ import Catalogo from './paginas/Catalogo';
 import DetalleProducto from './paginas/DetalleProducto';
 import Carrito from './paginas/Carrito';
 
+
 // Páginas públicas y de proceso de compra con carga diferida (Lazy Loading)
 const Pago = lazy(() => import('./paginas/Pago'));
 const ConfirmacionPedido = lazy(() => import('./paginas/ConfirmacionPedido'));
@@ -34,7 +35,7 @@ const MyTickets = lazy(() => import('./paginas/cliente/Soporte/MyTickets'));
 const Perfil = lazy(() => import('./paginas/cliente/Settings/Perfil'));
 const AddressBook = lazy(() => import('./paginas/cliente/Settings/AddressBook'));
 
-const ProductosVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
+const PanelVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
 const PedidosVendedor = lazy(() => import('./paginas/vendedor/PedidosVendedor'));
 const StockAlerts = lazy(() => import('./paginas/vendedor/StockAlerts'));
 
@@ -177,7 +178,7 @@ function AppRoutes() {
                     path="/vendedor"
                     element={
                         <ProtectedRoute roles={['vendedor', 'admin']}>
-                            <ProductosVendedor />
+                            <PanelVendedor />
                         </ProtectedRoute>
                     }
                 />
@@ -185,7 +186,7 @@ function AppRoutes() {
                     path="/vendedor/productos"
                     element={
                         <ProtectedRoute roles={['vendedor', 'admin']}>
-                            <ProductosVendedor />
+                            <PanelVendedor />
                         </ProtectedRoute>
                     }
                 />

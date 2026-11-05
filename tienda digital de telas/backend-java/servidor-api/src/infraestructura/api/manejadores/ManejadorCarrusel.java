@@ -47,8 +47,7 @@ public class ManejadorCarrusel extends ManejadorBase {
     }
 
     private void manejarPost(HttpExchange intercambio, CarruselDAO dao) throws Exception {
-        InputStream entrada = intercambio.getRequestBody();
-        String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {
@@ -90,8 +89,7 @@ public class ManejadorCarrusel extends ManejadorBase {
             return;
         }
         int idDiapositiva = Integer.parseInt(ruta.split("/")[3]);
-        InputStream entrada = intercambio.getRequestBody();
-        String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {

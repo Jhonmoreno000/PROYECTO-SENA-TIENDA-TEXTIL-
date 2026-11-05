@@ -97,8 +97,7 @@ public class ManejadorPagosWompi extends ManejadorBase {
      * Endpoint para generar la orden y la firma de integridad SHA-256 antes de abrir el Widget.
      */
     private void manejarIntencionPago(HttpExchange intercambio) throws Exception {
-        InputStream is = intercambio.getRequestBody();
-        String cuerpo = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {
@@ -108,11 +107,15 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        int userId = 1;
+        int userId = -1;
         if (json.has("userId") && !json.get("userId").isJsonNull()) {
             userId = json.get("userId").getAsInt();
         } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
             userId = json.get("idUsuario").getAsInt();
+        }
+        if (userId <= 0) {
+            enviarRespuestaError(intercambio, 400, "El identificador del usuario es obligatorio.");
+            return;
         }
 
         JsonObject customer = json.has("customerInfo") && json.get("customerInfo").isJsonObject()
@@ -187,8 +190,7 @@ public class ManejadorPagosWompi extends ManejadorBase {
      * Endpoint Webhook de Wompi. Valida la firma del evento y procesa la transacción de forma idempotente.
      */
     private void manejarWebhook(HttpExchange intercambio) throws Exception {
-        InputStream is = intercambio.getRequestBody();
-        String payloadRaw = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        String payloadRaw = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {
@@ -208,8 +210,12 @@ public class ManejadorPagosWompi extends ManejadorBase {
                 enviarRespuestaError(intercambio, 401, "Firma criptográfica inválida.");
                 return;
             }
+        } else if (ConfiguracionWompi.esProduccion()) {
+            System.err.println("[WOMPI SEGURIDAD] Rechazado webhook en producción porque WOMPI_EVENTS_SECRET no está configurado.");
+            enviarRespuestaError(intercambio, 401, "Configuración de firma de eventos requerida en producción.");
+            return;
         } else {
-            System.out.println("[WOMPI AVISO] Webhook recibido sin validación estricta porque WOMPI_EVENTS_SECRET no está definido.");
+            System.out.println("[WOMPI AVISO] Webhook recibido en sandbox sin validación estricta porque WOMPI_EVENTS_SECRET no está definido.");
         }
 
         // Extraer datos de la transacción
