@@ -5,9 +5,11 @@ import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 
 function Perfil() {
     const { user } = useAutenticacion();
+    const { showNotification } = useNotificacion();
 
     const [formData, setFormData] = useState({
         name: user?.name || 'Cliente Demo',
@@ -48,12 +50,12 @@ function Perfil() {
         // Validate passwords if changing
         if (showPasswordChange) {
             if (formData.newPassword !== formData.confirmPassword) {
-                alert('Las contraseñas no coinciden');
+                showNotification('error', 'Las contraseñas no coinciden');
                 setIsSaving(false);
                 return;
             }
             if (formData.newPassword.length < 8) {
-                alert('La contraseña debe tener al menos 8 caracteres');
+                showNotification('warning', 'La contraseña debe tener al menos 8 caracteres');
                 setIsSaving(false);
                 return;
             }

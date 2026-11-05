@@ -26,11 +26,13 @@ import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useProductos } from '../../../contextos/ContextoProducto';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 
 function Wishlist() {
     const { wishlistItems = [], addToWishlist, removeFromWishlist, updateWishlistItem } = useMetricas();
     const { products } = useProductos();
+    const { showNotification } = useNotificacion();
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [newCategory, setNewCategory] = useState('');
@@ -73,9 +75,8 @@ function Wishlist() {
     };
 
     const handleRemoveItem = (itemId) => {
-        if (confirm('¿Eliminar esta tela de tu lista de deseos?')) {
-            // removeFromWishlist(itemId);
-        }
+        removeFromWishlist(itemId);
+        showNotification('info', 'Tela eliminada de tu lista de deseos');
     };
 
     return (

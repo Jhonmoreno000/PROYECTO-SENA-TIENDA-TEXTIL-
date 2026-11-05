@@ -18,6 +18,7 @@ import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 
 const COLOMBIA_DEPARTMENTS = [
     'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar', 'Boyacá',
@@ -35,6 +36,7 @@ const ADDRESS_LABELS = [
 ];
 
 function AddressBook() {
+    const { showNotification } = useNotificacion();
     const [addresses, setAddresses] = useState([
         {
             id: 1,
@@ -100,9 +102,8 @@ function AddressBook() {
     };
 
     const handleDelete = (id) => {
-        if (confirm('¿Eliminar esta dirección de forma permanente?')) {
-            setAddresses(prev => prev.filter(a => a.id !== id));
-        }
+        setAddresses(prev => prev.filter(a => a.id !== id));
+        showNotification('info', 'Dirección eliminada correctamente');
     };
 
     const handleSetDefault = (id) => {
@@ -116,7 +117,7 @@ function AddressBook() {
         e.preventDefault();
 
         if (!formData.fullName || !formData.phone || !formData.department || !formData.city || !formData.address) {
-            alert('Por favor completa todos los campos requeridos (*).');
+            showNotification('warning', 'Por favor completa todos los campos requeridos (*).');
             return;
         }
 
