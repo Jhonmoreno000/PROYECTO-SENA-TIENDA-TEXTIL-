@@ -65,11 +65,7 @@ export function ProductProvider({ children }) {
                 const precio = Number(p.price ?? p.precio ?? 0);
                 const existencias = Number(p.stock ?? p.existencias ?? 0);
                 const categoria = p.category || p.categoria || '';
-                const imagenes = (p.images || p.imagenes || []).map(img =>
-                    img && typeof img === 'string' && img.startsWith('http://localhost:8081/uploads/')
-                        ? img.replace('http://localhost:8081', '')
-                        : img
-                );
+                const imagenes = p.images || p.imagenes || [];
                 return {
                     ...p,
                     name: nombre,
