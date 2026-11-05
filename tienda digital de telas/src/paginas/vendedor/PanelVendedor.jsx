@@ -444,7 +444,7 @@ export default function PanelVendedor() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-gray-200 dark:border-slate-700">
                             <img
-                              src={product.images?.length > 0 ? product.images[0] : '/placeholder.png'}
+                              src={product.images?.length > 0 ? product.images[0] : '/placeholder.webp'}
                               alt=""
                               className="w-full h-full object-cover"
                             />

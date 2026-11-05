@@ -170,7 +170,7 @@ function Wishlist() {
                                     {/* Imagen */}
                                     <div className="aspect-square relative overflow-hidden bg-slate-100 dark:bg-slate-800">
                                         <img
-                                            src={product?.images?.[0] || '/placeholder.png'}
+                                            src={product?.images?.[0] || '/placeholder.webp'}
                                             alt={product?.name || 'Producto'}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         />

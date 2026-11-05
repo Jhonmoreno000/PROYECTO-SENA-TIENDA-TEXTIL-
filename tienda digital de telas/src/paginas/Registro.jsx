@@ -114,7 +114,7 @@ function Registro() {
                     >
                         <div
                             className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay transition-transform duration-[20s] hover:scale-110"
-                            style={{ backgroundImage: 'url("/images/hero-telas-premium.png")' }}
+                            style={{ backgroundImage: 'url("/images/hero-telas-premium.webp")' }}
                         />
                         <div
                             className="absolute inset-0 opacity-[0.2] mix-blend-overlay"

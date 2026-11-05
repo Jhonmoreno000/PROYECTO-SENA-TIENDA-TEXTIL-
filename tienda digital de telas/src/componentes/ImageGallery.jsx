@@ -44,7 +44,7 @@ function ImageGallery({ images, productName }) {
                 <img
                     ref={mainImageRef}
                     key={selectedImage}
-                    src={images[selectedImage] || '/placeholder.png'}
+                    src={images[selectedImage] || '/placeholder.webp'}
                     alt={`${productName} - Vista principal`}
                     className="w-full h-full object-cover"
                 />
@@ -58,7 +58,7 @@ function ImageGallery({ images, productName }) {
                             height: `${magnifierSize}px`,
                             left: mousePos.x - magnifierSize / 2,
                             top: mousePos.y - magnifierSize / 2,
-                            backgroundImage: `url(${images[selectedImage] || '/placeholder.png'})`,
+                            backgroundImage: `url(${images[selectedImage] || '/placeholder.webp'})`,
                             backgroundSize: `${100 * zoomScale}%`,
                             backgroundPosition: `${mousePos.percX}% ${mousePos.percY}%`,
                         }}
@@ -100,7 +100,7 @@ function ImageGallery({ images, productName }) {
                     ))
                 ) : (
                     <div className="aspect-square rounded-xl overflow-hidden border-2 border-gray-200 dark:border-slate-700">
-                        <img src="/placeholder.png" alt="Placeholder Miniatura" className="w-full h-full object-cover opacity-50" />
+                        <img src="/placeholder.webp" alt="Placeholder Miniatura" className="w-full h-full object-cover opacity-50" />
                     </div>
                 )}
             </div>

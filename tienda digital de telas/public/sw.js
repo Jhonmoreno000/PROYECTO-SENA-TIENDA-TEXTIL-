@@ -8,7 +8,7 @@ const RECURSOS_PRECACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/images/hero-telas-premium.png'
+  '/images/hero-telas-premium.webp'
 ];
 
 self.addEventListener('install', (evento) => {

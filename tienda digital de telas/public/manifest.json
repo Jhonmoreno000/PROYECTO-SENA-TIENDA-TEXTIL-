@@ -13,9 +13,9 @@
   "categories": ["shopping", "business", "lifestyle"],
   "icons": [
     {
-      "src": "/images/hero-telas-premium.png",
+      "src": "/images/hero-telas-premium.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     }
   ]
