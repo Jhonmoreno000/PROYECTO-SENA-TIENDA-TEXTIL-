@@ -26,6 +26,11 @@ jobs:
           cd "tienda digital de telas"
           npm ci
 
+      - name: Verificar estilo y reglas de ESLint
+        run: |
+          cd "tienda digital de telas"
+          npm run lint
+
       - name: Ejecutar Pruebas Automatizadas del Frontend
         run: |
           cd "tienda digital de telas"
