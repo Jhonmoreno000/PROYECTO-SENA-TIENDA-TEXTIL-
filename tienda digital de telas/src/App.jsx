@@ -30,7 +30,7 @@ const MyTickets = lazy(() => import('./paginas/cliente/Soporte/MyTickets'));
 const Perfil = lazy(() => import('./paginas/cliente/Settings/Perfil'));
 const AddressBook = lazy(() => import('./paginas/cliente/Settings/AddressBook'));
 
-const ProductosVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
+const PanelVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
 const PedidosVendedor = lazy(() => import('./paginas/vendedor/PedidosVendedor'));
 const StockAlerts = lazy(() => import('./paginas/vendedor/StockAlerts'));
 
@@ -221,7 +221,7 @@ function AppRoutes() {
                         element={
                             <ProtectedRoute roles={['vendedor', 'admin']}>
                                 <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosVendedor />
+                                    <PanelVendedor />
                                 </Suspense>
                             </ProtectedRoute>
                         }
@@ -231,7 +231,7 @@ function AppRoutes() {
                         element={
                             <ProtectedRoute roles={['vendedor', 'admin']}>
                                 <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosVendedor />
+                                    <PanelVendedor />
                                 </Suspense>
                             </ProtectedRoute>
                         }
