@@ -1,2 +1,2 @@
-export { default as useDarkMode } from './useDarkMode';
-export { default as useLocalStorage } from './useLocalStorage';
+export { useDarkMode } from './useDarkMode';
+export { useLocalStorage } from './useLocalStorage';
