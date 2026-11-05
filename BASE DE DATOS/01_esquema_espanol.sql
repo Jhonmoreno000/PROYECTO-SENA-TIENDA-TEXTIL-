@@ -327,8 +327,9 @@ INSERT INTO cupones (codigo, valor_descuento, usos_maximos, activo) VALUES
 ('BIENVENIDA20', 20.0, 50, true)
 ON CONFLICT (codigo) DO NOTHING;
 
-INSERT INTO banner_global (activo, mensaje, tipo_banner) VALUES
-(true, '¡Envío gratis en compras superiores a $200.000 COP a todo el país!', 'info');
+INSERT INTO banner_global (activo, mensaje, tipo_banner)
+SELECT true, '¡Envío gratis en compras superiores a $200.000 COP a todo el país!', 'info'
+WHERE NOT EXISTS (SELECT 1 FROM banner_global);
 
 INSERT INTO configuracion_sistema (clave, valor) VALUES
 ('system_config', '{"siteName":"D&D Textil","defaultDarkMode":false,"primaryColor":"#8B5CF6","secondaryColor":"#EC4899","accentColor":"#F59E0B","taxRate":0.19,"shippingCost":15000,"freeShippingThreshold":200000,"lowStockThreshold":20,"maintenanceMode":false}')
