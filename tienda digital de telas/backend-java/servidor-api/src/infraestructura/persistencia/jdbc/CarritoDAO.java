@@ -48,7 +48,8 @@ public class CarritoDAO {
      * Agrega un producto al carrito o incrementa su cantidad.
      */
     public boolean agregarAlCarrito(int idUsuario, int idProducto, int cantidad) {
-        String consulta = "INSERT INTO items_carrito (usuario_id, producto_id, cantidad) VALUES (?, ?, ?)";
+        String consulta = "INSERT INTO items_carrito (usuario_id, producto_id, cantidad) VALUES (?, ?, ?) " +
+                "ON CONFLICT (usuario_id, producto_id) DO UPDATE SET cantidad = items_carrito.cantidad + EXCLUDED.cantidad, actualizado_en = NOW()";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, idUsuario);
