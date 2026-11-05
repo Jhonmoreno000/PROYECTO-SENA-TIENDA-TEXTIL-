@@ -346,3 +346,17 @@ CREATE TABLE IF NOT EXISTS inventario_telas_erp (
     costo_por_metro NUMERIC(12,2) DEFAULT 0.00,
     fecha_ultima_reposicion DATE
 );
+
+-- 26. TABLA: rollos_textil
+CREATE TABLE IF NOT EXISTS rollos_textil (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    codigo_rollo VARCHAR(50) NOT NULL UNIQUE,
+    metraje_inicial NUMERIC(10,2) NOT NULL CHECK (metraje_inicial >= 0),
+    metraje_remanente NUMERIC(10,2) NOT NULL CHECK (metraje_remanente >= 0),
+    lote_tintoreria VARCHAR(50),
+    estado VARCHAR(50) DEFAULT 'disponible',
+    ubicacion_bodega VARCHAR(100),
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
