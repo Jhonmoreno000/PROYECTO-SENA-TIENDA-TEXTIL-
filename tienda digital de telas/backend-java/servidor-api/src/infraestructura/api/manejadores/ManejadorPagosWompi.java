@@ -210,8 +210,12 @@ public class ManejadorPagosWompi extends ManejadorBase {
                 enviarRespuestaError(intercambio, 401, "Firma criptográfica inválida.");
                 return;
             }
+        } else if (ConfiguracionWompi.esProduccion()) {
+            System.err.println("[WOMPI SEGURIDAD] Rechazado webhook en producción porque WOMPI_EVENTS_SECRET no está configurado.");
+            enviarRespuestaError(intercambio, 401, "Configuración de firma de eventos requerida en producción.");
+            return;
         } else {
-            System.out.println("[WOMPI AVISO] Webhook recibido sin validación estricta porque WOMPI_EVENTS_SECRET no está definido.");
+            System.out.println("[WOMPI AVISO] Webhook recibido en sandbox sin validación estricta porque WOMPI_EVENTS_SECRET no está definido.");
         }
 
         // Extraer datos de la transacción
