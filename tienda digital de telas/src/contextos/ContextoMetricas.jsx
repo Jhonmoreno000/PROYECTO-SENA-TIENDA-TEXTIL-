@@ -12,6 +12,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProductos } from './ContextoProducto';
+import { useAutenticacion } from './ContextoAutenticacion';
 import { formatCurrency } from '../utilidades/formateadores';
 
 import { getApiUrl, RUTAS_API } from '../config';
@@ -185,6 +186,7 @@ async function apiFetch(endpoint) {
 export function MetricsProvider({ children }) {
     // ── Productos (delegados a ContextoProducto para evitar duplicación) ────
     const { products, refreshProducts } = useProductos();
+    const { user } = useAutenticacion();
     const [pendingProducts,   setPendingProducts]   = useState([]);
 
     // ── Estado principal ──────────────────────────────────────────────────
@@ -222,10 +224,36 @@ export function MetricsProvider({ children }) {
     const [loading,           setLoading]           = useState(true);
     
 
-    // ── Carga inicial: todos los endpoints en paralelo ───────────────────
+    // ── Carga inicial: endpoints según el rol del usuario ────────────────
     const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
+            const role = user?.role || user?.rol;
+            const isStaff = role === 'admin' || role === 'administrador' || role === 'vendedor';
+            const isClient = role === 'cliente';
+
+            if (!isStaff) {
+                const [apiBanner, apiConfigRaw, apiProductDiscounts, apiCoupons, apiOrders, apiTickets] = await Promise.all([
+                    apiFetch(RUTAS_API?.banner || '/api/banner'),
+                    apiFetch('/api/configuracion/system_config'),
+                    apiFetch('/api/configuracion/product_discounts'),
+                    user ? apiFetch(RUTAS_API?.cupones || '/api/cupones') : Promise.resolve(null),
+                    isClient ? apiFetch(RUTAS_API?.pedidos || '/api/pedidos') : Promise.resolve(null),
+                    isClient ? apiFetch('/api/soporte/tickets') : Promise.resolve(null),
+                ]);
+                if (apiBanner) setGlobalBanner(apiBanner);
+                if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
+                    setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
+                }
+                if (apiProductDiscounts && typeof apiProductDiscounts === 'object') {
+                    setProductDiscounts(apiProductDiscounts);
+                }
+                if (apiCoupons?.length > 0) setCoupons(apiCoupons.map(normalizarCupon));
+                if (apiOrders?.length > 0) setOrders(apiOrders.map(normalizarPedido));
+                if (apiTickets?.length > 0) setSupportTickets(apiTickets.map(normalizarTicket));
+                return;
+            }
+
             const [
                 apiUsers, apiPending, apiOrders, apiCoupons,
                 apiTickets, apiBugs, apiBatches, apiWaste, apiThresholds,
@@ -294,7 +322,7 @@ export function MetricsProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
