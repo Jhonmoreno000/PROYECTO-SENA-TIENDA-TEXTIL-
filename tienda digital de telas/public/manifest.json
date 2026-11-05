@@ -13,7 +13,7 @@
   "categories": ["shopping", "business", "lifestyle"],
   "icons": [
     {
-      "src": "/images/proyecto-preview.png",
+      "src": "/images/hero-telas-premium.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
