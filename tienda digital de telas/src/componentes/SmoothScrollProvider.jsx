@@ -1,11 +1,5 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-export const LenisContext = createContext(null);
-
-export function useLenis() {
-    return useContext(LenisContext);
-}
 
 export function SmoothScrollProvider({ children }) {
     useEffect(() => {
@@ -44,5 +38,5 @@ export function SmoothScrollProvider({ children }) {
         };
     }, []);
 
-    return <LenisContext.Provider value={null}>{children}</LenisContext.Provider>;
+    return <>{children}</>;
 }

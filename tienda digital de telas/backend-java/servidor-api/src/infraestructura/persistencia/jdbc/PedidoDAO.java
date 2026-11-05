@@ -230,4 +230,91 @@ public class PedidoDAO {
             return false;
         }
     }
+
+    /**
+     * Lista el resumen de facturas a partir de los pedidos registrados.
+     */
+    public List<Map<String, Object>> obtenerResumenFacturas() {
+        List<Map<String, Object>> facturas = new ArrayList<>();
+        String consulta = "SELECT p.id, p.usuario_id, p.monto_total, p.estado, p.creado_en, " +
+                "p.nombre_cliente, p.correo_cliente " +
+                "FROM pedidos p ORDER BY p.id DESC";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(consulta);
+             ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> fac = new java.util.HashMap<>();
+                fac.put("orderId", rs.getInt("id"));
+                fac.put("clientId", rs.getInt("usuario_id"));
+                fac.put("clientName", rs.getString("nombre_cliente"));
+                fac.put("clientEmail", rs.getString("correo_cliente"));
+                fac.put("total", rs.getDouble("monto_total"));
+                fac.put("status", rs.getString("estado"));
+                fac.put("date", rs.getTimestamp("creado_en") != null ? rs.getTimestamp("creado_en").toString() : "");
+                facturas.add(fac);
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error listando facturas: " + e.getMessage());
+        }
+        return facturas;
+    }
+
+    /**
+     * Obtiene los datos de cabecera y totales de un pedido para generar su factura PDF.
+     */
+    public Map<String, Object> obtenerCabeceraFactura(int idPedido) {
+        String consulta = "SELECT nombre_cliente, correo_cliente, telefono_cliente, direccion_envio, metodo_pago, " +
+                "subtotal, monto_descuento, costo_envio, monto_impuesto " +
+                "FROM pedidos WHERE id = ?";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(consulta)) {
+            pst.setInt(1, idPedido);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> datos = new java.util.HashMap<>();
+                    datos.put("nombreCliente", rs.getString("nombre_cliente"));
+                    datos.put("correoCliente", rs.getString("correo_cliente"));
+                    datos.put("telefonoCliente", rs.getString("telefono_cliente"));
+                    datos.put("direccionEnvio", rs.getString("direccion_envio"));
+                    datos.put("metodoPago", rs.getString("metodo_pago"));
+                    datos.put("subtotal", rs.getDouble("subtotal"));
+                    datos.put("descuento", rs.getDouble("monto_descuento"));
+                    datos.put("envio", rs.getDouble("costo_envio"));
+                    datos.put("impuesto", rs.getDouble("monto_impuesto"));
+                    return datos;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo cabecera de factura: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene las líneas de detalle de un pedido para la factura PDF.
+     */
+    public List<Map<String, Object>> obtenerArticulosFactura(int idPedido) {
+        List<Map<String, Object>> articulos = new ArrayList<>();
+        String consulta = "SELECT ip.producto_id, ip.cantidad, ip.precio_por_metro, ip.subtotal, pr.nombre " +
+                "FROM items_pedido ip " +
+                "LEFT JOIN productos pr ON ip.producto_id = pr.id " +
+                "WHERE ip.pedido_id = ?";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(consulta)) {
+            pst.setInt(1, idPedido);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> item = new java.util.HashMap<>();
+                    item.put("productId", rs.getInt("producto_id"));
+                    item.put("quantity", rs.getDouble("cantidad"));
+                    item.put("unitPrice", rs.getDouble("precio_por_metro"));
+                    item.put("name", rs.getString("nombre") != null ? rs.getString("nombre") : "Tela Textil");
+                    articulos.add(item);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo artículos de factura: " + e.getMessage());
+        }
+        return articulos;
+    }
 }

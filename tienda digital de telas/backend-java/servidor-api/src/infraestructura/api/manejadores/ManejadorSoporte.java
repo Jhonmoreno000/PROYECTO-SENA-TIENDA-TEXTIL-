@@ -42,8 +42,7 @@ public class ManejadorSoporte extends ManejadorBase {
 
         // POST — Creación de nuevos tickets o reportes
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
             if (ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets")) {
                 TicketSoporte ticket = gson.fromJson(cuerpo, TicketSoporte.class);
@@ -59,8 +58,7 @@ public class ManejadorSoporte extends ManejadorBase {
 
         // PUT — Actualización del estado de tickets o reportes
         } else if ("PUT".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -76,14 +74,7 @@ public class ManejadorSoporte extends ManejadorBase {
                 estado = objetoJson.get("estado").getAsString();
             }
 
-            String[] segmentosRuta = ruta.split("/");
-            int identificador = -1;
-            for (String segmento : segmentosRuta) {
-                if (segmento.matches("\\d+")) {
-                    identificador = Integer.parseInt(segmento);
-                    break;
-                }
-            }
+            int identificador = extraerIdRuta(ruta);
 
             if (identificador <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador no numérico o inválido en la ruta\"}");

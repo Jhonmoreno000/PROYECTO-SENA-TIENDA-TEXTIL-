@@ -27,6 +27,7 @@ import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 
 const ISSUE_TYPES = [
     { value: 'stain', label: 'Manchas en la tela', priority: 'high' },
@@ -50,6 +51,7 @@ const ISSUE_TYPES = [
 function NewReport() {
     const { orders, addSupportTicket } = useMetricas();
     const { user } = useAutenticacion();
+    const { showNotification } = useNotificacion();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const preselectedOrderId = searchParams.get('orderId');
@@ -84,7 +86,7 @@ function NewReport() {
         e.preventDefault();
 
         if (!selectedOrder || !issueType || !description.trim()) {
-            alert('Por favor completa todos los campos obligatorios.');
+            showNotification('warning', 'Por favor completa todos los campos obligatorios.');
             return;
         }
 
@@ -112,7 +114,7 @@ function NewReport() {
             addSupportTicket(newTicket); // Se guarda el ticket en el contexto global
 
             setIsSubmitting(false);
-            alert('¡Reporte enviado exitosamente! Te contactaremos pronto.');
+            showNotification('success', '¡Reporte enviado exitosamente! Te contactaremos pronto.');
             navigate('/cliente/soporte/tickets');
         }, 1500);
     };

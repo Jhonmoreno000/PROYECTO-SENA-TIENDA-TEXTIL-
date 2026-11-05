@@ -58,8 +58,7 @@ public class ManejadorResenas extends ManejadorBase {
      * Cuerpo esperado: { "productId": 1, "userId": 2, "rating": 5, "comment": "..." }
      */
     private void manejarPost(HttpExchange intercambio, ResenasDAO dao, Gson gson) throws Exception {
-        InputStream flujoEntrada = intercambio.getRequestBody();
-        String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {

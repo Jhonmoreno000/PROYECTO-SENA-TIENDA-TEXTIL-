@@ -64,3 +64,30 @@ export function truncateText(text, maxLength = 100) {
     if (text.length <= maxLength) return text;     // Si ya cabe, lo devolvemos sin cambios
     return text.substring(0, maxLength) + '...';  // Recortamos y añadimos puntos suspensivos
 }
+
+/**
+ * calcularMetrajeCortina — Calcula los metros de tela requeridos para confeccionar una cortina
+ */
+export function calcularMetrajeCortina(anchoVentana, altoVentana, factorFruncido = 2.0, margenTecnico = 0.10) {
+    if (anchoVentana <= 0 || altoVentana <= 0) {
+        throw new Error('Dimensiones deben ser positivas');
+    }
+    const metrosBrutos = (anchoVentana * factorFruncido) * (altoVentana + 0.30) / 1.50;
+    const metrosConMargen = metrosBrutos * (1 + margenTecnico);
+    return Math.round(metrosConMargen * 100) / 100;
+}
+
+/**
+ * convertirACentavosWompi — Convierte un monto en pesos colombianos (COP) a centavos enteros para Wompi
+ */
+export function convertirACentavosWompi(montoCop) {
+    if (montoCop < 0) throw new Error('Monto no puede ser negativo');
+    return Math.round(montoCop * 100);
+}
+
+/**
+ * generarReferenciaPedido — Genera la referencia de pago con formato PED-{id}-{timestamp}
+ */
+export function generarReferenciaPedido(idPedido, timestamp = Date.now()) {
+    return `PED-${idPedido}-${timestamp}`;
+}

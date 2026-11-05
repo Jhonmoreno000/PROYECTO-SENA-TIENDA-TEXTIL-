@@ -17,6 +17,7 @@ import IniciarSesion from './paginas/IniciarSesion';
 import Registro from './paginas/Registro';
 import BugReport from './paginas/BugReport';
 import Payment from './paginas/payment/Payment';
+import NoEncontrado from './paginas/NoEncontrado';
 
 // Dashboard paginas (lazy - only loaded when needed)
 const PanelCliente = lazy(() => import('./paginas/cliente/PanelCliente'));
@@ -29,7 +30,7 @@ const MyTickets = lazy(() => import('./paginas/cliente/Soporte/MyTickets'));
 const Perfil = lazy(() => import('./paginas/cliente/Settings/Perfil'));
 const AddressBook = lazy(() => import('./paginas/cliente/Settings/AddressBook'));
 
-const ProductosVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
+const PanelVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
 const PedidosVendedor = lazy(() => import('./paginas/vendedor/PedidosVendedor'));
 const StockAlerts = lazy(() => import('./paginas/vendedor/StockAlerts'));
 
@@ -81,9 +82,6 @@ function AppRoutes() {
                     <Route path="/login" element={<IniciarSesion />} />
                     <Route path="/registro" element={<Registro />} />
                     <Route path="/reportar-fallo" element={<BugReport />} />
-                    <Route path="/pago" element={<Payment />} />
-                    <Route path="/checkout" element={<Pago />} />
-                    <Route path="/confirmacion" element={<ConfirmacionPedido />} />
 
                     {/* Payment */}
                     <Route
@@ -223,7 +221,7 @@ function AppRoutes() {
                         element={
                             <ProtectedRoute roles={['vendedor', 'admin']}>
                                 <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosVendedor />
+                                    <PanelVendedor />
                                 </Suspense>
                             </ProtectedRoute>
                         }
@@ -233,7 +231,7 @@ function AppRoutes() {
                         element={
                             <ProtectedRoute roles={['vendedor', 'admin']}>
                                 <Suspense fallback={<DashboardFallback />}>
-                                    <ProductosVendedor />
+                                    <PanelVendedor />
                                 </Suspense>
                             </ProtectedRoute>
                         }
@@ -504,6 +502,7 @@ function AppRoutes() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route path="*" element={<NoEncontrado />} />
             </Routes>
     );
 }

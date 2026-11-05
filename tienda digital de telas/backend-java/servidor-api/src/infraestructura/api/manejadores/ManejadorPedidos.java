@@ -51,8 +51,7 @@ public class ManejadorPedidos extends ManejadorBase {
 
         // POST /api/orders o /api/pedidos
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json;
             try {
                 json = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -61,7 +60,7 @@ public class ManejadorPedidos extends ManejadorBase {
                 return;
             }
 
-            int idCliente = 1;
+            int idCliente = -1;
             if (json.has("clientId") && !json.get("clientId").isJsonNull()) {
                 idCliente = json.get("clientId").getAsInt();
             } else if (json.has("userId") && !json.get("userId").isJsonNull()) {
@@ -70,6 +69,10 @@ public class ManejadorPedidos extends ManejadorBase {
                 idCliente = json.get("idCliente").getAsInt();
             } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
                 idCliente = json.get("idUsuario").getAsInt();
+            }
+            if (idCliente <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"El identificador del cliente es obligatorio\"}");
+                return;
             }
 
             double total = 0.0;
@@ -105,8 +108,7 @@ public class ManejadorPedidos extends ManejadorBase {
                     return;
                 }
 
-                InputStream flujoEntrada = intercambio.getRequestBody();
-                String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+                String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
                 JsonObject objetoJson;
                 try {
                     objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -115,9 +117,17 @@ public class ManejadorPedidos extends ManejadorBase {
                     return;
                 }
 
-                String estado = objetoJson.has("status") ? objetoJson.get("status").getAsString() 
-                              : (objetoJson.has("estado") ? objetoJson.get("estado").getAsString() : "pending");
-                boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado);
+                String estado = (objetoJson.has("status") && !objetoJson.get("status").isJsonNull()) ? objetoJson.get("status").getAsString()
+                              : ((objetoJson.has("estado") && !objetoJson.get("estado").isJsonNull()) ? objetoJson.get("estado").getAsString() : null);
+                java.util.Set<String> estadosValidos = java.util.Set.of(
+                        "pending", "paid", "confirmed", "cutting", "packed", "shipped", "delivered", "cancelled",
+                        "pendiente", "pagado", "confirmado", "en corte", "empacado", "enviado", "entregado", "cancelado"
+                );
+                if (estado == null || !estadosValidos.contains(estado.trim().toLowerCase())) {
+                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Estado de pedido inválido o faltante\"}");
+                    return;
+                }
+                boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado.trim().toLowerCase());
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando estado del pedido\"}");
             } else {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
@@ -125,15 +135,5 @@ public class ManejadorPedidos extends ManejadorBase {
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
-    }
-
-    private int extraerIdRuta(String ruta) {
-        String[] segmentos = ruta.split("/");
-        for (String segmento : segmentos) {
-            if (segmento.matches("\\d+")) {
-                return Integer.parseInt(segmento);
-            }
-        }
-        return -1;
     }
 }

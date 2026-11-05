@@ -4,9 +4,11 @@ import LayoutPanel from '../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../componentes/PaginaAnimada';
 import enlacesAdmin from '../../datos/enlacesAdmin';
 import { getApiUrl } from '../../config';
+import { useNotificacion } from '../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../utilidades/formateadores';
 
 function FacturasAdmin() {
+    const { showNotification } = useNotificacion();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +34,7 @@ function FacturasAdmin() {
         try {
             const res = await fetch(getApiUrl(`/api/facturas/${orderId}`));
             if (!res.ok) {
-                alert('Error al descargar la factura');
+                showNotification('error', 'Error al descargar la factura');
                 return;
             }
             const blob = await res.blob();
@@ -46,7 +48,7 @@ function FacturasAdmin() {
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Error downloading invoice:', err);
-            alert('Error al descargar la factura');
+            showNotification('error', 'Error al descargar la factura');
         }
     };
 

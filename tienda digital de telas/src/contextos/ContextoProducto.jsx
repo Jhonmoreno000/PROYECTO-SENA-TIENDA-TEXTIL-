@@ -12,11 +12,12 @@
  * ¿Cómo se usa?
  *  const { products, loading, updateProduct } = useProductos();
  *
- * Endpoint de la API: GET http://localhost:8081/api/products
+ * Endpoint de la API: GET /api/productos
  */
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { getApiUrl, RUTAS_API } from '../config';
+import { useNotificacion } from './ContextoNotificacion';
 
 // Creamos el contexto del catálogo de productos
 const ContextoProducto = createContext();
@@ -43,6 +44,7 @@ export function ProductProvider({ children }) {
     const [loading, setLoading] = useState(true);
     // Mensaje de error si la conexión al backend falla
     const [error, setError] = useState(null);
+    const { showNotification } = useNotificacion();
 
     /**
      * fetchProducts — Pide la lista de productos al backend Java
@@ -63,11 +65,7 @@ export function ProductProvider({ children }) {
                 const precio = Number(p.price ?? p.precio ?? 0);
                 const existencias = Number(p.stock ?? p.existencias ?? 0);
                 const categoria = p.category || p.categoria || '';
-                const imagenes = (p.images || p.imagenes || []).map(img =>
-                    img && typeof img === 'string' && img.startsWith('http://localhost:8081/uploads/')
-                        ? img.replace('http://localhost:8081', '')
-                        : img
-                );
+                const imagenes = p.images || p.imagenes || [];
                 return {
                     ...p,
                     name: nombre,
@@ -146,11 +144,16 @@ export function ProductProvider({ children }) {
                     p.id === updatedProduct.id || p.id === String(updatedProduct.id) ? updatedProduct : p
                 ));
                 refreshProducts();
+                return true;
             }
+            showNotification('error', 'No se pudo actualizar el producto en el servidor.');
+            return false;
         } catch (err) {
             console.error('Error al actualizar el producto:', err);
+            showNotification('error', 'Error de conexión al actualizar el producto.');
+            return false;
         }
-    }, []);
+    }, [showNotification]);
 
     /**
      * deleteProduct — Elimina un producto de la base de datos y de la lista local
@@ -163,11 +166,16 @@ export function ProductProvider({ children }) {
             if (response.ok) {
                 setProducts(prev => prev.filter(p => p.id !== id && p.id !== String(id)));
                 refreshProducts();
+                return true;
             }
+            showNotification('error', 'No se pudo eliminar el producto en el servidor.');
+            return false;
         } catch (err) {
             console.error('Error al eliminar el producto:', err);
+            showNotification('error', 'Error de conexión al eliminar el producto.');
+            return false;
         }
-    }, []);
+    }, [showNotification]);
 
     /**
      * addProduct — Crea un nuevo producto en la base de datos
@@ -183,11 +191,16 @@ export function ProductProvider({ children }) {
             });
             if (response.ok) {
                 refreshProducts();
+                return true;
             }
+            showNotification('error', 'No se pudo crear el producto en el servidor.');
+            return false;
         } catch (err) {
             console.error('Error al agregar el producto:', err);
+            showNotification('error', 'Error de conexión al crear el producto.');
+            return false;
         }
-    }, []);
+    }, [showNotification]);
 
     /**
      * getFeaturedProducts — Devuelve los productos marcados como "destacados"

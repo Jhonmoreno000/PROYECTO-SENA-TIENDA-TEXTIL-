@@ -15,8 +15,11 @@ gsap.registerPlugin(useGSAP);
 const registerSchema = z.object({
     name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     email: z.string().min(1, 'El correo es requerido').email('Formato de correo inválido'),
-    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
+    aceptaHabeasData: z.boolean().refine((val) => val === true, {
+        message: 'Debes autorizar el tratamiento de datos personales (Ley 1581 de 2012)',
+    }),
 }).refine((datos) => datos.password === datos.confirmPassword, {
     message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],
@@ -75,7 +78,8 @@ function Registro() {
         const result = await registerUser({
             name: datos.name,
             email: datos.email,
-            password: datos.password
+            password: datos.password,
+            aceptaHabeasData: datos.aceptaHabeasData
         });
 
         if (result.success) {
@@ -110,7 +114,7 @@ function Registro() {
                     >
                         <div
                             className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay transition-transform duration-[20s] hover:scale-110"
-                            style={{ backgroundImage: 'url("/images/hero-telas-premium.png")' }}
+                            style={{ backgroundImage: 'url("/images/hero-telas-premium.webp")' }}
                         />
                         <div
                             className="absolute inset-0 opacity-[0.2] mix-blend-overlay"
@@ -226,6 +230,25 @@ function Registro() {
                                         {errors.confirmPassword && <p className="text-red-500 text-xs font-bold mt-1.5 pl-1">{errors.confirmPassword.message}</p>}
                                     </div>
 
+                                    {/* Aceptación Habeas Data (Ley 1581 de 2012) */}
+                                    <div className="form-field pt-1">
+                                        <label className="flex items-start gap-3 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                {...register('aceptaHabeasData')}
+                                                className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                            />
+                                            <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                                Autorizo de manera previa, expresa e informada el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 (Habeas Data).
+                                            </span>
+                                        </label>
+                                        {errors.aceptaHabeasData && (
+                                            <p className="text-red-500 text-xs font-bold mt-1.5 pl-1">
+                                                {errors.aceptaHabeasData.message}
+                                            </p>
+                                        )}
+                                    </div>
+
                                     {/* Botón de Submit */}
                                     <button
                                         type="submit"
@@ -265,7 +288,7 @@ function Registro() {
                     <span className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
                     <a href="/contacto" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Contacto</a>
                     <span className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
-                    <a href="#" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Privacidad</a>
+                    <Link to="/contacto" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Privacidad</Link>
                 </div>
             </div>
         </div>

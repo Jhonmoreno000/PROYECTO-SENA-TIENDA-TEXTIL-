@@ -175,7 +175,7 @@ function IniciarSesion() {
                     >
                         <div 
                             className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay transition-transform duration-[20s] hover:scale-110"
-                            style={{ backgroundImage: 'url("/images/hero-telas-premium.png")' }}
+                            style={{ backgroundImage: 'url("/images/hero-telas-premium.webp")' }}
                         />
                         <div 
                             className="absolute inset-0 opacity-[0.2] mix-blend-overlay"
@@ -270,9 +270,9 @@ function IniciarSesion() {
                                             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">
                                                 Contraseña
                                             </label>
-                                            <a href="#" className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
+                                            <Link to="/contacto" className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
                                                 ¿Olvidaste tu contraseña?
-                                            </a>
+                                            </Link>
                                         </div>
                                         <div className="relative group">
                                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -407,7 +407,7 @@ function IniciarSesion() {
                     <span className="w-px h-3 bg-slate-300 dark:bg-slate-700"></span>
                     <a href="/contacto" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Contacto</a>
                     <span className="w-px h-3 bg-slate-300 dark:bg-slate-700"></span>
-                    <a href="#" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Privacidad</a>
+                    <Link to="/contacto" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Privacidad</Link>
                 </div>
             </div>
         </div>

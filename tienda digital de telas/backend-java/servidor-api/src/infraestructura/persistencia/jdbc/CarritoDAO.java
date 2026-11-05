@@ -30,7 +30,7 @@ public class CarritoDAO {
                     item.setId(rs.getInt("id"));
                     item.setIdUsuario(rs.getInt("usuario_id"));
                     item.setIdProducto(rs.getInt("producto_id"));
-                    item.setCantidad(rs.getInt("cantidad"));
+                    item.setCantidad(rs.getDouble("cantidad"));
                     item.setNombreProducto(rs.getString("product_name"));
                     item.setPrecioProducto(rs.getDouble("product_price"));
                     item.setImagenProducto(rs.getString("product_image"));
@@ -47,13 +47,14 @@ public class CarritoDAO {
     /**
      * Agrega un producto al carrito o incrementa su cantidad.
      */
-    public boolean agregarAlCarrito(int idUsuario, int idProducto, int cantidad) {
-        String consulta = "INSERT INTO items_carrito (usuario_id, producto_id, cantidad) VALUES (?, ?, ?)";
+    public boolean agregarAlCarrito(int idUsuario, int idProducto, double cantidad) {
+        String consulta = "INSERT INTO items_carrito (usuario_id, producto_id, cantidad) VALUES (?, ?, ?) " +
+                "ON CONFLICT (usuario_id, producto_id) DO UPDATE SET cantidad = items_carrito.cantidad + EXCLUDED.cantidad, actualizado_en = NOW()";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setInt(1, idUsuario);
             pst.setInt(2, idProducto);
-            pst.setInt(3, cantidad);
+            pst.setDouble(3, cantidad);
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -61,20 +62,28 @@ public class CarritoDAO {
         }
     }
 
+    public boolean agregarAlCarrito(int idUsuario, int idProducto, int cantidad) {
+        return agregarAlCarrito(idUsuario, idProducto, (double) cantidad);
+    }
+
     /**
      * Actualiza la cantidad de un ítem del carrito.
      */
-    public boolean actualizarCantidad(int idItem, int cantidad) {
+    public boolean actualizarCantidad(int idItem, double cantidad) {
         String consulta = "UPDATE items_carrito SET cantidad = ?, actualizado_en = NOW() WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
-            pst.setInt(1, cantidad);
+            pst.setDouble(1, cantidad);
             pst.setInt(2, idItem);
             return pst.executeUpdate() > 0;
         } catch (SQLException e) { 
             e.printStackTrace(); 
             return false; 
         }
+    }
+
+    public boolean actualizarCantidad(int idItem, int cantidad) {
+        return actualizarCantidad(idItem, (double) cantidad);
     }
 
     /**
@@ -109,8 +118,8 @@ public class CarritoDAO {
 
     // Métodos alias para compatibilidad
     public List<ItemCarrito> getCartByUser(int userId) { return obtenerCarritoPorUsuario(userId); }
-    public boolean addToCart(int userId, int productId, int quantity) { return agregarAlCarrito(userId, productId, quantity); }
-    public boolean updateQuantity(int cartItemId, int quantity) { return actualizarCantidad(cartItemId, quantity); }
+    public boolean addToCart(int userId, int productId, double quantity) { return agregarAlCarrito(userId, productId, quantity); }
+    public boolean updateQuantity(int cartItemId, double quantity) { return actualizarCantidad(cartItemId, quantity); }
     public boolean removeFromCart(int cartItemId) { return eliminarDelCarrito(cartItemId); }
     public boolean clearCart(int userId) { return vaciarCarrito(userId); }
 }

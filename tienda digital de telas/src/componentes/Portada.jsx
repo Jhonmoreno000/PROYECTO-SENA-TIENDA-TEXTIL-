@@ -154,7 +154,7 @@ export default function Portada() {
                 <div className="order-1 lg:order-2 h-[50vh] lg:h-[75vh] w-full relative overflow-hidden rounded-bl-[4rem] rounded-tr-[4rem] shadow-2xl shadow-gray-200/50">
                     <img 
                         ref={imageRef}
-                        src="/images/hero-telas-premium.png" 
+                        src="/images/hero-telas-premium.webp" 
                         alt="Telas de Lujo"
                         className="w-full h-full object-cover origin-center will-change-transform"
                         style={{ clipPath: "inset(100% 0% 0% 0%)" }}

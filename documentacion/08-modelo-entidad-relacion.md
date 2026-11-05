@@ -363,7 +363,7 @@ Estas tablas no tienen llaves foráneas porque se consultan por clave, fecha o c
 
 ## 4. Observaciones del esquema (para corregir o justificar)
 
-1. **Dos esquemas a la vez.** Docker monta toda la carpeta `BASE DE DATOS/` como scripts de inicio, así que además de las 25 tablas en español se crean las 25 tablas en inglés de `TIENDA DIGITAL TEXTIL.sql` (`orders`, `users`, `products`…). El backend escribe los pedidos en `pedidos`, pero `ManejadorFactura` lee las facturas desde `orders`/`order_items`/`users`/`products`, por lo que un pedido nuevo no aparece en facturación. Conviene dejar un solo esquema y mover el volcado en inglés fuera de esa carpeta.
+1. **Dos esquemas a la vez (corregido).** El volcado en inglés `TIENDA DIGITAL TEXTIL.sql` se movió a `BASE DE DATOS/legado/`, así que Docker ya no lo ejecuta y solo se crean las 25 tablas en español. `ManejadorFactura` ya lee las facturas desde `pedidos` e `items_pedido`.
 2. **Columnas duplicadas.** `02_datos_iniciales.sql` agrega columnas alias en inglés (`name`, `email`, `role`, `code`, `active`…) y copia los valores una sola vez; después pueden quedar desincronizadas. No se incluyen en el DER.
 3. **Metros enteros en el carrito.** `items_carrito.cantidad` y `productos.stock` son `INTEGER`, mientras que `items_pedido.cantidad` es `NUMERIC(10,2)`. Si se venden fracciones de metro (1,5 m), el carrito no las puede guardar.
 4. **FK opcionales que deberían ser obligatorias.** `lotes_inventario.producto_id`, `eventos_merma.producto_id` y las dos columnas de `categorias_cupon` admiten NULL; un lote o una merma sin producto no tiene sentido.
