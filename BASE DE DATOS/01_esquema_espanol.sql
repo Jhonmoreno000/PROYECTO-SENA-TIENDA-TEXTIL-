@@ -285,6 +285,14 @@ CREATE TABLE IF NOT EXISTS actividad_reciente (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Índices en claves foráneas de alta frecuencia de consulta
+CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_id ON pedidos(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_items_pedido_pedido_id ON items_pedido(pedido_id);
+CREATE INDEX IF NOT EXISTS idx_items_carrito_usuario_id ON items_carrito(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_resenas_producto_id ON resenas(producto_id);
+CREATE INDEX IF NOT EXISTS idx_productos_vendedor_id ON productos(vendedor_id);
+CREATE INDEX IF NOT EXISTS idx_imagenes_producto_producto_id ON imagenes_producto(producto_id);
+
 -- ============================================================================
 -- DATOS INICIALES EN ESPAÑOL
 -- ============================================================================
