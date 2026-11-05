@@ -154,10 +154,28 @@ public class PagoWompiDAO {
 
                 double subtotalConDescuento = Math.max(0.0, subtotal - descuento);
 
-                // 3. Envío e IVA
-                // Envío gratis si el subtotal con descuento supera los $100.000 COP
-                double costoEnvio = subtotalConDescuento >= 100000.0 ? 0.0 : 15000.0;
-                double iva = Math.round((subtotalConDescuento * 0.19) * 100.0) / 100.0;
+                // 3. Envío e IVA (leídos desde configuracion_sistema con respaldo en $200.000 / $15.000 / 19%)
+                double umbralEnvioGratis = 200000.0;
+                double costoEnvioBase = 15000.0;
+                double tasaImpuesto = 0.19;
+                try (PreparedStatement pstCfg = con.prepareStatement("SELECT valor FROM configuracion_sistema WHERE clave = 'system_config'");
+                     ResultSet rsCfg = pstCfg.executeQuery()) {
+                    if (rsCfg.next() && rsCfg.getString("valor") != null) {
+                        com.google.gson.JsonObject cfg = com.google.gson.JsonParser.parseString(rsCfg.getString("valor")).getAsJsonObject();
+                        if (cfg.has("freeShippingThreshold") && !cfg.get("freeShippingThreshold").isJsonNull()) {
+                            umbralEnvioGratis = cfg.get("freeShippingThreshold").getAsDouble();
+                        }
+                        if (cfg.has("shippingCost") && !cfg.get("shippingCost").isJsonNull()) {
+                            costoEnvioBase = cfg.get("shippingCost").getAsDouble();
+                        }
+                        if (cfg.has("taxRate") && !cfg.get("taxRate").isJsonNull()) {
+                            tasaImpuesto = cfg.get("taxRate").getAsDouble();
+                        }
+                    }
+                } catch (Exception ignored) {}
+
+                double costoEnvio = subtotalConDescuento >= umbralEnvioGratis ? 0.0 : costoEnvioBase;
+                double iva = Math.round((subtotalConDescuento * tasaImpuesto) * 100.0) / 100.0;
                 double total = Math.round((subtotalConDescuento + costoEnvio + iva) * 100.0) / 100.0;
 
                 long montoCentavos = Math.round(total * 100.0);

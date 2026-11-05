@@ -16,6 +16,7 @@
 
 import React, { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage'; // Guarda datos en el navegador automáticamente
+import { useMetricas } from './ContextoMetricas';
 
 // Creamos el contexto del carrito para compartirlo con toda la app
 const ContextoCarrito = createContext();
@@ -36,6 +37,7 @@ export function useCarrito() {
  * Envuelve la aplicación para que el carrito esté disponible en todas las pantallas.
  */
 export function CartProvider({ children }) {
+    const { systemConfig } = useMetricas();
     // Lista de productos en el carrito (se guarda automáticamente en el navegador)
     const [cartItems, setCartItems] = useLocalStorage('cart', []);
     // Cupón de descuento aplicado actualmente (si hay alguno)
@@ -163,11 +165,14 @@ export function CartProvider({ children }) {
             discount = Math.min(discount, subtotal);
         }
         const afterDiscount = subtotal - discount;
-        const shipping = afterDiscount >= 100000 ? 0 : 15000;
-        const tax = afterDiscount * 0.19;
+        const freeShippingThreshold = Number(systemConfig?.freeShippingThreshold ?? 200000);
+        const shippingCost = Number(systemConfig?.shippingCost ?? 15000);
+        const taxRate = Number(systemConfig?.taxRate ?? 0.19);
+        const shipping = afterDiscount >= freeShippingThreshold ? 0 : shippingCost;
+        const tax = afterDiscount * taxRate;
         const total = afterDiscount + shipping + tax;
         return { subtotal, discount, afterDiscount, shipping, tax, total };
-    }, [appliedCoupon, getCartTotal]);
+    }, [appliedCoupon, getCartTotal, systemConfig]);
 
     /**
      * isInCart — Verifica si un producto ya está en el carrito
