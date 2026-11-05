@@ -131,7 +131,8 @@ export function AuthProvider({ children }) {
                     email: userData.email || userData.correo,
                     correo: userData.email || userData.correo,
                     password: userData.password || userData.contrasena,
-                    contrasena: userData.password || userData.contrasena
+                    contrasena: userData.password || userData.contrasena,
+                    aceptaHabeasData: Boolean(userData.aceptaHabeasData)
                 })
             });
 

@@ -17,6 +17,9 @@ const registerSchema = z.object({
     email: z.string().min(1, 'El correo es requerido').email('Formato de correo inválido'),
     password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
+    aceptaHabeasData: z.boolean().refine((val) => val === true, {
+        message: 'Debes autorizar el tratamiento de datos personales (Ley 1581 de 2012)',
+    }),
 }).refine((datos) => datos.password === datos.confirmPassword, {
     message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],
@@ -75,7 +78,8 @@ function Registro() {
         const result = await registerUser({
             name: datos.name,
             email: datos.email,
-            password: datos.password
+            password: datos.password,
+            aceptaHabeasData: datos.aceptaHabeasData
         });
 
         if (result.success) {
@@ -224,6 +228,25 @@ function Registro() {
                                             </button>
                                         </div>
                                         {errors.confirmPassword && <p className="text-red-500 text-xs font-bold mt-1.5 pl-1">{errors.confirmPassword.message}</p>}
+                                    </div>
+
+                                    {/* Aceptación Habeas Data (Ley 1581 de 2012) */}
+                                    <div className="form-field pt-1">
+                                        <label className="flex items-start gap-3 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                {...register('aceptaHabeasData')}
+                                                className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                            />
+                                            <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                                Autorizo de manera previa, expresa e informada el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 (Habeas Data).
+                                            </span>
+                                        </label>
+                                        {errors.aceptaHabeasData && (
+                                            <p className="text-red-500 text-xs font-bold mt-1.5 pl-1">
+                                                {errors.aceptaHabeasData.message}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Botón de Submit */}
