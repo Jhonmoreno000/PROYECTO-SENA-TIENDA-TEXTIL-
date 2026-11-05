@@ -13,6 +13,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProductos } from './ContextoProducto';
 import { useAutenticacion } from './ContextoAutenticacion';
+import { useNotificacion } from './ContextoNotificacion';
 import { formatCurrency } from '../utilidades/formateadores';
 
 import { getApiUrl, RUTAS_API } from '../config';
@@ -187,6 +188,7 @@ export function MetricsProvider({ children }) {
     // ── Productos (delegados a ContextoProducto para evitar duplicación) ────
     const { products, refreshProducts } = useProductos();
     const { user } = useAutenticacion();
+    const { showNotification } = useNotificacion();
     const [pendingProducts,   setPendingProducts]   = useState([]);
 
     // ── Estado principal ──────────────────────────────────────────────────
@@ -365,28 +367,44 @@ export function MetricsProvider({ children }) {
 
     /** Actualiza el rol de un usuario en el backend y estado local */
     const updateUserRole = async (userId, newRole) => {
+        const prevUsers = users;
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole, rol: newRole } : u));
         try {
-            await fetch(getApiUrl(`/api/usuarios/${userId}/rol`), {
+            const res = await fetch(getApiUrl(`/api/usuarios/${userId}/rol`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ role: newRole, rol: newRole })
             });
-        } catch (e) { console.error('Error al actualizar rol de usuario:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar rol de usuario:', e);
+            setUsers(prevUsers);
+            showNotification('error', 'No se pudo actualizar el rol del usuario.');
+            return false;
+        }
     };
 
     /** Activa / desactiva un usuario en el backend y estado local */
     const toggleUserActive = async (userId) => {
+        const prevUsers = users;
         const targetUser = users.find(u => u.id === userId);
         const nextActive = targetUser ? !targetUser.active : true;
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, active: nextActive, activo: nextActive } : u));
         try {
-            await fetch(getApiUrl(`/api/usuarios/${userId}/estado`), {
+            const res = await fetch(getApiUrl(`/api/usuarios/${userId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ active: nextActive, activo: nextActive })
             });
-        } catch (e) { console.error('Error al actualizar estado de usuario:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar estado de usuario:', e);
+            setUsers(prevUsers);
+            showNotification('error', 'No se pudo cambiar el estado del usuario.');
+            return false;
+        }
     };
 
     /** Filtra usuarios por rol */
@@ -408,14 +426,22 @@ export function MetricsProvider({ children }) {
      * @param {string} newStatus
      */
     const updateOrderStatus = async (orderId, newStatus) => {
+        const prevOrders = orders;
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, estado: newStatus } : o));
         try {
-            await fetch(getApiUrl(`/api/pedidos/${orderId}/estado`), {
+            const res = await fetch(getApiUrl(`/api/pedidos/${orderId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, estado: newStatus })
             });
-        } catch (e) { console.error('Error al actualizar estado de pedido:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar estado de pedido:', e);
+            setOrders(prevOrders);
+            showNotification('error', 'No se pudo actualizar el estado del pedido.');
+            return false;
+        }
     };
 
     // =========================================================================
@@ -471,29 +497,45 @@ export function MetricsProvider({ children }) {
      * @param {number} productId
      */
     const approveProduct = async (productId) => {
+        const prevPending = pendingProducts;
         setPendingProducts(prev => prev.filter(p => String(p.id) !== String(productId)));
         try {
-            await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
+            const res = await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'approved', estado: 'approved' })
             });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             refreshProducts();
-        } catch (e) { console.error('Error al aprobar producto:', e); }
+            return true;
+        } catch (e) {
+            console.error('Error al aprobar producto:', e);
+            setPendingProducts(prevPending);
+            showNotification('error', 'No se pudo aprobar el producto.');
+            return false;
+        }
     };
 
     const rejectProduct = async (productId, reason) => {
+        const prevPending = pendingProducts;
         setPendingProducts(prev => prev.map(p =>
             String(p.id) === String(productId) ? { ...p, status: 'rejected', estado: 'rejected', rejectionReason: reason, motivo: reason } : p
         ));
         try {
-            await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
+            const res = await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected', estado: 'rejected', reason, motivo: reason })
             });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             refreshProducts();
-        } catch (e) { console.error('Error al rechazar producto:', e); }
+            return true;
+        } catch (e) {
+            console.error('Error al rechazar producto:', e);
+            setPendingProducts(prevPending);
+            showNotification('error', 'No se pudo rechazar el producto.');
+            return false;
+        }
     };
 
     /** Actualiza tasa de comisión de un vendedor localmente */
@@ -561,6 +603,7 @@ export function MetricsProvider({ children }) {
      * @param {Object} newCoupon
      */
     const createCoupon = async (newCoupon) => {
+        const prevCoupons = coupons;
         const couponObj = {
             ...newCoupon,
             id: coupons.length > 0 ? Math.max(...coupons.map(c => c.id)) + 1 : 1,
@@ -572,12 +615,19 @@ export function MetricsProvider({ children }) {
         };
         setCoupons(prev => [...prev, couponObj]);
         try {
-            await fetch(getApiUrl('/api/cupones'), {
+            const res = await fetch(getApiUrl('/api/cupones'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(couponObj)
             });
-        } catch (e) { console.error('Error al crear cupón:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al crear cupón:', e);
+            setCoupons(prevCoupons);
+            showNotification('error', 'No se pudo crear el cupón.');
+            return false;
+        }
     };
 
     /**
@@ -585,10 +635,18 @@ export function MetricsProvider({ children }) {
      * @param {number} couponId
      */
     const deactivateCoupon = async (couponId) => {
+        const prevCoupons = coupons;
         setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, active: false, activo: false } : c));
         try {
-            await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), { method: 'PUT' });
-        } catch (e) { console.error('Error al desactivar cupón:', e); }
+            const res = await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), { method: 'PUT' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al desactivar cupón:', e);
+            setCoupons(prevCoupons);
+            showNotification('error', 'No se pudo desactivar el cupón.');
+            return false;
+        }
     };
 
     /**
