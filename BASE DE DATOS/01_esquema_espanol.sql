@@ -160,7 +160,8 @@ CREATE TABLE IF NOT EXISTS items_carrito (
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
     cantidad INTEGER DEFAULT 1 NOT NULL,
     agregado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP
+    actualizado_en TIMESTAMP,
+    UNIQUE (usuario_id, producto_id)
 );
 
 -- 13. TABLA: resenas
@@ -170,7 +171,8 @@ CREATE TABLE IF NOT EXISTS resenas (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     calificacion INTEGER CHECK (calificacion >= 1 AND calificacion <= 5),
     comentario TEXT NOT NULL,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (producto_id, usuario_id)
 );
 
 -- 14. TABLA: tickets_soporte
