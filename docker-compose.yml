@@ -32,7 +32,9 @@ services:
     env_file:
       - .env
     environment:
-      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/tienda_digital_textiles_db}
+      # Dentro de Docker la base de datos siempre es el servicio "db" (no localhost).
+      # Por eso no se lee DB_URL del .env, que apunta a localhost para desarrollo local.
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-tienda_digital_textiles_db}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-mysecretpassword}
       PORT: ${BACKEND_PORT:-8081}
