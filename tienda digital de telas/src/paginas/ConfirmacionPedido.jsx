@@ -17,8 +17,11 @@ function ConfirmacionPedido() {
     const [orderData, setOrderData] = useState(null);
     const [cargando, setCargando] = useState(true);
     const containerRef = useRef(null);
+    const consultadoRef = useRef(false);
 
     useEffect(() => {
+        if (consultadoRef.current) return;
+        consultadoRef.current = true;
         const params = new URLSearchParams(window.location.search);
         const referencia = params.get('referencia') || params.get('reference') || params.get('id');
 
@@ -81,7 +84,8 @@ function ConfirmacionPedido() {
         };
 
         cargarPedido();
-    }, [clearCart, navigate]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useGSAP(() => {
         if (!containerRef.current || !orderData) return;
