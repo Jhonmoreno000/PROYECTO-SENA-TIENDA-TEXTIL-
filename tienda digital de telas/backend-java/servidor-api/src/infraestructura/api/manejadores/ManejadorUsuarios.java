@@ -62,9 +62,13 @@ public class ManejadorUsuarios extends ManejadorBase {
 
             boolean exito = false;
             if (ruta.contains("/rol") || ruta.contains("/role") || objetoJson.has("role") || objetoJson.has("rol")) {
-                String nuevoRol = objetoJson.has("role") ? objetoJson.get("role").getAsString()
-                                : (objetoJson.has("rol") ? objetoJson.get("rol").getAsString() : "client");
-                exito = usuarioDAO.actualizarRolUsuario(idUsuario, nuevoRol);
+                String nuevoRol = (objetoJson.has("role") && !objetoJson.get("role").isJsonNull()) ? objetoJson.get("role").getAsString()
+                                : ((objetoJson.has("rol") && !objetoJson.get("rol").isJsonNull()) ? objetoJson.get("rol").getAsString() : null);
+                if (nuevoRol == null || !java.util.Set.of("cliente", "vendedor", "administrador").contains(nuevoRol.trim().toLowerCase())) {
+                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Rol inválido. Valores permitidos: cliente, vendedor, administrador\"}");
+                    return;
+                }
+                exito = usuarioDAO.actualizarRolUsuario(idUsuario, nuevoRol.trim().toLowerCase());
             } else if (ruta.contains("/estado") || ruta.contains("/status") || objetoJson.has("active") || objetoJson.has("activo")) {
                 boolean nuevoEstado = objetoJson.has("active") ? objetoJson.get("active").getAsBoolean()
                                     : (objetoJson.has("activo") ? objetoJson.get("activo").getAsBoolean() : true);
