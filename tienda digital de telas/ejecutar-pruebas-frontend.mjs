@@ -4,7 +4,15 @@
  * Ejecutable nativo con Node.js (ES Modules).
  */
 
-import { formatCurrency, formatDate, truncateText, generateId } from './src/utilidades/formateadores.js';
+import {
+    formatCurrency,
+    formatDate,
+    truncateText,
+    generateId,
+    calcularMetrajeCortina,
+    convertirACentavosWompi,
+    generarReferenciaPedido,
+} from './src/utilidades/formateadores.js';
 
 let totalPruebas = 0;
 let pruebasAprobadas = 0;
@@ -56,15 +64,6 @@ assert(typeof id1 === 'string' && id1.length > 10 && id1 !== id2, 'generateId de
 // -----------------------------------------------------------------------------
 console.log('\n[GRUPO 2: Motor Matematico de la Calculadora de Confeccion]');
 
-function calcularMetrajeCortina(anchoVentana, altoVentana, factorFruncido = 2.0, margenTecnico = 0.10) {
-    if (anchoVentana <= 0 || altoVentana <= 0) {
-        throw new Error('Dimensiones deben ser positivas');
-    }
-    const metrosBrutos = (anchoVentana * factorFruncido) * (altoVentana + 0.30) / 1.50;
-    const metrosConMargen = metrosBrutos * (1 + margenTecnico);
-    return Math.round(metrosConMargen * 100) / 100;
-}
-
 const metrosCortina = calcularMetrajeCortina(2.0, 2.2);
 assert(metrosCortina > 0 && metrosCortina > (2.0 * 2.2), 'Calculo de cortina debe considerar fruncido 2.0x y dobladillo superior/inferior');
 
@@ -85,17 +84,8 @@ assert(errorCapturado, 'Calculadora debe rechazar dimensiones negativas o iguale
 // -----------------------------------------------------------------------------
 console.log('\n[GRUPO 3: Dominio Financiero y Checkout Wompi]');
 
-function convertirACentavosWompi(montoCop) {
-    if (montoCop < 0) throw new Error('Monto no puede ser negativo');
-    return Math.round(montoCop * 100);
-}
-
 const centavos1 = convertirACentavosWompi(125000);
 assert(centavos1 === 12500000, 'Conversion de $125.000 COP a centavos Wompi debe ser exactamente 12500000 enteros');
-
-function generarReferenciaPedido(idPedido, timestamp = Date.now()) {
-    return `PED-${idPedido}-${timestamp}`;
-}
 
 const ref = generarReferenciaPedido(42, 1729000000000);
 assert(ref === 'PED-42-1729000000000' && ref.startsWith('PED-'), 'Referencia de pago debe cumplir estructura PED-{id}-{timestamp}');
@@ -105,10 +95,12 @@ assert(ref === 'PED-42-1729000000000' && ref.startsWith('PED-'), 'Referencia de 
 // -----------------------------------------------------------------------------
 console.log('\n================================================================================');
 console.log(`RESUMEN DE PRUEBAS FRONTEND:`);
+const porcentajeAprobacion = totalPruebas > 0 ? Math.round((pruebasAprobadas / totalPruebas) * 100) : 0;
+const dictamen = pruebasFallidas === 0 ? 'SUITE FRONTEND APROBADA PARA CI/CD' : 'SUITE FRONTEND CON FALLOS';
 console.log(`Total Pruebas: ${totalPruebas}`);
-console.log(`Aprobadas: ${pruebasAprobadas} (100%)`);
+console.log(`Aprobadas: ${pruebasAprobadas} (${porcentajeAprobacion}%)`);
 console.log(`Fallidas: ${pruebasFallidas}`);
-console.log('Dictamen: SUITE FRONTEND APROBADA PARA CI/CD');
+console.log(`Dictamen: ${dictamen}`);
 console.log('================================================================================');
 
 if (pruebasFallidas > 0) {
