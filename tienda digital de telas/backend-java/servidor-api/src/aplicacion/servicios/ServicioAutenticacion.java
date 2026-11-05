@@ -35,6 +35,7 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("El correo y la contraseña son obligatorios.");
         }
 
+        correo = correo.trim().toLowerCase();
         String hash = generarHashContrasena(contrasena);
         Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYValidarContrasena(correo, hash);
 
@@ -67,7 +68,8 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("Todos los campos obligatorios deben ser completados.");
         }
 
-        Usuario nuevoUsuario = new Usuario(0, nombre, correo, "cliente", true, false, null, null, null, null, null);
+        correo = correo.trim().toLowerCase();
+        Usuario nuevoUsuario = new Usuario(0, nombre.trim(), correo, "cliente", true, false, null, null, null, null, null);
         String contrasenaCifrada = generarHashContrasena(contrasena);
 
         boolean guardadoExitoso = repositorioUsuario.guardar(nuevoUsuario, contrasenaCifrada);
@@ -106,6 +108,7 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("El correo electrónico del proveedor SSO es obligatorio.");
         }
 
+        correo = correo.trim().toLowerCase();
         Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYActivo(correo);
         if (usuarioOpt.isPresent()) {
             Usuario usuario = usuarioOpt.get();
