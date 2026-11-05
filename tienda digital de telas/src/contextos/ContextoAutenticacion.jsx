@@ -218,32 +218,6 @@ export function AuthProvider({ children }) {
         } catch (error) {
             console.error('Error al iniciar sesión con SSO:', error);
             const isNetworkError = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError');
-
-            // Si estamos en desarrollo o el backend local no responde, permitir sesión de desarrollo
-            if (isNetworkError || import.meta.env.DEV) {
-                const nombreUsuario = ssoData.nombre || ssoData.name || ('Usuario ' + (ssoData.proveedor || 'SSO'));
-                const loggedInUser = {
-                    id: 9999,
-                    name: nombreUsuario,
-                    nombre: nombreUsuario,
-                    email: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
-                    correo: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
-                    role: 'cliente',
-                    rol: 'cliente',
-                    proveedor: ssoData.proveedor
-                };
-
-                try {
-                    window.localStorage.setItem('authUser', JSON.stringify(loggedInUser));
-                } catch (e) {
-                    console.error('Error guardando en localStorage:', e);
-                }
-
-                setUser(loggedInUser);
-                showNotification('success', `¡Bienvenido ${loggedInUser.name}! (Conectado con ${ssoData.proveedor || 'SSO'})`);
-                return { success: true, user: loggedInUser };
-            }
-
             const msg = isNetworkError
                 ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : 'Error al conectar con el servidor';
