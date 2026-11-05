@@ -76,9 +76,9 @@ export default function PanelVendedor() {
   const {
     products, orders, bugReports,
     getProductsBySeller, getOrdersBySeller, getBugReportsBySeller,
-    updateProduct, deleteProduct, refreshData,
+    deleteProduct, refreshData,
   } = useMetricas();
-  const { refreshProducts } = useProductos();
+  const { updateProduct, refreshProducts } = useProductos();
 
   // ── Filtros de la barra superior (rango de fechas y categoría) ────────
   // Estos valores controlan qué periodo y qué tipo de producto se muestra.
@@ -215,7 +215,7 @@ export default function PanelVendedor() {
       }
     }
 
-    await updateProduct(productId, updatedForm);
+    await updateProduct({ ...updatedForm, id: productId });
     setEditingId(null);
     showNotification('success', 'Producto actualizado correctamente');
 
