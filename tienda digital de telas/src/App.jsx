@@ -17,6 +17,7 @@ import IniciarSesion from './paginas/IniciarSesion';
 import Registro from './paginas/Registro';
 import BugReport from './paginas/BugReport';
 import Payment from './paginas/payment/Payment';
+import NoEncontrado from './paginas/NoEncontrado';
 
 // Dashboard paginas (lazy - only loaded when needed)
 const PanelCliente = lazy(() => import('./paginas/cliente/PanelCliente'));
@@ -501,6 +502,7 @@ function AppRoutes() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route path="*" element={<NoEncontrado />} />
             </Routes>
     );
 }
