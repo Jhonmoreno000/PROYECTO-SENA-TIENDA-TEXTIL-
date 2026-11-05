@@ -69,6 +69,13 @@ public class ServicioAutenticacion {
         }
 
         correo = correo.trim().toLowerCase();
+        if (!correo.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new ExcepcionDominio("El formato del correo electrónico no es válido.");
+        }
+        if (contrasena.length() < 8) {
+            throw new ExcepcionDominio("La contraseña debe tener al menos 8 caracteres.");
+        }
+
         Usuario nuevoUsuario = new Usuario(0, nombre.trim(), correo, "cliente", true, false, null, null, null, null, null);
         String contrasenaCifrada = generarHashContrasena(contrasena);
 
