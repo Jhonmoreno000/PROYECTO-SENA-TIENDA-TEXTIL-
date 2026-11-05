@@ -95,6 +95,9 @@ public abstract class ManejadorBase implements HttpHandler {
         } catch (ExcepcionDominio e) {
             registrarLogJson("WARN", "Error de Regla de Negocio: " + e.getMessage(), correlationId, intercambio, 400);
             enviarRespuestaError(intercambio, 400, e.getMessage());
+        } catch (com.google.gson.JsonParseException e) {
+            registrarLogJson("WARN", "JSON inválido en la petición: " + e.getMessage(), correlationId, intercambio, 400);
+            enviarRespuestaError(intercambio, 400, "El cuerpo de la petición no contiene un JSON válido.");
         } catch (IllegalArgumentException e) {
             registrarLogJson("WARN", "Parámetros inválidos: " + e.getMessage(), correlationId, intercambio, 400);
             enviarRespuestaError(intercambio, 400, "Parámetros inválidos o formato incorrecto: " + e.getMessage());
