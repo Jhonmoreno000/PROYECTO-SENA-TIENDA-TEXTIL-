@@ -52,10 +52,11 @@ public class ManejadorSalud extends ManejadorBase {
             if (conexion != null && conexion.isValid(2)) {
                 baseDatosOperativa = true;
             } else {
-                detalleErrorBd = "Conexión inválida o nula tras timeout de 2 segundos.";
+                detalleErrorBd = "Base de datos no disponible";
             }
         } catch (Exception ex) {
-            detalleErrorBd = ex.getMessage();
+            System.err.println("[SALUD] Error de conexión a PostgreSQL: " + ex.getMessage());
+            detalleErrorBd = "Base de datos no disponible";
         }
 
         int codigoHttp = baseDatosOperativa ? 200 : 503;
