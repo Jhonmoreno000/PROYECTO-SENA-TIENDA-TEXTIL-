@@ -195,13 +195,18 @@ public class ProductoDAO {
                     extension = "gif";
             }
 
+            byte[] bytesImagen = Base64.getDecoder().decode(base64.trim());
+            if (!esImagenValida(bytesImagen)) {
+                System.err.println("[SEGURIDAD] Archivo rechazado: los magic bytes no corresponden a una imagen válida.");
+                return null;
+            }
+
             File carpetaSubidas = new File("uploads");
             if (!carpetaSubidas.exists())
                 carpetaSubidas.mkdirs();
 
             String nombreArchivo = "product_" + idProducto + "_" + System.currentTimeMillis() + "." + extension;
             File archivoImagen = new File(carpetaSubidas, nombreArchivo);
-            byte[] bytesImagen = Base64.getDecoder().decode(base64);
             try (FileOutputStream fos = new FileOutputStream(archivoImagen)) {
                 fos.write(bytesImagen);
             }
@@ -209,10 +214,22 @@ public class ProductoDAO {
             String urlImagen = "/uploads/" + nombreArchivo;
 
             try (Connection conexion = Conexion.obtenerConexion()) {
+                List<String> imagenesAnteriores = obtenerImagenesProducto(conexion, idProducto);
+
                 String consultaEliminar = "DELETE FROM imagenes_producto WHERE producto_id = ?";
                 try (PreparedStatement sentenciaEliminar = conexion.prepareStatement(consultaEliminar)) {
                     sentenciaEliminar.setInt(1, idProducto);
                     sentenciaEliminar.executeUpdate();
+                }
+
+                for (String urlAnterior : imagenesAnteriores) {
+                    if (urlAnterior != null && urlAnterior.startsWith("/uploads/")) {
+                        String nombreAnterior = urlAnterior.substring("/uploads/".length());
+                        File archivoAnterior = new File(carpetaSubidas, nombreAnterior);
+                        if (archivoAnterior.exists() && archivoAnterior.isFile()) {
+                            archivoAnterior.delete();
+                        }
+                    }
                 }
 
                 String consultaInsertar = "INSERT INTO imagenes_producto (producto_id, url_imagen, orden_visualizacion) VALUES (?, ?, 0)";
@@ -229,6 +246,20 @@ public class ProductoDAO {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private boolean esImagenValida(byte[] bytes) {
+        if (bytes == null || bytes.length < 12) return false;
+        // PNG: 89 50 4E 47 0D 0A 1A 0A
+        boolean esPng = (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
+        // JPEG: FF D8 FF
+        boolean esJpg = (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF;
+        // GIF: GIF87a o GIF89a
+        boolean esGif = bytes[0] == 'G' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == '8';
+        // WebP: RIFF....WEBP
+        boolean esWebp = bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+                && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P';
+        return esPng || esJpg || esGif || esWebp;
     }
 
     /**
