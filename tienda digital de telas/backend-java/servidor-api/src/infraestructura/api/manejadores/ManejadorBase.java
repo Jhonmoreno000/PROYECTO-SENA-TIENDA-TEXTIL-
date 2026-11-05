@@ -225,6 +225,23 @@ public abstract class ManejadorBase implements HttpHandler {
     }
 
     /**
+     * Extrae el primer segmento numérico positivo de una ruta URI.
+     */
+    protected int extraerIdRuta(String ruta) {
+        if (ruta == null) return -1;
+        for (String segmento : ruta.split("/")) {
+            if (segmento.matches("\\d+")) {
+                try {
+                    return Integer.parseInt(segmento);
+                } catch (NumberFormatException e) {
+                    return -1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Lee el cuerpo de la petición de forma segura limitando la lectura al tamaño máximo permitido.
      */
     protected byte[] leerCuerpoSeguro(HttpExchange intercambio) throws IOException {

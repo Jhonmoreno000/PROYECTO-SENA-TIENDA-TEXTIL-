@@ -36,14 +36,7 @@ public class ManejadorUsuarios extends ManejadorBase {
             List<Usuario> usuarios = usuarioDAO.obtenerTodosLosUsuarios();
             enviarRespuestaJson(intercambio, 200, gson.toJson(usuarios));
         } else if ("PUT".equalsIgnoreCase(metodo)) {
-            String[] segmentos = ruta.split("/");
-            int idUsuario = -1;
-            for (String segmento : segmentos) {
-                if (segmento.matches("\\d+")) {
-                    idUsuario = Integer.parseInt(segmento);
-                    break;
-                }
-            }
+            int idUsuario = extraerIdRuta(ruta);
 
             if (idUsuario <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de usuario inválido en la ruta\"}");

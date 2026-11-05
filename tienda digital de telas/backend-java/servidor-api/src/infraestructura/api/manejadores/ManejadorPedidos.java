@@ -130,14 +130,4 @@ public class ManejadorPedidos extends ManejadorBase {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
     }
-
-    private int extraerIdRuta(String ruta) {
-        String[] segmentos = ruta.split("/");
-        for (String segmento : segmentos) {
-            if (segmento.matches("\\d+")) {
-                return Integer.parseInt(segmento);
-            }
-        }
-        return -1;
-    }
 }

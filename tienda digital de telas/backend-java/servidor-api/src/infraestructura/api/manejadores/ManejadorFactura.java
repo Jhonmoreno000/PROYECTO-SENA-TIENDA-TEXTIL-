@@ -40,14 +40,7 @@ public class ManejadorFactura extends ManejadorBase {
             if (ruta.equals("/api/invoices") || ruta.equals("/api/facturas")) {
                 manejarListarFacturas(intercambio);
             } else {
-                String[] partes = ruta.split("/");
-                int idPedido = -1;
-                for (String p : partes) {
-                    if (p.matches("\\d+")) {
-                        idPedido = Integer.parseInt(p);
-                        break;
-                    }
-                }
+                int idPedido = extraerIdRuta(ruta);
                 if (idPedido <= 0) {
                     enviarRespuestaJson(intercambio, 400, "{\"error\":\"ID de pedido inválido en la ruta\"}");
                     return;

@@ -76,14 +76,7 @@ public class ManejadorSoporte extends ManejadorBase {
                 estado = objetoJson.get("estado").getAsString();
             }
 
-            String[] segmentosRuta = ruta.split("/");
-            int identificador = -1;
-            for (String segmento : segmentosRuta) {
-                if (segmento.matches("\\d+")) {
-                    identificador = Integer.parseInt(segmento);
-                    break;
-                }
-            }
+            int identificador = extraerIdRuta(ruta);
 
             if (identificador <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador no numérico o inválido en la ruta\"}");

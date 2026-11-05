@@ -136,14 +136,4 @@ public class ManejadorProductos extends ManejadorBase {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
         }
     }
-
-    private int extraerIdRuta(String ruta) {
-        String[] partes = ruta.split("/");
-        for (String p : partes) {
-            if (p.matches("\\d+")) {
-                return Integer.parseInt(p);
-            }
-        }
-        return -1;
-    }
 }

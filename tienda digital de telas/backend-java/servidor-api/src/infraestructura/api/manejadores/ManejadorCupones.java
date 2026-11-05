@@ -49,14 +49,7 @@ public class ManejadorCupones extends ManejadorBase {
             String ruta = intercambio.getRequestURI().getPath();
             if ((ruta.startsWith("/api/coupons/") && ruta.endsWith("/deactivate")) ||
                 (ruta.startsWith("/api/cupones/") && ruta.endsWith("/desactivar"))) {
-                String[] segmentos = ruta.split("/");
-                int idCupon = -1;
-                for (String segmento : segmentos) {
-                    if (segmento.matches("\\d+")) {
-                        idCupon = Integer.parseInt(segmento);
-                        break;
-                    }
-                }
+                int idCupon = extraerIdRuta(ruta);
 
                 if (idCupon <= 0) {
                     enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de cupón inválido\"}");
