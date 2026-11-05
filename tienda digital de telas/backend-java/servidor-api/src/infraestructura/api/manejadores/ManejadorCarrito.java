@@ -39,8 +39,7 @@ public class ManejadorCarrito extends ManejadorBase {
 
         // POST /api/cart o /api/carrito
         } else if ("POST".equals(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -78,8 +77,7 @@ public class ManejadorCarrito extends ManejadorBase {
                 return;
             }
 
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();

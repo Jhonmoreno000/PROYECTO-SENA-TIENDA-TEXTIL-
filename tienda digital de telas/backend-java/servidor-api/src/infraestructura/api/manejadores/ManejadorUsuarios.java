@@ -43,8 +43,7 @@ public class ManejadorUsuarios extends ManejadorBase {
                 return;
             }
 
-            java.io.InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), java.nio.charset.StandardCharsets.UTF_8);
             com.google.gson.JsonObject objetoJson;
             try {
                 objetoJson = com.google.gson.JsonParser.parseString(cuerpo).getAsJsonObject();

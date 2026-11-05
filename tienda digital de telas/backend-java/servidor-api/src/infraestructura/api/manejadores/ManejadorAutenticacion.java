@@ -32,8 +32,7 @@ public class ManejadorAutenticacion extends ManejadorBase {
         }
 
         String ruta = intercambio.getRequestURI().getPath();
-        InputStream cuerpoEntrada = intercambio.getRequestBody();
-        String cuerpoTexto = new String(cuerpoEntrada.readAllBytes(), StandardCharsets.UTF_8).trim();
+        String cuerpoTexto = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8).trim();
 
         if (cuerpoTexto.isEmpty()) {
             enviarRespuestaError(intercambio, 400, "El cuerpo de la petición no puede estar vacío");

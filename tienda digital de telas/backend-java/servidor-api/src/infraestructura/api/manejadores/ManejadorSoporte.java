@@ -42,8 +42,7 @@ public class ManejadorSoporte extends ManejadorBase {
 
         // POST — Creación de nuevos tickets o reportes
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
             if (ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets")) {
                 TicketSoporte ticket = gson.fromJson(cuerpo, TicketSoporte.class);
@@ -59,8 +58,7 @@ public class ManejadorSoporte extends ManejadorBase {
 
         // PUT — Actualización del estado de tickets o reportes
         } else if ("PUT".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();

@@ -97,8 +97,7 @@ public class ManejadorPagosWompi extends ManejadorBase {
      * Endpoint para generar la orden y la firma de integridad SHA-256 antes de abrir el Widget.
      */
     private void manejarIntencionPago(HttpExchange intercambio) throws Exception {
-        InputStream is = intercambio.getRequestBody();
-        String cuerpo = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {
@@ -191,8 +190,7 @@ public class ManejadorPagosWompi extends ManejadorBase {
      * Endpoint Webhook de Wompi. Valida la firma del evento y procesa la transacción de forma idempotente.
      */
     private void manejarWebhook(HttpExchange intercambio) throws Exception {
-        InputStream is = intercambio.getRequestBody();
-        String payloadRaw = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        String payloadRaw = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {

@@ -34,8 +34,7 @@ public class ManejadorCupones extends ManejadorBase {
 
         // POST — Crea un nuevo cupón a partir del cuerpo JSON
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             Cupon nuevoCupon = gson.fromJson(cuerpo, Cupon.class);
 
             if (cuponDAO.agregarCupon(nuevoCupon)) {

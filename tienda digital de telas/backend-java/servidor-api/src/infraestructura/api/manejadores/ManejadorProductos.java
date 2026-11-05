@@ -82,8 +82,7 @@ public class ManejadorProductos extends ManejadorBase {
         }
 
         if (ruta.contains("/moderate") || ruta.contains("/moderar")) {
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             String estado = json.has("status") ? json.get("status").getAsString() : json.get("estado").getAsString();
             String motivo = json.has("reason") ? json.get("reason").getAsString()
@@ -92,8 +91,7 @@ public class ManejadorProductos extends ManejadorBase {
             enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error en moderación\"}");
 
         } else if (ruta.matches("^/api/(products|productos)/\\d+/image$") || ruta.matches("^/api/(products|productos)/\\d+/imagen$")) {
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             String imagenBase64 = json.has("image") ? json.get("image").getAsString() : json.get("imagen").getAsString();
             String urlGuardada = dao.guardarImagenProducto(idProducto, imagenBase64);
@@ -105,8 +103,7 @@ public class ManejadorProductos extends ManejadorBase {
             }
 
         } else if (ruta.matches("^/api/(products|productos)/\\d+/?$")) {
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             Producto actualizaciones = gson.fromJson(json, Producto.class);
             Boolean destacado = json.has("featured") ? json.get("featured").getAsBoolean()
@@ -120,8 +117,7 @@ public class ManejadorProductos extends ManejadorBase {
     }
 
     private void manejarPost(HttpExchange intercambio, ProductoDAO dao, Gson gson) throws Exception {
-        InputStream entrada = intercambio.getRequestBody();
-        String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
         Producto nuevoProducto = gson.fromJson(cuerpo, Producto.class);
         boolean exito = dao.agregarProducto(nuevoProducto);
         enviarRespuestaJson(intercambio, exito ? 201 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error al insertar producto\"}");

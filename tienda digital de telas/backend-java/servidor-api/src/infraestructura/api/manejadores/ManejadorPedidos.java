@@ -51,8 +51,7 @@ public class ManejadorPedidos extends ManejadorBase {
 
         // POST /api/orders o /api/pedidos
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream entrada = intercambio.getRequestBody();
-            String cuerpo = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json;
             try {
                 json = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -109,8 +108,7 @@ public class ManejadorPedidos extends ManejadorBase {
                     return;
                 }
 
-                InputStream flujoEntrada = intercambio.getRequestBody();
-                String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+                String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
                 JsonObject objetoJson;
                 try {
                     objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
