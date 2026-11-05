@@ -84,7 +84,12 @@ public class ManejadorProductos extends ManejadorBase {
         if (ruta.contains("/moderate") || ruta.contains("/moderar")) {
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
-            String estado = json.has("status") ? json.get("status").getAsString() : json.get("estado").getAsString();
+            String estado = (json.has("status") && !json.get("status").isJsonNull()) ? json.get("status").getAsString()
+                          : ((json.has("estado") && !json.get("estado").isJsonNull()) ? json.get("estado").getAsString() : null);
+            if (estado == null || !java.util.Set.of("approved", "rejected", "pending", "aprobado", "rechazado", "pendiente").contains(estado.trim().toLowerCase())) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Estado de moderación inválido o faltante\"}");
+                return;
+            }
             String motivo = json.has("reason") ? json.get("reason").getAsString()
                           : (json.has("motivo") ? json.get("motivo").getAsString() : null);
             boolean exito = dao.actualizarEstadoModeracion(idProducto, estado, motivo);
@@ -119,6 +124,10 @@ public class ManejadorProductos extends ManejadorBase {
     private void manejarPost(HttpExchange intercambio, ProductoDAO dao, Gson gson) throws Exception {
         String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
         Producto nuevoProducto = gson.fromJson(cuerpo, Producto.class);
+        if (nuevoProducto == null || nuevoProducto.getNombre() == null || nuevoProducto.getNombre().isBlank() || nuevoProducto.getPrecio() <= 0 || nuevoProducto.getExistencias() < 0) {
+            enviarRespuestaJson(intercambio, 400, "{\"error\":\"Nombre, precio mayor a cero y stock no negativo son obligatorios\"}");
+            return;
+        }
         boolean exito = dao.agregarProducto(nuevoProducto);
         enviarRespuestaJson(intercambio, exito ? 201 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error al insertar producto\"}");
     }
