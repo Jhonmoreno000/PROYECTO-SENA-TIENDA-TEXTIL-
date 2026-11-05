@@ -95,8 +95,13 @@ public class ManejadorFactura extends ManejadorBase {
         String direccionCliente = "";
         String documentoCliente = "";
         String metodoPago = "N/A";
+        double subtotalGuardado = 0.0;
+        double descuentoGuardado = 0.0;
+        double envioGuardado = 0.0;
+        double impuestoGuardado = 0.0;
 
-        String consultaPedido = "SELECT nombre_cliente, correo_cliente, telefono_cliente, direccion_envio, metodo_pago " +
+        String consultaPedido = "SELECT nombre_cliente, correo_cliente, telefono_cliente, direccion_envio, metodo_pago, " +
+                "subtotal, monto_descuento, costo_envio, monto_impuesto " +
                 "FROM pedidos WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consultaPedido)) {
@@ -118,6 +123,10 @@ public class ManejadorFactura extends ManejadorBase {
                     if (rs.getString("metodo_pago") != null) {
                         metodoPago = rs.getString("metodo_pago");
                     }
+                    subtotalGuardado = rs.getDouble("subtotal");
+                    descuentoGuardado = rs.getDouble("monto_descuento");
+                    envioGuardado = rs.getDouble("costo_envio");
+                    impuestoGuardado = rs.getDouble("monto_impuesto");
                 }
             }
         }
@@ -142,19 +151,22 @@ public class ManejadorFactura extends ManejadorBase {
             }
         }
 
-        double subtotal = 0;
+        double subtotalCalculado = 0;
         for (Map<String, Object> item : articulos) {
             double cantidad = ((Number) item.get("quantity")).doubleValue();
             double precio = ((Number) item.get("unitPrice")).doubleValue();
-            subtotal += cantidad * precio;
+            subtotalCalculado += cantidad * precio;
         }
-        double impuestos = subtotal * 0.19;
+        double subtotal = subtotalGuardado > 0 ? subtotalGuardado : subtotalCalculado;
+        double descuento = descuentoGuardado;
+        double envio = envioGuardado;
+        double impuestos = impuestoGuardado > 0 ? impuestoGuardado : Math.max(0.0, subtotal - descuento) * 0.19;
         double total = pedido.getTotal();
 
         byte[] pdfBytes = servicioFactura.generarFactura(
                 idPedido, nombreCliente, correoCliente, telefonoCliente,
                 direccionCliente, documentoCliente, articulos,
-                subtotal, 0, 0, impuestos, total, metodoPago
+                subtotal, descuento, envio, impuestos, total, metodoPago
         );
 
         intercambio.getResponseHeaders().set("Content-Type", "application/pdf");
