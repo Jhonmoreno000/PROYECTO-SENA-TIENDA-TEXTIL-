@@ -108,11 +108,15 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        int userId = 1;
+        int userId = -1;
         if (json.has("userId") && !json.get("userId").isJsonNull()) {
             userId = json.get("userId").getAsInt();
         } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
             userId = json.get("idUsuario").getAsInt();
+        }
+        if (userId <= 0) {
+            enviarRespuestaError(intercambio, 400, "El identificador del usuario es obligatorio.");
+            return;
         }
 
         JsonObject customer = json.has("customerInfo") && json.get("customerInfo").isJsonObject()

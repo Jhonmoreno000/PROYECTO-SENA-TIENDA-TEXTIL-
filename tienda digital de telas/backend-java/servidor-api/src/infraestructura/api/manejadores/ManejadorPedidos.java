@@ -61,7 +61,7 @@ public class ManejadorPedidos extends ManejadorBase {
                 return;
             }
 
-            int idCliente = 1;
+            int idCliente = -1;
             if (json.has("clientId") && !json.get("clientId").isJsonNull()) {
                 idCliente = json.get("clientId").getAsInt();
             } else if (json.has("userId") && !json.get("userId").isJsonNull()) {
@@ -70,6 +70,10 @@ public class ManejadorPedidos extends ManejadorBase {
                 idCliente = json.get("idCliente").getAsInt();
             } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
                 idCliente = json.get("idUsuario").getAsInt();
+            }
+            if (idCliente <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"El identificador del cliente es obligatorio\"}");
+                return;
             }
 
             double total = 0.0;
