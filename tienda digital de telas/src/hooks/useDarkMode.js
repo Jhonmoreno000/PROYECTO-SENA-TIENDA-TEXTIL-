@@ -13,8 +13,30 @@ export function useDarkMode() {
         }
     }, [darkMode]);
 
+    useEffect(() => {
+        const syncTheme = (event) => {
+            if (event.type === 'dark-mode-change') {
+                setDarkMode(Boolean(event.detail));
+            } else if (event.type === 'storage' && event.key === 'darkMode' && event.newValue !== null) {
+                try {
+                    setDarkMode(JSON.parse(event.newValue));
+                } catch {
+                    // Ignorar valores malformados
+                }
+            }
+        };
+        window.addEventListener('dark-mode-change', syncTheme);
+        window.addEventListener('storage', syncTheme);
+        return () => {
+            window.removeEventListener('dark-mode-change', syncTheme);
+            window.removeEventListener('storage', syncTheme);
+        };
+    }, [setDarkMode]);
+
     const toggleDarkMode = () => {
-        setDarkMode(!darkMode);
+        const nextMode = !darkMode;
+        setDarkMode(nextMode);
+        window.dispatchEvent(new CustomEvent('dark-mode-change', { detail: nextMode }));
     };
 
     return [darkMode, toggleDarkMode];
