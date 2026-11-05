@@ -147,22 +147,17 @@ public abstract class ManejadorBase implements HttpHandler {
      * Emite un log estructurado en formato JSON estándar para Observabilidad / SIEM / ELK / Grafana Loki.
      */
     protected void registrarLogJson(String nivel, String mensaje, String correlationId, HttpExchange intercambio, int codigoEstado) {
-        String timestamp = Instant.now().toString();
-        String metodo = intercambio != null ? intercambio.getRequestMethod() : "N/A";
-        String ruta = intercambio != null ? intercambio.getRequestURI().getPath() : "N/A";
-        String mensajeEscapado = mensaje != null ? mensaje.replace("\"", "\\\"").replace("\n", " ") : "";
+        com.google.gson.JsonObject logObj = new com.google.gson.JsonObject();
+        logObj.addProperty("timestamp", Instant.now().toString());
+        logObj.addProperty("level", nivel);
+        logObj.addProperty("service_name", NOMBRE_SERVICIO);
+        logObj.addProperty("trace_id", correlationId != null ? correlationId : "N/A");
+        logObj.addProperty("method", intercambio != null ? intercambio.getRequestMethod() : "N/A");
+        logObj.addProperty("path", intercambio != null ? intercambio.getRequestURI().getPath() : "N/A");
+        logObj.addProperty("status", codigoEstado);
+        logObj.addProperty("message", mensaje != null ? mensaje : "");
 
-        String jsonLog = "{"
-                + "\"timestamp\":\"" + timestamp + "\","
-                + "\"level\":\"" + nivel + "\","
-                + "\"service_name\":\"" + NOMBRE_SERVICIO + "\","
-                + "\"trace_id\":\"" + (correlationId != null ? correlationId : "N/A") + "\","
-                + "\"method\":\"" + metodo + "\","
-                + "\"path\":\"" + ruta + "\","
-                + "\"status\":" + codigoEstado + ","
-                + "\"message\":\"" + mensajeEscapado + "\""
-                + "}";
-
+        String jsonLog = logObj.toString();
         if ("ERROR".equalsIgnoreCase(nivel)) {
             System.err.println(jsonLog);
         } else {
@@ -194,9 +189,9 @@ public abstract class ManejadorBase implements HttpHandler {
      * Envía una respuesta de error en JSON.
      */
     protected void enviarRespuestaError(HttpExchange intercambio, int codigoEstado, String mensaje) throws IOException {
-        String mensajeSeguro = mensaje != null ? mensaje.replace("\"", "\\\"") : "Error";
-        String json = "{\"error\": \"" + mensajeSeguro + "\"}";
-        enviarRespuestaJson(intercambio, codigoEstado, json);
+        com.google.gson.JsonObject errorObj = new com.google.gson.JsonObject();
+        errorObj.addProperty("error", mensaje != null ? mensaje : "Error");
+        enviarRespuestaJson(intercambio, codigoEstado, errorObj.toString());
     }
 
     /**

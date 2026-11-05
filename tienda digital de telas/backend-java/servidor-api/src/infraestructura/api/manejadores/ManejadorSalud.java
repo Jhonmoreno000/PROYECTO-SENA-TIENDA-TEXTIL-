@@ -30,18 +30,18 @@ public class ManejadorSalud extends ManejadorBase {
 
         // --- LIVENESS PROBE: /health/live ---
         if (ruta.endsWith("/live")) {
-            String jsonLive = "{"
-                    + "\"status\":\"UP\","
-                    + "\"timestamp\":\"" + Instant.now().toString() + "\","
-                    + "\"service\":\"ddtextil-backend\","
-                    + "\"uptime_ms\":" + tiempoUptimeMs + ","
-                    + "\"jvm_memory\":{"
-                    + "\"used_mb\":" + memoriaUsadaMb + ","
-                    + "\"free_mb\":" + memoriaLibreMb + ","
-                    + "\"total_mb\":" + memoriaTotalMb
-                    + "}"
-                    + "}";
-            enviarRespuestaJson(intercambio, 200, jsonLive);
+            com.google.gson.JsonObject memObj = new com.google.gson.JsonObject();
+            memObj.addProperty("used_mb", memoriaUsadaMb);
+            memObj.addProperty("free_mb", memoriaLibreMb);
+            memObj.addProperty("total_mb", memoriaTotalMb);
+
+            com.google.gson.JsonObject liveObj = new com.google.gson.JsonObject();
+            liveObj.addProperty("status", "UP");
+            liveObj.addProperty("timestamp", Instant.now().toString());
+            liveObj.addProperty("service", "ddtextil-backend");
+            liveObj.addProperty("uptime_ms", tiempoUptimeMs);
+            liveObj.add("jvm_memory", memObj);
+            enviarRespuestaJson(intercambio, 200, liveObj.toString());
             return;
         }
 
@@ -61,18 +61,28 @@ public class ManejadorSalud extends ManejadorBase {
         int codigoHttp = baseDatosOperativa ? 200 : 503;
         String estadoGlobal = baseDatosOperativa ? "UP" : "DOWN";
 
-        String jsonRespuesta = "{"
-                + "\"status\":\"" + estadoGlobal + "\","
-                + "\"timestamp\":\"" + Instant.now().toString() + "\","
-                + "\"service\":\"ddtextil-backend\","
-                + "\"checks\":["
-                + "{\"name\":\"jvm_process\",\"status\":\"UP\",\"uptime_ms\":" + tiempoUptimeMs + "},"
-                + "{\"name\":\"postgresql_database\",\"status\":\"" + (baseDatosOperativa ? "UP" : "DOWN") + "\""
-                + (detalleErrorBd != null ? ",\"error\":\"" + detalleErrorBd.replace("\"", "\\\"") + "\"" : "")
-                + "}"
-                + "]"
-                + "}";
+        com.google.gson.JsonObject checkJvm = new com.google.gson.JsonObject();
+        checkJvm.addProperty("name", "jvm_process");
+        checkJvm.addProperty("status", "UP");
+        checkJvm.addProperty("uptime_ms", tiempoUptimeMs);
 
-        enviarRespuestaJson(intercambio, codigoHttp, jsonRespuesta);
+        com.google.gson.JsonObject checkDb = new com.google.gson.JsonObject();
+        checkDb.addProperty("name", "postgresql_database");
+        checkDb.addProperty("status", baseDatosOperativa ? "UP" : "DOWN");
+        if (detalleErrorBd != null) {
+            checkDb.addProperty("error", detalleErrorBd);
+        }
+
+        com.google.gson.JsonArray checks = new com.google.gson.JsonArray();
+        checks.add(checkJvm);
+        checks.add(checkDb);
+
+        com.google.gson.JsonObject respObj = new com.google.gson.JsonObject();
+        respObj.addProperty("status", estadoGlobal);
+        respObj.addProperty("timestamp", Instant.now().toString());
+        respObj.addProperty("service", "ddtextil-backend");
+        respObj.add("checks", checks);
+
+        enviarRespuestaJson(intercambio, codigoHttp, respObj.toString());
     }
 }
