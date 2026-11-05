@@ -588,10 +588,12 @@ CREATE DATABASE tienda_digital_textiles_db;
 
 #### 1.2. Restaurar el esquema y datos
 
-El archivo SQL se encuentra en la carpeta `BASE DE DATOS/` en la raíz del repositorio.
+Los scripts SQL están en la carpeta `BASE DE DATOS/` en la raíz del repositorio. Ejecútalos en este orden:
 
 ```bash
-psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql"```
+psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/01_esquema_espanol.sql"
+psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/02_datos_iniciales.sql"
+```
 
 > **Nota:** Si te pide contraseña, ingresa la contraseña de tu usuario `postgres` de PostgreSQL.
 
@@ -753,9 +755,11 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
    \q
    ```
 
-3. **Vuelve a importar el SQL actualizado (que ya contiene todas las columnas correctas y los hashes válidos):**
+3. **Vuelve a importar los scripts actualizados (esquema en español y datos iniciales con los hashes válidos):**
    ```bash
-   psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/TIENDA DIGITAL TEXTIL.sql"```
+   psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/01_esquema_espanol.sql"
+   psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/02_datos_iniciales.sql"
+   ```
 
 > **Consejo Pro (SembradorDatosPrueba):**  
 > Alternativamente, en lugar de importar el archivo `.sql`, puedes usar nuestra herramienta nativa de Java para resetear y sembrar automáticamente la base de datos con contraseñas encriptadas en SHA-256:  
