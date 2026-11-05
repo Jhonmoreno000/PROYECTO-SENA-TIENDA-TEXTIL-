@@ -11,7 +11,7 @@
 
 **D&D Textil** es una plataforma tecnológica integral de comercio electrónico (*E-Commerce B2B/B2C*) y gestión logística de bodega especializada en la industria textil y de insumos para la confección en Colombia. A diferencia de las plataformas genéricas de comercio electrónico que operan bajo unidades discretas (piezas o cajas cerradas), **D&D Textil** ha sido arquitecturada desde su núcleo de dominio (*Domain-Driven Design*) para gestionar la naturaleza continua, fraccionable y físico-química de las telas: **venta por metraje lineal decimal, trazabilidad por lote de tintorería (*dye lot*), continuidad de pieza por rollo físico y liquidación automatizada de mermas y retazos**.
 
-El propósito del proyecto es digitalizar la cadena de suministro entre importadores/distribuidores textiles, talleres de confección, diseñadores independientes y compradores minoristas, conectando en tiempo real el **piso de corte en bodega** con una **vitrina digital omnicanal** (Web SPA/PWA en React 18 y Aplicación Móvil Android nativa) respaldada por un motor transaccional en **Java 21** y **PostgreSQL 15** con integración financiera **Wompi** y facturación electrónica con **CUFE**.
+El propósito del proyecto es digitalizar la cadena de suministro entre importadores/distribuidores textiles, talleres de confección, diseñadores independientes y compradores minoristas, conectando en tiempo real el **piso de corte en bodega** con una **vitrina digital omnicanal** (Web SPA/PWA en React 18 y Aplicación Móvil Android nativa) respaldada por un motor transaccional en **Java 21** y **PostgreSQL 17** con integración financiera **Wompi** y facturación electrónica con **CUFE**.
 
 ---
 
@@ -96,7 +96,7 @@ Gracias a una decisión arquitectónica deliberada —**Backend en Java 21 nativ
 
 | Categoría | Componente / Servicio | Especificación Técnica | Costo Mensual Estimado (USD / COP) |
 | :--- | :--- | :--- | :--- |
-| **Cómputo y Contenedores** | Servidor VPS Cloud (AWS Lightsail / DigitalOcean / Hetzner) | 2 vCPU, 4 GB RAM, 80 GB NVMe SSD ejecutando Docker Compose (`nginx`, `backend-java`, `postgres:15-alpine`) | \$24 USD (~ \$100.000 COP) |
+| **Cómputo y Contenedores** | Servidor VPS Cloud (AWS Lightsail / DigitalOcean / Hetzner) | 2 vCPU, 4 GB RAM, 80 GB NVMe SSD ejecutando Docker Compose (`nginx`, `backend-java`, `postgres:17`) | \$24 USD (~ \$100.000 COP) |
 | **Almacenamiento y Backups (DRP)** | Object Storage (AWS S3 / Backblaze B2) | Almacenamiento de imágenes de catálogo WebP y respaldos automatizados de PostgreSQL (RPO $\le 24\text{h}$, retención 7 días) | \$5 USD (~ \$21.000 COP) |
 | **Dominio, DNS y Seguridad** | Cloudflare + Dominio `.com` / `.co` | Certificado TLS/SSL, CDN para activos estáticos, mitigación DDoS y WAF básico | \$3 USD (~ \$13.000 COP) |
 | **Correo Transaccional** | Proveedor SMTP / API Transaccional | Envío automático de confirmaciones de pedido, alertas de stock y facturas | \$0 – \$10 USD (~ \$42.000 COP) |
