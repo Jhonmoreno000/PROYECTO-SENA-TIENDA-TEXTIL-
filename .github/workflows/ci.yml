@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           cd "tienda digital de telas"
-          npm ci || npm install
+          npm ci
 
       - name: Ejecutar Pruebas Automatizadas del Frontend
         run: |
