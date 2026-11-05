@@ -397,7 +397,7 @@ src/
  │    │    └── ServidorApi.java # Servidor HTTP concurrente (Pool de 32+ hilos)
  │    ├── persistencia/jdbc/    # DAOs y Repositorios JDBC (UsuarioDAO, JdbcRepositorioUsuarioImpl...)
  │    └── configuracion/
- │         └── Conexion.java    # Pool de conexiones HikariCP / PostgreSQL
+ │         └── Conexion.java    # Gestión de conexiones JDBC / PostgreSQL
  ├── App.java                   # Punto de entrada principal
  ├── SembradorDatosPrueba.java   # Utilidad para poblar la BD con datos iniciales reales
  └── PruebasSeguridadIntegridad.java # Suite de validación de seguridad y concurrencia

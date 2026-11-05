@@ -26,7 +26,7 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Matriz de Trazabilidad de Requerimientos:** Cruce bidireccional entre requerimientos de negocio, casos de uso tecnicos y componentes de software.
 
 ### 2. [02. Arquitectura de Software, Modelo C4 y Backend Java](documentacion/02-arquitectura-software-c4-y-backend.md)
-*   **Vision General del Backend:** Diseno en Vanilla Java 17 de alto desempeno, servidor HTTP nativo con pool de 32 hilos concurrentes, pool de conexiones HikariCP y Google Gson.
+*   **Vision General del Backend:** Diseno en Vanilla Java 17 de alto desempeno, servidor HTTP nativo con pool de 32 hilos concurrentes, conexion JDBC directa con PostgreSQL y Google Gson.
 *   **Estructura Exhaustiva de Capas y Paquetes:** Distribucion Clean Architecture en capas `dominio`, `aplicacion` e `infraestructura` con correspondencia exacta de clases en idioma espanol.
 *   **Principios SOLID con Ejemplos de Codigo:** Demostracion de SRP, OCP, LSP, ISP y DIP en el contexto textil.
 *   **Diagramas de Arquitectura bajo el Modelo C4 y Despliegue:**

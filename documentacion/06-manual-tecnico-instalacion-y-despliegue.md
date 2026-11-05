@@ -77,7 +77,7 @@ flowchart TD
     UserApp -->|"HTTP / Puerto 8081"| ContBackend
 
     ContFrontend -->|"HTTP REST / Proxy: 8081<br/>[frontend-net]"| ContBackend
-    ContBackend -->|"JDBC HikariCP / Puerto 5432<br/>[backend-net]"| ContPostgres
+    ContBackend -->|"JDBC PostgreSQL / Puerto 5432<br/>[backend-net]"| ContPostgres
 
     ContPostgres --- VolData
     ContBackend --- VolUploads
@@ -148,7 +148,7 @@ DB_PASSWORD=postgres_secure_password_2026
 # VARIABLES DE CONFIGURACION DEL BACKEND (JAVA)
 # =============================================================================
 SERVER_PORT=8081
-JWT_SECRET=b8c4d2e8f1a0e9c7b5d3a1f8e6c4b2a0d9e7f5c3b1a9e7f5d3c1b9a7f5e3d1c9
+WOMPI_ENV=sandbox
 ENVIRONMENT=production
 LOG_LEVEL=INFO
 
@@ -230,7 +230,7 @@ En estaciones de trabajo para desarrollo local donde no se disponga de Docker, l
    ```bash
    mkdir -p bin
    ```
-3. Compilar todas las clases del codigo fuente incluyendo las librerias JAR de dependencias (`postgresql-*.jar`, `gson-*.jar`, `HikariCP-*.jar`, `slf4j-*.jar`):
+3. Compilar todas las clases del codigo fuente incluyendo las librerias JAR de dependencias (`postgresql-*.jar`, `gson-*.jar`, `pdfbox-app-*.jar`):
    - En sistemas Linux / macOS:
      ```bash
      javac -encoding UTF-8 -cp "lib/*:src"-d bin $(find src -name "*.java")
@@ -254,7 +254,7 @@ En estaciones de trabajo para desarrollo local donde no se disponga de Docker, l
    ==================================================
    SERVIDOR TEXTIL INICIADO EXITOSAMENTE
    Puerto de Escucha: 8081
-   Pool de Conexiones HikariCP: ACTIVO
+   Conexion JDBC PostgreSQL: ACTIVA
    Pool de Hilos de Peticiones: 32 hilos concurrentes
    ==================================================
    ```
