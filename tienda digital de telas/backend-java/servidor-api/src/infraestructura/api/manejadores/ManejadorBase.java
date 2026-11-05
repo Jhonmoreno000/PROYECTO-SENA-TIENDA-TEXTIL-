@@ -134,14 +134,20 @@ public abstract class ManejadorBase implements HttpHandler {
      * Extrae la IP de origen, considerando cabeceras de proxy inverso (X-Forwarded-For).
      */
     private String obtenerIpCliente(HttpExchange intercambio) {
-        String xForwarded = intercambio.getRequestHeaders().getFirst("X-Forwarded-For");
-        if (xForwarded != null && !xForwarded.isBlank()) {
-            return xForwarded.split(",")[0].trim();
-        }
+        String ipRemota = "127.0.0.1";
+        boolean esProxyConfiable = false;
         if (intercambio.getRemoteAddress() != null && intercambio.getRemoteAddress().getAddress() != null) {
-            return intercambio.getRemoteAddress().getAddress().getHostAddress();
+            java.net.InetAddress addr = intercambio.getRemoteAddress().getAddress();
+            ipRemota = addr.getHostAddress();
+            esProxyConfiable = addr.isLoopbackAddress() || addr.isSiteLocalAddress();
         }
-        return "127.0.0.1";
+        if (esProxyConfiable) {
+            String xRealIp = intercambio.getRequestHeaders().getFirst("X-Real-IP");
+            if (xRealIp != null && !xRealIp.isBlank()) {
+                return xRealIp.trim();
+            }
+        }
+        return ipRemota;
     }
 
     /**
