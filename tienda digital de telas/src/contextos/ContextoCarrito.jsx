@@ -14,7 +14,7 @@
  *  const { cartItems, addToCart, removeFromCart } = useCarrito();
  */
 
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage'; // Guarda datos en el navegador automáticamente
 
 // Creamos el contexto del carrito para compartirlo con toda la app
@@ -120,6 +120,12 @@ export function CartProvider({ children }) {
         setCartItems([]);
         setAppliedCoupon(null);
     }, [setCartItems, setAppliedCoupon]);
+
+    useEffect(() => {
+        const handleLogout = () => clearCart();
+        window.addEventListener('auth-logout', handleLogout);
+        return () => window.removeEventListener('auth-logout', handleLogout);
+    }, [clearCart]);
 
     /**
      * getCartTotal — Calcula el precio total del carrito

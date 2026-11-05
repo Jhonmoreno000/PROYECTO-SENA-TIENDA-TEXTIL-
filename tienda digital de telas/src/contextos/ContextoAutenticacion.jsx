@@ -235,6 +235,13 @@ export function AuthProvider({ children }) {
         setIsLoggingOut(true);
         setTimeout(() => {
             setUser(null);           // Borramos el usuario del estado y del localStorage
+            try {
+                window.localStorage.removeItem('cart');
+                window.localStorage.removeItem('applied_coupon');
+                window.dispatchEvent(new Event('auth-logout'));
+            } catch (e) {
+                console.error('Error limpiando carrito en logout:', e);
+            }
             setIsLoggingOut(false);  // Ocultamos la animación de logout
             showNotification('info', 'Has cerrado sesión');
         }, 2500); // Esperamos 2.5 segundos para que se vea la animación
