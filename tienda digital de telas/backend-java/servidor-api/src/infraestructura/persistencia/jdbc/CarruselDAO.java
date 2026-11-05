@@ -22,7 +22,7 @@ public class CarruselDAO {
      */
     public List<DiapositivaCarrusel> obtenerDiapositivasActivas() {
         List<DiapositivaCarrusel> diapositivas = new ArrayList<>();
-        String consulta = "SELECT * FROM diapositivas_carrusel WHERE active = true ORDER BY orden ASC, id ASC";
+        String consulta = "SELECT * FROM diapositivas_carrusel WHERE activo = true ORDER BY orden ASC, id ASC";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -61,19 +61,17 @@ public class CarruselDAO {
      * Inserta una nueva diapositiva en la base de datos.
      */
     public boolean agregarDiapositiva(DiapositivaCarrusel diapositiva) {
-        String consulta = "INSERT INTO diapositivas_carrusel (titulo, subtitulo, imagen, image, cta, clave_seccion, activo, active, orden) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String consulta = "INSERT INTO diapositivas_carrusel (titulo, subtitulo, imagen, cta, clave_seccion, activo, orden) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta, Statement.RETURN_GENERATED_KEYS)) {
             pst.setString(1, diapositiva.getTitulo());
             pst.setString(2, diapositiva.getSubtitulo());
             pst.setString(3, diapositiva.getImagen());
-            pst.setString(4, diapositiva.getImagen());
-            pst.setString(5, diapositiva.getTextoBoton());
-            pst.setString(6, diapositiva.getClaveSeccion());
-            pst.setBoolean(7, diapositiva.isActivo());
-            pst.setBoolean(8, diapositiva.isActivo());
-            pst.setInt(9, diapositiva.getOrden());
+            pst.setString(4, diapositiva.getTextoBoton());
+            pst.setString(5, diapositiva.getClaveSeccion());
+            pst.setBoolean(6, diapositiva.isActivo());
+            pst.setInt(7, diapositiva.getOrden());
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -89,11 +87,9 @@ public class CarruselDAO {
                 "titulo = COALESCE(?, titulo), " +
                 "subtitulo = COALESCE(?, subtitulo), " +
                 "imagen = COALESCE(?, imagen), " +
-                "image = COALESCE(?, image), " +
                 "cta = COALESCE(?, cta), " +
                 "clave_seccion = COALESCE(?, clave_seccion), " +
                 "activo = COALESCE(?, activo), " +
-                "active = COALESCE(?, active), " +
                 "orden = COALESCE(?, orden) " +
                 "WHERE id = ?";
         try (Connection con = Conexion.obtenerConexion();
@@ -101,13 +97,11 @@ public class CarruselDAO {
             pst.setString(1, diapositiva.getTitulo());
             pst.setString(2, diapositiva.getSubtitulo());
             pst.setString(3, diapositiva.getImagen());
-            pst.setString(4, diapositiva.getImagen());
-            pst.setString(5, diapositiva.getTextoBoton());
-            pst.setString(6, diapositiva.getClaveSeccion());
-            pst.setObject(7, activo);
-            pst.setObject(8, activo);
-            pst.setObject(9, diapositiva.getOrden() > 0 ? diapositiva.getOrden() : null);
-            pst.setInt(10, id);
+            pst.setString(4, diapositiva.getTextoBoton());
+            pst.setString(5, diapositiva.getClaveSeccion());
+            pst.setObject(6, activo);
+            pst.setObject(7, diapositiva.getOrden() > 0 ? diapositiva.getOrden() : null);
+            pst.setInt(8, id);
             return pst.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -135,8 +129,7 @@ public class CarruselDAO {
         slide.setId(rs.getInt("id"));
         slide.setTitulo(rs.getString("titulo"));
         slide.setSubtitulo(rs.getString("subtitulo"));
-        String img = rs.getString("imagen");
-        slide.setImagen(img != null && !img.isBlank() ? img : rs.getString("image"));
+        slide.setImagen(rs.getString("imagen"));
         slide.setTextoBoton(rs.getString("cta"));
         slide.setClaveSeccion(rs.getString("clave_seccion"));
         slide.setActivo(rs.getBoolean("activo"));

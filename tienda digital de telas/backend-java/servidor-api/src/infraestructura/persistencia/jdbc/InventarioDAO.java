@@ -311,14 +311,14 @@ public class InventarioDAO {
 
     public List<java.util.Map<String, Object>> obtenerNotificacionesErp() {
         List<java.util.Map<String, Object>> lista = new ArrayList<>();
-        String consulta = "SELECT id, COALESCE(type, tipo) as type, titulo, mensaje, leido, creado_en FROM notificaciones_sistema_erp ORDER BY creado_en DESC LIMIT 20";
+        String consulta = "SELECT id, tipo, titulo, mensaje, leido, creado_en FROM notificaciones_sistema_erp ORDER BY creado_en DESC LIMIT 20";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
              ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 java.util.Map<String, Object> fila = new java.util.LinkedHashMap<>();
                 fila.put("id", rs.getInt("id"));
-                fila.put("type", rs.getString("type"));
+                fila.put("type", rs.getString("tipo"));
                 fila.put("titulo", rs.getString("titulo"));
                 fila.put("mensaje", rs.getString("mensaje"));
                 fila.put("isRead", rs.getBoolean("leido"));
