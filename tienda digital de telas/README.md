@@ -764,7 +764,8 @@ Para solucionarlo y tener la base de datos idéntica al repositorio oficial:
 > **Consejo Pro (SembradorDatosPrueba):**  
 > Alternativamente, en lugar de importar el archivo `.sql`, puedes usar nuestra herramienta nativa de Java para resetear y sembrar automáticamente la base de datos con contraseñas encriptadas en SHA-256:  
 > ```bash
-> cd "backend-java/servidor-api"> java -cp "bin;lib/*"SembradorDatosPrueba
+> cd "backend-java/servidor-api"
+> java -cp "bin;lib/*" SembradorDatosPrueba
 > ```  
 > Esto truncará las tablas e insertará usuarios, métricas, productos temporales y las **credenciales válidas**.
 
