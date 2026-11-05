@@ -77,13 +77,6 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Sobrecarga de compatibilidad para registrar cliente.
-     */
-    public void registrarCliente(String nombre, String correo, String contrasena) {
-        registrarCliente(nombre, correo, contrasena, true);
-    }
-
-    /**
      * Inicia sesión con Google o Microsoft.
      * El token se valida primero con el proveedor y se usa únicamente el correo que el proveedor certifica;
      * el correo que envíe el navegador se ignora.

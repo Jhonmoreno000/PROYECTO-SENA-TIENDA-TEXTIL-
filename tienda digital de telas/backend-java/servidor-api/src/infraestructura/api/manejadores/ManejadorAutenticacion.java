@@ -63,7 +63,7 @@ public class ManejadorAutenticacion extends ManejadorBase {
             String correo = extraerTexto(jsonObjeto, "email", extraerTexto(jsonObjeto, "correo", null));
             String contrasena = extraerTexto(jsonObjeto, "password", extraerTexto(jsonObjeto, "contrasena", null));
 
-            boolean aceptaHabeasData = true;
+            boolean aceptaHabeasData = false;
             if (jsonObjeto.has("aceptaHabeasData") && !jsonObjeto.get("aceptaHabeasData").isJsonNull()) {
                 aceptaHabeasData = jsonObjeto.get("aceptaHabeasData").getAsBoolean();
             } else if (jsonObjeto.has("acceptsTerms") && !jsonObjeto.get("acceptsTerms").isJsonNull()) {
