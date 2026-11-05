@@ -288,7 +288,7 @@ function Registro() {
                     <span className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
                     <a href="/contacto" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Contacto</a>
                     <span className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
-                    <a href="#" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Privacidad</a>
+                    <Link to="/contacto" className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors">Privacidad</Link>
                 </div>
             </div>
         </div>
