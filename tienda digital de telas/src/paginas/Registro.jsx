@@ -15,7 +15,7 @@ gsap.registerPlugin(useGSAP);
 const registerSchema = z.object({
     name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     email: z.string().min(1, 'El correo es requerido').email('Formato de correo inválido'),
-    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
     aceptaHabeasData: z.boolean().refine((val) => val === true, {
         message: 'Debes autorizar el tratamiento de datos personales (Ley 1581 de 2012)',
