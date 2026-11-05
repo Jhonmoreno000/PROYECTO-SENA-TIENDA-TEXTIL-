@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.UUID;
 
 import aplicacion.servicios.ServicioCriptoWompi;
 import dominio.excepciones.ExcepcionDominio;
@@ -163,7 +163,8 @@ public class PagoWompiDAO {
                 long montoCentavos = Math.round(total * 100.0);
 
                 // 4. Generar referencia única
-                String referencia = "DD-" + System.currentTimeMillis() + "-" + String.format("%04d", new Random().nextInt(10000));
+                String sufijoUuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+                String referencia = "DD-" + System.currentTimeMillis() + "-" + sufijoUuid;
 
                 // 5. Guardar Pedido en PostgreSQL con estado 'pending'
                 String sqlInsertPedido = "INSERT INTO pedidos (" +
