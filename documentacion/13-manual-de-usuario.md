@@ -110,3 +110,34 @@ Dentro de la página de un producto (`/producto/:id`) puedes revisar su informac
 4. **Comprar ahora:** agrega el producto y te dirige de inmediato al carrito para finalizar la orden.
 5. **Favoritos (corazón):** guarda la tela en tu **Lista de deseos / Muestrario Virtual** (requiere sesión iniciada).
 6. **Reseñas:** al final de la página puedes leer opiniones verificadas de otros compradores y, si ya iniciaste sesión, calificar la tela de **1 a 5 estrellas** dejando tu comentario.
+
+### 2.4. Carrito
+
+Haz clic en el icono de la bolsa en la esquina superior derecha para abrir tu carrito (`/carrito`):
+
+- **Cambiar metros:** ajusta los metros con `-` y `+` o elimina un corte haciendo clic en el icono de papelera.
+- **Código de cupón:** si cuentas con un código promocional (por ejemplo `BIENVENIDA10`), escríbelo en el campo correspondiente y pulsa **Aplicar**.
+- **Resumen del pedido:** a la derecha se detalla en tiempo real:
+  - **Subtotal** de las telas seleccionadas.
+  - **Descuento** aplicado por cupón o volumen.
+  - **Envío:** tarifa estándar de **$15.000 COP**, o **gratis** en compras iguales o superiores a **$100.000 COP**.
+  - **IVA (19 %)** discriminado legalmente.
+  - **Total a pagar**.
+- Haz clic en **Proceder al Pago** para avanzar al checkout.
+
+### 2.5. Crear una cuenta
+
+Para registrarte como cliente nuevo (`/registro`):
+
+1. Haz clic en **Ingresar** en la barra superior y luego selecciona **Regístrate aquí**.
+2. Completa tu **Nombre Completo**, **Correo Electrónico** y una **Contraseña** (mínimo 6 caracteres), o utiliza los botones de registro rápido con **Google** o **Microsoft**.
+3. Marca las casillas de aceptación de **Términos y Condiciones** y la **Política de Tratamiento de Datos Personales (Habeas Data — Ley 1581 de 2012)**.
+4. Haz clic en **Crear Cuenta**.
+
+### 2.6. Iniciar sesión
+
+En la pantalla **Bienvenido de nuevo** (`/login`):
+
+1. Escribe tu **Correo Electrónico** y tu **Contraseña**, y pulsa **Iniciar Sesión**.
+2. Si lo prefieres, entra con tu cuenta corporativa o personal de **Google** o **Microsoft**.
+3. **Solo en entorno de demostración:** debajo del formulario encontrarás tres botones de acceso rápido (**Cliente**, **Vendedor** y **Admin**) que autocompletan las credenciales de prueba con un solo clic para agilizar la sustentación.
