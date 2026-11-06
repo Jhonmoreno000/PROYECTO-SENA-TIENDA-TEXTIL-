@@ -78,7 +78,12 @@ export function calcularMetrajeCortina(anchoVentana, altoVentana, factorFruncido
 }
 
 /**
- * convertirACentavosWompi — Convierte un monto en pesos colombianos (COP) a centavos enteros para Wompi
+ * convertirACentavosWompi — Convierte un monto en Pesos Colombianos (COP) a la unidad mínima en centavos enteros
+ * exigida por la firma criptográfica SHA-256 y el checkout de la pasarela Wompi.
+ *
+ * @param {number} montoCop - Valor total de la orden en pesos colombianos (mayor o igual a 0).
+ * @returns {number} Monto expresado en centavos enteros redondeados (ej. 125000 -> 12500000).
+ * @throws {Error} Si el monto es negativo.
  */
 export function convertirACentavosWompi(montoCop) {
     if (montoCop < 0) throw new Error('Monto no puede ser negativo');
