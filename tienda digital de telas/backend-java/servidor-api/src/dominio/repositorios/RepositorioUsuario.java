@@ -11,6 +11,11 @@ import java.util.Optional;
 public interface RepositorioUsuario {
 
     /**
+     * Busca un usuario por su identificador.
+     */
+    Optional<Usuario> buscarPorId(int idUsuario);
+
+    /**
      * Busca un usuario por su correo electrónico verificando que se encuentre activo.
      */
     Optional<Usuario> buscarPorCorreoYActivo(String correo);

@@ -19,6 +19,38 @@ import java.util.Optional;
 public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
 
     @Override
+    public Optional<Usuario> buscarPorId(int idUsuario) {
+        String consulta = "SELECT id, nombre, correo, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
+                "registrado_en, ultimo_acceso FROM usuarios WHERE id = ?";
+        try (Connection conexion = Conexion.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
+            sentencia.setInt(1, idUsuario);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                if (resultado.next()) {
+                    Usuario usuario = new Usuario(
+                        resultado.getInt("id"),
+                        resultado.getString("nombre"),
+                        resultado.getString("correo"),
+                        resultado.getString("rol"),
+                        resultado.getBoolean("activo"),
+                        resultado.getBoolean("suspendido"),
+                        resultado.getString("motivo_suspension"),
+                        resultado.getBigDecimal("tasa_comision"),
+                        resultado.getTimestamp("registrado_en") != null ? resultado.getTimestamp("registrado_en").toLocalDateTime() : null,
+                        resultado.getTimestamp("ultimo_acceso") != null ? resultado.getTimestamp("ultimo_acceso").toLocalDateTime() : null,
+                        null
+                    );
+                    return Optional.of(usuario);
+                }
+            }
+        } catch (SQLException excepcion) {
+            System.err.println("[ERROR] Error buscando usuario por identificador: " + excepcion.getMessage());
+            excepcion.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<Usuario> buscarPorCorreoYActivo(String correo) {
         String consulta = "SELECT id, nombre, correo, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
                 "registrado_en, ultimo_acceso FROM usuarios WHERE correo = ? AND activo = true";
