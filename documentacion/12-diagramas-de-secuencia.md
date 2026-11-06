@@ -319,3 +319,38 @@ sequenceDiagram
 </details>
 
 Fuentes editables en PlantUML: `diagramas/fuentes/sec_*.puml`.
+
+
+---
+
+## 5. Diagrama de Secuencia: Emisión y Validación de Sesión Firmada (`TokenSesion`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Usuario (Cliente / Vendedor / Admin)
+    participant SPA as Frontend React (clienteApi.js)
+    participant MB as ManejadorBase / ManejadorAutenticacion
+    participant TS as TokenSesion (HMAC-SHA256)
+    participant DB as PostgreSQL (UsuarioDAO / PedidoDAO)
+
+    U->>SPA: Ingresa credenciales en /login
+    SPA->>MB: POST /api/login {email, password}
+    MB->>DB: buscarPorCorreo(email) + verificar SHA-256
+    DB-->>MB: Usuario activo (id, rol)
+    MB->>TS: emitir(id, rol)
+    TS-->>MB: token = base64url({sub,rol,exp}).base64url(HmacSHA256)
+    MB-->>SPA: 200 OK {id, nombre, rol, token}
+    SPA->>SPA: Guarda sesión y programa temporizador de expiración
+
+    Note over U,DB: Petición subsecuente protegida (ej. GET /api/pedidos)
+    U->>SPA: Abre panel de pedidos
+    SPA->>MB: GET /api/pedidos (Authorization: Bearer token)
+    MB->>TS: verificar(token)
+    TS-->>MB: Identidad reclamada (idUsuario, rol)
+    MB->>DB: buscarPorId(idUsuario)
+    DB-->>MB: Usuario actual (activo=true, suspendido=false, rolActual)
+    MB->>DB: Consulta filtrada según rolActual (Cliente / Vendedor / Admin)
+    DB-->>MB: Lista de pedidos autorizados
+    MB-->>SPA: 200 OK [pedidos]
+```
