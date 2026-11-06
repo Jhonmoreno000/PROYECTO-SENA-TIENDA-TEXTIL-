@@ -227,3 +227,13 @@ flowchart LR
 4. **El login no regresa a la compra.** `IniciarSesion.jsx` guarda la ruta pedida en `from`, pero solo la usa si el rol no es cliente, vendedor ni admin. En la práctica, un cliente que pulsa «Proceder al pago» sin sesión termina en `/cliente` en vez de volver a `/checkout`.
 5. **Destino distinto para el vendedor.** Tras el login va a `/vendedor`, pero el menú de usuario del encabezado lo lleva a `/vendedor/productos`.
 6. **Documentación anterior.** La sección 4 de `03-arquitectura-frontend-y-roles.md` menciona `/contactos` y `/checkout/success`, que no existen; las rutas reales son `/contacto` y `/confirmacion`.
+
+
+---
+
+## Anexo de Navegación Segura: Verificación de Vigencia de Token y Activos Estáticos
+
+1. **Guardia de Navegación con Vigencia Temporal (`RutaProtegida.jsx`):**
+   - Antes de renderizar cualquier ruta privada (`/cliente/*`, `/vendedor/*`, `/admin/*` o `/checkout`), el guardia verifica no solo la presencia del objeto `usuario`, sino también que `sesionVigente(usuario)` sea verdadera. Si el token caducó, redirige limpiamente a `/login`.
+2. **Resolución Limpia de Imágenes en `/uploads/*`:**
+   - Tanto el manejador de archivos estáticos del backend (`ManejadorArchivosEstaticos`) como el middleware del servidor de desarrollo Vite (`vite.config.js`) devuelven estrictamente `HTTP 404` cuando un recurso bajo `/uploads/` no existe en disco, permitiendo que los componentes visuales (`Imagen Seguras` / `onError`) activen de inmediato la fotografía textil de respaldo sin pantallas rotas.
