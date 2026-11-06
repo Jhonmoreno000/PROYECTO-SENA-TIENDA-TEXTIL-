@@ -141,3 +141,31 @@ En la pantalla **Bienvenido de nuevo** (`/login`):
 1. Escribe tu **Correo Electrónico** y tu **Contraseña**, y pulsa **Iniciar Sesión**.
 2. Si lo prefieres, entra con tu cuenta corporativa o personal de **Google** o **Microsoft**.
 3. **Solo en entorno de demostración:** debajo del formulario encontrarás tres botones de acceso rápido (**Cliente**, **Vendedor** y **Admin**) que autocompletan las credenciales de prueba con un solo clic para agilizar la sustentación.
+
+---
+
+## 3. Comprar telas
+
+Al pulsar **Proceder al Pago** desde el carrito se inicia el proceso de compra en tres pasos guiados (**Envío** → **Pago** → **Confirmación**). Si aún no habías iniciado sesión, el sistema te solicitará hacerlo antes de continuar.
+
+### 3.1. Datos de envío
+
+En el **Paso 1 (Información de Envío)**:
+
+1. Completa los **Datos de Contacto**: nombre completo, correo electrónico y teléfono de contacto (10 dígitos).
+2. Completa la **Dirección de Entrega**: dirección física exacta, barrio, departamento, ciudad y notas adicionales para el transportador (ej. *"Dejar en portería"*).
+3. Revisa a la derecha el resumen de productos y el total calculado.
+4. Haz clic en **Confirmar Pedido y Pagar**. El sistema registrará el pedido en la base de datos y te llevará a la selección de pasarela de pago.
+
+### 3.2. Pago
+
+En el **Paso 2 (Pasarela de Pagos Multi-Método)** elige cómo deseas pagar utilizando las pestañas superiores:
+
+- **Tarjeta Crédito / Débito:** ingresa los 16 dígitos de la tarjeta, nombre del titular, fecha de vencimiento (`MM/AA`), código de seguridad (`CVV`, que voltea dinámicamente la tarjeta 3D en pantalla), tipo y número de documento, y número de cuotas (1 a 36).
+- **PSE (ACH Colombia):** selecciona tipo de persona (Natural o Jurídica), entidad bancaria de la lista oficial ACH, tipo y número de documento y teléfono celular.
+- **Wompi (Bancolombia):** pago directo mediante cuenta o Botón Bancolombia / corresponsal bancario.
+- **Mercado Pago:** pago con saldo en cuenta de Mercado Pago o tarjetas vinculadas.
+- **Nequi / Bre-B:** ingresa tu número celular de 10 dígitos vinculado a Nequi o tu llave Bre-B (celular, correo, documento o llave alfanumérica) para aprobar la notificación push.
+- **ePayco:** alternativa para pagos en efectivo (Efecty, Baloto, Gana, SuRed) o tarjetas internacionales.
+
+Pulsa el botón de pago al final del formulario. En pocos segundos verás la pantalla de **¡Pago Exitoso!** (**Paso 3**) con el número de pedido, el código de seguimiento y el botón para ir directamente a **Mis Pedidos**.
