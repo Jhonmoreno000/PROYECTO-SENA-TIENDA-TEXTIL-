@@ -53,3 +53,24 @@ Esta suite verifica el núcleo de dominio textil (`ServicioCorteTextil`, `RolloT
 | **UT-12** | Rechazo de corte sobre rollo agotado o bloqueado | Impide descontar metraje de rollos en estado `AGOTADO` o `BLOQUEADO_CALIDAD`. | **APROBADO** |
 | **UT-13** | Reversión compensatoria de metraje (Saga Rollback) | Restaura íntegramente el metraje al rollo original si el pago electrónico es rechazado. | **APROBADO** |
 | **UT-14** | Generación de etiqueta térmica QR y CUFE de factura | Verifica estructura determinista del código QR de bodega y hash CUFE SHA-384. | **APROBADO** |
+
+---
+
+## 3. Suite Backend 2: Seguridad de Sesiones HMAC-SHA256 y Autorización RBAC (`PruebasSeguridadYSesiones.java`)
+
+Suite introducida para certificar el blindaje criptográfico de sesiones (`TokenSesion`), la revalidación de estado en base de datos (`ManejadorBase.identidadVigente`) y el aislamiento estricto de datos entre clientes y vendedores (`ManejadorPedidos.puedeVerPedido`):
+
+| ID Caso | Caso de Prueba | Control de Seguridad Verificado | Resultado |
+| :--- | :--- | :--- | :---: |
+| **SEC-01** | Emisión y verificación de token válido | Firma `HmacSHA256` sobre carga útil Base64URL `{sub, rol, exp}` preserva `idUsuario` y `rol`. | **APROBADO** |
+| **SEC-02** | Rechazo de alteración de rol en payload (*Tampering*) | Modificar `"rol":"cliente"` a `"rol":"administrador"` invalida la firma HMAC de inmediato. | **APROBADO** |
+| **SEC-03** | Rechazo de firma firmada con secreto distinto | Un token firmado con otra llave simétrica es rechazado en tiempo constante (`MessageDigest.isEqual`). | **APROBADO** |
+| **SEC-04** | Rechazo de token expirado (`exp <= ahora`) | Tokens cuyo timestamp de expiración ya venció devuelven `Optional.empty()`. | **APROBADO** |
+| **SEC-05** | Rechazo de tokens malformados o incompletos | Entradas nulas, vacías, sin punto separador o con Base64 corrupto se rechazan sin excepciones no controladas. | **APROBADO** |
+| **SEC-06** | Revocación inmediata de usuario suspendido | `identidadVigente` rechaza el token si el usuario fue marcado como `suspendido = true` en BD. | **APROBADO** |
+| **SEC-07** | Revocación inmediata de usuario inactivo | `identidadVigente` rechaza el token si el usuario fue desactivado (`activo = false`) en BD. | **APROBADO** |
+| **SEC-08** | Prevalencia del rol en BD sobre el rol del token | Si un usuario cambió de rol en BD después de emitido el token, prevalece el rol actual de la BD. | **APROBADO** |
+| **SEC-09** | Aislamiento de pedidos por cliente propietario | Un cliente autenticado (`id=10`) puede ver su pedido (`idCliente=10`), pero recibe rechazo ante `idCliente=20`. | **APROBADO** |
+| **SEC-10** | Aislamiento de pedidos por vendedor de la línea | Un vendedor (`id=5`) solo puede consultar pedidos cargados con sus líneas de producto (`idVendedor=5`). | **APROBADO** |
+| **SEC-11** | Visibilidad global exclusiva para Administrador | El rol `administrador` / `admin` tiene autorización para auditar cualquier pedido del sistema. | **APROBADO** |
+| **SEC-12** | Protección de `PUT /api/usuarios/{id}` | Solo un administrador autenticado puede cambiar roles o estados de cuentas de usuario. | **APROBADO** |
