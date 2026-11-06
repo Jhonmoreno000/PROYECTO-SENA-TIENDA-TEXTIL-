@@ -59,3 +59,25 @@ $$
 | **Mantel de Mesa** | Largo de mesa ($L_m$), Ancho ($W_m$) y Caída lateral ($d = 30\text{ cm}$) | Superficie total $(L_m + 2d) \times (W_m + 2d)$ dividida en paños según $A_{\text{rollo}}$. |
 | **Cojines Decorativos** | Lado del cojín ($L_c$) y Cantidad de unidades ($N$) | Cada cojín consume $2 \times (L_c + 4\text{ cm})$ de ancho; el sistema agrupa cuántos cojines caben a lo ancho del rollo. |
 | **Vestido Sencillo** | Largo de talle + falda ($L_v$) y Contorno de busto/cadera | Consume $(L_v + 25\text{ cm de mangas/escote}) \times 1,10$ cuando el contorno cabe en un ancho de rollo. |
+
+---
+
+## 4. Normatividad Técnica Colombiana (NTC) de Etiquetado, Conservación y Control de Mermas
+
+El diseño del catálogo y de las etiquetas térmicas de **D&D Textil** está alineado con el **Reglamento Técnico de Etiquetado de Confecciones y Textiles (Resolución SIC / NTC 1806 y ISO 3758)**:
+
+### 4.1. Símbolos y Reglas de Conservación Textil (`careInstructions`)
+
+1. **Lino Natural:** Lavado a mano o ciclo delicado a máximo $30\ ^\circ\text{C}$, secado a la sombra en superficie horizontal y planchado en húmedo a temperatura media-alta.
+2. **Seda Natural:** Lavado en seco profesional o lavado manual en agua fría con jabón neutro sin retorcer; prohibido el uso de blanqueadores clorados y secadora de tambor.
+3. **Algodón Pima / Punto:** Lavado en máquina a máximo $30\ ^\circ\text{C}$, no usar blanqueador, secado a baja temperatura para prevenir encogimiento superior al 3 %.
+4. **Terciopelo y Tapicería Antifluidos:** Limpieza inmediata de líquidos con paño absorbente sin frotar, cepillado suave en sentido del pelo y prohibido planchar directamente sobre la cara afelpada.
+
+### 4.2. Clasificación Contable y Operativa de Mermas en Bodega
+
+En el módulo **Calculadora de Merma** (`/admin/inventario/mermas`), toda baja de metraje se clasifica bajo una de las siguientes causales auditables:
+
+- **Defecto de Fábrica / Tejeduría:** nudos, hilos rotos o barrado de tintorería detectado al desenrollar la pieza (reclamable al proveedor).
+- **Daño por Manipulación o Almacenamiento:** humedad, manchas o rasgaduras ocurridas en estantería o mesa de corte.
+- **Muestrario Comercial:** cortes de $10\text{ cm} \times 15\text{ cm}$ destinados a catálogos físicos de vendedores y clientes mayoristas.
+- **Retazo Sub-Métrico (`RETAZO_LIQUIDADO`):** saldo final del rollo menor a $1,00\text{ m}$ que se transfiere automáticamente al outlet de liquidación con 40 % de descuento.
