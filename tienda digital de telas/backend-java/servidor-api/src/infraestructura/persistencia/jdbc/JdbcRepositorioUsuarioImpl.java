@@ -35,9 +35,9 @@ public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
                         resultado.getBoolean("activo"),
                         resultado.getBoolean("suspendido"),
                         resultado.getString("motivo_suspension"),
-                        resultado.getBigDecimal("tasa_comision"),
-                        resultado.getTimestamp("registrado_en") != null ? resultado.getTimestamp("registrado_en").toLocalDateTime() : null,
-                        resultado.getTimestamp("ultimo_acceso") != null ? resultado.getTimestamp("ultimo_acceso").toLocalDateTime() : null,
+                        resultado.getDouble("tasa_comision"),
+                        resultado.getString("registrado_en"),
+                        resultado.getString("ultimo_acceso"),
                         null
                     );
                     return Optional.of(usuario);
