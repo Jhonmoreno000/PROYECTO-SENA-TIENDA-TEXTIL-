@@ -91,3 +91,21 @@ Esta suite somete el motor transaccional a condiciones de carrera extremas y vec
 | **CON-06** | Mitigación de Path Traversal en `/uploads/` | Solicitudes con `../` o rutas fuera del directorio `uploads` se bloquean con HTTP 403/404. | **APROBADO** |
 | **CON-07** | Devolución estricta de HTTP 404 en activos inexistentes | Si una imagen en `/uploads/...` no existe en disco, responde HTTP 404 para activar el fallback visual del frontend. | **APROBADO** |
 | **CON-08** | Límite de tamaño de cuerpo HTTP (5 MB — OWASP DoS) | Cargas útiles superiores a `5.242.880 bytes` son rechazadas preventivamente con HTTP 413. | **APROBADO** |
+
+---
+
+## 5. Suite Backend 4 (Contrato OpenAPI v3) y Suite Automatizada Frontend
+
+### 5.1. Validador de Contrato OpenAPI (`ValidadorContratoOpenAPI.java`)
+
+- Analiza estáticamente `documentacion/openapi_tienda_textil.yaml` y lo contrasta con los contextos registrados en `ServidorApi.java`.
+- Certifica que los endpoints críticos (`/api/login`, `/api/register`, `/api/products`, `/api/orders`, `/api/wompi/signature`, `/api/wompi/webhook`, `/health/live`, `/health/ready`) estén documentados con sus esquemas JSON, códigos de estado HTTP (`200`, `201`, `400`, `401`, `403`, `404`, `503`) y esquema de seguridad `BearerAuth`.
+
+### 5.2. Suite Automatizada del Frontend (`tienda digital de telas/ejecutar-pruebas-frontend.mjs`)
+
+Ejecutable directamente con `node "tienda digital de telas/ejecutar-pruebas-frontend.mjs"`:
+
+- **Grupo 1 — Formateadores Monetarios, Fechas y Texto:** valida `formatCurrency` (positivos, cero, negativos, millones, `null`, `NaN`), `formatDate` (fechas ISO en español colombiano) y `truncateText` (cadenas cortas, largas, longitud exacta y vacías).
+- **Grupo 2 — Motor Matemático de la Calculadora de Confección:** valida `calcularMetrajeCortina` con distintos factores de fruncido, dobladillos, margen técnico del +10 % y rechazo de dimensiones negativas o cero.
+- **Grupo 3 — Dominio Financiero y Checkout Wompi:** valida `convertirACentavosWompi` (conversión exacta a centavos enteros, redondeo de decimales y rechazo de montos negativos) y `generarReferenciaPedido`.
+- **Grupo 4 — Vigencia de Tokens y Sesiones en Cliente:** valida `expiracionDeToken`, `tokenVigente` y `sesionVigente` ante tokens vigentes, expirados, bordes temporales exactos, cargas UTF-8 con tildes y 12 variantes de tokens malformados.
