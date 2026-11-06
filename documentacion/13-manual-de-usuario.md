@@ -169,3 +169,38 @@ En el **Paso 2 (Pasarela de Pagos Multi-Método)** elige cómo deseas pagar util
 - **ePayco:** alternativa para pagos en efectivo (Efecty, Baloto, Gana, SuRed) o tarjetas internacionales.
 
 Pulsa el botón de pago al final del formulario. En pocos segundos verás la pantalla de **¡Pago Exitoso!** (**Paso 3**) con el número de pedido, el código de seguimiento y el botón para ir directamente a **Mis Pedidos**.
+
+---
+
+## 4. Panel del cliente
+
+Cuando inicias sesión con una cuenta de cliente accedes a tu espacio personal (`/cliente`). Desde el menú lateral izquierdo puedes navegar por todas tus herramientas de compra y postventa.
+
+### 4.1. Historial de pedidos
+
+En **Resumen** o **Mis Pedidos** (`/cliente/pedidos`) encuentras todas tus compras realizadas:
+
+- Cada fila muestra el número de pedido, la fecha de compra, la cantidad de telas, el total pagado y el estado actual (**Pagado**, **En Corte**, **Empacado**, **Enviado** o **Entregado**).
+- Haz clic en **Ver Detalles** para desplegar los artículos del pedido, la dirección de despacho y el botón para descargar tu **Factura Electrónica en PDF** (con código QR y CUFE).
+
+### 4.2. Rastrear un envío
+
+En **Rastrear Envío** (`/cliente/seguimiento`):
+
+1. Escribe el número de pedido (por ejemplo `1001`) o el número de guía logística (por ejemplo `COL987654321`) y pulsa **Buscar**.
+2. También puedes hacer clic directamente sobre cualquiera de tus pedidos recientes listados debajo del buscador.
+3. Verás la barra de progreso con las cinco etapas operativas del despacho:
+   - **Pedido Confirmado** → **En Proceso de Corte** → **Empacado** → **En Tránsito** → **Entregado**, junto con el historial cronológico de actualizaciones de bodega.
+
+### 4.3. Reportar un problema
+
+Si recibiste un pedido con alguna novedad de calidad o metraje, ve a **Soporte y Devoluciones** (`/cliente/soporte`):
+
+1. Selecciona el **Pedido Relacionado** (el sistema habilita únicamente pedidos en estado **Entregado**).
+2. Elige el **Tipo de Problema**:
+   - *Tela con manchas o daños físicos*.
+   - *Hilos sueltos o imperfectos de tejido*.
+   - *Color diferente al mostrado en catálogo*.
+   - *Metraje incompleto o menor al facturado*.
+3. Escribe una **Descripción Detallada** del inconveniente y, si lo deseas, adjunta fotografías de evidencia del rollo o corte recibido.
+4. Haz clic en **Enviar Reporte**. En la columna derecha podrás consultar en todo momento el estado de tus tickets (**Abierto**, **En Revisión** o **Resuelto**).
