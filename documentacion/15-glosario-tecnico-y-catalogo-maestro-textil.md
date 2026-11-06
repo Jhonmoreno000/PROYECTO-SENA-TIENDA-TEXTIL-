@@ -36,3 +36,26 @@ La siguiente matriz documenta las propiedades físico-químicas y comerciales de
 | **Velo Suizo / Velo Lino Translúcido** | Cortinería | 100 % Poliéster de alta caída | $85 - 110\text{ g/m}^2$ | $2,80\text{ m}$ | Cortinas y Hogar (Iluminación difusa para salas y alcobas) |
 | **Denim Índigo Stretch (12 oz)** | Dril y Denim | 98 % Algodón / 2 % Elastano | $360 - 400\text{ g/m}^2$ | $1,50\text{ m}$ | Moda y Confección (Jeans, Chaquetas, Dotación Industrial) |
 | **Paño Cachemir / Lana Fría** | Invierno | 80 % Lana Virgen / 20 % Poliamida | $310 - 350\text{ g/m}^2$ | $1,50\text{ m}$ | Invierno, Sastrería Masculina y Femenina, Abrigos |
+
+---
+
+## 3. Fórmulas Matemáticas de la Calculadora de Metraje por Proyecto
+
+El módulo **Calculadora de Metraje** (`/cliente/calculadora` y `formateadores.js`) implementa ecuaciones paramétricas que consideran el ancho del rollo ($A_{\text{rollo}}$), las dimensiones de la prenda/hogar y un **margen de seguridad técnica del 10 %** ($M = 1,10$) para absorber el encogimiento por primer lavado y los márgenes de costura:
+
+### 3.1. Cortinas Estándar con Fruncido y Dobladillos
+Para una ventana de ancho $W\text{ (m)}$ y alto $H\text{ (m)}$, con factor de fruncido $F$ (por defecto $2,0$), dobladillo superior/inferior de $0,30\text{ m}$ ($15\text{ cm}$ arriba + $15\text{ cm}$ bota) y rollo de ancho estándar $A_{\text{rollo}} = 1,50\text{ m}$:
+
+$$
+\text{Metraje}_{\text{cortina}} = \text{redondear}_{2}\left( \frac{(W \times F) \times (H + 0,30)}{A_{\text{rollo}}} \times (1 + M_{\text{seguridad}}) \right)
+$$
+
+### 3.2. Moldes de Confección y Hogar en el Panel del Cliente
+
+| Proyecto | Variables de Entrada | Regla de Cálculo Paramétrico (con +10 % de margen técnico) |
+| :--- | :--- | :--- |
+| **Falda Circular (360°)** | Cintura ($C$) y Largo deseado ($L$) | Radio de cintura $R = \frac{C}{2\pi}$; requiere $2 \times (L + R + 4\text{ cm})$ ajustado según el ancho del rollo. |
+| **Falda Recta / Básica** | Cadera ($K$) y Largo deseado ($L$) | Si $K + 10\text{ cm} \le A_{\text{rollo}}$, requiere $1 \times (L + 10\text{ cm}$ de pretina y ruedo$)$ más el 10 % de margen. |
+| **Mantel de Mesa** | Largo de mesa ($L_m$), Ancho ($W_m$) y Caída lateral ($d = 30\text{ cm}$) | Superficie total $(L_m + 2d) \times (W_m + 2d)$ dividida en paños según $A_{\text{rollo}}$. |
+| **Cojines Decorativos** | Lado del cojín ($L_c$) y Cantidad de unidades ($N$) | Cada cojín consume $2 \times (L_c + 4\text{ cm})$ de ancho; el sistema agrupa cuántos cojines caben a lo ancho del rollo. |
+| **Vestido Sencillo** | Largo de talle + falda ($L_v$) y Contorno de busto/cadera | Consume $(L_v + 25\text{ cm de mangas/escote}) \times 1,10$ cuando el contorno cabe en un ancho de rollo. |
