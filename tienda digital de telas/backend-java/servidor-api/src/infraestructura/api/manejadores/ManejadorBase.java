@@ -196,7 +196,13 @@ public abstract class ManejadorBase implements HttpHandler {
     }
 
     /**
-     * Valida el usuario actual y obtiene su rol sin confiar en el rol reclamado por la sesión.
+     * Valida que el registro actual del usuario en la base de datos siga activo, no esté suspendido
+     * y coincida con el sujeto del token, reconstruyendo la {@link TokenSesion.Identidad} con el rol
+     * vigente en base de datos sin confiar ciegamente en el rol reclamado cuando se emitió el token.
+     *
+     * @param reclamada Identidad extraída tras verificar la firma HMAC-SHA256 del token.
+     * @param actual    Entidad {@link Usuario} recién consultada en PostgreSQL.
+     * @return {@link Optional} con la identidad vigente, o vacío si la cuenta fue suspendida/inactivada.
      */
     public static Optional<TokenSesion.Identidad> identidadVigente(TokenSesion.Identidad reclamada, Usuario actual) {
         if (actual == null || !actual.isActivo() || actual.isSuspendido()
