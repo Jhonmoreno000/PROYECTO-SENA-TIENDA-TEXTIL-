@@ -56,6 +56,9 @@ assert(monedaCero.includes('0') && monedaCero.includes('COP'), 'formatCurrency(0
 const monedaMillones = formatCurrency(1500000);
 assert(monedaMillones.includes('1.500.000') && monedaMillones.includes('COP'), 'formatCurrency(1500000) debe incluir separadores de miles colombianos');
 
+const fechaFormateada = formatDate('2026-10-15T12:00:00Z');
+assert(typeof fechaFormateada === 'string' && fechaFormateada.includes('2026') && fechaFormateada.includes('15'), 'formatDate debe formatear fechas ISO en formato legible en español');
+
 const textoCorto = truncateText('Tela Lino', 20);
 assert(textoCorto === 'Tela Lino', 'truncateText con longitud menor al limite debe devolver el texto integro');
 
