@@ -92,6 +92,9 @@ try {
 }
 assert(errorCapturado, 'Calculadora debe rechazar dimensiones negativas o iguales a cero');
 
+const cortinaFruncidoTriple = calcularMetrajeCortina(2.0, 2.2, 3.0);
+assert(cortinaFruncidoTriple > metrosCortina, 'Un factor de fruncido 3.0x debe requerir mayor metraje que el fruncido estandar 2.0x');
+
 // -----------------------------------------------------------------------------
 // 3. Pruebas de Integracion Financiera Wompi (Checkout)
 // -----------------------------------------------------------------------------
