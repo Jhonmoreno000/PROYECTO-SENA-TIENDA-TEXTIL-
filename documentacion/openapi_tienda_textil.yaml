@@ -334,6 +334,10 @@ components:
         status:
           type: string
           example: Activo
+        token:
+          type: string
+          description: Token de sesión firmado con HMAC-SHA256 emitido tras autenticación exitosa.
+          example: eyJzdWIiOjEsInJvbCI6ImNsaWVudGUiLCJleHAiOjE4MDAwNDMyMDB9.8f9a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1
 
     Producto:
       type: object
