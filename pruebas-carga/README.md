@@ -80,3 +80,12 @@ powershell -ExecutionPolicy Bypass -File pruebas-carga/simulador_carga_concurren
 chmod +x pruebas-carga/simulador_carga_concurrente.sh
 ./pruebas-carga/simulador_carga_concurrente.sh http://localhost:8081 100 10
 ```
+
+
+## 3. Criterios de Aceptación y Acuerdos de Nivel de Servicio (SLA — ISO/IEC 25010)
+
+| Métrica Evaluada en k6 | Umbral Máximo Permitido | Comportamiento Esperado del Backend Java |
+| :--- | :---: | :--- |
+| **Latencia Percentil 95 (`http_req_duration p(95)`)** | $< 500\text{ ms}$ | Pool de hilos concurrente y HikariCP absorben ráfagas de lectura y escritura sin encolamiento crítico. |
+| **Tasa de Errores Inesperados (HTTP 5xx)** | $0,0\%$ | Ninguna petición concurrente debe provocar excepciones no controladas ni fugas de conexiones JDBC. |
+| **Integridad de Stock bajo Carrera (`POST /api/orders`)** | **0 sobreventas** | Las órdenes que exceden el metraje disponible del rollo reciben rechazo controlado HTTP `400` mientras el stock permanece $\ge 0,0\text{ m}$. |
