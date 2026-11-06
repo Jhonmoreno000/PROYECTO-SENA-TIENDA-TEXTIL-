@@ -334,3 +334,32 @@ En **Configuración** (`/admin/configuracion`) se encuentra la **Central de Cont
 
 - Cambia el nombre comercial de la tienda, el logo y los colores principales de la interfaz con **vista previa en vivo (*Live Preview*)**.
 - Ajusta parámetros financieros y logísticos globales como el porcentaje de **IVA**, el costo de envío estándar y el monto mínimo para **envío gratuito**.
+
+---
+
+## 7. Uso desde el celular
+
+La tienda se adapta automáticamente a pantallas de celular y tablet (**Diseño Responsivo Mobile-First** y soporte **PWA / App Android**):
+
+- El menú superior se convierte en un botón de tres líneas (**menú hamburguesa**) en la esquina superior derecha para navegar cómodamente con el pulgar.
+- Dentro de los paneles de **Cliente**, **Vendedor** y **Administrador**, el menú lateral se abre y se cierra tocando el icono de menú en la esquina superior izquierda.
+- Las tablas extensas de inventario, pedidos y movimientos se pueden desplazar horizontalmente deslizando con el dedo sin perder legibilidad.
+
+---
+
+## 8. Preguntas frecuentes
+
+### ¿Por qué no aparecen los botones de acceso rápido (Cliente / Vendedor / Admin) en el login?
+Esos botones solo se muestran cuando la aplicación corre en modo de prueba o demostración local (`VITE_ENABLE_DEMO_ACCOUNTS=true`). En el entorno de producción real se ocultan automáticamente por seguridad.
+
+### ¿Los pagos realizados en el entorno de prueba cobran dinero real?
+No. En el entorno de demostración la pasarela de pagos funciona en modo simulador (*Sandbox*) para que puedas probar tarjetas de crédito/débito, PSE, Wompi, Mercado Pago, Nequi/Bre-B y ePayco sin realizar cargos bancarios reales.
+
+### ¿Por qué no puedo reportar un problema sobre un pedido que acabo de hacer?
+El formulario de **Soporte y Devoluciones** solo habilita pedidos que ya figuran como **Entregado**, ya que está diseñado para reportar novedades sobre la tela física recibida en tu dirección.
+
+### ¿Qué hago si al navegar muy rápido aparece un aviso de "Demasiadas peticiones"?
+El servidor cuenta con un límite de seguridad contra abusos automatizados (*Rate Limiting* de **1.200 peticiones por minuto por IP**). Espera unos segundos y vuelve a recargar la página.
+
+### ¿Se borra mi carrito si recargo la página?
+No. El carrito de compras, el tema visual (claro/oscuro) y tu sesión firmada se conservan en el navegador hasta que cierres sesión explícitamente o el token cumpla su ciclo de expiración de 12 horas.
