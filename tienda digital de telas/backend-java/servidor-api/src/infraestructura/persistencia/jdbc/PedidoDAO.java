@@ -24,45 +24,125 @@ public class PedidoDAO {
      * @return Lista de objetos Pedido.
      */
     public List<Pedido> obtenerTodosLosPedidos() {
+        return obtenerPedidos(null, 0);
+    }
+
+    /**
+     * Recupera únicamente los pedidos realizados por el cliente indicado.
+     * @param idCliente Identificador del cliente.
+     * @return Lista de objetos Pedido del cliente.
+     */
+    public List<Pedido> obtenerPedidosPorCliente(int idCliente) {
+        return obtenerPedidos("WHERE o.usuario_id = ? ", idCliente);
+    }
+
+    /**
+     * Recupera los pedidos que contienen productos del vendedor indicado.
+     * Incluye solo sus líneas y el total corresponde al subtotal propio del vendedor.
+     * @param idVendedor Identificador del vendedor.
+     * @return Lista de objetos Pedido del vendedor.
+     */
+    public List<Pedido> obtenerPedidosPorVendedor(int idVendedor) {
+        return obtenerPedidosParaVendedor(idVendedor, null);
+    }
+
+    /**
+     * Obtiene un pedido con solo las líneas de productos del vendedor indicado.
+     * El total corresponde al subtotal propio del vendedor.
+     * @param idPedido Identificador del pedido.
+     * @param idVendedor Identificador del vendedor.
+     * @return Pedido del vendedor o null si no tiene líneas propias en el pedido.
+     */
+    public Pedido obtenerPedidoParaVendedor(int idPedido, int idVendedor) {
+        List<Pedido> pedidos = obtenerPedidosParaVendedor(idVendedor, idPedido);
+        return pedidos.isEmpty() ? null : pedidos.get(0);
+    }
+
+    private List<Pedido> obtenerPedidosParaVendedor(int idVendedor, Integer idPedido) {
+        Map<Integer, Pedido> mapaPedidos = new LinkedHashMap<>();
+        String consulta = "SELECT o.id, o.usuario_id, o.estado, o.creado_en, " +
+                "oi.producto_id, oi.cantidad, oi.subtotal " +
+                "FROM pedidos o " +
+                "JOIN items_pedido oi ON o.id = oi.pedido_id " +
+                "JOIN productos p ON p.id = oi.producto_id " +
+                "WHERE p.vendedor_id = ? " +
+                (idPedido == null ? "" : "AND o.id = ? ") +
+                "ORDER BY o.id ASC";
+
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(consulta)) {
+            pst.setInt(1, idVendedor);
+            if (idPedido != null) pst.setInt(2, idPedido);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    int identificadorPedido = rs.getInt("id");
+                    Pedido pedido = mapaPedidos.get(identificadorPedido);
+                    if (pedido == null) {
+                        pedido = new Pedido();
+                        pedido.setId(identificadorPedido);
+                        pedido.setIdCliente(rs.getInt("usuario_id"));
+                        pedido.setIdVendedor(idVendedor);
+                        pedido.setTotal(0.0);
+                        pedido.setEstado(rs.getString("estado"));
+                        if (rs.getTimestamp("creado_en") != null) {
+                            pedido.setFecha(rs.getTimestamp("creado_en").toString().split(" ")[0]);
+                        }
+                        pedido.setCantidadArticulos(0);
+                        mapaPedidos.put(identificadorPedido, pedido);
+                    }
+                    pedido.agregarIdProducto(rs.getInt("producto_id"));
+                    pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("cantidad"));
+                    pedido.setTotal(pedido.getTotal() + rs.getDouble("subtotal"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error obteniendo pedidos del vendedor: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return new ArrayList<>(mapaPedidos.values());
+    }
+
+    private List<Pedido> obtenerPedidos(String filtro, int idUsuario) {
         Map<Integer, Pedido> mapaPedidos = new LinkedHashMap<>();
 
         String consulta = "SELECT o.id, o.usuario_id, o.vendedor_id, o.monto_total, o.estado, o.creado_en, " +
                 "oi.producto_id, oi.cantidad " +
                 "FROM pedidos o " +
                 "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
+                (filtro == null ? "" : filtro) +
                 "ORDER BY o.id ASC";
 
         try (Connection con = Conexion.obtenerConexion();
-             PreparedStatement pst = con.prepareStatement(consulta);
-             ResultSet rs = pst.executeQuery()) {
+             PreparedStatement pst = con.prepareStatement(consulta)) {
+            if (filtro != null) pst.setInt(1, idUsuario);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    int idPedido = rs.getInt("id");
 
-            while (rs.next()) {
-                int idPedido = rs.getInt("id");
+                    Pedido pedido = mapaPedidos.get(idPedido);
+                    if (pedido == null) {
+                        pedido = new Pedido();
+                        pedido.setId(idPedido);
+                        pedido.setIdCliente(rs.getInt("usuario_id"));
+                        pedido.setIdVendedor(rs.getInt("vendedor_id"));
+                        pedido.setTotal(rs.getDouble("monto_total"));
+                        pedido.setEstado(rs.getString("estado"));
 
-                Pedido pedido = mapaPedidos.get(idPedido);
-                if (pedido == null) {
-                    pedido = new Pedido();
-                    pedido.setId(idPedido);
-                    pedido.setIdCliente(rs.getInt("usuario_id"));
-                    pedido.setIdVendedor(rs.getInt("vendedor_id"));
-                    pedido.setTotal(rs.getDouble("monto_total"));
-                    pedido.setEstado(rs.getString("estado"));
+                        if (rs.getTimestamp("creado_en") != null) {
+                            pedido.setFecha(rs.getTimestamp("creado_en").toString().split(" ")[0]);
+                        }
 
-                    if (rs.getTimestamp("creado_en") != null) {
-                        pedido.setFecha(rs.getTimestamp("creado_en").toString().split(" ")[0]);
+                        pedido.setCantidadArticulos(0);
+                        mapaPedidos.put(idPedido, pedido);
                     }
 
-                    pedido.setCantidadArticulos(0);
-                    mapaPedidos.put(idPedido, pedido);
-                }
-
-                int idProducto = rs.getInt("producto_id");
-                if (!rs.wasNull()) {
-                    pedido.agregarIdProducto(idProducto);
-                    pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("cantidad"));
+                    int idProducto = rs.getInt("producto_id");
+                    if (!rs.wasNull()) {
+                        pedido.agregarIdProducto(idProducto);
+                        pedido.setCantidadArticulos(pedido.getCantidadArticulos() + rs.getInt("cantidad"));
+                    }
                 }
             }
-
         } catch (SQLException e) {
             System.err.println("[ERROR] Error obteniendo pedidos: " + e.getMessage());
             e.printStackTrace();

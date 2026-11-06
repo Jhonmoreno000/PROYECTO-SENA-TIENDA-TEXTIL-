@@ -36,6 +36,15 @@ public class ManejadorUsuarios extends ManejadorBase {
             List<Usuario> usuarios = usuarioDAO.obtenerTodosLosUsuarios();
             enviarRespuestaJson(intercambio, 200, gson.toJson(usuarios));
         } else if ("PUT".equalsIgnoreCase(metodo)) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+            if (!identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Se requieren permisos de administrador\"}");
+                return;
+            }
             int idUsuario = extraerIdRuta(ruta);
 
             if (idUsuario <= 0) {

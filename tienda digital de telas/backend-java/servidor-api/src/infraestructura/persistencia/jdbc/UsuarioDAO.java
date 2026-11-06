@@ -1,6 +1,7 @@
 package infraestructura.persistencia.jdbc;
 
 import java.util.List;
+import java.util.Optional;
 import dominio.modelos.Usuario;
 import dominio.repositorios.RepositorioUsuario;
 
@@ -20,6 +21,13 @@ public class UsuarioDAO {
 
     public UsuarioDAO(RepositorioUsuario repositorioUsuario) {
         this.repositorioUsuario = repositorioUsuario;
+    }
+
+    /**
+     * Busca un usuario por su identificador con su rol y estado actuales.
+     */
+    public Optional<Usuario> buscarPorId(int idUsuario) {
+        return repositorioUsuario.buscarPorId(idUsuario);
     }
 
     /**

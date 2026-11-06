@@ -4,6 +4,7 @@
  * Ejecutable nativo con Node.js (ES Modules).
  */
 
+import { expiracionDeToken, tokenVigente, sesionVigente } from './src/utilidades/sesion.js';
 import {
     formatCurrency,
     formatDate,
@@ -89,6 +90,40 @@ assert(centavos1 === 12500000, 'Conversion de $125.000 COP a centavos Wompi debe
 
 const ref = generarReferenciaPedido(42, 1729000000000);
 assert(ref === 'PED-42-1729000000000' && ref.startsWith('PED-'), 'Referencia de pago debe cumplir estructura PED-{id}-{timestamp}');
+
+// -----------------------------------------------------------------------------
+// 4. Pruebas de vigencia de sesiones
+// -----------------------------------------------------------------------------
+console.log('\n[GRUPO 4: Vigencia de Tokens y Sesiones]');
+
+const ahora = 1800000000000;
+const expiracionFutura = ahora / 1000 + 60;
+const crearToken = exp => Buffer.from(JSON.stringify({ sub: 7, rol: 'cliente', exp })).toString('base64url') + '.firma';
+const tokenValido = crearToken(expiracionFutura);
+const tokenExpirado = crearToken(ahora / 1000 - 60);
+assert(tokenVigente(tokenValido, ahora), 'Un token con expiración futura debe estar vigente');
+assert(expiracionDeToken(tokenValido) === expiracionFutura * 1000, 'La expiración del token debe expresarse en milisegundos');
+assert(!tokenVigente(tokenExpirado, ahora), 'Un token expirado no debe estar vigente');
+assert(!tokenVigente(crearToken(ahora / 1000), ahora), 'Un token que expira ahora no debe estar vigente');
+
+const tokensInvalidos = [undefined, null, '', 'abc', 'a.b.c', 7, '.firma', 'carga.', '%%%.firma',
+    Buffer.from('no es JSON').toString('base64url') + '.firma', crearToken('mañana'),
+    Buffer.from('{"exp":1e999}').toString('base64url') + '.firma'];
+for (const token of tokensInvalidos) {
+    let resultadoSeguro = false;
+    try {
+        resultadoSeguro = !tokenVigente(token, ahora) && expiracionDeToken(token) === null;
+    } catch {
+        resultadoSeguro = false;
+    }
+    assert(resultadoSeguro, `El token inválido ${String(token)} debe rechazarse sin lanzar errores`);
+}
+
+assert(!sesionVigente(null, ahora), 'Un usuario nulo no debe tener sesión vigente');
+assert(!sesionVigente({ id: 7 }, ahora), 'Un usuario sin token no debe tener sesión vigente');
+assert(!sesionVigente({ token: tokenExpirado }, ahora), 'Un usuario con token expirado no debe tener sesión vigente');
+assert(sesionVigente({ token: tokenValido }, ahora), 'Un usuario con token válido debe tener sesión vigente');
+assert(sesionVigente({ sesionLocal: true }, ahora), 'Una sesión local explícita debe seguir vigente sin token');
 
 // -----------------------------------------------------------------------------
 // Resumen Final

@@ -10,7 +10,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
     volumes:
-      - "./BASE DE DATOS:/docker-entrypoint-initdb.d:ro"
+      - "./BASE DE DATOS/01_esquema_espanol.sql:/docker-entrypoint-initdb.d/01_esquema_espanol.sql:ro"
+      - "./BASE DE DATOS/02_datos_iniciales.sql:/docker-entrypoint-initdb.d/02_datos_iniciales.sql:ro"
       - pgdata:/var/lib/postgresql/data
     ports:
       - "${DB_PORT:-5432}:5432"
