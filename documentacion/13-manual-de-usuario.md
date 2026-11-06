@@ -76,3 +76,37 @@ Si estás probando el sistema en un entorno de demostración, puedes entrar con 
 | **Administrador** | `admin@ddtextil.com` | `admin123` |
 | **Vendedor** | `vendedor@ddtextil.com` | `vendedor123` |
 | **Cliente** | `cliente@ddtextil.com` (o `cliente@gmail.com`) | `cliente123` |
+
+---
+
+## 2. Tienda en línea
+
+### 2.1. Inicio
+
+Al abrir la dirección de la tienda verás la portada principal con los siguientes controles clave:
+
+1. **Barra superior:** permite ir a **Inicio**, **Catálogo**, **Contacto** y **Sobre Nosotros**.
+2. **Icono de luna / sol:** cambia entre modo claro y modo oscuro.
+3. **Ingresar:** lleva a la pantalla de inicio de sesión. Si ya entraste, muestra tu nombre y el acceso directo a tu panel (**Mi Cuenta**).
+4. **Carrito (icono de bolsa):** muestra cuántos productos llevas agregados y abre el resumen de compra.
+5. **Explorar Colección:** baja directamente al catálogo de telas destacadas o abre la vista completa de catálogo.
+
+### 2.2. Catálogo
+
+En **Catálogo** (`/catalogo`) encuentras todas las telas disponibles para compra por metraje:
+
+- **Apartados rápidos:** en la parte superior puedes alternar entre **Todos**, **Nuevas Colecciones**, **Telas Exclusivas** y **Ofertas Especiales**.
+- **Filtro por proyecto (*¿Qué estás imaginando crear?*):** elige el uso final (**Moda y Confección**, **Cortinas y Hogar**, **Tapicería**, **Verano** o **Invierno**) para que el sistema filtre automáticamente los tejidos recomendados.
+- **Ordenar y precio:** a la izquierda puedes ordenar los resultados y ajustar el control deslizante de **Rango de Precio** máximo por metro lineal.
+- Haz clic sobre la foto o el nombre de cualquier tela para abrir su ficha técnica detallada.
+
+### 2.3. Ficha de la tela
+
+Dentro de la página de un producto (`/producto/:id`) puedes revisar su información técnica (composición, gramaje $\text{g/m}^2$, ancho útil y cuidados de lavado) y configurar tu corte:
+
+1. **Metros por corte:** usa los botones `-` y `+` o escribe cuántos metros lineales necesitas en ese corte.
+2. **Cantidad de cortes:** indica cuántos tramos iguales de ese metraje deseas llevar.
+3. **Agregar al carrito:** guarda la selección en tu bolsa de compras para seguir navegando por la tienda.
+4. **Comprar ahora:** agrega el producto y te dirige de inmediato al carrito para finalizar la orden.
+5. **Favoritos (corazón):** guarda la tela en tu **Lista de deseos / Muestrario Virtual** (requiere sesión iniciada).
+6. **Reseñas:** al final de la página puedes leer opiniones verificadas de otros compradores y, si ya iniciaste sesión, calificar la tela de **1 a 5 estrellas** dejando tu comentario.
