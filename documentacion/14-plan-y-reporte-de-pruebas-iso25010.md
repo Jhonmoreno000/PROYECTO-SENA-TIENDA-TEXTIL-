@@ -109,3 +109,18 @@ Ejecutable directamente con `node "tienda digital de telas/ejecutar-pruebas-fron
 - **Grupo 2 — Motor Matemático de la Calculadora de Confección:** valida `calcularMetrajeCortina` con distintos factores de fruncido, dobladillos, margen técnico del +10 % y rechazo de dimensiones negativas o cero.
 - **Grupo 3 — Dominio Financiero y Checkout Wompi:** valida `convertirACentavosWompi` (conversión exacta a centavos enteros, redondeo de decimales y rechazo de montos negativos) y `generarReferenciaPedido`.
 - **Grupo 4 — Vigencia de Tokens y Sesiones en Cliente:** valida `expiracionDeToken`, `tokenVigente` y `sesionVigente` ante tokens vigentes, expirados, bordes temporales exactos, cargas UTF-8 con tildes y 12 variantes de tokens malformados.
+
+---
+
+## 6. Matriz de Trazabilidad y Cierre de Defectos (v1.0 → v2.0)
+
+Durante la auditoría integral de calidad e integración entre repositorios se identificaron, corrigieron y certificaron con pruebas de regresión los siguientes hallazgos:
+
+| Código Defecto | Severidad | Descripción del Hallazgo Original | Solución Implementada y Certificada | Estado |
+| :--- | :---: | :--- | :--- | :---: |
+| **BUG-SEC-01** | Crítica | Las peticiones autenticadas confiaban en cabeceras manipulables por el cliente sin firma criptográfica del servidor. | Implementación de `TokenSesion` con firma **HMAC-SHA256**, expiración de 12 h y revalidación de rol/estado en base de datos en cada petición (`ManejadorBase`). | **CERRADO** |
+| **BUG-SEC-02** | Alta | El endpoint `GET /api/orders` permitía que un rol no administrativo recibiera pedidos de otros clientes o de otros vendedores. | Filtrado estricto en `ManejadorPedidos` y `PedidoDAO`: cada cliente ve solo sus compras y cada vendedor ve únicamente las líneas de sus productos. | **CERRADO** |
+| **BUG-SEC-03** | Alta | El endpoint `PUT /api/usuarios/{id}` no exigía verificación de rol administrador en backend. | Restricción exclusiva a identidades vigentes con `esAdministrador() == true` en `ManejadorUsuarios`. | **CERRADO** |
+| **BUG-UX-01** | Media | Las imágenes locales inexistentes en `/uploads/` recibían el `index.html` con estado `200 OK` en el servidor de desarrollo, rompiendo el `onError` de `<img>`. | Middleware en `vite.config.js` que verifica existencia física en `public/uploads` y devuelve `404 Not Found` inmediato cuando el archivo no existe. | **CERRADO** |
+| **BUG-UX-02** | Media | El filtro de proyecto **"Tapicería"** no coincidía con categorías sin tilde (`"Tapiceria"`) y **"Verano"** omitía telas con tilde en `material` (`"Algodón"`). | Normalización NFD sin diacríticos tanto en `category` como en `material` dentro de `ProductGrid.jsx`. | **CERRADO** |
+| **BUG-OPS-01** | Media | En `docker-compose.yml`, `DB_URL` del archivo `.env` (`localhost`) sobrescribía el hostname interno `db` de la red Docker. | Fijación explícita de `DB_URL: jdbc:postgresql://db:5432/...` y `PORT: 8081` en el servicio `backend` de `docker-compose.yml`. | **CERRADO** |
