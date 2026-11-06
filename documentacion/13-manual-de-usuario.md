@@ -204,3 +204,27 @@ Si recibiste un pedido con alguna novedad de calidad o metraje, ve a **Soporte y
    - *Metraje incompleto o menor al facturado*.
 3. Escribe una **Descripción Detallada** del inconveniente y, si lo deseas, adjunta fotografías de evidencia del rollo o corte recibido.
 4. Haz clic en **Enviar Reporte**. En la columna derecha podrás consultar en todo momento el estado de tus tickets (**Abierto**, **En Revisión** o **Resuelto**).
+
+### 4.4. Calculadora de metraje
+
+Si no estás seguro de cuántos metros lineales comprar para tu prenda o proyecto de hogar, abre la **Calculadora de Metraje** (`/cliente/calculadora`):
+
+1. Elige el **Tipo de Proyecto** entre los 6 moldes paramétricos incluidos:
+   - *Falda Circular*, *Falda Recta*, *Cortinas Estándar*, *Mantel de Mesa*, *Cojines Decorativos* o *Vestido Sencillo*.
+2.Selecciona el **Ancho de la Tela** del rollo (**1,40 m**, **1,50 m**, **1,60 m** o **2,80 m** para lencería de hogar/cortinería).
+3. Ingresa las medidas solicitadas en centímetros (largo, cintura, ancho de ventana, dimensiones de mesa, etc.).
+4. En el recuadro derecho verás de inmediato los **Metros Recomendados**, que ya incluyen un **10 % adicional de margen técnico** por encogimiento de lavado y costuras.
+
+### 4.5. Lista de deseos
+
+En **Lista de Deseos** (`/cliente/favoritos`) se guardan las telas que marcaste con el icono de corazón en el catálogo:
+
+- Funciona como un **Muestrario Virtual**: puedes filtrar tus telas guardadas por categoría o quitarlas cuando ya no las necesites, facilitando la planeación de colecciones de confección.
+
+### 4.6. Mi perfil y direcciones
+
+En **Configuración** (`/cliente/perfil`) puedes administrar tu cuenta en tres pestañas:
+
+- **Datos Personales:** actualiza tu nombre, correo electrónico o teléfono y pulsa **Guardar Cambios**.
+- **Direcciones:** agrega, edita o elimina direcciones de entrega frecuentes y marca una como **Principal** para agilizar futuros checkouts.
+- **Seguridad:** cambia tu contraseña actual y configura tus preferencias de notificaciones por correo.
