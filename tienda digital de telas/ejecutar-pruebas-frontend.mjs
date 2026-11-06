@@ -50,6 +50,12 @@ assert(monedaNula === '0 COP', 'formatCurrency(null) debe degradar limpiamente a
 const monedaNan = formatCurrency(NaN);
 assert(monedaNan === '0 COP', 'formatCurrency(NaN) debe retornar "0 COP" defensivamente');
 
+const monedaCero = formatCurrency(0);
+assert(monedaCero.includes('0') && monedaCero.includes('COP'), 'formatCurrency(0) debe formatear correctamente el monto cero en COP');
+
+const monedaMillones = formatCurrency(1500000);
+assert(monedaMillones.includes('1.500.000') && monedaMillones.includes('COP'), 'formatCurrency(1500000) debe incluir separadores de miles colombianos');
+
 const textoCorto = truncateText('Tela Lino', 20);
 assert(textoCorto === 'Tela Lino', 'truncateText con longitud menor al limite debe devolver el texto integro');
 
