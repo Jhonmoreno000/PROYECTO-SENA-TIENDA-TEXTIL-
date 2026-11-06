@@ -74,3 +74,20 @@ Suite introducida para certificar el blindaje criptográfico de sesiones (`Token
 | **SEC-10** | Aislamiento de pedidos por vendedor de la línea | Un vendedor (`id=5`) solo puede consultar pedidos cargados con sus líneas de producto (`idVendedor=5`). | **APROBADO** |
 | **SEC-11** | Visibilidad global exclusiva para Administrador | El rol `administrador` / `admin` tiene autorización para auditar cualquier pedido del sistema. | **APROBADO** |
 | **SEC-12** | Protección de `PUT /api/usuarios/{id}` | Solo un administrador autenticado puede cambiar roles o estados de cuentas de usuario. | **APROBADO** |
+
+---
+
+## 4. Suite Backend 3: Concurrencia Multi-Hilo, Firma Wompi y DAST (`PruebasConcurrenciaYSeguridad.java`)
+
+Esta suite somete el motor transaccional a condiciones de carrera extremas y vectores de ataque OWASP Top 10:
+
+| ID Caso | Caso de Prueba | Escenario de Estrés / Seguridad | Resultado |
+| :--- | :--- | :--- | :---: |
+| **CON-01** | Carrera de 50 hilos sobre un rollo de 100 m (cortes de 10 m) | Exactamente 10 hilos logran cortar 10 m cada uno (stock final = 0.0 m) y 40 hilos reciben rechazo limpio por stock insuficiente (**0 sobreventas**). | **APROBADO** |
+| **CON-02** | Firma de Integridad Wompi (`SHA-256`) | Verifica concatenación `referencia + montoEnCentavos + moneda + secretoIntegridad` en hexadecimal minúscula. | **APROBADO** |
+| **CON-03** | Idempotencia de Webhook Wompi ante reintentos | Procesar 2 veces el mismo evento `transaction.updated` aprobado no duplica el descuento de inventario. | **APROBADO** |
+| **CON-04** | Rechazo de Webhook Wompi con checksum adulterado | Eventos HTTP cuyo `checksum` no coincide con el secreto de eventos son rechazados con HTTP 401/403. | **APROBADO** |
+| **CON-05** | Mitigación de Cross-Site Scripting (XSS) | `ManejadorBase.sanitizarHtml` neutraliza etiquetas `<script>`, comillas y eventos inline. | **APROBADO** |
+| **CON-06** | Mitigación de Path Traversal en `/uploads/` | Solicitudes con `../` o rutas fuera del directorio `uploads` se bloquean con HTTP 403/404. | **APROBADO** |
+| **CON-07** | Devolución estricta de HTTP 404 en activos inexistentes | Si una imagen en `/uploads/...` no existe en disco, responde HTTP 404 para activar el fallback visual del frontend. | **APROBADO** |
+| **CON-08** | Límite de tamaño de cuerpo HTTP (5 MB — OWASP DoS) | Cargas útiles superiores a `5.242.880 bytes` son rechazadas preventivamente con HTTP 413. | **APROBADO** |
