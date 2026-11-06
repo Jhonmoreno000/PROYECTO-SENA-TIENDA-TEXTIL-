@@ -185,7 +185,7 @@ Disponibles en el directorio [`pruebas-carga/`](pruebas-carga/README.md):
 * **Readiness Probe**: `GET http://localhost:8081/health/ready`
 * **Reporte Global**: `GET http://localhost:8081/api/health`
 
-## Portal Central de Documentacion Tecnica
+## Portal Central de Documentación Técnica
 
 El cuerpo documental oficial del sistema esta estructurado de forma modular en la carpeta `documentacion/`:
 
