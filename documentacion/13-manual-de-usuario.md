@@ -228,3 +228,35 @@ En **Configuración** (`/cliente/perfil`) puedes administrar tu cuenta en tres p
 - **Datos Personales:** actualiza tu nombre, correo electrónico o teléfono y pulsa **Guardar Cambios**.
 - **Direcciones:** agrega, edita o elimina direcciones de entrega frecuentes y marca una como **Principal** para agilizar futuros checkouts.
 - **Seguridad:** cambia tu contraseña actual y configura tus preferencias de notificaciones por correo.
+
+---
+
+## 5. Panel del vendedor
+
+Al ingresar con una cuenta de vendedor accedes al panel **ERP Vendedor** (`/vendedor`), diseñado para gestionar tu catálogo propio y el alistamiento de tus órdenes.
+
+### 5.1. Panel principal y productos
+
+En **Panel Principal** y **Productos** (`/vendedor/productos`):
+
+- En la parte superior se presentan tus indicadores clave en tiempo real: **Ventas del Mes**, **Pedidos Activos**, **Productos Activos** y **Stock Bajo**.
+- En la tabla de **Gestión de Inventario Textil** puedes:
+  - **Editar (icono de lápiz):** modificar nombre, categoría, precio por metro, metros disponibles en stock, descripción e imagen del producto.
+  - **Desactivar / Activar (icono de ojo):** ocultar temporalmente una tela de la tienda pública sin borrar su historial.
+  - **Eliminar (icono de papelera):** retirar definitivamente un producto del catálogo.
+- Para publicar una tela nueva, haz clic en el botón **+ Nuevo Producto** (`/vendedor/productos/nuevo`), completa los datos técnicos y sube las fotografías. Todo producto nuevo o editado pasa por la cola de **Moderación** del administrador antes de hacerse visible al público.
+
+### 5.2. Pedidos
+
+En **Pedidos** (`/vendedor/pedidos`) consultas exclusivamente las órdenes de compra que incluyen telas de tu catálogo:
+
+- Filtra rápidamente usando las pestañas **Todos**, **Preparando**, **Enviados** y **Entregados**, o busca por número de pedido o nombre del cliente.
+- Cada tarjeta detalla los cortes solicitados (producto, metros lineales y subtotal) junto con el estado actual del despacho para coordinar el corte en bodega.
+
+### 5.3. Alertas de stock
+
+En **Alertas Stock** (`/vendedor/alertas`) el sistema agrupa automáticamente las referencias que están próximas a agotarse:
+
+- **Stock Crítico (menos de 10 metros):** requiere reposición inmediata de rollos para evitar quiebres de inventario.
+- **Stock Bajo:** advertencia preventiva de reabastecimiento.
+- Desde cada tarjeta puedes escribir la nueva cantidad de metros disponibles cuando recibas mercancía y actualizar el inventario con un clic.
