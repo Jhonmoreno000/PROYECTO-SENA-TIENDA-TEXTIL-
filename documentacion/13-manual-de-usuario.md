@@ -293,3 +293,27 @@ En **Carrusel / Home** (`/admin/carrusel`) personalizas la portada pública de l
 
 - **Diapositivas del carrusel:** pulsa **+ Agregar Slide** para subir una nueva imagen promocional con su título, subtítulo y enlace, reordena las diapositivas con las flechas o actívalas/desactívalas individualmente.
 - **Visibilidad de secciones:** en la parte inferior puedes mostrar u ocultar con un interruptor las secciones de la página principal (**Portada**, **Carrusel**, **Productos Destacados**, **Novedades**, **Beneficios**, etc.).
+
+### 6.5. Inventario
+
+El módulo de **Inventario** está diseñado específicamente para la operación física de una bodega textil y se divide en cuatro pantallas:
+
+1. **Control de Lotes** (`/admin/inventario/lotes`): registra cada rollo físico que entra a bodega indicando tipo de tela, metraje inicial, proveedor y **código de lote de tintorería**. Permite descontar metros manualmente cuando se realiza un corte en mostrador.
+2. **Calculadora de Merma** (`/admin/inventario/mermas`): registra pérdidas de tela por daños de fábrica, manchas, cortes defectuosos o muestras comerciales. El sistema descuenta automáticamente esos metros del rollo afectado y calcula el costo financiero de la pérdida.
+3. **Alertas de Stock** (`/admin/inventario/alertas`): define el umbral mínimo de metros por producto y permite registrar entradas rápidas de mercancía.
+4. **Historial de Movimientos** (`/admin/inventario/movimientos`): bitácora completa de auditoría con todas las entradas, ventas, ajustes y mermas. Incluye filtros por fecha/tipo y botón **Exportar CSV** para contabilidad.
+
+### 6.6. Moderación
+
+En el bloque de **Moderación** supervisas la calidad del catálogo multi-vendedor:
+
+- **Cola de Aprobación** (`/admin/moderacion/cola`): revisa las telas nuevas o editadas por los vendedores. Puedes **Aprobar** su publicación inmediata o **Rechazar** el cambio escribiendo el motivo de corrección (por ejemplo, *"Falta especificar el gramaje o mejorar la iluminación de la foto"*).
+- **Rendimiento** (`/admin/moderacion/rendimiento`): consulta las ventas, cumplimiento de despacho, calificación promedio y tasa de devoluciones de cada vendedor.
+
+### 6.7. Soporte, cupones y reportes
+
+En el bloque de **Operaciones** gestionas la atención al cliente, el marketing promocional y la salud técnica:
+
+- **Gestión de Tickets** (`/admin/soporte/tickets`): bandeja centralizada con los reclamos enviados por los clientes. Permite filtrar por prioridad (**Alta**, **Media**, **Baja**), asignar responsable y cambiar el estado hasta su cierre (**Resuelto**).
+- **Cupones** (`/admin/marketing/cupones`): pulsa **+ Crear Cupón** para definir códigos promocionales por **porcentaje** (ej. `15%`) o **valor fijo** (ej. `$20.000 COP`), fecha de vencimiento, límite máximo de usos y reglas acumulables.
+- **Gestión de Reportes** (`/admin/operaciones/bugs`): registro interno para reportar y hacer seguimiento a fallos técnicos o mejoras operativas del sistema.
