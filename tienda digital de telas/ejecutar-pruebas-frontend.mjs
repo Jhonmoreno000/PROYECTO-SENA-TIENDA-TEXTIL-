@@ -65,6 +65,9 @@ assert(textoCorto === 'Tela Lino', 'truncateText con longitud menor al limite de
 const textoLargo = truncateText('Este es un tejido premium de seda natural importada con acabado satinado', 25);
 assert(textoLargo.endsWith('...') && textoLargo.length <= 28, 'truncateText debe truncar y anexar puntos suspensivos');
 
+assert(truncateText('', 10) === '' && truncateText(null, 10) === '', 'truncateText debe devolver cadena vacia ante entradas vacias o nulas');
+assert(truncateText('12345', 5) === '12345', 'truncateText con longitud exactamente igual al limite no debe truncar');
+
 const id1 = generateId();
 const id2 = generateId();
 assert(typeof id1 === 'string' && id1.length > 10 && id1 !== id2, 'generateId debe producir identificadores unicos no vacios');
