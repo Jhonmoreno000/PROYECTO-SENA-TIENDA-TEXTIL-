@@ -10,7 +10,7 @@
  *   region_sales, recent_activity, global_banner, system_config
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useProductos } from './ContextoProducto';
 import { useAutenticacion } from './ContextoAutenticacion';
 import { useNotificacion } from './ContextoNotificacion';
@@ -166,16 +166,25 @@ const normalizarLote = (b) => ({
  * @param {string} endpoint - Ruta relativa (ej: '/api/usuarios')
  * @returns {Promise<any|null>}
  */
-async function apiFetch(endpoint) {
+/** Consulta la API y distingue el resultado HTTP de los datos recibidos. */
+async function apiFetchDetallado(endpoint, token, alRechazarSesion) {
     try {
-        const res = await fetch(getApiUrl(endpoint));
-        if (!res.ok) return null;
+        const res = await fetch(getApiUrl(endpoint), token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+        if (res.status === 401 && token && alRechazarSesion) alRechazarSesion(token);
+        if (!res.ok) return { exito: false, estado: res.status, datos: null };
         const text = await res.text();
-        if (!text || text === 'null' || text === '{}') return null;
-        return JSON.parse(text);
+        const datos = text ? JSON.parse(text) : null;
+        return { exito: true, estado: res.status, datos };
     } catch {
-        return null;
+        return { exito: false, estado: 0, datos: null };
     }
+}
+
+/** Retorna el JSON de la API o null si falla o no contiene datos. */
+async function apiFetch(endpoint, token, alRechazarSesion) {
+    const { exito, datos } = await apiFetchDetallado(endpoint, token, alRechazarSesion);
+    if (!exito || datos === null || (Object.getPrototypeOf(datos) === Object.prototype && Object.keys(datos).length === 0)) return null;
+    return datos;
 }
 
 /**
@@ -187,13 +196,16 @@ async function apiFetch(endpoint) {
 export function MetricsProvider({ children }) {
     // ── Productos (delegados a ContextoProducto para evitar duplicación) ────
     const { products, refreshProducts } = useProductos();
-    const { user } = useAutenticacion();
+    const { user, invalidarSesion } = useAutenticacion();
+    const tokenSesion = user?.token;
+    const cargaVigenteRef = useRef(0);
     const { showNotification } = useNotificacion();
     const [pendingProducts,   setPendingProducts]   = useState([]);
 
     // ── Estado principal ──────────────────────────────────────────────────
     const [users,             setUsers]             = useState([]);
     const [orders,            setOrders]            = useState([]);
+    const [ordersLoadFailed,  setOrdersLoadFailed]  = useState(false);
     const [coupons,           setCoupons]           = useState([]);
     const [supportTickets,    setSupportTickets]    = useState([]);
     const [bugReports,        setBugReports]        = useState([]);
@@ -397,7 +409,10 @@ export function MetricsProvider({ children }) {
         try {
             const res = await fetch(getApiUrl(`/api/usuarios/${userId}/rol`), {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(tokenSesion ? { Authorization: `Bearer ${tokenSesion}` } : {})
+                },
                 body: JSON.stringify({ role: newRole, rol: newRole })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -905,6 +920,7 @@ export function MetricsProvider({ children }) {
         loading,
         users,
         orders,
+        ordersLoadFailed,
         products,
         pendingProducts,
         coupons,

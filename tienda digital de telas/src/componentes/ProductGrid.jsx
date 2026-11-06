@@ -7,6 +7,21 @@ import { formatCurrency } from '../utilidades/formateadores';
 
 
 
+const MOOD_FILTERS = {
+    'Gala': (p) => {
+        const text = `${p.category || ''} ${p.categoria || ''} ${p.name || ''} ${p.nombre || ''} ${p.description || ''} ${p.descripcion || ''}`.toLowerCase();
+        return text.includes('seda') || text.includes('terciopelo') || text.includes('gala') || text.includes('fiesta') || text.includes('brillante');
+    },
+    'Exterior': (p) => {
+        const text = `${p.category || ''} ${p.categoria || ''} ${p.name || ''} ${p.nombre || ''} ${p.description || ''} ${p.descripcion || ''}`.toLowerCase();
+        return text.includes('dril') || text.includes('lino') || text.includes('poliester') || text.includes('poliéster') || text.includes('mueble') || text.includes('cortina') || text.includes('tapiceria') || text.includes('tapicería') || text.includes('resistente');
+    },
+    'Verano': (p) => {
+        const text = `${p.category || ''} ${p.categoria || ''} ${p.name || ''} ${p.nombre || ''} ${p.description || ''} ${p.descripcion || ''} ${p.material || ''} ${p.composicion || ''}`.toLowerCase();
+        return text.includes('algodon') || text.includes('algodón') || text.includes('lino') || text.includes('fresca') || text.includes('verano') || text.includes('camisa');
+    }
+};
+
 function ProductGrid({ products }) {
     const [selectedCategory, setSelectedCategory] = useState('Todos');
     const [sortBy, setSortBy] = useState('featured');
@@ -21,7 +36,9 @@ function ProductGrid({ products }) {
     const filteredProducts = useMemo(() => {
         let filtered = products;
         if (selectedCategory !== 'Todos') {
-            filtered = filtered.filter((p) => p.category === selectedCategory);
+            filtered = MOOD_FILTERS[selectedCategory]
+                ? filtered.filter(MOOD_FILTERS[selectedCategory])
+                : filtered.filter((p) => p.category === selectedCategory || p.categoria === selectedCategory);
         }
         filtered = filtered.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
         switch (sortBy) {

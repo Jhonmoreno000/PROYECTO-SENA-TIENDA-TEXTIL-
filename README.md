@@ -203,7 +203,10 @@ El cuerpo documental oficial del sistema esta estructurado de forma modular en l
 * 10. **[Casos de Uso](documentacion/10-casos-de-uso.md)**
 * 11. **[Diagrama de Clases del Backend](documentacion/11-diagrama-de-clases.md)**
 * 12. **[Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)**
-* 13. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
+* 13. **[Manual de Usuario Oficial (Web Markdown)](documentacion/13-manual-de-usuario.md)** | **[Manual de Usuario (PDF Oficial)](documentacion/Manual_de_usuario_DD_Textil.pdf)**
+* 14. **[Plan Maestro y Reporte de Pruebas (ISO/IEC 25010)](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)**
+* 15. **[Glosario Tecnico y Catalogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)**
+* 16. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
 * 14. **[Matriz de Requerimientos (RF, RNF y Trazabilidad)](documentacion/Matriz_de_requerimientos_v2.xlsx)**
 * 15. **[Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)**
 * 16. **[Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)**

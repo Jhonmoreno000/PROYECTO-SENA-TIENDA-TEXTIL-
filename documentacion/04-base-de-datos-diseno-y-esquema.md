@@ -627,3 +627,13 @@ sequenceDiagram
         Vista-->>Cliente: Alerta visual de metros no disponibles
     end
 ```
+
+
+---
+
+## Anexo de Consultas Seguras en `PedidoDAO`: Proyección por Cliente y por Vendedor
+
+Para respaldar el control de acceso basado en roles (RBAC) desde la capa de datos relacional en PostgreSQL:
+
+- **Consulta por Cliente (`obtenerPedidosPorCliente(int idCliente)`):** filtra directamente sobre la tabla `pedidos` mediante `WHERE id_cliente = ? ORDER BY fecha_creacion DESC`, evitando transferir registros de terceros a la memoria de la JVM.
+- **Consulta por Vendedor (`obtenerPedidosPorVendedor(int idVendedor)` y `obtenerPedidoParaVendedor(int idPedido, int idVendedor)`):** verifica la existencia de líneas en `articulos_pedido ap INNER JOIN productos pr ON ap.id_producto = pr.id WHERE pr.id_vendedor = ?` y carga exclusivamente los artículos de ese vendedor, garantizando confidencialidad comercial entre distintos distribuidores del marketplace.

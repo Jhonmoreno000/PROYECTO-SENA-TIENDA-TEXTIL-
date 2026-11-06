@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import infraestructura.persistencia.jdbc.PedidoDAO;
+import infraestructura.seguridad.TokenSesion;
 import dominio.modelos.Pedido;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -14,8 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador para la gestión de pedidos (órdenes de compra).
- * Rutas base: /api/orders y /api/pedidos
+ * Controlador HTTP para la gestión del ciclo de vida de pedidos (órdenes de compra y corte textil).
+ * <p>
+ * Rutas soportadas: {@code /api/orders} y {@code /api/pedidos}.
+ * Aplica control de acceso basado en roles (RBAC) verificando la sesión firmada:
+ * los administradores consultan todo el historial, los vendedores únicamente las órdenes
+ * con líneas de sus productos, y los clientes exclusivamente sus propios pedidos.
  */
 public class ManejadorPedidos extends ManejadorBase {
     private final PedidoDAO pedidoDAO;
@@ -33,20 +38,25 @@ public class ManejadorPedidos extends ManejadorBase {
 
         // GET /api/orders o /api/pedidos (o individual /api/orders/{id})
         if ("GET".equalsIgnoreCase(metodo)) {
+            TokenSesion.Identidad identidad = obtenerIdentidad(intercambio).orElse(null);
+            if (identidad == null) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
             if (ruta.matches("^/api/(orders|pedidos)/\\d+/?$")) {
                 int idPedido = extraerIdRuta(ruta);
-                if (idPedido > 0) {
-                    Pedido pedido = pedidoDAO.obtenerPedidoPorId(idPedido);
-                    if (pedido != null) {
-                        enviarRespuestaJson(intercambio, 200, gson.toJson(pedido));
-                    } else {
-                        enviarRespuestaJson(intercambio, 404, "{\"error\":\"Pedido no encontrado\"}");
-                    }
-                    return;
+                Pedido pedido = obtenerPedidoParaIdentidad(idPedido, identidad);
+                if (pedido != null && puedeVerPedido(identidad, pedido)) {
+                    enviarRespuestaJson(intercambio, 200, gson.toJson(pedido));
+                } else {
+                    enviarRespuestaJson(intercambio, 404, "{\"error\":\"Pedido no encontrado\"}");
                 }
+                return;
             }
 
-            List<Pedido> pedidos = pedidoDAO.obtenerTodosLosPedidos();
+            List<Pedido> pedidos = identidad.esAdministrador() ? pedidoDAO.obtenerTodosLosPedidos()
+                    : identidad.esVendedor() ? pedidoDAO.obtenerPedidosPorVendedor(identidad.idUsuario())
+                    : pedidoDAO.obtenerPedidosPorCliente(identidad.idUsuario());
             enviarRespuestaJson(intercambio, 200, gson.toJson(pedidos));
 
         // POST /api/orders o /api/pedidos
@@ -135,5 +145,22 @@ public class ManejadorPedidos extends ManejadorBase {
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
+    }
+    private Pedido obtenerPedidoParaIdentidad(int idPedido, TokenSesion.Identidad identidad) {
+        if (identidad.esAdministrador()) return pedidoDAO.obtenerPedidoPorId(idPedido);
+        if (identidad.esVendedor()) return pedidoDAO.obtenerPedidoParaVendedor(idPedido, identidad.idUsuario());
+        return pedidoDAO.obtenerPedidoPorId(idPedido);
+    }
+
+    /**
+     * Un administrador ve cualquier pedido; un vendedor solo sus líneas de productos;
+     * cualquier otro rol solo los que realizó como cliente.
+     * Para vendedores, el pedido debe cargarse con obtenerPedidoParaVendedor:
+     * la pertenencia depende del producto, no del vendedor asignado al pedido.
+     */
+    public static boolean puedeVerPedido(TokenSesion.Identidad identidad, Pedido pedido) {
+        if (identidad.esAdministrador()) return true;
+        if (identidad.esVendedor()) return pedido.getIdVendedor() == identidad.idUsuario();
+        return pedido.getIdCliente() == identidad.idUsuario();
     }
 }
