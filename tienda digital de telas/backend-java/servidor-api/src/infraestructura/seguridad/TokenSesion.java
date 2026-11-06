@@ -13,7 +13,18 @@ import java.util.Optional;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-/** Sesiones firmadas por el servidor, con caducidad y sin datos de contraseña. */
+/**
+ * Utilidad criptográfica para emisión y verificación de tokens de sesión sin estado (stateless)
+ * firmados por el servidor mediante {@code HmacSHA256}.
+ * <p>
+ * Estructura del token: {@code <cargaBase64Url>.<firmaBase64Url>}, donde la carga JSON contiene:
+ * <ul>
+ *   <li>{@code sub}: Identificador numérico único del usuario en PostgreSQL.</li>
+ *   <li>{@code rol}: Rol asignado al momento de autenticar.</li>
+ *   <li>{@code exp}: Tiempo de expiración en segundos Epoch (vigencia por defecto: 12 horas).</li>
+ * </ul>
+ * Nunca almacena contraseñas ni hashes sensibles, y su firma se valida en tiempo constante.
+ */
 public final class TokenSesion {
     public static final long DURACION_SEGUNDOS = 12 * 60 * 60;
     private static final byte[] SECRETO = cargarSecreto();
