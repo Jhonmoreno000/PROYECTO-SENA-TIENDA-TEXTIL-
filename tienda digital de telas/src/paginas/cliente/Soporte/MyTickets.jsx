@@ -100,7 +100,7 @@ function MyTickets() {
     ];
 
     const tickets = supportTickets.length > 0
-        ? supportTickets.filter(t => t.clientId === user?.id || true)
+        ? supportTickets.filter(t => t.clientId === user?.id || t.usuarioId === user?.id)
         : mockTickets;
 
     const filteredTickets = filterStatus === 'all'

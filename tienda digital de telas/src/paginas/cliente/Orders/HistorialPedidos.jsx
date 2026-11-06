@@ -65,7 +65,7 @@ function HistorialPedidos() {
 
     // Filtrar pedidos para el cliente actual
     const clientOrders = orders
-        .filter(order => (order.clientId === user?.id || order.idCliente === user?.id || true)) // Show all for demo
+        .filter(order => (order.clientId === user?.id || order.idCliente === user?.id))
         .filter(order => filterStatus === 'all' || order.status === filterStatus || order.estado === filterStatus)
         .filter(order =>
             searchTerm === '' ||
@@ -74,9 +74,9 @@ function HistorialPedidos() {
         )
         .sort((a, b) => new Date(b.date || b.orderDate || b.fecha || 0) - new Date(a.date || a.orderDate || a.fecha || 0));
 
-    const totalOrders = orders.filter(order => order.clientId === user?.id || order.idCliente === user?.id || true).length;
-    const activeOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id || true) && ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
-    const deliveredOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id || true) && (o.status === 'delivered' || o.estado === 'entregado')).length;
+    const totalOrders = orders.filter(order => order.clientId === user?.id || order.idCliente === user?.id).length;
+    const activeOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id) && ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
+    const deliveredOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id) && (o.status === 'delivered' || o.estado === 'entregado')).length;
 
     const handleDownloadInvoice = async (orderId) => {
         try {
