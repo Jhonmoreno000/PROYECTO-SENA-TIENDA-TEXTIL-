@@ -248,7 +248,11 @@ while ($listener.IsListening) {
                 $userEmail = "vendedor@ddtextil.com"
                 $userId = 2
             }
-            $loginResp = "{`"success`":true,`"token`":`"demo-jwt-token-sena-adso-2026`",`"user`":{`"id`":$userId,`"name`":`"$userName`",`"nombre`":`"$userName`",`"email`":`"$userEmail`",`"correo`":`"$userEmail`",`"role`":`"$role`",`"rol`":`"$role`"}}"
+            $expiracion = [DateTimeOffset]::UtcNow.AddHours(12).ToUnixTimeSeconds()
+            $carga = '{"sub":' + $userId + ',"rol":"' + $role + '","exp":' + $expiracion + '}'
+            $cargaB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($carga)).TrimEnd('=').Replace('+','-').Replace('/','_')
+            $tokenDemo = "$cargaB64.demo-sin-firma"
+            $loginResp = "{`"success`":true,`"token`":`"$tokenDemo`",`"user`":{`"id`":$userId,`"name`":`"$userName`",`"nombre`":`"$userName`",`"email`":`"$userEmail`",`"correo`":`"$userEmail`",`"role`":`"$role`",`"rol`":`"$role`"}}"
             Send-Json $res $loginResp
             continue
         }
@@ -273,7 +277,7 @@ while ($listener.IsListening) {
             } catch {}
             $ssoRespObj = @{
                 success = $true
-                token   = "demo-jwt-token-sena-adso-2026"
+                token   = "$([Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(('{""sub"":4,""rol"":""cliente"",""exp"":' + [DateTimeOffset]::UtcNow.AddHours(12).ToUnixTimeSeconds() + '}'))).TrimEnd('=').Replace('+','-').Replace('/','_')).demo-sin-firma"
                 user    = @{
                     id     = 4
                     name   = $ssoName
@@ -341,6 +345,24 @@ while ($listener.IsListening) {
         $relPath = $urlPath.TrimStart('/')
         if ([string]::IsNullOrWhiteSpace($relPath)) {
             $relPath = "index.html"
+        }
+
+        if ($relPath.StartsWith("uploads/") -or $urlPath.StartsWith("/uploads/")) {
+            $uploadRel = $relPath -replace '^uploads/', ''
+            $uploadFile = Join-Path $uploadsDir $uploadRel
+            if (Test-Path $uploadFile -PathType Leaf) {
+                $ext = [System.IO.Path]::GetExtension($uploadFile).ToLower()
+                $res.ContentType = if ($mimeMap.ContainsKey($ext)) { $mimeMap[$ext] } else { "application/octet-stream" }
+                $bytes = [System.IO.File]::ReadAllBytes($uploadFile)
+                $res.StatusCode = 200
+                $res.ContentLength64 = $bytes.Length
+                $res.OutputStream.Write($bytes, 0, $bytes.Length)
+                $res.Close()
+                continue
+            }
+            $res.StatusCode = 404
+            $res.Close()
+            continue
         }
 
         $localFile = Join-Path $assetsDir $relPath
