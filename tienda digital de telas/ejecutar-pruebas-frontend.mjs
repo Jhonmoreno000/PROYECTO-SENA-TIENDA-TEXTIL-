@@ -150,6 +150,9 @@ assert(!sesionVigente({ token: tokenExpirado }, ahora), 'Un usuario con token ex
 assert(sesionVigente({ token: tokenValido }, ahora), 'Un usuario con token válido debe tener sesión vigente');
 assert(sesionVigente({ sesionLocal: true }, ahora), 'Una sesión local explícita debe seguir vigente sin token');
 
+const tokenConAcentos = Buffer.from(JSON.stringify({ sub: 99, nombre: 'María José Calderón', rol: 'administrador', exp: expiracionFutura }), 'utf8').toString('base64url') + '.firma';
+assert(sesionVigente({ token: tokenConAcentos }, ahora), 'Un token con caracteres UTF-8 acentuados en su carga debe decodificarse y validarse correctamente');
+
 // -----------------------------------------------------------------------------
 // Resumen Final
 // -----------------------------------------------------------------------------
