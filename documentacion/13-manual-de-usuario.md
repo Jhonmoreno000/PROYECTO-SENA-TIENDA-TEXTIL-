@@ -260,3 +260,36 @@ En **Alertas Stock** (`/vendedor/alertas`) el sistema agrupa automáticamente la
 - **Stock Crítico (menos de 10 metros):** requiere reposición inmediata de rollos para evitar quiebres de inventario.
 - **Stock Bajo:** advertencia preventiva de reabastecimiento.
 - Desde cada tarjeta puedes escribir la nueva cantidad de metros disponibles cuando recibas mercancía y actualizar el inventario con un clic.
+
+---
+
+## 6. Panel del administrador
+
+El panel **ERP Intelligence** (`/admin`) reúne todas las herramientas operativas, financieras y de gobierno de la tienda en un menú lateral organizado por áreas.
+
+### 6.1. Resumen
+
+Al entrar al panel (`/admin`) verás el tablero ejecutivo de control:
+
+- **Filtros globales:** filtra las métricas por rango de fechas, vendedor o categoría textil.
+- **Indicadores clave (KPIs):** ingresos totales, pedidos completados, ticket promedio, tasa de conversión y estado general del inventario.
+- **Centro de alertas:** notificaciones rápidas sobre rollos con stock bajo, reportes técnicos abiertos y solicitudes pendientes en cola de moderación.
+
+### 6.2. Usuarios
+
+En **Usuarios** (`/admin/usuarios`) administras todas las cuentas registradas en la plataforma:
+
+- Busca usuarios por nombre o correo y filtra por rol (**Administrador**, **Vendedor**, **Cliente**).
+- **Cambiar rol:** usa el selector desplegable de la columna **Rol** para promover o reasignar permisos de un usuario (revalidado en base de datos en cada petición).
+- **Suspender / Activar:** bloquea temporalmente el acceso de una cuenta sin borrar su historial transaccional, o elimínala con el icono de papelera.
+
+### 6.3. Catálogo
+
+En **Catálogo** (`/admin/productos`) tienes vista y control sobre absolutamente todas las telas de la plataforma, sin importar qué vendedor las haya creado. Puedes crear nuevas referencias, editar precios, ajustar stock, destacar productos en portada o eliminarlos.
+
+### 6.4. Carrusel y página de inicio
+
+En **Carrusel / Home** (`/admin/carrusel`) personalizas la portada pública de la tienda sin tocar código:
+
+- **Diapositivas del carrusel:** pulsa **+ Agregar Slide** para subir una nueva imagen promocional con su título, subtítulo y enlace, reordena las diapositivas con las flechas o actívalas/desactívalas individualmente.
+- **Visibilidad de secciones:** en la parte inferior puedes mostrar u ocultar con un interruptor las secciones de la página principal (**Portada**, **Carrusel**, **Productos Destacados**, **Novedades**, **Beneficios**, etc.).
