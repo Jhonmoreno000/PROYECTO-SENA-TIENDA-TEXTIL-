@@ -102,6 +102,16 @@ console.log('\n[GRUPO 3: Dominio Financiero y Checkout Wompi]');
 
 const centavos1 = convertirACentavosWompi(125000);
 assert(centavos1 === 12500000, 'Conversion de $125.000 COP a centavos Wompi debe ser exactamente 12500000 enteros');
+assert(convertirACentavosWompi(0) === 0, 'Conversion de $0 COP a centavos Wompi debe retornar 0');
+assert(convertirACentavosWompi(19999.99) === 1999999, 'Conversion de montos con decimales a centavos Wompi debe redondear sin perdida');
+
+let errorWompiNegativo = false;
+try {
+    convertirACentavosWompi(-500);
+} catch {
+    errorWompiNegativo = true;
+}
+assert(errorWompiNegativo, 'convertirACentavosWompi debe rechazar montos negativos');
 
 const ref = generarReferenciaPedido(42, 1729000000000);
 assert(ref === 'PED-42-1729000000000' && ref.startsWith('PED-'), 'Referencia de pago debe cumplir estructura PED-{id}-{timestamp}');
