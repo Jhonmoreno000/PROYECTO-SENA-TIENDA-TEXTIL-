@@ -15,8 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador para la gestión de pedidos (órdenes de compra).
- * Rutas base: /api/orders y /api/pedidos
+ * Controlador HTTP para la gestión del ciclo de vida de pedidos (órdenes de compra y corte textil).
+ * <p>
+ * Rutas soportadas: {@code /api/orders} y {@code /api/pedidos}.
+ * Aplica control de acceso basado en roles (RBAC) verificando la sesión firmada:
+ * los administradores consultan todo el historial, los vendedores únicamente las órdenes
+ * con líneas de sus productos, y los clientes exclusivamente sus propios pedidos.
  */
 public class ManejadorPedidos extends ManejadorBase {
     private final PedidoDAO pedidoDAO;
