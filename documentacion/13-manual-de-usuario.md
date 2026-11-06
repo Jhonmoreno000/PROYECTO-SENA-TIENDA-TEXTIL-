@@ -317,3 +317,20 @@ En el bloque de **Operaciones** gestionas la atención al cliente, el marketing 
 - **Gestión de Tickets** (`/admin/soporte/tickets`): bandeja centralizada con los reclamos enviados por los clientes. Permite filtrar por prioridad (**Alta**, **Media**, **Baja**), asignar responsable y cambiar el estado hasta su cierre (**Resuelto**).
 - **Cupones** (`/admin/marketing/cupones`): pulsa **+ Crear Cupón** para definir códigos promocionales por **porcentaje** (ej. `15%`) o **valor fijo** (ej. `$20.000 COP`), fecha de vencimiento, límite máximo de usos y reglas acumulables.
 - **Gestión de Reportes** (`/admin/operaciones/bugs`): registro interno para reportar y hacer seguimiento a fallos técnicos o mejoras operativas del sistema.
+
+### 6.8. Analítica y facturación
+
+En el bloque de **Analítica** cuentas con cinco herramientas de inteligencia de negocios textil:
+
+- **Mapa de Ventas** (`/admin/analitica/mapa`): distribución geográfica de las ventas e ingresos por departamento y región de Colombia (Antioquia, Cundinamarca, Valle del Cauca, Atlántico, Eje Cafetero, Santander).
+- **Rotación de Inventario** (`/admin/analitica/rotacion`): identifica qué telas se venden más rápido (*alta rotación*) y cuáles llevan semanas sin movimiento en estantería (*capital inmovilizado*).
+- **Análisis de Devoluciones** (`/admin/analitica/devoluciones`): estadísticas detalladas de los motivos más frecuentes de reclamo por tela y por proveedor/vendedor.
+- **Proyección de Ingresos** (`/admin/analitica/proyeccion`): estimación financiera de ventas para los próximos meses basada en el comportamiento histórico.
+- **Facturación** (`/admin/facturacion`): listado consolidado de todas las facturas electrónicas emitidas por la tienda, con buscador por cliente o número de factura y descarga directa en PDF.
+
+### 6.9. Configuración
+
+En **Configuración** (`/admin/configuracion`) se encuentra la **Central de Control de Marca** y parámetros globales:
+
+- Cambia el nombre comercial de la tienda, el logo y los colores principales de la interfaz con **vista previa en vivo (*Live Preview*)**.
+- Ajusta parámetros financieros y logísticos globales como el porcentaje de **IVA**, el costo de envío estándar y el monto mínimo para **envío gratuito**.
