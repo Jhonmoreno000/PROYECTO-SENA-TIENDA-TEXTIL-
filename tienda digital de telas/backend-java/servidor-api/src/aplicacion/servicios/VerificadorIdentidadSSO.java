@@ -1,23 +1,26 @@
 package aplicacion.servicios;
 
 /**
- * Puerto de la capa de aplicación para comprobar, ante el proveedor (Google o Microsoft),
+ * Puerto de la capa de aplicación para comprobar, ante el proveedor OAuth2 (Google o Microsoft),
  * que un token de acceso SSO es auténtico y fue emitido para esta aplicación.
- *
- * El servicio de autenticación depende de esta abstracción y no de los detalles HTTP
- * de cada proveedor (principio de inversión de dependencias).
  */
 public interface VerificadorIdentidadSSO {
 
     /**
-     * Valida el token con el proveedor y devuelve la identidad que el proveedor certifica.
-     * @param proveedor "google" o "microsoft".
-     * @param tokenAcceso Token de acceso entregado por el proveedor al navegador.
-     * @return Correo y nombre verificados por el proveedor.
-     * @throws dominio.excepciones.ExcepcionDominio si el token no es válido.
+     * Valida el token con el proveedor externo y devuelve la identidad certificada.
+     *
+     * @param proveedor Nombre del proveedor (`String`: `"google"` o `"microsoft"`).
+     * @param tokenAcceso Token de acceso OAuth2 (`String`) recibido desde el cliente.
+     * @return Registro {@link IdentidadSSO} con el correo y nombre verificados.
+     * @throws dominio.excepciones.ExcepcionDominio Si el token no es válido o expiró.
      */
     IdentidadSSO verificar(String proveedor, String tokenAcceso);
 
-    /** Identidad certificada por el proveedor SSO. */
+    /**
+     * Registro inmutable con la identidad certificada por el proveedor SSO.
+     *
+     * @param correo Dirección de correo electrónico verificada (`String`).
+     * @param nombre Nombre completo del titular (`String`).
+     */
     record IdentidadSSO(String correo, String nombre) {}
 }

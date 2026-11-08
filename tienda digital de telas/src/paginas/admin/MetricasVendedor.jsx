@@ -108,7 +108,7 @@ function MetricasVendedor() {
 
                     {/* Gráfico */}
                     <div className={`chart-container ${glassCard} p-6 mb-8`}>
-                        <BarChart datos={chartData} title="Comparación de Ventas por Vendedor" height={300} color="#6366f1" />
+                        <BarChart data={chartData} title="Comparación de Ventas por Vendedor" height={300} color="#6366f1" />
                     </div>
 
                     {/* Tabla vendedores */}

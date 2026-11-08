@@ -1,36 +1,34 @@
 package infraestructura.api.manejadores;
 
-import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.InputStream;
+import com.sun.net.httpserver.HttpExchange;
+import infraestructura.persistencia.jdbc.ConfiguracionDAO;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import infraestructura.persistencia.jdbc.ConfiguracionDAO;
 
 /**
- * Manejador para la configuración global del sistema (pares clave-valor).
- * Rutas base: /api/config y /api/configuracion
- * Permite leer y escribir valores de configuración persistidos en la base de datos.
- * Soporta:
- * - GET /api/config → Obtiene todas las configuraciones.
- * - GET /api/config/{key} → Obtiene el valor de una clave específica.
- * - POST /api/config → Crea o actualiza un par clave-valor.
+ * Controlador HTTP para la configuración global del sistema (pares clave-valor) en PostgreSQL.
+ * Rutas soportadas: `/api/config` y `/api/configuracion`.
  */
 public class ManejadorConfiguracion extends ManejadorBase {
+    /** Objeto de acceso a datos de configuración (`ConfiguracionDAO`). */
     private final ConfiguracionDAO configuracionDAO = new ConfiguracionDAO();
+    /** Serializador JSON (`Gson`). */
     private final Gson gson = new Gson();
 
     /**
-     * Enruta la solicitud según el método HTTP.
+     * Enruta las peticiones `GET` y `POST` para consultar o persistir pares clave-valor de configuración.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error procesando la solicitud.
      */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         String metodo = intercambio.getRequestMethod();
 
-        // GET — Recupera configuraciones
         if ("GET".equalsIgnoreCase(metodo)) {
             String ruta = intercambio.getRequestURI().getPath();
             String rutaNormalizada = (ruta.length() > 1 && ruta.endsWith("/")) ? ruta.substring(0, ruta.length() - 1) : ruta;
@@ -42,7 +40,6 @@ public class ManejadorConfiguracion extends ManejadorBase {
                 String clave = rutaNormalizada.substring(rutaNormalizada.lastIndexOf("/") + 1);
                 String valor = configuracionDAO.obtenerConfiguracion(clave);
                 if (valor != null) {
-                    // Si el valor ya es un JSON válido (objeto o arreglo), lo devolvemos tal cual
                     String valorTrim = valor.trim();
                     if ((valorTrim.startsWith("{") && valorTrim.endsWith("}")) ||
                         (valorTrim.startsWith("[") && valorTrim.endsWith("]"))) {
@@ -55,8 +52,7 @@ public class ManejadorConfiguracion extends ManejadorBase {
                 }
             }
 
-        // POST — Crea o actualiza una configuración (key/value o clave/valor en el cuerpo)
-        } else if ("POST".equalsIgnoreCase(metodo)) {
+        } else if ("POST".equalsIgnoreCase(metodo) || "PUT".equalsIgnoreCase(metodo)) {
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json;
             try {

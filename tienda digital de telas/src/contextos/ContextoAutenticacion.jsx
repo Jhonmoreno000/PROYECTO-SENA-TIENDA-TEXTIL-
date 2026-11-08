@@ -91,6 +91,8 @@ export function AuthProvider({ children }) {
                     nombre: nombreUsuario,
                     email: rawUser.email || rawUser.correo,
                     correo: rawUser.email || rawUser.correo,
+                    phone: rawUser.phone || rawUser.telefono || '',
+                    telefono: rawUser.telefono || rawUser.phone || '',
                     role: normalizedRole,
                     rol: normalizedRole
                 };
@@ -260,9 +262,15 @@ export function AuthProvider({ children }) {
         return user.role === roles;
     };
 
+    const updateUser = (updates) => {
+        setUser(prev => prev ? { ...prev, ...updates } : prev);
+    };
+
     // Todos los datos y funciones que estarán disponibles en la app
     const value = {
         user,                        // Objeto con los datos del usuario conectado (o null)
+        setUser,
+        updateUser,
         isAuthenticated: !!user,     // true si hay sesión activa, false si no
         login,                       // Función para iniciar sesión
         loginConSSO,                 // Función para iniciar sesión mediante SSO (Google / Microsoft)

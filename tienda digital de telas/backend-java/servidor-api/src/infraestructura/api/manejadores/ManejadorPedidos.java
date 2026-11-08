@@ -1,37 +1,52 @@
 package infraestructura.api.manejadores;
 
+import aplicacion.servicios.ServicioAutenticacion;
+import aplicacion.servicios.ServicioNotificacionesEmail;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.sun.net.httpserver.HttpExchange;
-import infraestructura.persistencia.jdbc.PedidoDAO;
-import dominio.modelos.Pedido;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.InputStream;
+import com.google.gson.reflect.TypeToken;
+import com.sun.net.httpserver.HttpExchange;
+import dominio.modelos.Pedido;
+import infraestructura.persistencia.jdbc.PedidoDAO;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador para la gestión de pedidos (órdenes de compra).
- * Rutas base: /api/orders y /api/pedidos
+ * Controlador HTTP para la gestión de pedidos (órdenes de compra).
+ * Rutas base: `/api/orders` y `/api/pedidos`.
  */
 public class ManejadorPedidos extends ManejadorBase {
+    /** Objeto de acceso a datos de pedidos (`PedidoDAO`). */
     private final PedidoDAO pedidoDAO;
+    /** Serializador JSON (`Gson`). */
     private final Gson gson;
+    /** Servicio de envío de notificaciones logísticas por correo (`ServicioNotificacionesEmail`). */
+    private final ServicioNotificacionesEmail servicioNotificaciones;
 
+    /**
+     * Inicializa el controlador de pedidos con su DAO y servicio de notificaciones.
+     */
     public ManejadorPedidos() {
         this.pedidoDAO = new PedidoDAO();
         this.gson = new Gson();
+        this.servicioNotificaciones = new ServicioNotificacionesEmail();
     }
 
+    /**
+     * Procesa las peticiones `GET`, `POST` y `PUT` para consultar, crear o actualizar el estado de pedidos.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error durante el procesamiento.
+     */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         String metodo = intercambio.getRequestMethod();
         String ruta = intercambio.getRequestURI().getPath();
 
-        // GET /api/orders o /api/pedidos (o individual /api/orders/{id})
         if ("GET".equalsIgnoreCase(metodo)) {
             if (ruta.matches("^/api/(orders|pedidos)/\\d+/?$")) {
                 int idPedido = extraerIdRuta(ruta);
@@ -49,9 +64,14 @@ public class ManejadorPedidos extends ManejadorBase {
             List<Pedido> pedidos = pedidoDAO.obtenerTodosLosPedidos();
             enviarRespuestaJson(intercambio, 200, gson.toJson(pedidos));
 
-        // POST /api/orders o /api/pedidos
         } else if ("POST".equalsIgnoreCase(metodo)) {
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
+
+            if (ServicioAutenticacion.contieneDatosTarjetaSensibles(cuerpo)) {
+                enviarRespuestaError(intercambio, 400, "Rechazado por seguridad PCI-DSS: no se permite enviar datos sensibles de tarjeta (PAN/CVV) al servidor.");
+                return;
+            }
+
             JsonObject json;
             try {
                 json = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -90,7 +110,39 @@ public class ManejadorPedidos extends ManejadorBase {
                 articulos = gson.fromJson(json.get("articulos"), tipoLista);
             }
 
-            int idPedido = pedidoDAO.crearPedido(idCliente, total, articulos);
+            Map<String, Object> metadatos = new HashMap<>();
+            metadatos.put("nombreCliente", extraerCampoTexto(json, "customerName", "nombreCliente", "nombre", "clientName"));
+            metadatos.put("correoCliente", extraerCampoTexto(json, "customerEmail", "correoCliente", "correo", "email", "clientEmail"));
+            metadatos.put("telefonoCliente", extraerCampoTexto(json, "customerPhone", "telefonoCliente", "telefono", "phone", "clientPhone"));
+            metadatos.put("direccionEnvio", extraerCampoTexto(json, "shippingAddress", "direccionEnvio", "direccion", "address"));
+            metadatos.put("ciudadEnvio", extraerCampoTexto(json, "shippingCity", "ciudadEnvio", "ciudad", "city"));
+            metadatos.put("departamentoEnvio", extraerCampoTexto(json, "shippingDepartment", "departamentoEnvio", "departamento", "department"));
+            metadatos.put("documentoCliente", extraerCampoTexto(json, "customerDocument", "documentoCliente", "documentNumber", "documento", "cedula", "nit"));
+            metadatos.put("metodoPago", extraerCampoTexto(json, "paymentMethod", "metodoPago"));
+            metadatos.put("estadoPago", extraerCampoTexto(json, "paymentStatus", "estadoPago"));
+            metadatos.put("codigoCupon", extraerCampoTexto(json, "couponCode", "codigoCupon"));
+            metadatos.put("notas", extraerCampoTexto(json, "notes", "notas"));
+
+            if (json.has("subtotal") && !json.get("subtotal").isJsonNull()) {
+                metadatos.put("subtotal", json.get("subtotal").getAsDouble());
+            }
+            if (json.has("shippingCost") && !json.get("shippingCost").isJsonNull()) {
+                metadatos.put("costoEnvio", json.get("shippingCost").getAsDouble());
+            } else if (json.has("costoEnvio") && !json.get("costoEnvio").isJsonNull()) {
+                metadatos.put("costoEnvio", json.get("costoEnvio").getAsDouble());
+            }
+            if (json.has("tax") && !json.get("tax").isJsonNull()) {
+                metadatos.put("impuestos", json.get("tax").getAsDouble());
+            } else if (json.has("impuestos") && !json.get("impuestos").isJsonNull()) {
+                metadatos.put("impuestos", json.get("impuestos").getAsDouble());
+            }
+            if (json.has("discount") && !json.get("discount").isJsonNull()) {
+                metadatos.put("descuento", json.get("discount").getAsDouble());
+            } else if (json.has("descuento") && !json.get("descuento").isJsonNull()) {
+                metadatos.put("descuento", json.get("descuento").getAsDouble());
+            }
+
+            int idPedido = pedidoDAO.crearPedidoConMetadatos(idCliente, total, articulos, metadatos);
 
             if (idPedido > 0) {
                 String respuesta = "{\"success\":true,\"orderId\":" + idPedido + ",\"idPedido\":" + idPedido + "}";
@@ -99,41 +151,83 @@ public class ManejadorPedidos extends ManejadorBase {
                 enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error al crear el pedido\"}");
             }
 
-        // PUT /api/orders/{id}/status o /api/pedidos/{id}/estado
         } else if ("PUT".equalsIgnoreCase(metodo)) {
-            if (ruta.contains("/status") || ruta.contains("/estado")) {
-                int idPedido = extraerIdRuta(ruta);
-                if (idPedido <= 0) {
-                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de pedido inválido en la ruta\"}");
-                    return;
-                }
-
-                String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
-                JsonObject objetoJson;
-                try {
-                    objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
-                } catch (Exception e) {
-                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
-                    return;
-                }
-
-                String estado = (objetoJson.has("status") && !objetoJson.get("status").isJsonNull()) ? objetoJson.get("status").getAsString()
-                              : ((objetoJson.has("estado") && !objetoJson.get("estado").isJsonNull()) ? objetoJson.get("estado").getAsString() : null);
-                java.util.Set<String> estadosValidos = java.util.Set.of(
-                        "pending", "paid", "confirmed", "cutting", "packed", "shipped", "delivered", "cancelled",
-                        "pendiente", "pagado", "confirmado", "en corte", "empacado", "enviado", "entregado", "cancelado"
-                );
-                if (estado == null || !estadosValidos.contains(estado.trim().toLowerCase())) {
-                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Estado de pedido inválido o faltante\"}");
-                    return;
-                }
-                boolean exito = pedidoDAO.actualizarEstadoPedido(idPedido, estado.trim().toLowerCase());
-                enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando estado del pedido\"}");
-            } else {
-                enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
+            int idPedido = extraerIdRuta(ruta);
+            if (idPedido <= 0) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de pedido inválido en la ruta\"}");
+                return;
             }
+
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
+            JsonObject objetoJson;
+            try {
+                objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
+            } catch (Exception e) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
+                return;
+            }
+
+            String estado = extraerCampoTexto(objetoJson, "status", "estado");
+            String numeroGuia = extraerCampoTexto(objetoJson, "trackingNumber", "numeroGuia");
+            String notas = extraerCampoTexto(objetoJson, "notes", "notas");
+
+            java.util.Set<String> estadosValidos = java.util.Set.of(
+                    "pending", "paid", "confirmed", "cutting", "packed", "shipped", "delivered", "cancelled",
+                    "pendiente", "pagado", "confirmado", "en corte", "empacado", "enviado", "entregado", "cancelado"
+            );
+            if (estado == null || !estadosValidos.contains(estado.trim().toLowerCase())) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Estado de pedido inválido o faltante\"}");
+                return;
+            }
+
+            String estadoNorm = estado.trim().toLowerCase();
+            boolean exito = pedidoDAO.actualizarPedido(idPedido, estadoNorm, numeroGuia, notas);
+
+            if (exito) {
+                Pedido pedidoActual = pedidoDAO.obtenerPedidoPorId(idPedido);
+                if (pedidoActual != null && pedidoActual.getCorreoCliente() != null && !pedidoActual.getCorreoCliente().isBlank()) {
+                    String correo = pedidoActual.getCorreoCliente();
+                    String nombre = pedidoActual.getNombreCliente() != null ? pedidoActual.getNombreCliente() : "Cliente";
+                    String nombreTela = !pedidoActual.getProductNames().isEmpty() ? String.join(", ", pedidoActual.getProductNames()) : "Telas del pedido";
+                    double metros = pedidoActual.getTotalMeters() > 0 ? pedidoActual.getTotalMeters() : Math.max(1.0, pedidoActual.getCantidadArticulos());
+                    try {
+                        if ("cutting".equals(estadoNorm) || "en corte".equals(estadoNorm)) {
+                            servicioNotificaciones.enviarNotificacionEnCorte(correo, nombre, idPedido, nombreTela, metros);
+                        } else if ("shipped".equals(estadoNorm) || "enviado".equals(estadoNorm)) {
+                            servicioNotificaciones.enviarNotificacionDespacho(
+                                    correo,
+                                    nombre,
+                                    idPedido,
+                                    "Transportadora Aliada",
+                                    numeroGuia != null ? numeroGuia : (pedidoActual.getNumeroGuia() != null ? pedidoActual.getNumeroGuia() : "GUIA-" + idPedido)
+                            );
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando estado del pedido\"}");
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
+    }
+
+    /**
+     * Busca y retorna el primer campo de texto no vacío entre múltiples alias de claves JSON.
+     *
+     * @param json   Objeto JSON a inspeccionar (`JsonObject`).
+     * @param claves Lista de nombres de propiedad candidatos (`String...`).
+     * @return Valor de texto recortado o `null` si ninguno existe.
+     */
+    private String extraerCampoTexto(JsonObject json, String... claves) {
+        for (String clave : claves) {
+            if (json.has(clave) && !json.get(clave).isJsonNull()) {
+                String valor = json.get(clave).getAsString();
+                if (valor != null && !valor.trim().isEmpty()) {
+                    return valor.trim();
+                }
+            }
+        }
+        return null;
     }
 }

@@ -131,7 +131,7 @@ function MapaVentas() {
                             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">Mapa de calor por volumen de ventas</p>
                         </div>
                         <ResponsiveContainer width="100%" height={500}>
-                            <Treemap datos={heatMapData} dataKey="value" aspectRatio={4 / 3} stroke="#fff" fill="#6366f1" content={<CustomizedContent />}>
+                            <Treemap data={heatMapData} dataKey="value" aspectRatio={4 / 3} stroke="#fff" fill="#6366f1" content={<CustomizedContent />}>
                                 <Tooltip content={<CustomTooltip />} />
                             </Treemap>
                         </ResponsiveContainer>

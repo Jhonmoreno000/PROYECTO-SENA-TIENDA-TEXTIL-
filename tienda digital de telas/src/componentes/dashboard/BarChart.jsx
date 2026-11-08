@@ -3,8 +3,9 @@ import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { formatCurrency } from '../../utilidades/formateadores';
 
-function BarChart({ datos, dataKey = 'value', xKey = 'name', title, height = 300, color = '#8B5CF6' }) {
+function BarChart({ data, datos, dataKey = 'value', xKey = 'name', title, height = 300, color = '#8B5CF6' }) {
     const [darkMode] = useDarkMode();
+    const chartData = data || datos || [];
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
@@ -28,7 +29,7 @@ function BarChart({ datos, dataKey = 'value', xKey = 'name', title, height = 300
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{title}</h3>
             )}
             <ResponsiveContainer width="100%" height={height}>
-                <RechartsBarChart datos={datos} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <RechartsBarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                     <CartesianGrid
                         strokeDasharray="3 3"
                         stroke={darkMode ? '#334155' : '#E5E7EB'}

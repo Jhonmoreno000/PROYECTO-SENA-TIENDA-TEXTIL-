@@ -6,15 +6,16 @@ import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
 import { useNotificacion } from '../../../contextos/ContextoNotificacion';
+import { getApiUrl } from '../../../config';
 
 function Perfil() {
-    const { user } = useAutenticacion();
+    const { user, updateUser } = useAutenticacion();
     const { showNotification } = useNotificacion();
 
     const [formData, setFormData] = useState({
-        name: user?.name || 'Cliente Demo',
-        email: user?.email || 'cliente@ejemplo.com',
-        phone: user?.phone || '300 123 4567',
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || user?.telefono || '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
@@ -61,9 +62,40 @@ function Perfil() {
             }
         }
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsSaving(false);
+        try {
+            const payload = {
+                name: formData.name,
+                nombre: formData.name,
+                email: formData.email,
+                correo: formData.email,
+                phone: formData.phone,
+                telefono: formData.phone,
+                ...(showPasswordChange && formData.newPassword
+                    ? { password: formData.newPassword, contrasena: formData.newPassword }
+                    : {})
+            };
+
+            const res = await fetch(getApiUrl(`/api/usuarios/${user.id}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                throw new Error('No se pudo actualizar el perfil');
+            }
+
+            if (updateUser) {
+                updateUser({
+                    name: formData.name,
+                    nombre: formData.name,
+                    email: formData.email,
+                    correo: formData.email,
+                    phone: formData.phone,
+                    telefono: formData.phone
+                });
+            }
+
             setSaveSuccess(true);
             setFormData(prev => ({
                 ...prev,
@@ -72,7 +104,13 @@ function Perfil() {
                 confirmPassword: ''
             }));
             setShowPasswordChange(false);
-        }, 1000);
+            showNotification('success', 'Perfil actualizado exitosamente');
+        } catch (err) {
+            console.error('Error al actualizar perfil:', err);
+            showNotification('error', 'No se pudo actualizar el perfil en el servidor');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (

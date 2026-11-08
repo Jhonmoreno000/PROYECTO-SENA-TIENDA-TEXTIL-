@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node iniciar-entorno-dev.mjs",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src",

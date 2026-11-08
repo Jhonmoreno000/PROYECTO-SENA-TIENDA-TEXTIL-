@@ -18,18 +18,28 @@ import java.util.Map;
  */
 public final class ConfiguracionEntorno {
 
+    /** Mapa en memoria (`Map<String, String>`) con los pares clave-valor cargados desde el archivo `.env`. */
     private static final Map<String, String> VALORES_ARCHIVO = cargarArchivoEnv();
 
+    /**
+     * Constructor privado para evitar la instanciación de esta clase utilitaria.
+     */
     private ConfiguracionEntorno() {}
 
     /**
-     * Devuelve el primer valor no vacío entre las claves indicadas, o null si ninguna existe.
+     * Devuelve el primer valor no vacío entre las claves indicadas, o `null` si ninguna existe.
      *
-     * @param claves Claves a consultar en orden de prioridad.
-     * @return Valor encontrado recortado, o null.
+     * @param claves Arreglo variable de claves (`String...`) a consultar en orden de prioridad.
+     * @return Valor encontrado (`String`) recortado, o `null`.
      */
     public static String obtener(String... claves) {
+        if (claves == null) {
+            return null;
+        }
         for (String clave : claves) {
+            if (clave == null || clave.isBlank()) {
+                continue;
+            }
             String valor = System.getenv(clave);
             if (valor == null || valor.isBlank()) {
                 valor = VALORES_ARCHIVO.get(clave);
@@ -42,26 +52,37 @@ public final class ConfiguracionEntorno {
     }
 
     /**
+     * Busca secuencialmente entre varias claves de entorno y retorna el primer valor definido, o `null`.
+     * Evita la ambigüedad de sobrecarga con {@link #obtener(String, String)} cuando se pasan dos claves.
+     *
+     * @param claves Claves candidatas (`String...`) a evaluar en orden de prioridad.
+     * @return Primer valor no vacío (`String`) o `null` si ninguna clave está configurada.
+     */
+    public static String obtenerPrimera(String... claves) {
+        return obtener(claves);
+    }
+
+    /**
      * Devuelve el valor de la clave especificada o el valor por defecto si no está definida.
      *
-     * @param clave Clave de entorno.
-     * @param valorPorDefecto Valor predeterminado de respaldo.
-     * @return Valor configurado o valorPorDefecto.
+     * @param clave Clave de entorno (`String`) a consultar.
+     * @param valorPorDefecto Valor predeterminado (`String`) de respaldo.
+     * @return Valor configurado o `valorPorDefecto`.
      */
     public static String obtener(String clave, String valorPorDefecto) {
-        String val = obtener(clave);
+        String val = obtener(new String[]{clave});
         return (val != null && !val.isBlank()) ? val : valorPorDefecto;
     }
 
     /**
      * Devuelve el valor numérico entero asociado a una clave, o el valor por defecto.
      *
-     * @param clave Clave de entorno.
-     * @param valorPorDefecto Entero de respaldo ante ausencia o error de parseo.
-     * @return Entero parseado o valorPorDefecto.
+     * @param clave Clave de entorno (`String`).
+     * @param valorPorDefecto Entero (`int`) de respaldo ante ausencia o error de formato.
+     * @return Entero parseado (`int`) o `valorPorDefecto`.
      */
     public static int obtenerEntero(String clave, int valorPorDefecto) {
-        String val = obtener(clave);
+        String val = obtener(new String[]{clave});
         if (val == null || val.isBlank()) {
             return valorPorDefecto;
         }
@@ -75,12 +96,12 @@ public final class ConfiguracionEntorno {
     /**
      * Devuelve el valor booleano asociado a una clave, o el valor por defecto.
      *
-     * @param clave Clave de entorno.
-     * @param valorPorDefecto Booleano de respaldo ante ausencia.
-     * @return Booleano parseado o valorPorDefecto.
+     * @param clave Clave de entorno (`String`).
+     * @param valorPorDefecto Booleano (`boolean`) de respaldo ante ausencia.
+     * @return Booleano parseado (`boolean`) o `valorPorDefecto`.
      */
     public static boolean obtenerBooleano(String clave, boolean valorPorDefecto) {
-        String val = obtener(clave);
+        String val = obtener(new String[]{clave});
         if (val == null || val.isBlank()) {
             return valorPorDefecto;
         }
@@ -88,7 +109,9 @@ public final class ConfiguracionEntorno {
     }
 
     /**
-     * Parser robusto para archivos .env que ignora comentarios y comillas envolventes.
+     * Carga y analiza el archivo `.env` más cercano ignorando comentarios y comillas envolventes.
+     *
+     * @return Mapa (`Map<String, String>`) con las variables de entorno definidas en disco.
      */
     private static Map<String, String> cargarArchivoEnv() {
         Map<String, String> valores = new HashMap<>();

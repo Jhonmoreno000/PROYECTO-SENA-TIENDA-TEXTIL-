@@ -39,18 +39,8 @@ function Wishlist() {
     const [editingNotes, setEditingNotes] = useState(null);
     const [tempNotes, setTempNotes] = useState('');
 
-    // Si no hay ítems reales en wishlist, generamos una demo usando productos reales del catálogo
-    const mockWishlist = products.slice(0, 4).map((p, i) => ({
-        id: i + 1,
-        productId: p.id,
-        category: p.category || 'General',
-        notes: '',
-        notifyOnStock: false,
-        addedAt: '2026-01-15'
-    }));
-
-    const wishlist = wishlistItems.length > 0 ? wishlistItems : mockWishlist;
-    const categories = ['all', ...new Set(wishlist.map(w => w.category))];
+    const wishlist = Array.isArray(wishlistItems) ? wishlistItems : [];
+    const categories = ['all', ...new Set(wishlist.map(w => w.category).filter(Boolean))];
 
     const filteredWishlist = selectedCategory === 'all'
         ? wishlist
@@ -62,14 +52,15 @@ function Wishlist() {
 
     const handleAddCategory = () => {
         if (newCategory.trim()) {
-            // In real app, save to contextos
             setShowAddCategory(false);
             setNewCategory('');
         }
     };
 
     const handleSaveNotes = (itemId) => {
-        // In real app, update via contextos
+        if (updateWishlistItem) {
+            updateWishlistItem(itemId, { notes: tempNotes });
+        }
         setEditingNotes(null);
         setTempNotes('');
     };
@@ -161,7 +152,7 @@ function Wishlist() {
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredWishlist.map(item => {
-                            const product = getProductById(item.productId);
+                            const product = getProductById(item.productId ?? item.id) || item;
                             if (!product) return null;
                             const isOutOfStock = (product.stock ?? 1) === 0;
 

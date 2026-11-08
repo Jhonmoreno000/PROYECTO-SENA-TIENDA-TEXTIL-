@@ -7,14 +7,17 @@ import java.sql.Connection;
 import java.time.Instant;
 
 /**
- * Controlador de Endpoints de Salud (Health Checks) para Kubernetes, Docker y Monitoreo SENA.
- * Expone:
- * - /health/live  (Liveness Probe: Proceso activo y receptivo)
- * - /health/ready (Readiness Probe: Conexión a Base de Datos PostgreSQL operativa)
- * - /api/health   (Reporte consolidado con métricas de JVM y persistencia)
+ * Controlador de endpoints de salud (`Health Checks`) para monitoreo de infraestructura y base de datos.
+ * Expone `/health/live`, `/health/ready` y `/api/health`.
  */
 public class ManejadorSalud extends ManejadorBase {
 
+    /**
+     * Procesa las solicitudes `GET` de verificación de actividad de la JVM y conectividad con PostgreSQL.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error inesperado al serializar la respuesta.
+     */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         if (!"GET".equalsIgnoreCase(intercambio.getRequestMethod())) {
@@ -28,7 +31,6 @@ public class ManejadorSalud extends ManejadorBase {
         long memoriaLibreMb = Runtime.getRuntime().freeMemory() / (1024 * 1024);
         long memoriaUsadaMb = memoriaTotalMb - memoriaLibreMb;
 
-        // --- LIVENESS PROBE: /health/live ---
         if (ruta.endsWith("/live")) {
             com.google.gson.JsonObject memObj = new com.google.gson.JsonObject();
             memObj.addProperty("used_mb", memoriaUsadaMb);
@@ -45,7 +47,6 @@ public class ManejadorSalud extends ManejadorBase {
             return;
         }
 
-        // --- READINESS PROBE: /health/ready y REPORTE CONSOLIDADO: /api/health ---
         boolean baseDatosOperativa = false;
         String detalleErrorBd = null;
         try (Connection conexion = Conexion.obtenerConexion()) {

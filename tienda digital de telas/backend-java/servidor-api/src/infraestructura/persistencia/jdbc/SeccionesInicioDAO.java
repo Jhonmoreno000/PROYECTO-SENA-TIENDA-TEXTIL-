@@ -11,13 +11,20 @@ import infraestructura.configuracion.Conexion;
 import dominio.modelos.SeccionInicio;
 
 /**
- * DAO para la gestión de las secciones del inicio.
- * Opera sobre la tabla 'secciones_inicio'.
+ * DAO para la gestión de las secciones configurables de la página de inicio.
+ * Opera sobre la tabla `secciones_inicio` en PostgreSQL.
  */
 public class SeccionesInicioDAO {
 
     /**
-     * Recupera todas las secciones ordenadas por posición.
+     * Construye una nueva instancia del DAO de secciones de inicio.
+     */
+    public SeccionesInicioDAO() {}
+
+    /**
+     * Recupera todas las secciones de inicio ordenadas por posición ascendente.
+     *
+     * @return Lista (`List<SeccionInicio>`) con todas las secciones.
      */
     public List<SeccionInicio> obtenerTodasLasSecciones() {
         List<SeccionInicio> secciones = new ArrayList<>();
@@ -37,7 +44,9 @@ public class SeccionesInicioDAO {
     }
 
     /**
-     * Recupera las secciones activas.
+     * Recupera únicamente las secciones de inicio marcadas como activas.
+     *
+     * @return Lista (`List<SeccionInicio>`) de secciones visibles.
      */
     public List<SeccionInicio> obtenerSeccionesActivas() {
         List<SeccionInicio> secciones = new ArrayList<>();
@@ -57,7 +66,12 @@ public class SeccionesInicioDAO {
     }
 
     /**
-     * Actualiza una sección del inicio.
+     * Actualiza selectivamente los datos de una sección del inicio identificada por su clave.
+     *
+     * @param clave Clave única de la sección (`String`).
+     * @param seccion Datos a actualizar ({@link SeccionInicio}).
+     * @param activa Nuevo estado de activación (`Boolean`) o `null` para mantener el actual.
+     * @return `true` si se actualizó la fila; `false` en caso contrario.
      */
     public boolean actualizarSeccion(String clave, SeccionInicio seccion, Boolean activa) {
         String consulta = "UPDATE secciones_inicio SET " +
@@ -80,6 +94,13 @@ public class SeccionesInicioDAO {
         }
     }
 
+    /**
+     * Convierte la fila actual de un {@link ResultSet} en un objeto {@link SeccionInicio}.
+     *
+     * @param rs Conjunto de resultados posicionado en la fila actual ({@link ResultSet}).
+     * @return Instancia de {@link SeccionInicio}.
+     * @throws SQLException Si ocurre un error leyendo las columnas.
+     */
     private SeccionInicio mapearFila(ResultSet rs) throws SQLException {
         SeccionInicio seccion = new SeccionInicio();
         seccion.setClave(rs.getString("clave"));
@@ -89,10 +110,4 @@ public class SeccionesInicioDAO {
         seccion.setOrden(rs.getInt("orden"));
         return seccion;
     }
-
-    // Métodos alias para compatibilidad
-    public List<SeccionInicio> getAllSections() { return obtenerTodasLasSecciones(); }
-    public List<SeccionInicio> getActiveSections() { return obtenerSeccionesActivas(); }
-    public boolean updateSection(String clave, SeccionInicio section, Boolean active) { return actualizarSeccion(clave, section, active); }
 }
-

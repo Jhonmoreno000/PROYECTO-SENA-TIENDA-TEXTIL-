@@ -3,7 +3,6 @@ package aplicacion.servicios;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,23 +10,23 @@ import infraestructura.configuracion.ConfiguracionWompi;
 
 /**
  * Servicio criptográfico para la pasarela de pagos Wompi (Bancolombia).
- *
- * Implementa:
- *  1. Cálculo de firma de integridad para el Checkout Widget (SHA-256).
- *     Fórmula Wompi: SHA256(referencia + montoEnCentavos + moneda + integridadSecret)
- *
- *  2. Verificación de firma criptográfica de Webhooks de Wompi.
- *     Fórmula Wompi: SHA256(concat(valores de propiedades) + timestamp + eventsSecret)
+ * Calcula firmas de integridad SHA-256 para el Checkout Widget y verifica firmas de eventos Webhook.
  */
 public class ServicioCriptoWompi {
 
     /**
+     * Constructor privado para evitar la instanciación directa de esta clase utilitaria.
+     */
+    private ServicioCriptoWompi() {}
+
+    /**
      * Genera el hash de integridad SHA-256 requerido por Wompi para iniciar el Widget de pago.
+     * Fórmula: `SHA256(referencia + montoCentavos + moneda + secretoIntegridad)`.
      *
-     * @param referencia    Referencia única de la orden (ej. DD-20261021-1234).
-     * @param montoCentavos Monto total en centavos (ej. 5000000 para $50.000 COP).
-     * @param moneda        Código de moneda ISO, típicamente "COP".
-     * @return Hash SHA-256 en formato hexadecimal en minúsculas.
+     * @param referencia Referencia única del pedido (`String`, ej. `"DD-20261021-1234"`).
+     * @param montoCentavos Monto total expresado en centavos (`long`, ej. `5000000L` para $50.000 COP).
+     * @param moneda Código ISO de moneda (`String`, típicamente `"COP"`).
+     * @return Hash SHA-256 (`String`) en formato hexadecimal en minúsculas.
      */
     public static String generarFirmaIntegridad(String referencia, long montoCentavos, String moneda) {
         String secreto = ConfiguracionWompi.secretoIntegridad();
@@ -40,21 +39,10 @@ public class ServicioCriptoWompi {
     }
 
     /**
-     * Valida la firma del evento recibido en el Webhook de Wompi.
+     * Valida la firma criptográfica (`checksum`) del evento recibido en el Webhook de Wompi.
      *
-     * Wompi envía una estructura como:
-     * {
-     *   "event": "transaction.updated",
-     *   "data": { "transaction": { ... } },
-     *   "signature": {
-     *     "properties": ["transaction.id", "transaction.status", "transaction.amount_in_cents"],
-     *     "checksum": "abc123..."
-     *   },
-     *   "timestamp": 1699999999
-     * }
-     *
-     * @param jsonWebhook Objeto JSON raíz recibido de Wompi.
-     * @return true si el checksum coincide; false si es apócrifo o inválido.
+     * @param jsonWebhook Objeto JSON raíz ({@link JsonObject}) enviado por Wompi.
+     * @return `true` si el checksum calculado coincide con el recibido; `false` si es inválido.
      */
     public static boolean validarFirmaWebhook(JsonObject jsonWebhook) {
         if (jsonWebhook == null || !jsonWebhook.has("signature") || !jsonWebhook.has("timestamp")) {
@@ -100,7 +88,11 @@ public class ServicioCriptoWompi {
     }
 
     /**
-     * Extrae recursivamente el valor de una ruta con notación de punto (ej: "transaction.id").
+     * Extrae recursivamente el valor en texto de una propiedad JSON usando notación de punto (ej. `"transaction.id"`).
+     *
+     * @param raiz Objeto JSON contenedor ({@link JsonObject}) sobre el cual navegar.
+     * @param ruta Ruta de propiedades separada por puntos (`String`).
+     * @return Valor de la propiedad (`String`) o cadena vacía `""` si no existe.
      */
     private static String extraerValorPorRuta(JsonObject raiz, String ruta) {
         if (raiz == null || ruta == null || ruta.isBlank()) return "";
@@ -122,7 +114,10 @@ public class ServicioCriptoWompi {
     }
 
     /**
-     * Calcula el digest SHA-256 de una cadena UTF-8 y lo retorna como string hex en minúsculas.
+     * Calcula el resumen SHA-256 de una cadena UTF-8 y lo retorna en hexadecimal en minúsculas.
+     *
+     * @param entrada Cadena de entrada (`String`) a procesar.
+     * @return Cadena hexadecimal (`String`) de 64 caracteres, o `""` si la entrada es nula.
      */
     public static String sha256(String entrada) {
         if (entrada == null) return "";

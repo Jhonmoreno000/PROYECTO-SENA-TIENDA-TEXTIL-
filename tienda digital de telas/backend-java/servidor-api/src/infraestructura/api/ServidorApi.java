@@ -22,6 +22,11 @@ import infraestructura.api.manejadores.*;
 public class ServidorApi {
 
     /**
+     * Constructor privado para evitar la instanciación directa del servidor utilitario.
+     */
+    private ServidorApi() {}
+
+    /**
      * Inicia el servidor en el puerto especificado.
      * Crea el directorio de subidas si no existe, configura dependencias y registra los manejadores.
      *
@@ -47,7 +52,7 @@ public class ServidorApi {
         ManejadorResenas manejadorResenas = new ManejadorResenas();
         ManejadorCarrusel manejadorCarrusel = new ManejadorCarrusel();
         ManejadorSeccionesInicio manejadorSeccionesInicio = new ManejadorSeccionesInicio();
-        ManejadorUsuarios manejadorUsuarios = new ManejadorUsuarios();
+        ManejadorUsuarios manejadorUsuarios = new ManejadorUsuarios(repositorioUsuario);
         ManejadorPedidos manejadorPedidos = new ManejadorPedidos();
         ManejadorFactura manejadorFactura = new ManejadorFactura();
         ManejadorCupones manejadorCupones = new ManejadorCupones();

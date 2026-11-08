@@ -10,6 +10,7 @@ import Encabezado from '../componentes/Encabezado';
 import PieDePagina from '../componentes/PieDePagina';
 import PaginaAnimada from '../componentes/PaginaAnimada';
 import { EASES, microPress, microRelease } from '../utilidades/animations';
+import { getApiUrl } from '../config';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -263,13 +264,26 @@ function Contact() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        try {
+            await fetch(getApiUrl('/api/soporte/tickets'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subject: formData.subject || 'Contacto Web',
+                    message: formData.message,
+                    description: formData.message,
+                    customerName: formData.name,
+                    customerEmail: formData.email,
+                    priority: 'medium'
+                })
+            });
+        } catch (err) {
+            console.error('Error enviando formulario de contacto:', err);
+        }
         setSubmitted(true);
-        setTimeout(() => {
-            setSubmitted(false);
-            setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-        }, 3000);
+        setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
     };
 
     const contactInfo = [

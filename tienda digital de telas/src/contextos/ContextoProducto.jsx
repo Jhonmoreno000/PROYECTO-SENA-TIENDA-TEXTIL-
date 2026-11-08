@@ -63,11 +63,13 @@ export function ProductProvider({ children }) {
             const formattedData = (datos || []).map(p => {
                 const nombre = p.name || p.nombre || '';
                 const precio = Number(p.price ?? p.precio ?? 0);
-                const rawStock = p.stock ?? p.existencias; const existencias = rawStock !== undefined && rawStock !== null ? Number(rawStock) : 50;
+                const rawStock = p.stock ?? p.existencias; const existencias = rawStock !== undefined && rawStock !== null ? Number(rawStock) : 0;
                 const categoria = p.category || p.categoria || '';
                 const imagenes = p.images || p.imagenes || [];
+                const isSaleVal = p.isSale ?? p.isOffer ?? p.esOferta ?? false;
                 return {
                     ...p,
+                    id: String(p.id),
                     name: nombre,
                     nombre,
                     price: precio,
@@ -80,14 +82,20 @@ export function ProductProvider({ children }) {
                     imagenes,
                     description: p.description || p.descripcion || '',
                     descripcion: p.description || p.descripcion || '',
+                    sellerName: p.sellerName ?? p.nombreVendedor ?? '',
+                    status: p.status ?? p.estadoModeracion ?? 'approved',
+                    rejectionReason: p.rejectionReason ?? p.motivoRechazo ?? '',
+                    createdAt: p.createdAt ?? p.creadoEn ?? '',
+                    active: p.active !== undefined ? p.active : (p.activo !== undefined ? p.activo : true),
                     featured: p.featured ?? p.destacado ?? false,
                     destacado: p.featured ?? p.destacado ?? false,
                     isNewCollection: p.isNewCollection ?? p.esNuevaColeccion ?? false,
                     esNuevaColeccion: p.isNewCollection ?? p.esNuevaColeccion ?? false,
                     isExclusive: p.isExclusive ?? p.esExclusivo ?? false,
                     esExclusivo: p.isExclusive ?? p.esExclusivo ?? false,
-                    isOffer: p.isOffer ?? p.esOferta ?? false,
-                    esOferta: p.isOffer ?? p.esOferta ?? false,
+                    isSale: isSaleVal,
+                    isOffer: isSaleVal,
+                    esOferta: isSaleVal,
                 };
             });
             setProducts(formattedData);
@@ -131,17 +139,20 @@ export function ProductProvider({ children }) {
      * Envía los cambios al backend y actualiza la lista local al mismo tiempo.
      * @param {Object} updatedProduct - Producto con los campos modificados (debe incluir 'id')
      */
-    const updateProduct = useCallback(async (updatedProduct) => {
+    const updateProduct = useCallback(async (idOrProduct, maybeUpdates) => {
         try {
+            const isTwoArgs = maybeUpdates !== undefined;
+            const targetId = isTwoArgs ? idOrProduct : idOrProduct?.id;
+            const payload = isTwoArgs ? { ...maybeUpdates, id: targetId } : idOrProduct;
             const rutaProd = RUTAS_API?.productos || '/api/productos';
-            const response = await fetch(getApiUrl(`${rutaProd}/${updatedProduct.id}`), {
+            const response = await fetch(getApiUrl(`${rutaProd}/${targetId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedProduct)
+                body: JSON.stringify(payload)
             });
             if (response.ok) {
                 setProducts(prev => prev.map(p =>
-                    p.id === updatedProduct.id || p.id === String(updatedProduct.id) ? updatedProduct : p
+                    String(p.id) === String(targetId) ? { ...p, ...payload, id: String(targetId) } : p
                 ));
                 refreshProducts();
                 return true;
@@ -190,8 +201,11 @@ export function ProductProvider({ children }) {
                 body: JSON.stringify(newProduct)
             });
             if (response.ok) {
+                const saved = await response.json().catch(() => ({}));
+                const created = saved?.product || { ...newProduct, id: String(saved?.id ?? newProduct.id ?? '') };
+                setProducts(prev => [...prev, created]);
                 refreshProducts();
-                return true;
+                return created;
             }
             showNotification('error', 'No se pudo crear el producto en el servidor.');
             return false;

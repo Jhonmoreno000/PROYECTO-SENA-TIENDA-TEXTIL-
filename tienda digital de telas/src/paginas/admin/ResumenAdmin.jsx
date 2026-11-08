@@ -281,7 +281,7 @@ export default function ResumenAdmin() {
                     <div className="lg:col-span-2 card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                         {salesChart.length > 0 ? (
                             <ErpAreaChart
-                                datos={salesChart}
+                                data={salesChart}
                                 title="Ventas Reales (Base de Datos)"
                                 subtitle={`${salesChart.length} días registrados en daily_sales`}
                             />

@@ -1,29 +1,35 @@
 package infraestructura.api.manejadores;
 
-import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.InputStream;
+import com.sun.net.httpserver.HttpExchange;
+import dominio.modelos.ItemCarrito;
+import infraestructura.persistencia.jdbc.CarritoDAO;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import infraestructura.persistencia.jdbc.CarritoDAO;
-import dominio.modelos.ItemCarrito;
 
 /**
- * Controlador para la gestión del carrito de compras.
- * Soporta operaciones sobre los ítems del carrito.
+ * Controlador HTTP para la gestión del carrito de compras persistente en PostgreSQL.
+ * Soporta metrajes decimales fraccionados y operaciones de consulta, adición, edición y vaciado.
  */
 public class ManejadorCarrito extends ManejadorBase {
+    /** Objeto de acceso a datos del carrito (`CarritoDAO`). */
     private final CarritoDAO carritoDAO = new CarritoDAO();
+    /** Serializador JSON (`Gson`). */
     private final Gson gson = new Gson();
 
+    /**
+     * Enruta y procesa las peticiones `GET`, `POST`, `PUT` y `DELETE` sobre `/api/carrito` y `/api/cart`.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error procesando la petición.
+     */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         String ruta = intercambio.getRequestURI().getPath();
         String metodo = intercambio.getRequestMethod();
 
-        // GET /api/cart?userId=N o ?idUsuario=N
         if ("GET".equals(metodo)) {
             int idUsuario = obtenerParametroConsultaEntero(intercambio, "userId", -1);
             if (idUsuario <= 0) {
@@ -37,7 +43,6 @@ public class ManejadorCarrito extends ManejadorBase {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Falta el parámetro userId / idUsuario válido\"}");
             }
 
-        // POST /api/cart o /api/carrito
         } else if ("POST".equals(metodo)) {
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
@@ -48,12 +53,12 @@ public class ManejadorCarrito extends ManejadorBase {
                 return;
             }
 
-            int idUsuario = objetoJson.has("userId") ? objetoJson.get("userId").getAsInt() 
+            int idUsuario = objetoJson.has("userId") ? objetoJson.get("userId").getAsInt()
                           : (objetoJson.has("idUsuario") ? objetoJson.get("idUsuario").getAsInt() : 0);
-            int idProducto = objetoJson.has("productId") ? objetoJson.get("productId").getAsInt() 
+            int idProducto = objetoJson.has("productId") ? objetoJson.get("productId").getAsInt()
                            : (objetoJson.has("idProducto") ? objetoJson.get("idProducto").getAsInt() : 0);
-            int cantidad = objetoJson.has("quantity") ? objetoJson.get("quantity").getAsInt() 
-                         : (objetoJson.has("cantidad") ? objetoJson.get("cantidad").getAsInt() : 1);
+            double cantidad = objetoJson.has("quantity") ? objetoJson.get("quantity").getAsDouble()
+                            : (objetoJson.has("cantidad") ? objetoJson.get("cantidad").getAsDouble() : 1.0);
 
             if (idUsuario <= 0 || idProducto <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Usuario y producto son obligatorios\"}");
@@ -68,7 +73,6 @@ public class ManejadorCarrito extends ManejadorBase {
             boolean exito = carritoDAO.agregarAlCarrito(idUsuario, idProducto, cantidad);
             enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
 
-        // PUT /api/cart/{id} o /api/carrito/{id}
         } else if ("PUT".equals(metodo)) {
             int idItem = extraerIdRuta(ruta);
 
@@ -86,10 +90,9 @@ public class ManejadorCarrito extends ManejadorBase {
                 return;
             }
 
-            int cantidad = objetoJson.has("quantity") ? objetoJson.get("quantity").getAsInt() 
-                         : (objetoJson.has("cantidad") ? objetoJson.get("cantidad").getAsInt() : 1);
+            double cantidad = objetoJson.has("quantity") ? objetoJson.get("quantity").getAsDouble()
+                            : (objetoJson.has("cantidad") ? objetoJson.get("cantidad").getAsDouble() : 1.0);
 
-            // Si la cantidad es menor o igual a cero, se elimina el producto del carrito
             if (cantidad <= 0) {
                 boolean exitoEliminar = carritoDAO.eliminarDelCarrito(idItem);
                 enviarRespuestaJson(intercambio, exitoEliminar ? 200 : 500, "{\"success\":" + exitoEliminar + "}");
@@ -99,7 +102,6 @@ public class ManejadorCarrito extends ManejadorBase {
             boolean exito = carritoDAO.actualizarCantidad(idItem, cantidad);
             enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
 
-        // DELETE /api/cart/{id} o /api/carrito/vaciar/{idUsuario}
         } else if ("DELETE".equals(metodo)) {
             int identificador = extraerIdRuta(ruta);
 
