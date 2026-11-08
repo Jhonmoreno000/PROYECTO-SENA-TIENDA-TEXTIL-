@@ -1,30 +1,42 @@
 package infraestructura.api.manejadores;
 
+import aplicacion.servicios.ServicioFactura;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import infraestructura.persistencia.jdbc.PedidoDAO;
-import aplicacion.servicios.ServicioFactura;
 import dominio.modelos.Pedido;
+import infraestructura.persistencia.jdbc.PedidoDAO;
 
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador para la generación y descarga de facturas electrónicas en PDF.
- * Consulta las tablas reales del esquema PostgreSQL ('pedidos', 'items_pedido', 'productos', 'usuarios').
+ * Controlador HTTP para el listado y descarga de facturas electrónicas en formato PDF.
+ * Consulta los datos reales del pedido y sus líneas desde PostgreSQL (`pedidos` e `items_pedido`).
  */
 public class ManejadorFactura extends ManejadorBase {
+    /** Objeto de acceso a datos de pedidos (`PedidoDAO`). */
     private final PedidoDAO pedidoDAO;
+    /** Servicio generador de documentos PDF (`ServicioFactura`). */
     private final ServicioFactura servicioFactura;
+    /** Serializador JSON (`Gson`). */
     private final Gson gson;
 
+    /**
+     * Inicializa el manejador de facturación con sus dependencias de persistencia y generación PDF.
+     */
     public ManejadorFactura() {
         this.pedidoDAO = new PedidoDAO();
         this.servicioFactura = new ServicioFactura();
         this.gson = new Gson();
     }
 
+    /**
+     * Enruta las peticiones `GET` para listar el resumen de facturas o descargar el PDF de un pedido específico.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error durante la consulta o generación del PDF.
+     */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         String metodo = intercambio.getRequestMethod();
@@ -46,11 +58,24 @@ public class ManejadorFactura extends ManejadorBase {
         }
     }
 
+    /**
+     * Envía en formato JSON el listado resumido de todas las facturas registradas.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @throws Exception Si falla la serialización o envío.
+     */
     private void manejarListarFacturas(HttpExchange intercambio) throws Exception {
         List<Map<String, Object>> facturas = pedidoDAO.obtenerResumenFacturas();
         enviarRespuestaJson(intercambio, 200, gson.toJson(facturas));
     }
 
+    /**
+     * Genera y transmite el archivo binario PDF de la factura asociada a un pedido.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @param idPedido    Identificador numérico del pedido (`int`).
+     * @throws Exception Si falla la generación del documento PDF o la escritura en el socket.
+     */
     private void manejarDescargarFactura(HttpExchange intercambio, int idPedido) throws Exception {
         Pedido pedido = pedidoDAO.obtenerPedidoPorId(idPedido);
         if (pedido == null) {
@@ -76,6 +101,9 @@ public class ManejadorFactura extends ManejadorBase {
             if (cabecera.get("correoCliente") != null) correoCliente = (String) cabecera.get("correoCliente");
             if (cabecera.get("telefonoCliente") != null) telefonoCliente = (String) cabecera.get("telefonoCliente");
             if (cabecera.get("direccionEnvio") != null) direccionCliente = (String) cabecera.get("direccionEnvio");
+            if (cabecera.get("documentoCliente") != null && !((String) cabecera.get("documentoCliente")).isBlank()) {
+                documentoCliente = (String) cabecera.get("documentoCliente");
+            }
             if (cabecera.get("metodoPago") != null) metodoPago = (String) cabecera.get("metodoPago");
             subtotalGuardado = ((Number) cabecera.getOrDefault("subtotal", 0.0)).doubleValue();
             descuentoGuardado = ((Number) cabecera.getOrDefault("descuento", 0.0)).doubleValue();
