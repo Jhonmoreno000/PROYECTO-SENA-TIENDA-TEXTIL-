@@ -76,8 +76,14 @@ function Inicio() {
     }, []);
 
     const isVisible = (id) => {
-        const section = sections.find(s => s.id === id);
-        return section ? section.visible : true;
+        if (Array.isArray(sections)) {
+            const section = sections.find(s => s.id === id);
+            return section ? section.visible !== false : true;
+        }
+        if (sections && typeof sections === 'object') {
+            return sections[id] !== undefined ? Boolean(sections[id]) : true;
+        }
+        return true;
     };
 
     return (

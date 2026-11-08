@@ -100,9 +100,10 @@ function CartRow({ item, onRemove, onQuantity }) {
 export default function Carrito() {
     const { cartItems, updateQuantity, removeFromCart, clearCart,
         getCartItemCount, appliedCoupon, setAppliedCoupon, getOrderCalculations } = useCarrito();
-    const { coupons } = useMetricas();
+    const { coupons, systemConfig } = useMetricas();
     const navigate = useNavigate();
     const listRef = useRef(null);
+    const freeShippingThreshold = Number(systemConfig?.freeShippingThreshold || 200000);
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setCouponError] = useState('');
@@ -297,7 +298,7 @@ export default function Carrito() {
 
                                 {shipping > 0 && (
                                     <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
-                                        Agrega {formatCurrency(100000 - subtotal)} más para envío gratis
+                                        Agrega {formatCurrency(Math.max(0, freeShippingThreshold - subtotal))} más para envío gratis
                                     </p>
                                 )}
 
@@ -330,7 +331,7 @@ export default function Carrito() {
                                 <div className="pt-2 space-y-2 border-t border-gray-100 dark:border-slate-700">
                                     {[
                                         { icon: ShieldCheck, label: 'Pago 100% seguro' },
-                                        { icon: Truck, label: `Envío gratis desde ${formatCurrency(100000)}` },
+                                        { icon: Truck, label: `Envío gratis desde ${formatCurrency(freeShippingThreshold)}` },
                                         { icon: RefreshCw, label: 'Devoluciones fáciles' },
                                     ].map(({ icon: Icon, label }) => (
                                         <div key={label} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">

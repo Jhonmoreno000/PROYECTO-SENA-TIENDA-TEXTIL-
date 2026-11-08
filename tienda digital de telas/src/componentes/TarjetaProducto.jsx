@@ -42,7 +42,10 @@ function TarjetaProducto({ product }) {
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const result = addToCart(product, 1);
+        const productToAdd = hasDiscount
+            ? { ...product, price: discountedPrice, originalPrice: basePrice }
+            : product;
+        const result = addToCart(productToAdd, 1);
         if (result) {
             setShowAddedMessage(true);
             if (messageRef.current) {
