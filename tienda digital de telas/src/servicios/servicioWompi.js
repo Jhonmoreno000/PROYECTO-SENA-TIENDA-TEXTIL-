@@ -117,6 +117,28 @@ export const consultarEstadoPagoWompi = async (referencia) => {
 };
 
 /**
+ * Confirma el pago en el backend para actualizar el estado del pedido en PostgreSQL,
+ * descontar stock y registrar la venta.
+ */
+export const confirmarPagoWompi = async ({ referencia, transaccionId, metodoPago, estadoPago = 'APPROVED' }) => {
+    const respuesta = await fetch(getApiUrl('/api/pagos/confirmar'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            referencia,
+            transaccionId,
+            metodoPago,
+            estadoPago
+        })
+    });
+    const datos = await respuesta.json().catch(() => ({}));
+    if (!respuesta.ok) {
+        throw new Error(datos.error || 'No se pudo confirmar el pago en el servidor.');
+    }
+    return datos;
+};
+
+/**
  * Abre el Checkout Widget oficial de Wompi (Bancolombia) en el navegador.
  *
  * @param {Object} config
