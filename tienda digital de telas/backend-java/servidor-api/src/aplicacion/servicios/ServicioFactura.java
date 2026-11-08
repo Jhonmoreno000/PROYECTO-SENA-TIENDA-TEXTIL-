@@ -35,7 +35,7 @@ public class ServicioFactura {
     private static final float ALTO_PAGINA = PDRectangle.A4.getHeight();
 
     /** Formateador de moneda en pesos colombianos (`NumberFormat`). */
-    private static final NumberFormat COP = NumberFormat.getCurrencyInstance(Locale.of("es", "CO"));
+    private static final NumberFormat COP = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CO"));
 
     /**
      * Construye una nueva instancia del servicio generador de facturas PDF.
