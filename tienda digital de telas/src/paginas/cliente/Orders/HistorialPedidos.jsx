@@ -64,8 +64,8 @@ function HistorialPedidos() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Filtrar pedidos para el cliente actual
-    const clientOrders = orders
-        .filter(order => (order.clientId === user?.id || order.idCliente === user?.id || true)) // Show all for demo
+    const userOrders = orders.filter(order => String(order.clientId ?? order.idCliente) === String(user?.id));
+    const clientOrders = userOrders
         .filter(order => filterStatus === 'all' || order.status === filterStatus || order.estado === filterStatus)
         .filter(order =>
             searchTerm === '' ||
@@ -74,9 +74,9 @@ function HistorialPedidos() {
         )
         .sort((a, b) => new Date(b.date || b.orderDate || b.fecha || 0) - new Date(a.date || a.orderDate || a.fecha || 0));
 
-    const totalOrders = orders.filter(order => order.clientId === user?.id || order.idCliente === user?.id || true).length;
-    const activeOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id || true) && ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
-    const deliveredOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id || true) && (o.status === 'delivered' || o.estado === 'entregado')).length;
+    const totalOrders = userOrders.length;
+    const activeOrders = userOrders.filter(o => ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
+    const deliveredOrders = userOrders.filter(o => (o.status === 'delivered' || o.estado === 'entregado')).length;
 
     const handleDownloadInvoice = async (orderId) => {
         try {
@@ -264,7 +264,7 @@ function HistorialPedidos() {
                                     <div className="flex items-center gap-4 p-4 bg-gray-50/80 dark:bg-slate-800/30 rounded-xl border border-gray-100 dark:border-slate-700/50 mb-6 group-hover:bg-gray-50 dark:group-hover:bg-slate-800/50 transition-colors">
                                         <div className="flex -space-x-3">
                                             {(order.productIds ? order.productIds.slice(0, 3) : [null, null, null].slice(0, order.items || 1)).map((id, i) => {
-                                                const productItem = id ? (products?.find(p => p.id === id)) : null;
+                                                const productItem = id ? (products?.find(p => String(p.id) === String(id))) : null;
                                                 return (
                                                     <div key={i} className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white dark:border-slate-800 bg-white shadow-sm">
                                                         {productItem?.images?.[0] ? (
@@ -289,10 +289,12 @@ function HistorialPedidos() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-gray-900 dark:text-white truncate">
-                                                {order.productNames || 'Telas variadas'}
+                                                {Array.isArray(order.productNames) && order.productNames.length > 0
+                                                    ? order.productNames.join(', ')
+                                                    : (order.productNames || 'Telas')}
                                             </p>
                                             <p className="text-sm font-medium text-gray-500">
-                                                {order.totalMeters || '5.0'} metros totales
+                                                {order.totalMeters || (order.lineItems || []).reduce((s, li) => s + Number(li.quantity ?? li.meters ?? 0), 0)} metros totales
                                             </p>
                                         </div>
                                     </div>

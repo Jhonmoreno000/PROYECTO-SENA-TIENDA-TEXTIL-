@@ -338,7 +338,7 @@ export default function PanelVendedor() {
             {/* Gráfica de área: muestra ventas reales vs. meta por día */}
             <div className="lg:col-span-2 card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                 <ErpAreaChart
-                    datos={chartData}
+                    data={chartData}
                     title="Desempeño de Ventas Diarias"
                     subtitle="Evolución de ingresos de tus productos (Últimos 7 días)"
                 />

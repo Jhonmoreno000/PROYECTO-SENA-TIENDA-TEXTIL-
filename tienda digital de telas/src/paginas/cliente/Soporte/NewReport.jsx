@@ -64,14 +64,14 @@ function NewReport() {
 
     // Filter delivered orders (only those can have issues reported)
     const deliveredOrders = orders.filter(o =>
-        o.status === 'delivered' &&
-        (o.clientId === user?.id || true) // Show all for demo
+        (o.status === 'delivered' || o.estado === 'entregado') &&
+        String(o.clientId ?? o.idCliente) === String(user?.id)
     );
 
     const handlePhotoUpload = (e) => {
         const files = Array.from(e.target.files);
-        const newPhotos = files.map(file => ({
-            id: Date.now() + Math.random(),
+        const newPhotos = files.map((file, idx) => ({
+            id: `${Date.now()}-${idx}`,
             name: file.name,
             preview: URL.createObjectURL(file)
         }));
@@ -92,31 +92,34 @@ function NewReport() {
 
         setIsSubmitting(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            const issue = ISSUE_TYPES.find(t => t.value === issueType);
+        try {
+            const issue = ISSUE_TYPES.find(t => t.value === issueType) || { label: 'Reporte de pedido', priority: 'medium' };
             const newTicket = {
-                id: Date.now(),
-                clientId: user?.id || 1,
+                userId: user?.id,
+                clientId: user?.id,
+                customerName: user?.name || 'Cliente',
                 clientName: user?.name || 'Cliente',
-                orderId: parseInt(selectedOrder),
+                customerEmail: user?.email || '',
+                orderId: selectedOrder ? parseInt(selectedOrder, 10) : null,
                 subject: issue.label,
+                category: issueType,
                 issueType: issueType,
+                message: description,
                 description: description,
                 priority: issue.priority,
                 status: 'open',
-                photos: photos.map(p => p.preview),
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                responses: []
+                photos: photos.map(p => p.preview)
             };
 
-            addSupportTicket(newTicket); // Se guarda el ticket en el contexto global
-
-            setIsSubmitting(false);
+            await addSupportTicket(newTicket);
             showNotification('success', '¡Reporte enviado exitosamente! Te contactaremos pronto.');
             navigate('/cliente/soporte/tickets');
-        }, 1500);
+        } catch (err) {
+            console.error('Error al enviar reporte:', err);
+            showNotification('error', 'No se pudo enviar el reporte. Intenta nuevamente.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const selectedIssue = ISSUE_TYPES.find(t => t.value === issueType);
