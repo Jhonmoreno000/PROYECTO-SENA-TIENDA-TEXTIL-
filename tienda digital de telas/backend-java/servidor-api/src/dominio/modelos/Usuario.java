@@ -3,59 +3,78 @@ package dominio.modelos;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Modelo que representa un usuario del sistema (clientes, vendedores, administradores).
- * Mapea a la tabla "usuarios" en la base de datos PostgreSQL.
+ * Modelo de dominio que representa un usuario del sistema (`administrador`, `vendedor` o `cliente`).
+ * Mapea a la tabla `usuarios` en PostgreSQL.
  */
 public class Usuario {
-    /** Identificador único del usuario. */
+
+    /** Identificador único del usuario (`int`). */
     @SerializedName(value = "id", alternate = {"idUsuario"})
     private int id;
 
-    /** Nombre completo del usuario. */
+    /** Nombre completo del usuario (`String`). */
     @SerializedName(value = "name", alternate = {"nombre"})
     private String nombre;
 
-    /** Correo electrónico del usuario, usado como credencial de inicio de sesión. */
+    /** Correo electrónico único usado como credencial de acceso (`String`). */
     @SerializedName(value = "email", alternate = {"correo"})
     private String correo;
 
-    /** Rol del usuario en el sistema: "administrador", "vendedor" o "cliente". */
+    /** Teléfono de contacto del usuario (`String`). */
+    @SerializedName(value = "phone", alternate = {"telefono"})
+    private String telefono;
+
+    /** Rol asignado en la plataforma (`String`: `"administrador"`, `"vendedor"` o `"cliente"`). */
     @SerializedName(value = "role", alternate = {"rol"})
     private String rol;
 
-    /** Indica si la cuenta del usuario está activa (true = activo, false = desactivado). */
+    /** Indica si la cuenta se encuentra activa (`boolean`). */
     @SerializedName(value = "active", alternate = {"activo"})
     private boolean activo;
 
-    /** Indica si la cuenta del usuario está suspendida temporalmente. */
+    /** Indica si la cuenta se encuentra suspendida temporalmente (`boolean`). */
     @SerializedName(value = "suspended", alternate = {"suspendido"})
     private boolean suspendido;
 
-    /** Razón por la cual la cuenta fue suspendida. */
+    /** Motivo administrativo de la suspensión, si aplica (`String`). */
     @SerializedName(value = "suspensionReason", alternate = {"motivoSuspension"})
     private String motivoSuspension;
 
-    /** Tasa de comisión del vendedor (porcentaje), aplicable solo si el rol es vendedor. */
-    @SerializedName(value = "commissionRate", alternate = {"porcentajeComision"})
+    /** Porcentaje de comisión asignado cuando el usuario tiene rol `vendedor` (`Double`). */
+    @SerializedName(value = "commissionRate", alternate = {"porcentajeComision", "tasaComision"})
     private Double porcentajeComision;
 
-    /** Fecha y hora en que el usuario se registró en la plataforma. */
-    @SerializedName(value = "registeredAt", alternate = {"fechaRegistro"})
+    /** Fecha y hora de registro en el sistema (`String`). */
+    @SerializedName(value = "registeredAt", alternate = {"fechaRegistro", "registradoEn"})
     private String fechaRegistro;
 
-    /** Fecha y hora del último inicio de sesión del usuario. */
+    /** Fecha y hora del último inicio de sesión exitoso (`String`). */
     @SerializedName(value = "lastLogin", alternate = {"ultimoAcceso"})
     private String ultimoAcceso;
 
-    /** Estado general del usuario: "active", "inactive", "banned", etc. */
+    /** Estado general calculado de la cuenta (`String`: `"active"`, `"inactive"`, `"suspended"`). */
     @SerializedName(value = "status", alternate = {"estado"})
     private String estado;
 
-    /** Constructor vacío requerido por frameworks y serializadores. */
+    /**
+     * Constructor vacío requerido para serialización JSON y mapeo JDBC.
+     */
     public Usuario() {}
 
     /**
-     * Constructor completo para inicializar todas las propiedades del usuario.
+     * Construye un usuario inicializando sus propiedades principales.
+     *
+     * @param id Identificador único (`int`).
+     * @param nombre Nombre completo (`String`).
+     * @param correo Correo electrónico (`String`).
+     * @param rol Rol del usuario (`String`).
+     * @param activo Indicador de cuenta activa (`boolean`).
+     * @param suspendido Indicador de cuenta suspendida (`boolean`).
+     * @param motivoSuspension Razón de suspensión (`String`).
+     * @param porcentajeComision Tasa de comisión de vendedor (`Double`).
+     * @param fechaRegistro Marca de tiempo de registro (`String`).
+     * @param ultimoAcceso Marca de tiempo de último ingreso (`String`).
+     * @param estado Estado general legible (`String`).
      */
     public Usuario(int id, String nombre, String correo, String rol, boolean activo, boolean suspendido,
                    String motivoSuspension, Double porcentajeComision, String fechaRegistro, String ultimoAcceso, String estado) {
@@ -72,58 +91,171 @@ public class Usuario {
         this.estado = estado;
     }
 
-    /** Obtiene el identificador único del usuario. */
+    /**
+     * Obtiene el identificador único del usuario.
+     *
+     * @return Identificador numérico (`int`).
+     */
     public int getId() { return id; }
-    /** Asigna el identificador único del usuario. */
+
+    /**
+     * Establece el identificador único del usuario.
+     *
+     * @param id Identificador numérico (`int`).
+     */
     public void setId(int id) { this.id = id; }
 
-    /** Obtiene el nombre completo del usuario. */
+    /**
+     * Obtiene el nombre completo del usuario.
+     *
+     * @return Nombre (`String`).
+     */
     public String getNombre() { return nombre; }
-    /** Asigna el nombre completo del usuario. */
+
+    /**
+     * Establece el nombre completo del usuario.
+     *
+     * @param nombre Nombre (`String`).
+     */
     public void setNombre(String nombre) { this.nombre = nombre; }
 
-    /** Obtiene el correo electrónico del usuario. */
+    /**
+     * Obtiene el correo electrónico del usuario.
+     *
+     * @return Correo electrónico (`String`).
+     */
     public String getCorreo() { return correo; }
-    /** Asigna el correo electrónico del usuario. */
+
+    /**
+     * Establece el correo electrónico del usuario.
+     *
+     * @param correo Correo electrónico (`String`).
+     */
     public void setCorreo(String correo) { this.correo = correo; }
 
-    /** Obtiene el rol del usuario (administrador, vendedor, cliente). */
+    /**
+     * Obtiene el teléfono de contacto del usuario.
+     *
+     * @return Teléfono (`String`).
+     */
+    public String getTelefono() { return telefono; }
+
+    /**
+     * Establece el teléfono de contacto del usuario.
+     *
+     * @param telefono Teléfono (`String`).
+     */
+    public void setTelefono(String telefono) { this.telefono = telefono; }
+
+    /**
+     * Obtiene el rol del usuario.
+     *
+     * @return Rol (`String`).
+     */
     public String getRol() { return rol; }
-    /** Asigna el rol del usuario. */
+
+    /**
+     * Establece el rol del usuario.
+     *
+     * @param rol Rol (`String`).
+     */
     public void setRol(String rol) { this.rol = rol; }
 
-    /** Indica si la cuenta del usuario está activa. */
+    /**
+     * Indica si la cuenta está activa.
+     *
+     * @return `true` si está activa; `false` en caso contrario.
+     */
     public boolean isActivo() { return activo; }
-    /** Activa o desactiva la cuenta del usuario. */
+
+    /**
+     * Establece si la cuenta está activa.
+     *
+     * @param activo Estado activo (`boolean`).
+     */
     public void setActivo(boolean activo) { this.activo = activo; }
 
-    /** Indica si la cuenta del usuario está suspendida. */
+    /**
+     * Indica si la cuenta está suspendida.
+     *
+     * @return `true` si está suspendida; `false` en caso contrario.
+     */
     public boolean isSuspendido() { return suspendido; }
-    /** Suspende o reactiva la cuenta del usuario. */
+
+    /**
+     * Establece si la cuenta está suspendida.
+     *
+     * @param suspendido Estado de suspensión (`boolean`).
+     */
     public void setSuspendido(boolean suspendido) { this.suspendido = suspendido; }
 
-    /** Obtiene la razón de suspensión del usuario. */
+    /**
+     * Obtiene el motivo de suspensión de la cuenta.
+     *
+     * @return Motivo de suspensión (`String`).
+     */
     public String getMotivoSuspension() { return motivoSuspension; }
-    /** Asigna la razón de suspensión del usuario. */
+
+    /**
+     * Establece el motivo de suspensión de la cuenta.
+     *
+     * @param motivoSuspension Motivo de suspensión (`String`).
+     */
     public void setMotivoSuspension(String motivoSuspension) { this.motivoSuspension = motivoSuspension; }
 
-    /** Obtiene la tasa de comisión del vendedor. */
+    /**
+     * Obtiene la tasa de comisión asignada al vendedor.
+     *
+     * @return Porcentaje de comisión (`Double`) o `null`.
+     */
     public Double getPorcentajeComision() { return porcentajeComision; }
-    /** Asigna la tasa de comisión del vendedor. */
+
+    /**
+     * Establece la tasa de comisión asignada al vendedor.
+     *
+     * @param porcentajeComision Porcentaje de comisión (`Double`).
+     */
     public void setPorcentajeComision(Double porcentajeComision) { this.porcentajeComision = porcentajeComision; }
 
-    /** Obtiene la fecha de registro del usuario. */
+    /**
+     * Obtiene la fecha de registro del usuario.
+     *
+     * @return Fecha de registro (`String`).
+     */
     public String getFechaRegistro() { return fechaRegistro; }
-    /** Asigna la fecha de registro del usuario. */
+
+    /**
+     * Establece la fecha de registro del usuario.
+     *
+     * @param fechaRegistro Fecha de registro (`String`).
+     */
     public void setFechaRegistro(String fechaRegistro) { this.fechaRegistro = fechaRegistro; }
 
-    /** Obtiene la fecha del último inicio de sesión. */
+    /**
+     * Obtiene la fecha del último inicio de sesión.
+     *
+     * @return Último acceso (`String`).
+     */
     public String getUltimoAcceso() { return ultimoAcceso; }
-    /** Asigna la fecha del último inicio de sesión. */
+
+    /**
+     * Establece la fecha del último inicio de sesión.
+     *
+     * @param ultimoAcceso Último acceso (`String`).
+     */
     public void setUltimoAcceso(String ultimoAcceso) { this.ultimoAcceso = ultimoAcceso; }
 
-    /** Obtiene el estado general del usuario. */
+    /**
+     * Obtiene el estado general de la cuenta.
+     *
+     * @return Estado (`String`).
+     */
     public String getEstado() { return estado; }
-    /** Asigna el estado general del usuario. */
+
+    /**
+     * Establece el estado general de la cuenta.
+     *
+     * @param estado Estado (`String`).
+     */
     public void setEstado(String estado) { this.estado = estado; }
 }
