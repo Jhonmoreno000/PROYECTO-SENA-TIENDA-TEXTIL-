@@ -1,23 +1,29 @@
+import aplicacion.servicios.ServicioAutenticacion;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dominio.modelos.ReporteError;
 import dominio.modelos.Usuario;
-import aplicacion.servicios.ServicioAutenticacion;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 /**
- * Suite de Pruebas Automatizadas de Seguridad, Validación de E INTEGRIDAD DE NEGOCIO para D&D Textil.
- * Todo el código, métodos y variables implementados estrictamente en español.
+ * Suite de pruebas automatizadas de seguridad, validación e integridad de negocio para D&D Textil.
  */
 public class PruebasSeguridadIntegridad {
 
+    /** Contador de pruebas exitosas (`int`). */
     private static int pruebasExitosas = 0;
+    /** Contador de pruebas fallidas (`int`). */
     private static int pruebasFallidas = 0;
+    /** Serializador JSON (`Gson`). */
     private static final Gson gson = new Gson();
 
+    /**
+     * Punto de entrada principal que ejecuta las 15 pruebas de seguridad e integridad.
+     *
+     * @param argumentos Argumentos de línea de comandos (`String[]`).
+     */
     public static void main(String[] argumentos) {
         System.out.println("=================================================================");
         System.out.println("   SUITE DE PRUEBAS DE SEGURIDAD, E INTEGRIDAD DE NEGOCIO (D&D TEXTIL)    ");
@@ -31,7 +37,6 @@ public class PruebasSeguridadIntegridad {
                 throw new AssertionError("El hash SHA-256 no tiene la longitud esperada de 64 caracteres hexadecimales.");
             }
 
-            // Verificar reproducibilidad estricta bajo UTF-8
             String hashSegundoIntento = ServicioAutenticacion.generarHashContrasena(contrasenaConEspeciales);
             if (!hashGenerado.equals(hashSegundoIntento)) {
                 throw new AssertionError("El cálculo del hash SHA-256 no es determinista.");
@@ -39,7 +44,6 @@ public class PruebasSeguridadIntegridad {
         });
 
         ejecutarPrueba("2. Deserialización y Sincronización de Bug Reports (title, area, severity, priority)", () -> {
-            // Payload exacto como lo envía BugReport.jsx
             String payloadJson = "{"
                     + "\"title\":\"Error al procesar el pago con tarjeta\","
                     + "\"description\":\"La pasarela no responde al hacer clic en pagar\","
@@ -55,23 +59,19 @@ public class PruebasSeguridadIntegridad {
                 throw new AssertionError("El reporte no se pudo deserializar.");
             }
 
-            // Validar que el título se mapea correctamente
             if (!"Error al procesar el pago con tarjeta".equals(reporte.getTitulo())) {
                 throw new AssertionError("El título esperado no coincide. Obtenido: " + reporte.getTitulo());
             }
 
-            // Validar que el área tiene el título como alternativa
             if (!"Error al procesar el pago con tarjeta".equals(reporte.getArea())) {
                 throw new AssertionError("El área esperada no coincide con el título. Obtenido: " + reporte.getArea());
             }
 
-            // Validar que la severidad y prioridad se sincronicen en 'high'
             if (!"high".equals(reporte.getSeveridad()) || !"high".equals(reporte.getPrioridad())) {
-                throw new AssertionError("La severidad o prioridad no se mapeó correctamente a 'high'. Severidad: " 
+                throw new AssertionError("La severidad o prioridad no se mapeó correctamente a 'high'. Severidad: "
                         + reporte.getSeveridad() + ", Prioridad: " + reporte.getPrioridad());
             }
 
-            // Validar serialización hacia el frontend React
             String jsonSerializado = gson.toJson(reporte);
             JsonObject objetoVerificado = JsonParser.parseString(jsonSerializado).getAsJsonObject();
 
@@ -91,7 +91,6 @@ public class PruebasSeguridadIntegridad {
 
             Path rutaDirectorioSubidas = carpetaSubidas.getCanonicalFile().toPath().normalize();
 
-            // Intento 1: Salto de directorio clásico
             File archivoAtaque1 = new File("uploads/../src/App.java");
             Path rutaAtaque1 = archivoAtaque1.getCanonicalFile().toPath().normalize();
             boolean bloqueo1 = !rutaAtaque1.startsWith(rutaDirectorioSubidas);
@@ -100,7 +99,6 @@ public class PruebasSeguridadIntegridad {
                 throw new AssertionError("Fallo de seguridad: no se bloqueó el escape de directorio '../src/App.java'");
             }
 
-            // Intento 2: Salto hacia raíz del sistema
             File archivoAtaque2 = new File("uploads/../../windows/system.ini");
             Path rutaAtaque2 = archivoAtaque2.getCanonicalFile().toPath().normalize();
             boolean bloqueo2 = !rutaAtaque2.startsWith(rutaDirectorioSubidas);
@@ -109,7 +107,6 @@ public class PruebasSeguridadIntegridad {
                 throw new AssertionError("Fallo de seguridad: no se bloqueó el escape hacia la raíz del sistema");
             }
 
-            // Intento 3: Archivo válido dentro de uploads
             File archivoValido = new File("uploads/foto_prueba.png");
             Path rutaValida = archivoValido.getCanonicalFile().toPath().normalize();
             boolean permitido = rutaValida.startsWith(rutaDirectorioSubidas);
@@ -120,23 +117,19 @@ public class PruebasSeguridadIntegridad {
         });
 
         ejecutarPrueba("4. Resistencia a Inyección SQL (SQLi) en Validación de Credenciales", () -> {
-            String correoInyeccion = "admin@ejemplo.com' OR '1'='1' --";
             String contrasenaInyeccion = "' OR 1=1 --";
-
-            // El hash generado no debe coincidir con contraseñas legítimas
             String hashInyeccion = ServicioAutenticacion.generarHashContrasena(contrasenaInyeccion);
 
             if (hashInyeccion == null || hashInyeccion.isBlank()) {
                 throw new AssertionError("El generador de hash falló con caracteres de inyección SQL.");
             }
 
-            // Comprobar que no hay bypass con campos nulos o en blanco
             try {
                 ServicioAutenticacion servicio = new ServicioAutenticacion(null);
                 servicio.iniciarSesion("   ", "   ");
                 throw new AssertionError("Fallo: Se permitió iniciar sesión con credenciales vacías.");
             } catch (dominio.excepciones.ExcepcionDominio e) {
-                // Correcto: ExcepcionDominio lanzada de forma controlada
+                // Correcto
             }
         });
 
@@ -209,7 +202,6 @@ public class PruebasSeguridadIntegridad {
         });
 
         ejecutarPrueba("8. Endpoints de Salud y Probes de Observabilidad (/health/live y /health/ready)", () -> {
-            // Estructura esperada de /health/live
             long memoriaTotalMb = Runtime.getRuntime().totalMemory() / (1024 * 1024);
             long memoriaLibreMb = Runtime.getRuntime().freeMemory() / (1024 * 1024);
             long memoriaUsadaMb = memoriaTotalMb - memoriaLibreMb;
@@ -230,18 +222,15 @@ public class PruebasSeguridadIntegridad {
         });
 
         ejecutarPrueba("9. Control de Concurrencia Textil: Bloqueo Pesimista (SELECT ... FOR UPDATE) y Prevención de Race Conditions", () -> {
-            // Simulación matemática de concurrencia: Dos clientes intentan reservar los últimos 5 metros a la vez
-            double stockDisponible = 5.0; // metros
-            double compraClienteA = 3.5;  // metros
-            double compraClienteB = 2.5;  // metros
+            double stockDisponible = 5.0;
+            double compraClienteA = 3.5;
+            double compraClienteB = 2.5;
 
-            // Cliente A bloquea la fila primero con SELECT ... FOR UPDATE y compra 3.5 metros
             double stockRestanteTrasA = stockDisponible - compraClienteA;
             if (stockRestanteTrasA < 0) {
                 throw new AssertionError("Error en cálculo de stock tras compra legítima de cliente A.");
             }
 
-            // Cliente B intenta comprar 2.5 metros pero solo quedan 1.5 metros -> Bloqueo y Rollback
             boolean transaccionBRechazada = false;
             try {
                 if (stockRestanteTrasA < compraClienteB) {
@@ -257,7 +246,6 @@ public class PruebasSeguridadIntegridad {
         });
 
         ejecutarPrueba("10. Cumplimiento Normativo Habeas Data (Ley 1581 de 2012 de Colombia)", () -> {
-            // Intento de registro sin consentimiento explícito
             boolean excepcionLanzada = false;
             try {
                 ServicioAutenticacion servicio = new ServicioAutenticacion(null);
@@ -306,7 +294,7 @@ public class PruebasSeguridadIntegridad {
                     + "}";
 
             JsonObject objLog = JsonParser.parseString(logJsonPrueba).getAsJsonObject();
-            if (!objLog.has("timestamp") || !objLog.has("level") || !objLog.has("service_name") 
+            if (!objLog.has("timestamp") || !objLog.has("level") || !objLog.has("service_name")
                     || !objLog.has("trace_id") || !objLog.has("message")) {
                 throw new AssertionError("El esquema del log JSON carece de campos obligatorios para observabilidad.");
             }
@@ -337,7 +325,6 @@ public class PruebasSeguridadIntegridad {
                 throw new AssertionError("Fallo en extracción de correo en payload de Google SSO.");
             }
 
-            // Validación de resiliencia ante valores nulos explícitos en JSON (evita UnsupportedOperationException en Gson)
             String payloadNulo = "{\"email\":null,\"correo\":null,\"nombre\":null}";
             JsonObject jsonNulo = JsonParser.parseString(payloadNulo).getAsJsonObject();
             String correoNulo = (jsonNulo.has("email") && !jsonNulo.get("email").isJsonNull()) ? jsonNulo.get("email").getAsString() : null;
@@ -365,7 +352,6 @@ public class PruebasSeguridadIntegridad {
                 throw new AssertionError("Fallo de seguridad: se aceptó un webhook con firma apócrifa.");
             }
 
-            // Verificación positiva de webhook legítimo con eventos_secret dummy
             long timestampReal = 1700000000L;
             String secretoEventos = infraestructura.configuracion.ConfiguracionWompi.secretoEventos();
             if (secretoEventos == null || secretoEventos.isBlank()) secretoEventos = "test_events_dummy";
@@ -405,6 +391,12 @@ public class PruebasSeguridadIntegridad {
         }
     }
 
+    /**
+     * Ejecuta un caso de prueba individual contabilizando su éxito o fallo.
+     *
+     * @param nombrePrueba Nombre descriptivo de la prueba (`String`).
+     * @param accion       Acción ejecutable de la prueba (`AccionPrueba`).
+     */
     private static void ejecutarPrueba(String nombrePrueba, AccionPrueba accion) {
         System.out.print("[TEST] " + nombrePrueba + " ... ");
         try {
@@ -419,8 +411,16 @@ public class PruebasSeguridadIntegridad {
         }
     }
 
+    /**
+     * Interfaz funcional que representa un bloque de prueba ejecutable.
+     */
     @FunctionalInterface
     interface AccionPrueba {
+        /**
+         * Ejecuta el caso de prueba.
+         *
+         * @throws Exception Si ocurre un error durante la validación.
+         */
         void ejecutar() throws Exception;
     }
 }

