@@ -9,6 +9,11 @@ import infraestructura.configuracion.ConfiguracionEntorno;
 public class App {
 
     /**
+     * Constructor privado para evitar la instanciación de la clase principal.
+     */
+    private App() {}
+
+    /**
      * Punto de entrada principal de la JVM.
      * Lee la configuración del entorno y arranca el {@link ServidorApi}.
      *
