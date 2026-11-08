@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     correo VARCHAR(150) NOT NULL UNIQUE,
+    telefono VARCHAR(50),
     contrasena_hash VARCHAR(255) NOT NULL,
     rol VARCHAR(50) DEFAULT 'cliente' CHECK (rol IN ('administrador', 'vendedor', 'cliente')),
     activo BOOLEAN DEFAULT true,
@@ -70,8 +71,10 @@ CREATE TABLE IF NOT EXISTS lotes_inventario (
     producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
     numero_lote VARCHAR(50),
     metros_recibidos NUMERIC(10,2) NOT NULL,
+    metros_actuales NUMERIC(10,2),
     costo_por_metro NUMERIC(10,2) NOT NULL,
     proveedor VARCHAR(100),
+    estado VARCHAR(50) DEFAULT 'active',
     fecha_recepcion DATE DEFAULT CURRENT_DATE,
     notas TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -81,9 +84,13 @@ CREATE TABLE IF NOT EXISTS lotes_inventario (
 CREATE TABLE IF NOT EXISTS eventos_merma (
     id SERIAL PRIMARY KEY,
     producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
+    id_lote VARCHAR(50),
     metros_perdidos NUMERIC(10,2) NOT NULL,
     motivo VARCHAR(100) NOT NULL,
+    descripcion TEXT,
     impacto_costo NUMERIC(10,2),
+    responsable VARCHAR(100),
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -125,6 +132,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     nombre_cliente VARCHAR(150) NOT NULL,
     correo_cliente VARCHAR(150) NOT NULL,
     telefono_cliente VARCHAR(50),
+    documento_cliente VARCHAR(50),
     direccion_envio TEXT NOT NULL,
     ciudad_envio VARCHAR(100),
     departamento_envio VARCHAR(100),
@@ -137,6 +145,11 @@ CREATE TABLE IF NOT EXISTS pedidos (
     estado VARCHAR(50) DEFAULT 'pending',
     metodo_pago VARCHAR(50),
     estado_pago VARCHAR(50) DEFAULT 'pending',
+    referencia_pago VARCHAR(64) UNIQUE,
+    monto_centavos BIGINT,
+    moneda VARCHAR(3) DEFAULT 'COP',
+    wompi_transaccion_id VARCHAR(100),
+    pagado_en TIMESTAMP,
     numero_guia VARCHAR(100),
     notas TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -179,8 +192,10 @@ CREATE TABLE IF NOT EXISTS resenas (
 CREATE TABLE IF NOT EXISTS tickets_soporte (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
     nombre_usuario VARCHAR(100),
     correo_usuario VARCHAR(150),
+    categoria VARCHAR(100),
     asunto VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
     estado VARCHAR(50) DEFAULT 'open',
@@ -196,7 +211,12 @@ CREATE TABLE IF NOT EXISTS reportes_errores (
     id SERIAL PRIMARY KEY,
     vendedor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     nombre_vendedor VARCHAR(100),
+    correo_reportante VARCHAR(150),
+    titulo VARCHAR(200),
     area VARCHAR(100),
+    severidad VARCHAR(50),
+    producto_id INTEGER REFERENCES productos(id) ON DELETE SET NULL,
+    nombre_producto VARCHAR(200),
     descripcion TEXT NOT NULL,
     pasos TEXT,
     estado VARCHAR(50) DEFAULT 'new',
@@ -269,8 +289,10 @@ CREATE TABLE IF NOT EXISTS ventas_diarias (
 -- 22. TABLA: ventas_region
 CREATE TABLE IF NOT EXISTS ventas_region (
     id SERIAL PRIMARY KEY,
-    region VARCHAR(100) NOT NULL,
+    region VARCHAR(100) NOT NULL UNIQUE,
+    capital VARCHAR(100),
     ventas_totales NUMERIC(14,2) DEFAULT 0.00,
+    pedidos_totales INTEGER DEFAULT 0,
     porcentaje NUMERIC(5,2) DEFAULT 0.00,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -371,3 +393,35 @@ CREATE TABLE IF NOT EXISTS rollos_textil (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 27. TABLA: eventos_pago_wompi
+CREATE TABLE IF NOT EXISTS eventos_pago_wompi (
+    id SERIAL PRIMARY KEY,
+    referencia_pago VARCHAR(64),
+    transaccion_id VARCHAR(100),
+    estado VARCHAR(30),
+    origen VARCHAR(30),
+    resultado VARCHAR(60),
+    carga_util TEXT,
+    recibido_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 28. TABLA: direcciones_usuario
+CREATE TABLE IF NOT EXISTS direcciones_usuario (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    etiqueta VARCHAR(100) DEFAULT 'Casa',
+    nombre_destinatario VARCHAR(150),
+    telefono VARCHAR(50),
+    direccion TEXT NOT NULL,
+    ciudad VARCHAR(100),
+    departamento VARCHAR(100),
+    codigo_postal VARCHAR(20),
+    predeterminada BOOLEAN DEFAULT false,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_pedidos_referencia_pago ON pedidos(referencia_pago);
+CREATE INDEX IF NOT EXISTS idx_eventos_wompi_referencia ON eventos_pago_wompi(referencia_pago);
+CREATE INDEX IF NOT EXISTS idx_direcciones_usuario_id ON direcciones_usuario(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_rollos_textil_producto_id ON rollos_textil(producto_id);
