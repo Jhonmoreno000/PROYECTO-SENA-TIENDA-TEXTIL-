@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,39 +19,61 @@ import infraestructura.configuracion.Conexion;
 import infraestructura.configuracion.ConfiguracionWompi;
 
 /**
- * DAO especializado en el ciclo de vida de pagos seguros con Wompi (Bancolombia).
- *
- * Garantiza:
- *  1. Cálculo estricto en el servidor (el cliente no puede alterar precios ni totales).
- *  2. Generación de firmas SHA-256 de integridad para el Widget.
- *  3. Procesamiento idempotente de Webhooks con transacciones ACID y bloqueo FOR UPDATE.
- *  4. Descuento automático de metros de tela (stock) sólo tras pago APROBADO.
+ * Objeto de acceso a datos (DAO) especializado en el ciclo de vida de pagos seguros con Wompi.
+ * Garantiza cálculo estricto en el servidor desde PostgreSQL, firmas SHA-256 de integridad,
+ * procesamiento idempotente de Webhooks con transacciones ACID y descuento atómico de stock.
  */
 public class PagoWompiDAO {
 
     /**
-     * DTO interno para retornar el resultado de la intención de pago.
+     * Objeto de transferencia de datos que encapsula el resultado de una intención de pago creada.
      */
     public static class ResultadoIntencionPago {
+        /** Identificador numérico del pedido generado en PostgreSQL (`int`). */
         public int idPedido;
+        /** Referencia alfanumérica única de pago (`String`). */
         public String referencia;
+        /** Monto total a cobrar expresado en centavos (`long`). */
         public long montoEnCentavos;
+        /** Subtotal bruto de los artículos antes de descuentos e impuestos (`double`). */
         public double subtotal;
+        /** Valor del descuento aplicado por cupón (`double`). */
         public double descuento;
+        /** Costo de envío calculado (`double`). */
         public double envio;
+        /** Monto de impuesto IVA calculado (`double`). */
         public double iva;
+        /** Monto total final del pedido en pesos (`double`). */
         public double total;
+        /** Código ISO de la moneda de cobro (`String`). */
         public String moneda;
+        /** Firma criptográfica SHA-256 de integridad para Wompi Widget (`String`). */
         public String firmaIntegridad;
+        /** Llave pública del comercio en Wompi (`String`). */
         public String llavePublica;
+        /** Correo electrónico del comprador (`String`). */
         public String correoCliente;
+        /** Nombre completo del comprador (`String`). */
         public String nombreCliente;
+        /** Teléfono de contacto del comprador (`String`). */
         public String telefonoCliente;
     }
 
     /**
-     * Crea una orden en estado PENDING y genera la intención de pago con su firma de integridad.
-     * Consulta los precios reales directamente en PostgreSQL.
+     * Crea un pedido en estado pendiente y genera la intención de pago con su firma de integridad.
+     * Consulta precios, cupones, configuración tributaria y datos del comprador directamente en PostgreSQL.
+     *
+     * @param idUsuario            Identificador del usuario comprador (`int`).
+     * @param nombreCliente        Nombre completo del cliente (`String`).
+     * @param correoCliente        Correo electrónico del cliente (`String`).
+     * @param telefonoCliente      Teléfono de contacto del cliente (`String`).
+     * @param direccionEnvio       Dirección física de entrega (`String`).
+     * @param ciudadEnvio          Ciudad o municipio de entrega (`String`).
+     * @param departamentoEnvio    Departamento o región de entrega (`String`).
+     * @param notas                Observaciones de entrega o corte (`String`).
+     * @param codigoCupon          Código promocional opcional (`String`).
+     * @param articulosSolicitados Lista de mapas con los productos y metrajes solicitados (`List<Map<String, Object>>`).
+     * @return Estructura `ResultadoIntencionPago` con la firma y desglose financiero.
      */
     public ResultadoIntencionPago crearIntencionPago(
             int idUsuario,
@@ -71,14 +94,46 @@ public class PagoWompiDAO {
         try (Connection con = Conexion.obtenerConexion()) {
             con.setAutoCommit(false);
             try {
-                // 1. Validar y calcular precios desde la base de datos
+                if (idUsuario > 0 && (nombreCliente == null || nombreCliente.isBlank()
+                        || correoCliente == null || correoCliente.isBlank()
+                        || telefonoCliente == null || telefonoCliente.isBlank())) {
+                    String sqlUsuario = "SELECT nombre, correo, telefono FROM usuarios WHERE id = ?";
+                    try (PreparedStatement pstU = con.prepareStatement(sqlUsuario)) {
+                        pstU.setInt(1, idUsuario);
+                        try (ResultSet rsU = pstU.executeQuery()) {
+                            if (rsU.next()) {
+                                if (nombreCliente == null || nombreCliente.isBlank()) {
+                                    nombreCliente = rsU.getString("nombre");
+                                }
+                                if (correoCliente == null || correoCliente.isBlank()) {
+                                    correoCliente = rsU.getString("correo");
+                                }
+                                if (telefonoCliente == null || telefonoCliente.isBlank()) {
+                                    telefonoCliente = rsU.getString("telefono");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                List<Map<String, Object>> articulosOrdenados = new ArrayList<>(articulosSolicitados);
+                articulosOrdenados.sort(Comparator.comparingInt(art -> {
+                    Object pIdObj = art.getOrDefault("productId", art.get("id"));
+                    if (pIdObj instanceof Number) return ((Number) pIdObj).intValue();
+                    try {
+                        return Integer.parseInt(String.valueOf(pIdObj));
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                }));
+
                 double subtotal = 0.0;
                 int idVendedorPrincipal = 1;
                 List<ItemCalculado> itemsCalculados = new ArrayList<>();
 
                 String sqlProducto = "SELECT id, nombre, precio, stock, vendedor_id, activo FROM productos WHERE id = ? FOR SHARE";
 
-                for (Map<String, Object> art : articulosSolicitados) {
+                for (Map<String, Object> art : articulosOrdenados) {
                     Object pIdObj = art.getOrDefault("productId", art.get("id"));
                     Object cantObj = art.getOrDefault("quantity", art.get("cantidad"));
 
@@ -120,7 +175,6 @@ public class PagoWompiDAO {
                     }
                 }
 
-                // 2. Aplicar Cupón si existe
                 double descuento = 0.0;
                 if (codigoCupon != null && !codigoCupon.trim().isEmpty()) {
                     String sqlCupon = "SELECT tipo_descuento, valor_descuento, compra_minima, activo, expira_en, usos_maximos, conteo_usos FROM cupones WHERE UPPER(codigo) = UPPER(?)";
@@ -154,7 +208,6 @@ public class PagoWompiDAO {
 
                 double subtotalConDescuento = Math.max(0.0, subtotal - descuento);
 
-                // 3. Envío e IVA (leídos desde configuracion_sistema con respaldo en $200.000 / $15.000 / 19%)
                 double umbralEnvioGratis = 200000.0;
                 double costoEnvioBase = 15000.0;
                 double tasaImpuesto = 0.19;
@@ -180,11 +233,9 @@ public class PagoWompiDAO {
 
                 long montoCentavos = Math.round(total * 100.0);
 
-                // 4. Generar referencia única
                 String sufijoUuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
                 String referencia = "DD-" + System.currentTimeMillis() + "-" + sufijoUuid;
 
-                // 5. Guardar Pedido en PostgreSQL con estado 'pending'
                 String sqlInsertPedido = "INSERT INTO pedidos (" +
                         "  usuario_id, vendedor_id, nombre_cliente, correo_cliente, telefono_cliente, " +
                         "  direccion_envio, ciudad_envio, departamento_envio, monto_total, subtotal, " +
@@ -194,14 +245,18 @@ public class PagoWompiDAO {
 
                 int idPedido = -1;
                 try (PreparedStatement pst = con.prepareStatement(sqlInsertPedido, Statement.RETURN_GENERATED_KEYS)) {
-                    pst.setInt(1, idUsuario > 0 ? idUsuario : 1);
+                    if (idUsuario > 0) {
+                        pst.setInt(1, idUsuario);
+                    } else {
+                        pst.setNull(1, java.sql.Types.INTEGER);
+                    }
                     pst.setInt(2, idVendedorPrincipal);
-                    pst.setString(3, nombreCliente != null ? nombreCliente : "Cliente");
-                    pst.setString(4, correoCliente != null ? correoCliente : "cliente@tienda.com");
+                    pst.setString(3, nombreCliente != null && !nombreCliente.isBlank() ? nombreCliente : "Usuario Registrado");
+                    pst.setString(4, correoCliente != null && !correoCliente.isBlank() ? correoCliente : "sin-correo@registrado.local");
                     pst.setString(5, telefonoCliente != null ? telefonoCliente : "");
-                    pst.setString(6, direccionEnvio != null ? direccionEnvio : "No especificada");
-                    pst.setString(7, ciudadEnvio != null ? ciudadEnvio : "Bogotá");
-                    pst.setString(8, departamentoEnvio != null ? departamentoEnvio : "Cundinamarca");
+                    pst.setString(6, direccionEnvio != null && !direccionEnvio.isBlank() ? direccionEnvio : "No especificada");
+                    pst.setString(7, ciudadEnvio != null && !ciudadEnvio.isBlank() ? ciudadEnvio : "No especificada");
+                    pst.setString(8, departamentoEnvio != null && !departamentoEnvio.isBlank() ? departamentoEnvio : "No especificado");
                     pst.setDouble(9, total);
                     pst.setDouble(10, subtotal);
                     pst.setDouble(11, iva);
@@ -222,7 +277,6 @@ public class PagoWompiDAO {
                     throw new SQLException("No se pudo obtener el ID del pedido generado.");
                 }
 
-                // 6. Guardar líneas del pedido
                 String sqlInsertItem = "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) VALUES (?, ?, ?, ?, ?)";
                 try (PreparedStatement pst = con.prepareStatement(sqlInsertItem)) {
                     for (ItemCalculado item : itemsCalculados) {
@@ -238,7 +292,6 @@ public class PagoWompiDAO {
 
                 con.commit();
 
-                // 7. Generar firma de integridad para Wompi Widget
                 String firmaIntegridad = ServicioCriptoWompi.generarFirmaIntegridad(referencia, montoCentavos, ConfiguracionWompi.MONEDA);
 
                 ResultadoIntencionPago res = new ResultadoIntencionPago();
@@ -270,7 +323,59 @@ public class PagoWompiDAO {
     }
 
     /**
-     * Procesa un evento de webhook de Wompi de forma IDEMPOTENTE y con ACID en PostgreSQL.
+     * Confirma el pago de un pedido por su referencia de Wompi verificando su monto y moneda en PostgreSQL.
+     *
+     * @param referencia    Referencia única del pedido en Wompi (`String`).
+     * @param transaccionId Identificador de la transacción en la pasarela (`String`).
+     * @param metodoPago    Método de pago empleado (`String`).
+     * @param estadoPago    Estado reportado de la transacción (`String`).
+     * @return `true` si la confirmación y actualización de inventario fueron exitosas; `false` en caso contrario.
+     */
+    public boolean confirmarPagoPorReferencia(String referencia, String transaccionId, String metodoPago, String estadoPago) {
+        if (referencia == null || referencia.isBlank()) {
+            return false;
+        }
+        long montoCentavos = 0L;
+        String moneda = "COP";
+        String sql = "SELECT monto_centavos, moneda FROM pedidos WHERE referencia_pago = ?";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setString(1, referencia.trim());
+            try (ResultSet rs = pst.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+                montoCentavos = rs.getLong("monto_centavos");
+                if (rs.getString("moneda") != null) {
+                    moneda = rs.getString("moneda");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[WOMPI] Error consultando pedido para confirmación: " + e.getMessage());
+            return false;
+        }
+
+        String idTx = (transaccionId != null && !transaccionId.isBlank()) ? transaccionId.trim() : ("WOMPI-" + referencia.trim());
+        String estadoNormalizado = (estadoPago != null && !estadoPago.isBlank()) ? estadoPago.trim().toUpperCase() : "APPROVED";
+        String metodoNormalizado = (metodoPago != null && !metodoPago.isBlank()) ? metodoPago.trim() : "WOMPI";
+
+        TransaccionWompi tx = new TransaccionWompi(
+                idTx,
+                referencia.trim(),
+                estadoNormalizado,
+                montoCentavos,
+                moneda,
+                metodoNormalizado
+        );
+        return procesarTransaccionWompi(tx, "{\"origen\":\"confirmar_endpoint\"}");
+    }
+
+    /**
+     * Procesa una transacción de Wompi de manera idempotente y transaccional (ACID) en PostgreSQL.
+     *
+     * @param tx         Datos estructurados de la transacción (`TransaccionWompi`).
+     * @param payloadRaw Cuerpo JSON original recibido en el evento (`String`).
+     * @return `true` si la transacción fue procesada o ya estaba aprobada; `false` si hubo discordancia o error.
      */
     public boolean procesarTransaccionWompi(TransaccionWompi tx, String payloadRaw) {
         if (tx == null || tx.referencia() == null || tx.referencia().isBlank()) {
@@ -278,7 +383,7 @@ public class PagoWompiDAO {
             return false;
         }
 
-        String sqlBloqueo = "SELECT id, estado, estado_pago, codigo_cupon, monto_centavos, moneda FROM pedidos WHERE referencia_pago = ? FOR UPDATE";
+        String sqlBloqueo = "SELECT id, estado, estado_pago, codigo_cupon, monto_centavos, monto_total, moneda FROM pedidos WHERE referencia_pago = ? FOR UPDATE";
 
         try (Connection con = Conexion.obtenerConexion()) {
             con.setAutoCommit(false);
@@ -288,6 +393,7 @@ public class PagoWompiDAO {
                 String estadoPagoActual = null;
                 String codigoCuponUsado = null;
                 long montoCentavosEsperado = 0L;
+                double montoTotalPedido = 0.0;
                 String monedaEsperada = "COP";
 
                 try (PreparedStatement pst = con.prepareStatement(sqlBloqueo)) {
@@ -299,6 +405,7 @@ public class PagoWompiDAO {
                             estadoPagoActual = rs.getString("estado_pago");
                             codigoCuponUsado = rs.getString("codigo_cupon");
                             montoCentavosEsperado = rs.getLong("monto_centavos");
+                            montoTotalPedido = rs.getDouble("monto_total");
                             if (rs.getString("moneda") != null) {
                                 monedaEsperada = rs.getString("moneda");
                             }
@@ -313,7 +420,6 @@ public class PagoWompiDAO {
                     return false;
                 }
 
-                // IDEMPOTENCIA: Si ya está pagado/aprobado, ignorar sin duplicar acciones
                 if ("APPROVED".equalsIgnoreCase(estadoPagoActual) || "paid".equalsIgnoreCase(estadoActual)) {
                     System.out.println("[WOMPI] Idempotencia: El pedido #" + idPedido + " (" + tx.referencia() + ") ya fue aprobado anteriormente.");
                     registrarEvento(con, tx.referencia(), tx.id(), tx.estado(), "webhook", "IGNORADO_YA_APROBADO", payloadRaw);
@@ -332,7 +438,7 @@ public class PagoWompiDAO {
                         con.commit();
                         return false;
                     }
-                    // Actualizar pedido a PAGADO
+
                     String sqlActualizarPedido = "UPDATE pedidos SET estado = 'paid', estado_pago = 'APPROVED', " +
                             "wompi_transaccion_id = ?, metodo_pago = ?, pagado_en = NOW(), actualizado_en = NOW() WHERE id = ?";
                     try (PreparedStatement pst = con.prepareStatement(sqlActualizarPedido)) {
@@ -342,8 +448,7 @@ public class PagoWompiDAO {
                         pst.executeUpdate();
                     }
 
-                    // Descontar inventario de metros en PostgreSQL
-                    String sqlItems = "SELECT producto_id, cantidad FROM items_pedido WHERE pedido_id = ?";
+                    String sqlItems = "SELECT producto_id, cantidad FROM items_pedido WHERE pedido_id = ? ORDER BY producto_id ASC";
                     String sqlDescontarStock = "UPDATE productos SET stock = GREATEST(0, stock - ?), actualizado_en = NOW() WHERE id = ?";
 
                     try (PreparedStatement pstItems = con.prepareStatement(sqlItems);
@@ -367,7 +472,6 @@ public class PagoWompiDAO {
                         }
                     }
 
-                    // Si usó cupón, incrementar conteo de usos
                     if (codigoCuponUsado != null && !codigoCuponUsado.isBlank()) {
                         String sqlIncrementarCupon = "UPDATE cupones SET conteo_usos = conteo_usos + 1 WHERE UPPER(codigo) = UPPER(?)";
                         try (PreparedStatement pst = con.prepareStatement(sqlIncrementarCupon)) {
@@ -376,6 +480,7 @@ public class PagoWompiDAO {
                         }
                     }
 
+                    registrarMetricasVentaAprobada(con, idPedido, tx.referencia(), montoTotalPedido);
                     registrarEvento(con, tx.referencia(), tx.id(), nuevoEstadoWompi, "webhook", "PAGO_PROCESADO_EXITOSO", payloadRaw);
                     System.out.println("[WOMPI] [EXITO] Pedido #" + idPedido + " (" + tx.referencia() + ") marcado como PAGADO e inventario descontado.");
 
@@ -390,7 +495,6 @@ public class PagoWompiDAO {
                     registrarEvento(con, tx.referencia(), tx.id(), nuevoEstadoWompi, "webhook", "PAGO_RECHAZADO", payloadRaw);
                     System.out.println("[WOMPI] [RECHAZADO] Pedido #" + idPedido + " marcado como " + nuevoEstadoWompi);
                 } else {
-                    // PENDING u otro estado intermedio
                     registrarEvento(con, tx.referencia(), tx.id(), nuevoEstadoWompi, "webhook", "ESTADO_PENDIENTE", payloadRaw);
                 }
 
@@ -410,7 +514,10 @@ public class PagoWompiDAO {
     }
 
     /**
-     * Consulta el estado actual de un pedido por su referencia de pago de Wompi o ID de transacción.
+     * Consulta el estado actual y artículos de un pedido por su referencia de pago o ID de transacción Wompi.
+     *
+     * @param referencia Referencia de pago o identificador de transacción (`String`).
+     * @return Mapa con los datos del pedido y artículos o `null` si no existe.
      */
     public Map<String, Object> consultarPedidoPorReferencia(String referencia) {
         String sql = "SELECT p.*, " +
@@ -471,6 +578,54 @@ public class PagoWompiDAO {
         return null;
     }
 
+    /**
+     * Actualiza las tablas de métricas de ventas diarias y actividad reciente cuando un pago es aprobado.
+     *
+     * @param con        Conexión JDBC transaccional activa (`Connection`).
+     * @param idPedido   Identificador del pedido aprobado (`int`).
+     * @param referencia Referencia de pago del pedido (`String`).
+     * @param montoTotal Monto total pagado (`double`).
+     */
+    private void registrarMetricasVentaAprobada(Connection con, int idPedido, String referencia, double montoTotal) {
+        java.sql.Savepoint sp = null;
+        try {
+            if (!con.getAutoCommit()) {
+                sp = con.setSavepoint();
+            }
+            String sqlVentaDiaria = "INSERT INTO ventas_diarias (fecha_venta, ventas_totales, pedidos_totales) " +
+                    "VALUES (CURRENT_DATE, ?, 1) " +
+                    "ON CONFLICT (fecha_venta) DO UPDATE SET " +
+                    "ventas_totales = ventas_diarias.ventas_totales + EXCLUDED.ventas_totales, " +
+                    "pedidos_totales = ventas_diarias.pedidos_totales + 1";
+            try (PreparedStatement pstVd = con.prepareStatement(sqlVentaDiaria)) {
+                pstVd.setDouble(1, montoTotal);
+                pstVd.executeUpdate();
+            }
+
+            String sqlActividad = "INSERT INTO actividad_reciente (tipo_actividad, descripcion, monto) VALUES ('venta', ?, ?)";
+            try (PreparedStatement pstAct = con.prepareStatement(sqlActividad)) {
+                pstAct.setString(1, "Pago Wompi aprobado para pedido #" + idPedido + " (" + referencia + ")");
+                pstAct.setDouble(2, montoTotal);
+                pstAct.executeUpdate();
+            }
+        } catch (SQLException e) {
+            if (sp != null) {
+                try { con.rollback(sp); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    /**
+     * Registra un evento en la bitácora de auditoría `eventos_pago_wompi` usando un Savepoint seguro.
+     *
+     * @param con           Conexión JDBC activa (`Connection`).
+     * @param referencia    Referencia de pago (`String`).
+     * @param transaccionId Identificador de transacción en Wompi (`String`).
+     * @param estado        Estado reportado (`String`).
+     * @param origen        Origen del evento (`String`).
+     * @param resultado     Resultado interno del procesamiento (`String`).
+     * @param cargaUtil     Carga útil JSON cruda (`String`).
+     */
     private void registrarEvento(Connection con, String referencia, String transaccionId, String estado, String origen, String resultado, String cargaUtil) {
         String sql = "INSERT INTO eventos_pago_wompi (referencia_pago, transaccion_id, estado, origen, resultado, carga_util) VALUES (?, ?, ?, ?, ?, ?)";
         java.sql.Savepoint sp = null;
@@ -495,18 +650,42 @@ public class PagoWompiDAO {
         }
     }
 
+    /**
+     * Trunca una cadena de texto a la longitud máxima permitida por la columna SQL.
+     *
+     * @param valor       Texto de entrada (`String`).
+     * @param maxLongitud Longitud máxima permitida (`int`).
+     * @return Cadena truncada o `null` si la entrada es nula.
+     */
     private static String truncar(String valor, int maxLongitud) {
         if (valor == null) return null;
         return valor.length() > maxLongitud ? valor.substring(0, maxLongitud) : valor;
     }
 
+    /**
+     * Estructura interna auxiliar que representa una línea de pedido validada y calculada desde PostgreSQL.
+     */
     private static class ItemCalculado {
+        /** Identificador del producto (`int`). */
         int idProducto;
+        /** Nombre del producto (`String`). */
         String nombre;
+        /** Cantidad en metros (`double`). */
         double metros;
+        /** Precio unitario por metro (`double`). */
         double precioUnitario;
+        /** Subtotal de la línea (`double`). */
         double subtotal;
 
+        /**
+         * Construye un ítem calculado con sus importes validados.
+         *
+         * @param idProducto     Identificador del producto (`int`).
+         * @param nombre         Nombre de la tela (`String`).
+         * @param metros         Metraje solicitado (`double`).
+         * @param precioUnitario Precio por metro (`double`).
+         * @param subtotal       Subtotal de la línea (`double`).
+         */
         ItemCalculado(int idProducto, String nombre, double metros, double precioUnitario, double subtotal) {
             this.idProducto = idProducto;
             this.nombre = nombre;
