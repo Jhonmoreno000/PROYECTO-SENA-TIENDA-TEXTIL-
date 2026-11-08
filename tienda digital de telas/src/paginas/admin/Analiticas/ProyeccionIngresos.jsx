@@ -187,7 +187,7 @@ function ProyeccionIngresos() {
                     
                     {projectionData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={400}>
-                            <AreaChart datos={projectionData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                            <AreaChart data={projectionData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorProjected" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6} />

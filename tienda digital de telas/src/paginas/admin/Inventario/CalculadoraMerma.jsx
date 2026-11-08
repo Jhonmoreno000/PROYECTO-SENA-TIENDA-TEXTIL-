@@ -183,7 +183,7 @@ function CalculadoraMerma() {
                                 )}
                             </div>
                             <ResponsiveContainer width="100%" height={280}>
-                                <BarChart datos={wasteByReasonData} onClick={handleChartClick} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <BarChart data={wasteByReasonData} onClick={handleChartClick} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} tick={{ fontSize: 11, fill: '#64748b' }} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
@@ -207,7 +207,7 @@ function CalculadoraMerma() {
                                 <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Evolución de pérdidas financieras en eventos recientes</p>
                             </div>
                             <ResponsiveContainer width="100%" height={280}>
-                                <LineChart datos={wasteOverTimeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <LineChart data={wasteOverTimeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                     <XAxis dataKey="date" axisLine={false} tickLine={false} dy={10} tick={{ fontSize: 11, fill: '#64748b' }} />
                                     <YAxis axisLine={false} tickLine={false} tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 11, fill: '#64748b' }} />

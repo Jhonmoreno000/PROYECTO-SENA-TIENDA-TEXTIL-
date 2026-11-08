@@ -14,7 +14,7 @@ const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:borde
 const cleanInput = "bg-slate-50 dark:bg-slate-900  border border-slate-200 dark:border-slate-700 focus:border-indigo-500 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all";
 
 function RendimientoVendedores() {
-    const { users, orders, updateSellerCommission, toggleSellerSuspension } = useMetricas();
+    const { users, orders, bugReports, updateSellerCommission, toggleSellerSuspension } = useMetricas();
     const [editingCommission, setEditingCommission] = useState(null);
     const [tempCommission, setTempCommission] = useState('');
     const [showSuspendModal, setShowSuspendModal] = useState(null);
@@ -25,25 +25,27 @@ function RendimientoVendedores() {
     const modalOverlayRef = useRef(null);
 
     const sellersRealBI = useMemo(() => {
-        const sellers = users.filter(u => u.role === 'vendedor' || u.role === 'vendedor');
+        const sellers = users.filter(u => u.role === 'vendedor' || u.rol === 'vendedor');
         return sellers.map((vendedor) => {
             const sellerOrders = orders.filter(o => String(o.sellerId) === String(vendedor.id));
+            const sellerReports = (bugReports || []).filter(r => String(r.sellerId) === String(vendedor.id));
             const grossSales = sellerOrders.reduce((sum, o) => sum + (o.total || 0), 0);
             const totalOrders = sellerOrders.length;
+            const returnsRate = totalOrders > 0 ? Number(((sellerReports.length / totalOrders) * 100).toFixed(1)) : 0;
             
             return {
                 ...vendedor,
                 biMetrics: {
                     grossSales,
-                    profitMargin: vendedor.commissionRate || 15,
+                    profitMargin: Number(vendedor.commissionRate || 15),
                     conversionRate: totalOrders > 0 ? Math.min(100, 2.5 + (totalOrders * 0.1)) : 0,
                     avgMonthlySales: grossSales > 0 ? grossSales / 3 : 0,
                     totalOrders,
-                    returnsRate: totalOrders > 0 ? 1.5 : 0
+                    returnsRate
                 }
             };
         }).sort((a, b) => b.biMetrics.grossSales - a.biMetrics.grossSales);
-    }, [users, orders]);
+    }, [users, orders, bugReports]);
 
     const chartData = sellersRealBI.slice(0, 5).map(s => ({
         name: s.name.split(' ')[0],
@@ -161,7 +163,7 @@ function RendimientoVendedores() {
                             <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Análisis comparativo entre volumen bruto y rentabilidad real de cada cuenta.</p>
                         </div>
                         <ResponsiveContainer width="100%" height={350}>
-                            <ComposedChart datos={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                            <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} tick={{ fill: '#64748b', fontSize: 12 }} />
                                 <YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`} tick={{ fill: '#64748b', fontSize: 12 }} />
