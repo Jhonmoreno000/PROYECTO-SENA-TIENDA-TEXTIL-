@@ -91,7 +91,7 @@ function Pago() {
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-primary-500 text-primary-600 dark:text-primary-400 font-bold text-sm hover:bg-primary-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
                     >
                         <Zap className="w-4 h-4" />
-                        <span>2. Ir a Pagar (Wompi / Mercado Pago / Nequi / PSE) →</span>
+                        <span>2. Ir a Pagar (Wompi / Mercado Pago / Nequi / Tarjetas) →</span>
                     </button>
                 </div>
 

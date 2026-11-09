@@ -4,8 +4,6 @@ import {
     LogoWompi,
     LogoMercadoPago,
     LogoNequi,
-    LogoEpayco,
-    LogoPSE,
     LogoTarjetas,
 } from '../paginas/payment/LogosPasarelas';
 
@@ -122,19 +120,13 @@ function CheckoutForm({ onSubmit, formData, setFormData }) {
                         <LogoNequi className="h-5" />
                     </div>
                     <div className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 shadow-xs">
-                        <LogoEpayco className="h-5" />
-                    </div>
-                    <div className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 shadow-xs">
-                        <LogoPSE className="h-5" />
-                    </div>
-                    <div className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 shadow-xs">
                         <LogoTarjetas className="h-5" />
                     </div>
                 </div>
             </div>
 
             <button type="submit" className="btn-primary w-full text-lg py-4 active:scale-[0.98] transition-transform">
-                Continuar a Pasarela de Pago 3D (Wompi / Mercado Pago / Nequi / PSE) →
+                Continuar a Pasarela de Pago Segura (Wompi / Mercado Pago / Nequi / Tarjetas) →
             </button>
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
                 Al confirmar tu pedido, aceptas nuestros términos y condiciones y la Política de Tratamiento de Datos (Ley 1581 de 2012)

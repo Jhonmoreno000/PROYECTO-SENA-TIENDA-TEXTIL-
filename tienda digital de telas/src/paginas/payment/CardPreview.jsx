@@ -38,16 +38,6 @@ const TEMAS_PASARELA = {
         etiquetaNumero: 'CELULAR / LLAVE OFICIAL D&D TEXTIL',
         badgeTexto: 'QR INMEDIATO',
     },
-    epayco: {
-        gradiente: 'from-[#3b1105] via-[#8a2c0e] to-[#b83b0a]',
-        borde: 'border-amber-400/40',
-        glow: 'rgba(255, 90, 0, 0.4)',
-        marca: 'D&D TEXTIL × ePAYCO',
-        subtitulo: 'EFECTY • GANA ANTIOQUIA • BALOTO',
-        numeroDefault: '1104  5200  3027  0589',
-        etiquetaNumero: 'CONVENIO NACIONAL #110452',
-        badgeTexto: 'MULTICAJA ACTIVO',
-    },
     card: {
         gradiente: 'from-slate-900 via-slate-800 to-amber-950',
         borde: 'border-amber-400/35',
@@ -57,16 +47,6 @@ const TEMAS_PASARELA = {
         numeroDefault: '####  ####  ####  ####',
         etiquetaNumero: 'NÚMERO DE TARJETA',
         badgeTexto: '3D SECURE 2.0',
-    },
-    pse: {
-        gradiente: 'from-[#001d3d] via-[#003566] to-[#042f2e]',
-        borde: 'border-amber-300/35',
-        glow: 'rgba(56, 189, 248, 0.38)',
-        marca: 'D&D TEXTIL × PSE ACH',
-        subtitulo: 'DÉBITO BANCARIO & CONTRAENTREGA',
-        numeroDefault: 'ACH   COL   3027   0589',
-        etiquetaNumero: 'CÁMARA INTERBANCARIA COLOMBIA',
-        badgeTexto: 'TODOS LOS BANCOS',
     },
 };
 

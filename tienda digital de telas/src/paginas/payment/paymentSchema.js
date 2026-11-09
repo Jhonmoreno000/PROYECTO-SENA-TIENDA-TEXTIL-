@@ -34,39 +34,6 @@ export const cardPaymentSchema = z.object({
         .regex(/^\d+$/, 'Solo se permiten números'),
 });
 
-// Validación para PSE
-export const psePaymentSchema = z.object({
-    bank: z
-        .string()
-        .min(1, 'Selecciona un banco'),
-
-    personType: z
-        .enum(['natural', 'juridica'], {
-            errorMap: () => ({ message: 'Selecciona un tipo de persona' })
-        }),
-
-    email: z
-        .string()
-        .email('Correo electrónico inválido'),
-});
-
-// Bancos colombianos para PSE
-export const colombianBanks = [
-    'Bancolombia',
-    'Banco de Bogotá',
-    'Davivienda',
-    'BBVA Colombia',
-    'Banco Caja Social',
-    'Banco Agrario',
-    'Banco AV Villas',
-    'Banco Popular',
-    'Banco Occidente',
-    'Colpatria',
-    'Banco Falabella',
-    'Banco Pichincha',
-    'Banco Cooperativo Coopcentral',
-];
-
 // Tipos de documento en Colombia
 export const documentTypes = [
     { value: 'CC', label: 'Cédula de Ciudadanía' },

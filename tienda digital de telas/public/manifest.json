@@ -13,6 +13,12 @@
   "categories": ["shopping", "business", "lifestyle"],
   "icons": [
     {
+      "src": "/icono/dd-textil-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/images/proyecto-preview.png",
       "sizes": "512x512",
       "type": "image/png",

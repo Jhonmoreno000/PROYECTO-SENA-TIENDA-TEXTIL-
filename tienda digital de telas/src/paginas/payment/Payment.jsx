@@ -3,59 +3,63 @@ import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import {
-    CreditCard,
-    DollarSign,
     ArrowLeft,
     ShieldCheck,
-    Zap,
     Lock,
-    Building2,
-    Smartphone,
-    Wallet,
-    Banknote,
-    Truck,
+    CheckCircle2,
     Copy,
     Check,
-    MessageCircle,
-    CheckCircle2,
+    QrCode,
 } from 'lucide-react';
 import Encabezado from '../../componentes/Encabezado';
 import PieDePagina from '../../componentes/PieDePagina';
 import CardPreview from './CardPreview';
 import FormularioPago from './FormularioPago';
-import PSEForm from './PSEForm';
 import ModalPasarelaInteractiva from './ModalPasarelaInteractiva';
-import { LogoPasarelaPorId } from './LogosPasarelas';
+import {
+    IconoHumanoWompi,
+    IconoHumanoMercadoPago,
+    IconoHumanoNequi,
+    IconoHumanoTarjeta,
+    IconoHumanoBancolombia,
+    LogoWompi,
+    LogoMercadoPago,
+    LogoNequi,
+    LogoTarjetas,
+} from './LogosPasarelas';
 import { useCarrito } from '../../contextos/ContextoCarrito';
 import { useNotificacion } from '../../contextos/ContextoNotificacion';
 import { useAutenticacion } from '../../contextos/ContextoAutenticacion';
+import { useMetricas } from '../../contextos/ContextoMetricas';
 import { formatCurrency } from '../../utilidades/formateadores';
-import { crearIntencionPagoWompi } from '../../servicios/servicioWompi';
+import * as servicioWompi from '../../servicios/servicioWompi';
 
 gsap.registerPlugin(useGSAP);
 
 const TELEFONO_TIENDA = '3027058951';
-const TELEFONO_TIENDA_FORMATO = '302 705 8951';
-const CORREO_TIENDA = 'dydtextil222medellin@gmail.com';
 
 function Payment() {
     const navigate = useNavigate();
     const { getOrderCalculations, cartItems, clearCart, appliedCoupon } = useCarrito();
     const { showNotification } = useNotificacion();
     const { user } = useAutenticacion();
+    const { refreshData } = useMetricas();
     const contentRef = useRef(null);
 
-    // 'wompi' | 'mercadopago' | 'nequi' | 'epayco' | 'card' | 'pse'
+    // 4 pasarelas activas: 'wompi' | 'mercadopago' | 'nequi' | 'card'
     const [paymentMethod, setPaymentMethod] = useState('wompi');
-    const [submodoPse, setSubmodoPse] = useState('pse'); // 'pse' | 'contraentrega'
     const [isProcessing, setIsProcessing] = useState(false);
     const [isCVVFocused, setIsCVVFocused] = useState(false);
-    const [cardData, setCardData] = useState({ cardholderName: '', cardNumber: '', expiryDate: '', cvv: '' });
-    const [customerInfo, setCustomerInfo] = useState(null);
     const [copiadoNequi, setCopiadoNequi] = useState(false);
-    const [referenciaComprobante, setReferenciaComprobante] = useState('');
+    const [comprobanteNequi, setComprobanteNequi] = useState('');
+    const [cardData, setCardData] = useState({
+        cardholderName: '',
+        cardNumber: '',
+        expiryDate: '',
+        cvv: '',
+    });
+    const [customerInfo, setCustomerInfo] = useState(null);
 
-    // Estado del modal interactivo de pasarela (Wompi / Mercado Pago / ePayco)
     const [modalPasarela, setModalPasarela] = useState({
         abierto: false,
         gateway: 'wompi',
@@ -106,7 +110,7 @@ function Payment() {
     const prepararIntencionOrden = async (metodoNombre) => {
         const infoCliente = obtenerDatosCliente();
         try {
-            const intencion = await crearIntencionPagoWompi({
+            const intencion = await servicioWompi.crearIntencionPagoWompi({
                 items: cartItems.map((it) => ({
                     productId: it.id,
                     quantity: it.quantity || 1,
@@ -150,8 +154,27 @@ function Payment() {
         };
     };
 
-    const finalizarOrdenExitosa = ({ reference, transactionId, paymentMethod: metodoFinal, status = 'APPROVED' }) => {
+    const finalizarOrdenExitosa = async ({
+        reference,
+        transactionId,
+        paymentMethod: metodoFinal,
+        status = 'APPROVED',
+    }) => {
         const infoCliente = obtenerDatosCliente();
+        try {
+            if (typeof servicioWompi.confirmarPagoWompi === 'function') {
+                await servicioWompi.confirmarPagoWompi({
+                    referencia: reference,
+                    transaccionId: transactionId,
+                    metodoPago: metodoFinal,
+                    estadoPago: status,
+                });
+            }
+            if (refreshData) await refreshData();
+        } catch (err) {
+            console.warn('Aviso confirmando pago en servidor:', err);
+        }
+
         const orderGuardada = {
             orderNumber: reference,
             reference,
@@ -175,7 +198,7 @@ function Payment() {
         navigate(`/confirmacion?referencia=${encodeURIComponent(reference)}`);
     };
 
-    const abrirPasarelaAPI = async (gatewayKey) => {
+    const abrirPasarelaInteractiva = async (gatewayId, etiqueta) => {
         if (!cartItems || cartItems.length === 0) {
             showNotification('error', 'El carrito está vacío.');
             navigate('/carrito');
@@ -184,15 +207,10 @@ function Payment() {
 
         setIsProcessing(true);
         try {
-            const nombres = {
-                wompi: 'Wompi Bancolombia',
-                mercadopago: 'Mercado Pago Checkout Pro',
-                epayco: 'ePayco / PayU Colombia',
-            };
-            const intencion = await prepararIntencionOrden(nombres[gatewayKey] || 'Wompi Bancolombia');
+            const intencion = await prepararIntencionOrden(etiqueta);
             setModalPasarela({
                 abierto: true,
-                gateway: gatewayKey,
+                gateway: gatewayId,
                 orderInfo: intencion,
             });
         } catch (error) {
@@ -217,9 +235,9 @@ function Payment() {
                 setIsProcessing(false);
                 finalizarOrdenExitosa({
                     reference: intencion.reference,
-                    transactionId: referenciaComprobante ? `NEQUI-${referenciaComprobante}` : txId,
+                    transactionId: txId,
                     paymentMethod: etiquetaMetodo,
-                    status: etiquetaMetodo.includes('Contraentrega') ? 'pending' : 'APPROVED',
+                    status: 'APPROVED',
                 });
             }, 900);
         } catch (err) {
@@ -228,561 +246,531 @@ function Payment() {
         }
     };
 
-    const copiarNumeroNequi = () => {
+    const copiarCelularNequi = () => {
         navigator.clipboard?.writeText(TELEFONO_TIENDA);
         setCopiadoNequi(true);
+        showNotification('success', 'Número Nequi 302 705 8951 copiado al portapapeles');
         setTimeout(() => setCopiadoNequi(false), 2000);
     };
 
-    useGSAP(() => {
-        if (contentRef.current) {
-            gsap.fromTo(
-                contentRef.current,
-                { opacity: 0, y: 12 },
-                { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out' }
-            );
-        }
-    }, { scope: contentRef, dependencies: [paymentMethod, submodoPse] });
+    useGSAP(
+        () => {
+            if (contentRef.current) {
+                gsap.fromTo(
+                    contentRef.current,
+                    { opacity: 0, y: 10 },
+                    { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }
+                );
+            }
+        },
+        { scope: contentRef, dependencies: [paymentMethod] }
+    );
 
-    const METODOS_DISPONIBLES = [
+    const METODOS_SELECCION = [
         {
             id: 'wompi',
-            titulo: 'Wompi Bancolombia',
-            subtitulo: 'Nequi, PSE, Botón Bancolombia',
-            badge: 'Recomendado',
-            badgeColor: 'from-amber-500 to-primary-600',
-            icon: Zap,
-            iconBg: 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
+            titulo: 'Wompi',
+            subtitulo: 'Bancolombia, Nequi, Tarjetas',
+            recomendado: true,
+            icon: IconoHumanoWompi,
         },
         {
             id: 'mercadopago',
             titulo: 'Mercado Pago',
-            subtitulo: 'Checkout Pro • Cuotas • Efecty',
-            badge: 'API Sandbox Gratis',
-            badgeColor: 'from-sky-500 to-blue-600',
-            icon: Wallet,
-            iconBg: 'bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400',
+            subtitulo: 'Checkout Pro • Cuotas',
+            recomendado: false,
+            icon: IconoHumanoMercadoPago,
         },
         {
             id: 'nequi',
-            titulo: 'Nequi / Daviplata / Bre-B',
-            subtitulo: `Transferencia QR • ${TELEFONO_TIENDA_FORMATO}`,
-            badge: '0% Comisión',
-            badgeColor: 'from-fuchsia-600 to-purple-600',
-            icon: Smartphone,
-            iconBg: 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-        },
-        {
-            id: 'epayco',
-            titulo: 'ePayco / Efecty / Gana',
-            subtitulo: 'Baloto, Gana Antioquia, SuRed',
-            icon: Banknote,
-            iconBg: 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+            titulo: 'Nequi / Bre-B',
+            subtitulo: 'Transferencia QR • Celular',
+            recomendado: false,
+            icon: IconoHumanoNequi,
         },
         {
             id: 'card',
-            titulo: 'Tarjeta Crédito / Débito',
-            subtitulo: 'Visa, Mastercard, Amex',
-            icon: CreditCard,
-            iconBg: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+            titulo: 'Tarjeta',
+            subtitulo: 'Crédito o Débito',
+            recomendado: false,
+            icon: IconoHumanoTarjeta,
+        },
+    ];
+
+    const SUBMETODOS_WOMPI = [
+        {
+            nombre: 'Nequi',
+            detalle: 'Push al celular',
+            icon: IconoHumanoNequi,
         },
         {
-            id: 'pse',
-            titulo: 'PSE / Contraentrega',
-            subtitulo: 'Todos los bancos o Pago al recibir',
-            icon: DollarSign,
-            iconBg: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+            nombre: 'Bancolombia',
+            detalle: 'Transferencia directa',
+            icon: IconoHumanoBancolombia,
+        },
+        {
+            nombre: 'Tarjetas',
+            detalle: 'Débito / Crédito',
+            icon: IconoHumanoTarjeta,
         },
     ];
 
     const infoClienteActual = obtenerDatosCliente();
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+        <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+            <style>{`
+                @keyframes rotarBordeLuz {
+                    0% { transform: translate(-50%, -50%) rotate(0deg); }
+                    100% { transform: translate(-50%, -50%) rotate(360deg); }
+                }
+                @keyframes flotarIconoHumano {
+                    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+                    50% { transform: translateY(-2px) rotate(-2.5deg) scale(1.06); }
+                }
+                .marco-borde-animado {
+                    position: relative;
+                    border-radius: 1.15rem;
+                    padding: 2.2px;
+                    overflow: hidden;
+                    transition: transform 0.25s ease, box-shadow 0.25s ease;
+                }
+                .marco-borde-animado::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 240%;
+                    height: 240%;
+                    background: conic-gradient(
+                        from 0deg,
+                        #e2e8f0 0deg,
+                        #fb923c 80deg,
+                        #ea580c 135deg,
+                        #f59e0b 180deg,
+                        #e2e8f0 245deg,
+                        #fdba74 315deg,
+                        #e2e8f0 360deg
+                    );
+                    animation: rotarBordeLuz 4s linear infinite;
+                    z-index: 0;
+                }
+                .marco-borde-activo {
+                    box-shadow: 0 12px 28px -6px rgba(234, 88, 12, 0.24);
+                    transform: translateY(-2px);
+                }
+                .marco-borde-activo::before {
+                    background: conic-gradient(
+                        from 0deg,
+                        #fed7aa 0deg,
+                        #ea580c 90deg,
+                        #f59e0b 160deg,
+                        #fb923c 230deg,
+                        #ea580c 300deg,
+                        #fed7aa 360deg
+                    );
+                    animation-duration: 2.8s;
+                }
+                .marco-borde-inactivo:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 22px -6px rgba(234, 88, 12, 0.14);
+                }
+                .marco-borde-inactivo:hover::before {
+                    animation-duration: 2.4s;
+                }
+                .marco-panel-principal {
+                    position: relative;
+                    border-radius: 1.65rem;
+                    padding: 2px;
+                    overflow: hidden;
+                }
+                .marco-panel-principal::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 200%;
+                    height: 200%;
+                    background: conic-gradient(
+                        from 0deg,
+                        #e2e8f0 0deg,
+                        #fdba74 90deg,
+                        #ea580c 150deg,
+                        #e2e8f0 230deg,
+                        #f59e0b 310deg,
+                        #e2e8f0 360deg
+                    );
+                    animation: rotarBordeLuz 7s linear infinite;
+                    z-index: 0;
+                }
+                .icono-trazo-humano {
+                    animation: flotarIconoHumano 3.4s ease-in-out infinite;
+                }
+            `}</style>
+
             <Encabezado />
 
-            <main className="flex-1 py-8 md:py-10">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Botón Volver */}
-                    <button
-                        onClick={() => navigate('/checkout')}
-                        className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-4 transition-colors cursor-pointer"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Volver a datos de envío
-                    </button>
+            <main className="flex-1 py-10 sm:py-14 md:py-16">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Enlace Volver */}
+                    <div className="mb-6">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/checkout')}
+                            className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer group"
+                        >
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+                            <span>Volver a datos de envío</span>
+                        </button>
+                    </div>
 
-                    {/* Título y Total */}
-                    <div className="text-center mb-7">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 mb-2">
-                            <Lock className="w-3.5 h-3.5" /> Ecosistema Multipagos Colombia • Tarjeta 3D Interactiva
+                    {/* Encabezado: Jerarquía y Tipografía Corporativa */}
+                    <div className="text-center mb-10">
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-orange-50 text-orange-700 border border-orange-200/70 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50">
+                            <Lock className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+                            <span>Pasarela de Pago Segura (Colombia)</span>
                         </span>
-                        <h1 className="text-3xl md:text-4xl font-display font-bold mb-1.5">
-                            Elige tu Forma de Pago
+
+                        <h1 className="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-slate-900 dark:text-white mt-3.5 mb-2.5">
+                            Finalizar y Pagar
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 text-base">
-                            Total del pedido:{' '}
-                            <span className="font-bold text-primary-600 dark:text-primary-400">
+
+                        <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 font-normal">
+                            Total estimado a cobrar:{' '}
+                            <span className="font-semibold text-orange-600 dark:text-orange-400 tracking-tight">
                                 {formatCurrency(total)}
                             </span>
                         </p>
                     </div>
 
-                    {/* Selector de las 6 Pasarelas y Formas de Pago */}
-                    <div className="mb-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                            {METODOS_DISPONIBLES.map((m) => {
-                                const Icon = m.icon;
-                                const activo = paymentMethod === m.id;
-                                return (
-                                    <button
-                                        key={m.id}
-                                        type="button"
-                                        onClick={() => setPaymentMethod(m.id)}
-                                        className={`relative p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                                            activo
-                                                ? 'border-primary-600 bg-white dark:bg-slate-800 shadow-md ring-2 ring-primary-500/20 -translate-y-0.5'
-                                                : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-gray-300'
+                    {/* 4 Tarjetas de Pasarelas (Wompi, Mercado Pago, Nequi, Tarjeta) con Borde Animado e Iconos Humanos */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 max-w-4xl mx-auto mb-10">
+                        {METODOS_SELECCION.map((metodo) => {
+                            const Icon = metodo.icon;
+                            const isSelected = paymentMethod === metodo.id;
+
+                            return (
+                                <div key={metodo.id} className="relative pt-2">
+                                    {metodo.recomendado && (
+                                        <span className="absolute -top-0.5 right-3.5 z-20 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-orange-600 to-amber-500 text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                                            RECOMENDADO
+                                        </span>
+                                    )}
+
+                                    <div
+                                        className={`marco-borde-animado h-full ${
+                                            isSelected ? 'marco-borde-activo' : 'marco-borde-inactivo'
                                         }`}
                                     >
-                                        {m.badge && (
-                                            <span
-                                                className={`absolute -top-2.5 right-3 bg-gradient-to-r ${m.badgeColor} text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm`}
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod(metodo.id)}
+                                            className={`relative z-10 w-full h-full flex items-center gap-3.5 p-4 sm:p-5 rounded-[16px] text-left transition-colors cursor-pointer ${
+                                                isSelected
+                                                    ? 'bg-[#FFF9F5] dark:bg-slate-800'
+                                                    : 'bg-white dark:bg-slate-800/95 hover:bg-[#FFFDFB] dark:hover:bg-slate-800'
+                                            }`}
+                                        >
+                                            <div
+                                                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                                                    isSelected
+                                                        ? 'bg-orange-100/80 dark:bg-orange-950/60 shadow-2xs scale-105'
+                                                        : 'bg-slate-50 dark:bg-slate-700/60'
+                                                }`}
                                             >
-                                                {m.badge}
-                                            </span>
-                                        )}
-                                        <div className="flex items-center justify-between gap-3">
+                                                <Icon className="w-9 h-9 icono-trazo-humano" />
+                                            </div>
+
                                             <div className="min-w-0">
-                                                <p className="font-bold text-gray-900 dark:text-white text-sm truncate">
-                                                    {m.titulo}
+                                                <p
+                                                    className={`text-sm font-bold leading-snug ${
+                                                        isSelected
+                                                            ? 'text-orange-950 dark:text-white'
+                                                            : 'text-slate-800 dark:text-slate-200'
+                                                    }`}
+                                                >
+                                                    {metodo.titulo}
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                                    {m.subtitulo}
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                                    {metodo.subtitulo}
                                                 </p>
                                             </div>
-                                            <div className="shrink-0">
-                                                <LogoPasarelaPorId gateway={m.id} className="h-7" />
-                                            </div>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
-                    {/* Layout de 2 columnas: Tarjeta 3D Interactiva (Izquierda) + Pasarela Activa (Derecha) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                        {/* COLUMNA IZQUIERDA: Tarjeta de Crédito / Pasarela 3D Animada */}
-                        <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
-                            <CardPreview
-                                gateway={paymentMethod}
-                                cardNumber={cardData.cardNumber}
-                                cardHolder={cardData.cardholderName || infoClienteActual.fullName}
-                                expiryDate={cardData.expiryDate}
-                                cvv={cardData.cvv}
-                                isFlipped={isCVVFocused}
-                                cardType={detectCardType(cardData.cardNumber)}
-                                totalAmount={total}
-                            />
-
-                            {/* Tarjeta de resumen rápido debajo de la tarjeta 3D */}
-                            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-gray-200/80 dark:border-slate-700 shadow-sm text-xs space-y-2">
-                                <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-                                    <span>Destinatario:</span>
-                                    <span className="font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
-                                        {infoClienteActual.fullName}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-                                    <span>Destino de envío:</span>
-                                    <span className="font-semibold text-gray-800 dark:text-gray-200">
-                                        {infoClienteActual.city || 'Medellín'}, {infoClienteActual.state || 'Antioquia'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-700">
-                                    <span className="text-gray-500">Soporte D&amp;D Textil:</span>
-                                    <span className="font-mono font-semibold text-primary-600 dark:text-primary-400">
-                                        +57 {TELEFONO_TIENDA_FORMATO}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* COLUMNA DERECHA: Panel dinámico según la pasarela seleccionada */}
-                        <div className="lg:col-span-7" ref={contentRef} key={paymentMethod}>
-                            {/* 1. WOMPI BANCOLOMBIA */}
-                            {paymentMethod === 'wompi' && (
-                                <div className="card p-6 md:p-8 bg-white dark:bg-slate-800 shadow-xl rounded-2xl border border-gray-100 dark:border-slate-700">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-slate-700 gap-4">
+                    {/* Contenedor Principal de Pago con Borde Animado */}
+                    <div ref={contentRef} key={paymentMethod} className="max-w-3xl mx-auto">
+                        {/* OPCIÓN 1: PANEL WOMPI CORPORATIVO */}
+                        {paymentMethod === 'wompi' && (
+                            <div className="marco-panel-principal shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08)]">
+                                <div className="relative z-10 bg-white dark:bg-slate-800 rounded-[24px] p-7 sm:p-10 md:p-12">
+                                    {/* Cabecera del Panel Wompi */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-7 border-b border-slate-100 dark:border-slate-700/70">
                                         <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                            <div className="flex flex-wrap items-center gap-2.5">
+                                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                                                     Pagar con Wompi
                                                 </h2>
-                                                <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 px-2.5 py-0.5 rounded-full font-semibold">
-                                                    Grupo Bancolombia
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/50">
+                                                    Bancolombia
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                API Sandbox gratuita integrada con firma criptográfica SHA-256
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+                                                Transacciones locales inmediatas y libres de fraude
                                             </p>
                                         </div>
-                                        <LogoPasarelaPorId gateway="wompi" className="h-9" />
+
+                                        <LogoWompi className="h-8" />
                                     </div>
 
-                                    <div className="py-5 space-y-4">
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                            <div className="p-3 bg-gray-50 dark:bg-slate-700/40 rounded-xl text-center border border-gray-100 dark:border-slate-700">
-                                                <Smartphone className="w-5 h-5 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
-                                                <span className="text-xs font-semibold block text-gray-700 dark:text-gray-200">Nequi</span>
-                                                <span className="text-[10px] text-gray-400">Push al celular</span>
-                                            </div>
-                                            <div className="p-3 bg-gray-50 dark:bg-slate-700/40 rounded-xl text-center border border-gray-100 dark:border-slate-700">
-                                                <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
-                                                <span className="text-xs font-semibold block text-gray-700 dark:text-gray-200">Bancolombia</span>
-                                                <span className="text-[10px] text-gray-400">Botón Transferencia</span>
-                                            </div>
-                                            <div className="p-3 bg-gray-50 dark:bg-slate-700/40 rounded-xl text-center border border-gray-100 dark:border-slate-700">
-                                                <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-                                                <span className="text-xs font-semibold block text-gray-700 dark:text-gray-200">PSE</span>
-                                                <span className="text-[10px] text-gray-400">Todos los bancos</span>
-                                            </div>
-                                            <div className="p-3 bg-gray-50 dark:bg-slate-700/40 rounded-xl text-center border border-gray-100 dark:border-slate-700">
-                                                <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
-                                                <span className="text-xs font-semibold block text-gray-700 dark:text-gray-200">Tarjetas</span>
-                                                <span className="text-[10px] text-gray-400">Débito / Crédito</span>
-                                            </div>
-                                        </div>
+                                    {/* Sub-tarjetas de Métodos Habilitados (Nequi, Bancolombia, Tarjetas) con Borde Animado */}
+                                    <div className="py-8">
+                                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-4">
+                                            Métodos habilitados en esta orden:
+                                        </p>
 
-                                        <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-xs text-emerald-800 dark:text-emerald-300 space-y-1">
-                                            <div className="flex items-center gap-2 font-semibold">
-                                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                                                Integridad Criptográfica Garantizada (SHA-256)
-                                            </div>
-                                            <p className="text-emerald-700 dark:text-emerald-400 pl-6">
-                                                El precio y los metros son verificados directamente por nuestro servidor antes de autorizar el cobro.
-                                            </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            {SUBMETODOS_WOMPI.map((sub) => {
+                                                const SubIcon = sub.icon;
+                                                return (
+                                                    <div
+                                                        key={sub.nombre}
+                                                        className="marco-borde-animado marco-borde-inactivo"
+                                                    >
+                                                        <div className="relative z-10 flex flex-col items-center justify-center text-center p-5 rounded-[16px] bg-[#F9FAFB] dark:bg-slate-900/80 h-full">
+                                                            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-amber-200/60 dark:border-slate-700 flex items-center justify-center mb-3 shadow-2xs">
+                                                                <SubIcon className="w-8 h-8 icono-trazo-humano" />
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                                                                {sub.nombre}
+                                                            </span>
+                                                            <span className="text-xs text-slate-400 dark:text-slate-400 mt-1 font-normal">
+                                                                {sub.detalle}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                    {/* Nota de Integridad + Botón Principal */}
+                                    <div className="pt-6 border-t border-slate-100 dark:border-slate-700/70 space-y-5">
+                                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#F9FAFB] dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                            <p className="leading-relaxed">
+                                                Tu orden para <strong className="text-slate-800 dark:text-white">{infoClienteActual.fullName}</strong> ({infoClienteActual.city || 'Medellín'}) cuenta con firma de integridad <span className="font-mono text-[11px] text-slate-700 dark:text-slate-200">SHA-256</span> verificada en tiempo real.
+                                            </p>
+                                        </div>
+
                                         <button
                                             type="button"
-                                            onClick={() => abrirPasarelaAPI('wompi')}
+                                            onClick={() => abrirPasarelaInteractiva('wompi', 'Wompi Bancolombia')}
                                             disabled={isProcessing}
-                                            className="w-full btn-primary py-4 text-base font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 active:scale-[0.99] transition-transform disabled:opacity-50 cursor-pointer"
+                                            className="w-full py-4 px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-semibold text-base flex items-center justify-center gap-2.5 shadow-[0_12px_28px_-6px_rgba(234,88,12,0.35)] transition-all disabled:opacity-50 cursor-pointer"
                                         >
                                             <Lock className="w-4 h-4" />
-                                            <span>Abrir Pasarela Wompi Bancolombia ({formatCurrency(total)})</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 2. MERCADO PAGO CHECKOUT PRO */}
-                            {paymentMethod === 'mercadopago' && (
-                                <div className="card p-6 md:p-8 bg-white dark:bg-slate-800 shadow-xl rounded-2xl border border-sky-100 dark:border-slate-700">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-slate-700 gap-4">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                    Mercado Pago Checkout Pro
-                                                </h2>
-                                                <span className="text-xs bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 px-2.5 py-0.5 rounded-full font-semibold">
-                                                    API Developers Gratis
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                Paga con saldo en Mercado Pago, tarjetas hasta 12 cuotas, PSE o Efecty
-                                            </p>
-                                        </div>
-                                        <LogoPasarelaPorId gateway="mercadopago" className="h-9" />
-                                    </div>
-
-                                    <div className="py-5 space-y-4">
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                            <div className="p-3.5 rounded-xl bg-sky-50/70 dark:bg-slate-700/40 border border-sky-100 dark:border-slate-700">
-                                                <p className="font-bold text-sky-900 dark:text-sky-300 mb-1">Compra Protegida</p>
-                                                <p className="text-gray-600 dark:text-gray-400">Respaldo total hasta que recibas tus rollos de tela en tu taller.</p>
-                                            </div>
-                                            <div className="p-3.5 rounded-xl bg-sky-50/70 dark:bg-slate-700/40 border border-sky-100 dark:border-slate-700">
-                                                <p className="font-bold text-sky-900 dark:text-sky-300 mb-1">Sin costo de integración</p>
-                                                <p className="text-gray-600 dark:text-gray-400">Credenciales de prueba (`TEST-...`) gratuitas en Mercado Pago Developers.</p>
-                                            </div>
-                                            <div className="p-3.5 rounded-xl bg-sky-50/70 dark:bg-slate-700/40 border border-sky-100 dark:border-slate-700">
-                                                <p className="font-bold text-sky-900 dark:text-sky-300 mb-1">Aprobación al instante</p>
-                                                <p className="text-gray-600 dark:text-gray-400">Notificación automática Webhook / IPN para despachar el pedido hoy mismo.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
-                                        <button
-                                            type="button"
-                                            onClick={() => abrirPasarelaAPI('mercadopago')}
-                                            disabled={isProcessing}
-                                            className="w-full py-4 px-6 rounded-xl bg-[#009ee3] hover:bg-[#008ACA] text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg transition-colors cursor-pointer"
-                                        >
-                                            <Wallet className="w-5 h-5" />
-                                            <span>Pagar con Mercado Pago ({formatCurrency(total)})</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 3. NEQUI / DAVIPLATA / BRE-B DIRECTO */}
-                            {paymentMethod === 'nequi' && (
-                                <div className="card p-6 md:p-8 bg-white dark:bg-slate-800 shadow-xl rounded-2xl border border-purple-100 dark:border-slate-700">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-slate-700 gap-4">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                    Nequi / Daviplata / Llave Bre-B
-                                                </h2>
-                                                <span className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 px-2.5 py-0.5 rounded-full font-semibold">
-                                                    Inmediato • 0% Comisión
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                El método más rápido y frecuente en comercios textiles de Medellín
-                                            </p>
-                                        </div>
-                                        <LogoPasarelaPorId gateway="nequi" className="h-9" />
-                                    </div>
-
-                                    <div className="py-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                                        <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-gradient-to-br from-purple-900 to-indigo-950 text-white shadow-inner">
-                                            <span className="text-[11px] font-bold uppercase tracking-widest text-pink-300 mb-3">
-                                                Escanea con Nequi o tu Banco
+                                            <span>
+                                                {isProcessing
+                                                    ? 'Conectando de forma segura con Wompi...'
+                                                    : `Continuar a Wompi Seguro (${formatCurrency(total)})`}
                                             </span>
-                                            <div className="bg-white p-3 rounded-xl shadow-lg">
-                                                <img
-                                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-                                                        `NEQUI-DDTEXTIL-TEL:${TELEFONO_TIENDA}-MONTO:${Math.round(total)}`
-                                                    )}`}
-                                                    alt="Código QR Nequi D&D Textil"
-                                                    className="w-36 h-36 object-contain"
-                                                />
-                                            </div>
-                                            <p className="text-xs font-bold mt-3 text-white">
-                                                D&amp;D Textil Medellín
-                                            </p>
-                                            <p className="text-[11px] text-purple-200">
-                                                {CORREO_TIENDA}
-                                            </p>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <div className="p-4 rounded-xl bg-purple-50 dark:bg-slate-700/50 border border-purple-200 dark:border-slate-600">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                    Número Nequi / Daviplata / Llave celular:
-                                                </p>
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className="text-xl font-mono font-black text-purple-700 dark:text-purple-300">
-                                                        {TELEFONO_TIENDA_FORMATO}
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={copiarNumeroNequi}
-                                                        className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-purple-300 dark:border-slate-600 text-xs font-bold text-purple-700 dark:text-purple-300 inline-flex items-center gap-1.5 cursor-pointer"
-                                                    >
-                                                        {copiadoNequi ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                                        <span>{copiadoNequi ? 'Copiado' : 'Copiar'}</span>
-                                                    </button>
-                                                </div>
-                                                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1.5">
-                                                    Titular: <strong>D&amp;D Textil Medellín</strong>
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                                                    Referencia o últimos 4 dígitos del comprobante (opcional):
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={referenciaComprobante}
-                                                    onChange={(e) => setReferenciaComprobante(e.target.value)}
-                                                    placeholder="Ej. M1294820"
-                                                    className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 text-sm outline-none focus:border-purple-500"
-                                                />
-                                            </div>
-
-                                            <button
-                                                type="button"
-                                                disabled={isProcessing}
-                                                onClick={() => procesarPagoDirecto(`Nequi / Bre-B (${TELEFONO_TIENDA_FORMATO})`)}
-                                                className="w-full py-3.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
-                                            >
-                                                <CheckCircle2 className="w-4 h-4" />
-                                                <span>Ya transferí • Confirmar Pedido ({formatCurrency(total)})</span>
-                                            </button>
-
-                                            <a
-                                                href={`https://wa.me/57${TELEFONO_TIENDA}?text=${encodeURIComponent(
-                                                    `Hola D&D Textil, acabo de realizar un pago por ${formatCurrency(total)} para mi pedido de telas.`
-                                                )}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="w-full py-2.5 px-4 rounded-xl border border-emerald-500 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
-                                            >
-                                                <MessageCircle className="w-4 h-4" />
-                                                <span>Enviar comprobante al WhatsApp {TELEFONO_TIENDA_FORMATO}</span>
-                                            </a>
-                                        </div>
+                                        </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {/* 4. EPAYCO / PAYU (EFECTY, BALOTO, GANA ANTIOQUIA) */}
-                            {paymentMethod === 'epayco' && (
-                                <div className="card p-6 md:p-8 bg-white dark:bg-slate-800 shadow-xl rounded-2xl border border-orange-100 dark:border-slate-700">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-100 dark:border-slate-700 gap-4">
+                        {/* OPCIÓN 2: PANEL MERCADO PAGO CHECKOUT PRO */}
+                        {paymentMethod === 'mercadopago' && (
+                            <div className="marco-panel-principal shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08)]">
+                                <div className="relative z-10 bg-white dark:bg-slate-800 rounded-[24px] p-7 sm:p-10 md:p-12 space-y-7">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-700/70">
                                         <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                    ePayco / PayU (Efecty, Baloto y Gana)
+                                            <div className="flex items-center gap-2.5">
+                                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                                    Pagar con Mercado Pago
                                                 </h2>
-                                                <span className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 px-2.5 py-0.5 rounded-full font-semibold">
-                                                    Efectivo &amp; Multicaja
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/60 dark:bg-sky-950/50 dark:text-sky-300">
+                                                    Checkout Pro
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                Ideal para clientes que prefieren pagar en efectivo en puntos Gana (Antioquia), Efecty, Baloto o SuRed
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+                                                Paga con saldo en cuenta, tarjetas hasta en 12 cuotas o Efecty con Compra Protegida
                                             </p>
                                         </div>
-                                        <LogoPasarelaPorId gateway="epayco" className="h-9" />
+                                        <LogoMercadoPago className="h-8" />
                                     </div>
 
-                                    <div className="py-5 space-y-4">
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-                                            <div className="p-3 rounded-xl bg-amber-50 dark:bg-slate-700/40 border border-amber-200 dark:border-slate-700 font-bold text-amber-800 dark:text-amber-300">
-                                                Efecty
-                                                <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Convenio 110452</span>
-                                            </div>
-                                            <div className="p-3 rounded-xl bg-blue-50 dark:bg-slate-700/40 border border-blue-200 dark:border-slate-700 font-bold text-blue-800 dark:text-blue-300">
-                                                Gana Antioquia
-                                                <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Todo Medellín</span>
-                                            </div>
-                                            <div className="p-3 rounded-xl bg-red-50 dark:bg-slate-700/40 border border-red-200 dark:border-slate-700 font-bold text-red-800 dark:text-red-300">
-                                                Baloto
-                                                <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Red Nacional</span>
-                                            </div>
-                                            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-slate-700/40 border border-emerald-200 dark:border-slate-700 font-bold text-emerald-800 dark:text-emerald-300">
-                                                SuRed / PagaTodo
-                                                <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Aprobación en línea</span>
-                                            </div>
-                                        </div>
+                                    <div className="max-w-md mx-auto">
+                                        <CardPreview
+                                            gateway="mercadopago"
+                                            cardHolder={infoClienteActual.fullName}
+                                            totalAmount={total}
+                                        />
                                     </div>
 
-                                    <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                    <div className="pt-2">
                                         <button
                                             type="button"
-                                            onClick={() => abrirPasarelaAPI('epayco')}
+                                            onClick={() => abrirPasarelaInteractiva('mercadopago', 'Mercado Pago Checkout Pro')}
                                             disabled={isProcessing}
-                                            className="w-full py-4 px-6 rounded-xl bg-[#ff5a00] hover:bg-[#e04800] text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg transition-colors cursor-pointer"
+                                            className="w-full py-4 px-6 rounded-2xl bg-[#009EE3] hover:bg-[#008ACA] active:scale-[0.99] text-white font-semibold text-base flex items-center justify-center gap-2.5 shadow-[0_12px_28px_-6px_rgba(0,158,227,0.35)] transition-all disabled:opacity-50 cursor-pointer"
                                         >
-                                            <Banknote className="w-5 h-5" />
-                                            <span>Generar Pin o Pagar con ePayco ({formatCurrency(total)})</span>
+                                            <ShieldCheck className="w-5 h-5" />
+                                            <span>
+                                                {isProcessing
+                                                    ? 'Abriendo Checkout Pro...'
+                                                    : `Pagar con Mercado Pago (${formatCurrency(total)})`}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {/* 5. TARJETA DE CRÉDITO / DÉBITO DIRECTA */}
-                            {paymentMethod === 'card' && (
-                                <div className="card p-6 md:p-8 bg-white dark:bg-slate-800 shadow-xl rounded-2xl">
-                                    <h2 className="text-2xl font-bold mb-1.5">Datos de la Tarjeta</h2>
-                                    <p className="text-xs text-gray-500 mb-5">
-                                        Observa cómo la tarjeta 3D a la izquierda refleja tus datos en tiempo real y gira automáticamente al ingresar el CVV.
-                                    </p>
-                                    <FormularioPago
-                                        onSubmit={() => procesarPagoDirecto('Tarjeta de Crédito / Débito')}
-                                        onCardDataChange={handleCardDataChange}
-                                        onCVVFocus={() => setIsCVVFocused(true)}
-                                        onCVVBlur={() => setIsCVVFocused(false)}
-                                        isProcessing={isProcessing}
-                                    />
-                                </div>
-                            )}
-
-                            {/* 6. PSE DÉBITO BANCARIO O CONTRAENTREGA MEDELLÍN */}
-                            {paymentMethod === 'pse' && (
-                                <div className="card p-6 md:p-8 bg-white dark:bg-slate-800 shadow-xl rounded-2xl">
-                                    <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-slate-700/60 rounded-xl mb-6">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSubmodoPse('pse')}
-                                            className={`py-2.5 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                submodoPse === 'pse'
-                                                    ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm'
-                                                    : 'text-gray-600 dark:text-gray-300'
-                                            }`}
-                                        >
-                                            PSE (Transferencia Bancaria)
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSubmodoPse('contraentrega')}
-                                            className={`py-2.5 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                submodoPse === 'contraentrega'
-                                                    ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm'
-                                                    : 'text-gray-600 dark:text-gray-300'
-                                            }`}
-                                        >
-                                            Pago Contraentrega (Medellín)
-                                        </button>
-                                    </div>
-
-                                    {submodoPse === 'pse' ? (
-                                        <>
-                                            <h2 className="text-2xl font-bold mb-2">Pago con PSE (ACH Colombia)</h2>
-                                            <p className="text-xs text-gray-500 mb-6">
-                                                Débito directo desde tu cuenta de ahorros o corriente en cualquier banco del país.
-                                            </p>
-                                            <PSEForm
-                                                onSubmit={(datosPse) =>
-                                                    procesarPagoDirecto(`PSE (${datosPse?.bank || 'Banco Nacional'})`)
-                                                }
-                                                isProcessing={isProcessing}
-                                            />
-                                        </>
-                                    ) : (
-                                        <div className="space-y-5">
-                                            <div className="flex items-start gap-3.5 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60">
-                                                <Truck className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                                                <div>
-                                                    <h3 className="font-bold text-amber-900 dark:text-amber-200 text-sm">
-                                                        Pago Contraentrega en Medellín y Área Metropolitana
-                                                    </h3>
-                                                    <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 leading-relaxed">
-                                                        Paga en efectivo o con datáfono móvil cuando nuestro mensajero entregue tus telas en la dirección indicada. Para confirmar el despacho nos comunicaremos contigo al WhatsApp.
-                                                    </p>
-                                                </div>
+                        {/* OPCIÓN 3: PANEL NEQUI / BRE-B TRANSFERENCIA QR */}
+                        {paymentMethod === 'nequi' && (
+                            <div className="marco-panel-principal shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08)]">
+                                <div className="relative z-10 bg-white dark:bg-slate-800 rounded-[24px] p-7 sm:p-10 md:p-12 space-y-7">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-700/70">
+                                        <div>
+                                            <div className="flex items-center gap-2.5">
+                                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                                    Nequi • Daviplata • Llave Bre-B
+                                                </h2>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200/60 dark:bg-pink-950/50 dark:text-pink-300">
+                                                    0% Comisión
+                                                </span>
                                             </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+                                                Transferencia directa inmediata a la cuenta oficial de D&amp;D Textil Medellín
+                                            </p>
+                                        </div>
+                                        <LogoNequi className="h-8" />
+                                    </div>
 
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center p-5 rounded-2xl bg-[#F9FAFB] dark:bg-slate-900/55 border border-slate-200/70 dark:border-slate-700">
+                                        <div className="space-y-2">
+                                            <span className="text-[11px] font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400">
+                                                Línea Nequi / Bre-B Oficial
+                                            </span>
+                                            <p className="text-2xl font-mono font-extrabold text-slate-900 dark:text-white">
+                                                302 705 8951
+                                            </p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                Titular: D&amp;D Textil Medellín
+                                            </p>
                                             <button
                                                 type="button"
-                                                disabled={isProcessing}
-                                                onClick={() => procesarPagoDirecto('Pago Contraentrega (Medellín)')}
-                                                className="w-full btn-primary py-4 text-base font-bold flex items-center justify-center gap-2 cursor-pointer"
+                                                onClick={copiarCelularNequi}
+                                                className="mt-1 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-orange-400 transition-colors cursor-pointer"
                                             >
-                                                <Truck className="w-5 h-5" />
-                                                <span>Confirmar Pedido Contraentrega ({formatCurrency(total)})</span>
+                                                {copiadoNequi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                                <span>{copiadoNequi ? 'Número copiado' : 'Copiar número'}</span>
                                             </button>
                                         </div>
-                                    )}
+
+                                        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 text-center">
+                                            <QrCode className="w-16 h-16 text-[#20002C] dark:text-pink-400 mb-1.5" />
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                                QR Interoperable Bre-B
+                                            </span>
+                                            <span className="text-[11px] text-slate-400">
+                                                Monto exacto: {formatCurrency(total)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+                                                Código de comprobante Nequi (opcional en modo prueba):
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={comprobanteNequi}
+                                                onChange={(e) => setComprobanteNequi(e.target.value)}
+                                                placeholder="Ej. M1294850"
+                                                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-orange-500"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                procesarPagoDirecto(
+                                                    `Nequi / Bre-B (${comprobanteNequi ? `Ref ${comprobanteNequi}` : '302 705 8951'})`
+                                                )
+                                            }
+                                            disabled={isProcessing}
+                                            className="w-full py-4 px-6 rounded-2xl bg-[#FF0080] hover:bg-[#d9006c] active:scale-[0.99] text-white font-semibold text-base flex items-center justify-center gap-2.5 shadow-[0_12px_28px_-6px_rgba(255,0,128,0.35)] transition-all disabled:opacity-50 cursor-pointer"
+                                        >
+                                            <CheckCircle2 className="w-5 h-5" />
+                                            <span>
+                                                {isProcessing
+                                                    ? 'Verificando transferencia...'
+                                                    : `Confirmar Pago Nequi (${formatCurrency(total)})`}
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
+
+                        {/* OPCIÓN 4: PAGO CON TARJETA CRÉDITO / DÉBITO */}
+                        {paymentMethod === 'card' && (
+                            <div className="marco-panel-principal shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08)]">
+                                <div className="relative z-10 bg-white dark:bg-slate-800 rounded-[24px] p-7 sm:p-10 md:p-12 space-y-8">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700/70 pb-5">
+                                        <div>
+                                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                                Pago con Tarjeta de Crédito o Débito
+                                            </h2>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                                Procesamiento seguro compatible con Visa, Mastercard y American Express
+                                            </p>
+                                        </div>
+                                        <LogoTarjetas cardType={detectCardType(cardData.cardNumber)} className="h-7" />
+                                    </div>
+
+                                    <div className="max-w-md mx-auto">
+                                        <CardPreview
+                                            gateway="card"
+                                            cardNumber={cardData.cardNumber}
+                                            cardHolder={cardData.cardholderName || infoClienteActual.fullName}
+                                            expiryDate={cardData.expiryDate}
+                                            cvv={cardData.cvv}
+                                            isFlipped={isCVVFocused}
+                                            cardType={detectCardType(cardData.cardNumber)}
+                                            totalAmount={total}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <FormularioPago
+                                            onSubmit={() => procesarPagoDirecto('Tarjeta de Crédito / Débito')}
+                                            onCardDataChange={handleCardDataChange}
+                                            onCVVFocus={() => setIsCVVFocused(true)}
+                                            onCVVBlur={() => setIsCVVFocused(false)}
+                                            isProcessing={isProcessing}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Badges de Seguridad al pie */}
-                    <div className="max-w-3xl mx-auto mt-10 text-center">
-                        <div className="inline-flex flex-wrap items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    {/* Pie de Certificación de Seguridad */}
+                    <div className="max-w-2xl mx-auto mt-10 text-center">
+                        <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400 shadow-2xs">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                             <span>
-                                Pasarelas verificadas: Wompi Bancolombia • Mercado Pago • Nequi / Bre-B • ePayco • PSE ACH • Cifrado TLS 256-bit
+                                Transacción cifrada de extremo a extremo (TLS 256-bit) • Estándar PCI-DSS v4.0
                             </span>
                         </div>
                     </div>

@@ -27,7 +27,6 @@ const CONFIG_PASARELAS = {
         metodosInternos: [
             { id: 'nequi_wompi', label: 'Nequi Push', desc: 'Notificación al celular', icon: Smartphone },
             { id: 'bancolombia_transfer', label: 'Botón Bancolombia', desc: 'Ahorros o Corriente', icon: Building2 },
-            { id: 'pse_wompi', label: 'PSE Todos los Bancos', desc: 'Débito inmediato ACH', icon: DollarSign },
             { id: 'card_wompi', label: 'Tarjeta Crédito / Débito', desc: 'Visa, Mastercard, Amex', icon: CreditCard },
         ],
     },
@@ -40,21 +39,7 @@ const CONFIG_PASARELAS = {
         metodosInternos: [
             { id: 'mp_wallet', label: 'Dinero en Mercado Pago', desc: 'Aprobación instantánea', icon: Wallet },
             { id: 'mp_card', label: 'Tarjeta hasta 12 cuotas', desc: 'Visa, Mastercard, Codensa', icon: CreditCard },
-            { id: 'mp_pse', label: 'Transferencia PSE', desc: 'Todos los bancos en Colombia', icon: Building2 },
             { id: 'mp_efecty', label: 'Efecty sin comisión', desc: 'Con código de convenio', icon: Banknote },
-        ],
-    },
-    epayco: {
-        nombre: 'ePayco / PayU Colombia',
-        subtitulo: 'Pasarela Multicaja & Efectivo Nacional',
-        colorHeader: 'from-[#ff5a00] to-[#e04800]',
-        acento: 'bg-[#ff5a00] hover:bg-[#e04800] text-white',
-        prefijoTx: 'EPAYCO-CO-',
-        metodosInternos: [
-            { id: 'efecty_pin', label: 'Efecty / Baloto', desc: 'Convenio 110452 sin costo extra', icon: Banknote },
-            { id: 'gana_antioquia', label: 'Gana (Antioquia) / SuRed', desc: 'Puntos físicos en Medellín', icon: Building2 },
-            { id: 'epayco_pse', label: 'PSE / Daviplata', desc: 'Confirmación en línea', icon: Smartphone },
-            { id: 'epayco_card', label: 'Tarjetas / SafetyPay', desc: 'Nacionales e internacionales', icon: CreditCard },
         ],
     },
 };
@@ -69,7 +54,7 @@ function ModalPasarelaInteractiva({
     const config = CONFIG_PASARELAS[gateway] || CONFIG_PASARELAS.wompi;
     const [metodoElegido, setMetodoElegido] = useState(config.metodosInternos[0].id);
     const [celularNequi, setCelularNequi] = useState(orderInfo?.customerInfo?.phone || '3027058951');
-    const [bancoPse, setBancoPse] = useState('Bancolombia');
+    const [bancoSeleccionado, setBancoSeleccionado] = useState('Bancolombia');
     const [etapa, setEtapa] = useState('seleccion'); // 'seleccion' | 'procesando' | 'aprobado'
     const [copiado, setCopiado] = useState(false);
     const [txId, setTxId] = useState('');
@@ -208,24 +193,18 @@ function ModalPasarelaInteractiva({
                                 </div>
                             )}
 
-                            {(metodoElegido.includes('pse') || metodoElegido.includes('bancolombia')) && (
+                            {metodoElegido.includes('bancolombia') && (
                                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 space-y-2">
                                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                        Entidad financiera (Sandbox ACH Colombia):
+                                        Tipo de cuenta Bancolombia (Sandbox):
                                     </label>
                                     <select
-                                        value={bancoPse}
-                                        onChange={(e) => setBancoPse(e.target.value)}
+                                        value={bancoSeleccionado}
+                                        onChange={(e) => setBancoSeleccionado(e.target.value)}
                                         className="w-full px-3.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 text-sm text-gray-900 dark:text-white outline-none focus:border-primary-500"
                                     >
-                                        <option value="Bancolombia">Bancolombia</option>
-                                        <option value="Nequi">Nequi</option>
-                                        <option value="Davivienda">Banco Davivienda</option>
-                                        <option value="Daviplata">Daviplata</option>
-                                        <option value="Banco de Bogotá">Banco de Bogotá</option>
-                                        <option value="BBVA Colombia">BBVA Colombia</option>
-                                        <option value="Nu Colombia">Nu Colombia</option>
-                                        <option value="Lulo Bank">Lulo Bank</option>
+                                        <option value="Bancolombia">Cuenta de Ahorros Bancolombia</option>
+                                        <option value="Corriente">Cuenta Corriente Bancolombia</option>
                                     </select>
                                 </div>
                             )}
