@@ -425,3 +425,17 @@ Al desplegar **D&D Textil** en entornos de pruebas o producción, tenga en cuent
 | :--- | :--- | :--- |
 | `SESSION_SECRET` | Backend Java (`TokenSesion`) | Llave secreta de mínimo 32 bytes para firmar tokens de sesión con `HmacSHA256`. Si no se define en desarrollo local, el servidor genera una llave aleatoria criptográfica (`SecureRandom`) al arrancar e invalida sesiones previas al reiniciar. |
 | `VITE_ENABLE_DEMO_ACCOUNTS` | Frontend React (`IniciarSesion.jsx`) | Cuando es `true` en desarrollo local, habilita los botones de acceso rápido (**Cliente**, **Vendedor**, **Admin**) y permite sesiones locales de demostración. En producción debe omitirse o fijarse en `false`. |
+
+### Verificación Rápida de Compilación sobre OpenJDK 21 LTS
+
+Para validar localmente la compilación del backend y las 4 suites de pruebas sin requerir demonios externos:
+
+```bash
+cd "tienda digital de telas/backend-java/servidor-api"
+mkdir -p bin
+javac -encoding UTF-8 -cp "lib/*" -d bin $(find src -name "*.java")
+java -ea -cp "bin:lib/*" PruebasReglasNegocioTextil
+java -ea -cp "bin:lib/*" PruebasSeguridadIntegridad
+java -ea -cp "bin:lib/*" PruebasConcurrenciaYPagos
+java -ea -cp "bin:lib/*" PruebasContratoApi
+```
