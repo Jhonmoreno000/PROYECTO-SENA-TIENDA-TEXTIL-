@@ -128,8 +128,8 @@ export const confirmarPagoWompi = async ({ referencia, transaccionId, metodoPago
             referencia,
             transaccionId,
             metodoPago,
-            estadoPago
-        })
+            estadoPago,
+        }),
     });
     const datos = await respuesta.json().catch(() => ({}));
     if (!respuesta.ok) {

@@ -9,7 +9,6 @@ import CheckoutForm from '../componentes/CheckoutForm';
 import ResumenPedido from '../componentes/ResumenPedido';
 import { useCarrito } from '../contextos/ContextoCarrito';
 import { useAutenticacion } from '../contextos/ContextoAutenticacion';
-import { useMetricas } from '../contextos/ContextoMetricas';
 
 gsap.registerPlugin(useGSAP);
 
@@ -17,7 +16,6 @@ function Pago() {
     const navigate = useNavigate();
     const { cartItems, getCartTotal, appliedCoupon } = useCarrito();
     const { user } = useAutenticacion();
-    const { systemConfig } = useMetricas();
     const headerRef = useRef(null);
 
     const [formData, setFormData] = useState({
@@ -59,9 +57,7 @@ function Pago() {
             discountAmount = Math.min(discountAmount, subtotal);
         }
         const discountedSubtotal = subtotal - discountAmount;
-        const freeShippingThreshold = Number(systemConfig?.freeShippingThreshold || 200000);
-        const shippingCost = Number(systemConfig?.shippingCost || 15000);
-        const shipping = discountedSubtotal >= freeShippingThreshold ? 0 : shippingCost;
+        const shipping = discountedSubtotal >= 100000 ? 0 : 15000;
         const tax = discountedSubtotal * 0.19;
         const total = discountedSubtotal + shipping + tax;
 
