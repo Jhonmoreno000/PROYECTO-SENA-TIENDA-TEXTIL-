@@ -171,3 +171,13 @@ if (pruebasFallidas > 0) {
 } else {
     process.exit(0);
 }
+
+ejecutarPrueba('Referencia de pago debe cumplir estructura PED-{id}-{timestamp}', () => {
+    const ref = generarReferenciaPedido(1042, 1711929600000);
+    assert.strictEqual(ref, 'PED-1042-1711929600000');
+});
+
+ejecutarPrueba('generarReferenciaPedido sin timestamp explícito debe usar marca de tiempo numérica', () => {
+    const ref = generarReferenciaPedido(2050);
+    assert.match(ref, /^PED-2050-\d+$/);
+});
