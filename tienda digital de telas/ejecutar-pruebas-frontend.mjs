@@ -201,3 +201,9 @@ ejecutarPrueba('formatCurrency(-5000) debe conservar el signo negativo y sufijo 
     const resultado = formatCurrency(-5000);
     assert.ok(resultado.includes('-5.000') && resultado.endsWith('COP'));
 });
+
+ejecutarPrueba('Un objeto de usuario vacío sin token ni marca local no debe tener sesión vigente', () => {
+    assert.strictEqual(sesionVigente({}, 1_700_000_000_000), false);
+});
+
+ejecutarPrueba('Un token con caracteres UTF-8 acentuados en su carga debe decodificarse y validarse correctamente', () => {
