@@ -637,3 +637,17 @@ Para respaldar el control de acceso basado en roles (RBAC) desde la capa de dato
 
 - **Consulta por Cliente (`obtenerPedidosPorCliente(int idCliente)`):** filtra directamente sobre la tabla `pedidos` mediante `WHERE id_cliente = ? ORDER BY fecha_creacion DESC`, evitando transferir registros de terceros a la memoria de la JVM.
 - **Consulta por Vendedor (`obtenerPedidosPorVendedor(int idVendedor)` y `obtenerPedidoParaVendedor(int idPedido, int idVendedor)`):** verifica la existencia de líneas en `articulos_pedido ap INNER JOIN productos pr ON ap.id_producto = pr.id WHERE pr.id_vendedor = ?` y carga exclusivamente los artículos de ese vendedor, garantizando confidencialidad comercial entre distintos distribuidores del marketplace.
+
+### Tabla `notificaciones_sistema` (Centro de Notificaciones Operativas)
+
+Registra las alertas internas generadas por eventos de negocio (nuevos pedidos, cambios de estado logístico, tickets de soporte y alertas de stock) asociadas a cada usuario o globales:
+
+| Columna | Tipo SQL | Restricciones | Descripción |
+| :--- | :--- | :--- | :--- |
+| `id` | `SERIAL` | `PRIMARY KEY` | Identificador único de la notificación. |
+| `usuario_id` | `INT` | `REFERENCES usuarios(id) ON DELETE CASCADE` | Usuario destinatario (`NULL` para avisos globales de rol). |
+| `tipo` | `VARCHAR(50)` | `DEFAULT 'sistema'` | Categoría del evento (`pedido`, `soporte`, `inventario`, `sistema`). |
+| `titulo` | `VARCHAR(200)` | `NOT NULL` | Encabezado resumido de la alerta. |
+| `mensaje` | `TEXT` | `NULL` | Detalle descriptivo del evento operativo. |
+| `leida` | `BOOLEAN` | `DEFAULT FALSE` | Estado de lectura en la bandeja del panel. |
+| `fecha_creacion` | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Marca temporal de emisión de la alerta. |
