@@ -218,3 +218,5 @@ El cuerpo documental oficial del sistema esta estructurado de forma modular en l
 <sub>Proyecto formativo SENA · D&D Textil · Calidad ISO/IEC 25010 & DevSecOps</sub>
 
 </div>
+
+46 pruebas unitarias de utilidades, calculadora textil, pagos Wompi y sesiones

@@ -130,3 +130,5 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 ## Certificacion de Conformidad Tecnica
 
 La presente documentacion tecnica satisface la totalidad de los criterios de evaluacion tecnica para proyectos de software del Servicio Nacional de Aprendizaje (SENA) en el programa **ADSO**, garantizando rigor metodologico, coherencia arquitectonica e inmutabilidad operativa.
+
+102 casos de prueba automatizados (56 backend + 46 frontend)
