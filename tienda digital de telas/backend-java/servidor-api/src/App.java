@@ -9,6 +9,11 @@ import infraestructura.configuracion.ConfiguracionEntorno;
 public class App {
 
     /**
+     * Constructor privado para evitar la instanciación de la clase principal.
+     */
+    private App() {}
+
+    /**
      * Punto de entrada principal de la JVM.
      * Lee la configuración del entorno y arranca el {@link ServidorApi}.
      *
@@ -21,6 +26,7 @@ public class App {
         } catch (Exception e) {
             System.err.println("Error al iniciar el servidor de backend: " + e.getMessage());
             e.printStackTrace();
+            System.exit(1);
         }
     }
 }

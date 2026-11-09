@@ -97,7 +97,6 @@ function GestionarCarrusel() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('¿Eliminar este slide?')) return;
         try {
             const res = await fetch(getApiUrl(`/api/carrusel/${id}`), { method: 'DELETE' });
             if (res.ok) {
@@ -171,7 +170,8 @@ function GestionarCarrusel() {
                 body: JSON.stringify(payload),
             });
             if (res.ok) {
-                setCarouselSlides(prev => [...prev, normalizarSlide({ ...payload, id: Date.now() })]);
+                const saved = await res.json().catch(() => ({}));
+                setCarouselSlides(prev => [...prev, normalizarSlide({ ...payload, id: saved.id })]);
                 setIsAdding(false);
                 setNewSlide({ title: '', subtitle: '', image: '', cta: '', sectionKey: '' });
                 showNotification('success', 'Slide agregado');

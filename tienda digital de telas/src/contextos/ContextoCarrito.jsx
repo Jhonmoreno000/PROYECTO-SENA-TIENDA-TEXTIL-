@@ -14,8 +14,9 @@
  *  const { cartItems, addToCart, removeFromCart } = useCarrito();
  */
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage'; // Guarda datos en el navegador automáticamente
+import { useMetricas } from './ContextoMetricas';
 
 // Creamos el contexto del carrito para compartirlo con toda la app
 const ContextoCarrito = createContext();
@@ -36,6 +37,7 @@ export function useCarrito() {
  * Envuelve la aplicación para que el carrito esté disponible en todas las pantallas.
  */
 export function CartProvider({ children }) {
+    const { systemConfig } = useMetricas();
     // Lista de productos en el carrito (se guarda automáticamente en el navegador)
     const [cartItems, setCartItems] = useLocalStorage('cart', []);
     // Cupón de descuento aplicado actualmente (si hay alguno)
@@ -48,7 +50,13 @@ export function CartProvider({ children }) {
      * @param {Object} product  - Objeto del producto a agregar
      * @param {number} quantity - Cantidad de metros a agregar (por defecto 1)
      */
-    const addToCart = (product, quantity = 1) => {
+    const getProductQuantity = useCallback((productId) => {
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        const item = items.find((item) => item.id === productId);
+        return item ? Number(item.quantity) || 0 : 0;
+    }, [cartItems]);
+
+    const addToCart = useCallback((product, quantity = 1) => {
         const maxStock = Number(product.stock ?? product.existencias ?? 99);
         const qty = Number(quantity) || 1;
         if (maxStock <= 0) return false;
@@ -69,7 +77,18 @@ export function CartProvider({ children }) {
             return [...items, { ...product, quantity: qty }];
         });
         return true;
-    };
+    }, [getProductQuantity, setCartItems]);
+
+    /**
+     * removeFromCart — Quita un producto del carrito completamente
+     * @param {string|number} productId - ID del producto a eliminar
+     */
+    const removeFromCart = useCallback((productId) => {
+        setCartItems((prevItems) => {
+            const items = Array.isArray(prevItems) ? prevItems : [];
+            return items.filter((item) => item.id !== productId);
+        });
+    }, [setCartItems]);
 
     /**
      * updateQuantity — Cambia la cantidad de un producto en el carrito
@@ -77,7 +96,7 @@ export function CartProvider({ children }) {
      * @param {string|number} productId - ID del producto a modificar
      * @param {number} newQuantity      - Nueva cantidad deseada
      */
-    const updateQuantity = (productId, newQuantity) => {
+    const updateQuantity = useCallback((productId, newQuantity) => {
         const parsedQuantity = Number(newQuantity);
         if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
             removeFromCart(productId);
@@ -86,57 +105,55 @@ export function CartProvider({ children }) {
 
         setCartItems((prevItems) => {
             const items = Array.isArray(prevItems) ? prevItems : [];
-            return items.map((item) =>
-                item.id === productId ? { ...item, quantity: parsedQuantity } : item
-            );
+            return items.map((item) => {
+                if (item.id !== productId) return item;
+                const maxStock = Number(item.stock ?? item.existencias ?? 99);
+                const limitedQuantity = maxStock > 0 ? Math.min(parsedQuantity, maxStock) : parsedQuantity;
+                return { ...item, quantity: limitedQuantity };
+            });
         });
-    };
-
-    /**
-     * removeFromCart — Quita un producto del carrito completamente
-     * @param {string|number} productId - ID del producto a eliminar
-     */
-    const removeFromCart = (productId) => {
-        setCartItems((prevItems) => {
-            const items = Array.isArray(prevItems) ? prevItems : [];
-            return items.filter((item) => item.id !== productId);
-        });
-    };
+    }, [removeFromCart, setCartItems]);
 
     /**
      * clearCart — Vacía el carrito por completo y quita el cupón aplicado
      * Se llama después de completar una compra.
      */
-    const clearCart = () => {
+    const clearCart = useCallback(() => {
         setCartItems([]);
         setAppliedCoupon(null);
-    };
+    }, [setCartItems, setAppliedCoupon]);
+
+    useEffect(() => {
+        const handleLogout = () => clearCart();
+        window.addEventListener('auth-logout', handleLogout);
+        return () => window.removeEventListener('auth-logout', handleLogout);
+    }, [clearCart]);
 
     /**
      * getCartTotal — Calcula el precio total del carrito
      * Suma (precio × cantidad) de todos los productos.
      * @returns {number} Total en pesos colombianos
      */
-    const getCartTotal = () => {
+    const getCartTotal = useCallback(() => {
         const items = Array.isArray(cartItems) ? cartItems : [];
         return items.reduce((total, item) => total + Number(item.price ?? item.precio ?? 0) * (Number(item.quantity) || 0), 0);
-    };
+    }, [cartItems]);
 
     /**
      * getCartItemCount — Cuenta cuántos artículos hay en el carrito (suma de cantidades)
      * @returns {number} Total de unidades/metros en el carrito
      */
-    const getCartItemCount = () => {
+    const getCartItemCount = useCallback(() => {
         const items = Array.isArray(cartItems) ? cartItems : [];
         return items.reduce((count, item) => count + (Number(item.quantity) || 0), 0);
-    };
+    }, [cartItems]);
 
     /**
      * getOrderCalculations — Calcula descuento, envío, IVA y total
      * @param {Object} [coupon] - Cupón a usar (por defecto appliedCoupon)
      * @returns {{ subtotal, discount, afterDiscount, shipping, tax, total }}
      */
-    const getOrderCalculations = (coupon = appliedCoupon) => {
+    const getOrderCalculations = useCallback((coupon = appliedCoupon) => {
         const subtotal = getCartTotal();
         let discount = 0;
         if (coupon) {
@@ -148,35 +165,27 @@ export function CartProvider({ children }) {
             discount = Math.min(discount, subtotal);
         }
         const afterDiscount = subtotal - discount;
-        const shipping = afterDiscount >= 100000 ? 0 : 15000;
-        const tax = afterDiscount * 0.19;
+        const freeShippingThreshold = Number(systemConfig?.freeShippingThreshold ?? 200000);
+        const shippingCost = Number(systemConfig?.shippingCost ?? 15000);
+        const taxRate = Number(systemConfig?.taxRate ?? 0.19);
+        const shipping = afterDiscount >= freeShippingThreshold ? 0 : shippingCost;
+        const tax = afterDiscount * taxRate;
         const total = afterDiscount + shipping + tax;
         return { subtotal, discount, afterDiscount, shipping, tax, total };
-    };
+    }, [appliedCoupon, getCartTotal, systemConfig]);
 
     /**
      * isInCart — Verifica si un producto ya está en el carrito
      * @param {string|number} productId - ID del producto a verificar
      * @returns {boolean} true si está en el carrito, false si no
      */
-    const isInCart = (productId) => {
+    const isInCart = useCallback((productId) => {
         const items = Array.isArray(cartItems) ? cartItems : [];
         return items.some((item) => item.id === productId);
-    };
-
-    /**
-     * getProductQuantity — Obtiene la cantidad actual de un producto en el carrito
-     * @param {string|number} productId - ID del producto
-     * @returns {number} Cantidad en el carrito (0 si no está)
-     */
-    const getProductQuantity = (productId) => {
-        const items = Array.isArray(cartItems) ? cartItems : [];
-        const item = items.find((item) => item.id === productId);
-        return item ? Number(item.quantity) || 0 : 0;
-    };
+    }, [cartItems]);
 
     // Datos y funciones disponibles para todos los componentes que usen useCarrito()
-    const value = {
+    const value = useMemo(() => ({
         cartItems,           // Lista de productos en el carrito
         appliedCoupon,       // Cupón de descuento activo (o null)
         setAppliedCoupon,    // Función para aplicar/quitar un cupón
@@ -189,7 +198,20 @@ export function CartProvider({ children }) {
         getOrderCalculations,// Calcular descuento, envío, IVA, total
         isInCart,            // Saber si un producto ya está en el carrito
         getProductQuantity,  // Saber la cantidad de un producto específico
-    };
+    }), [
+        cartItems,
+        appliedCoupon,
+        setAppliedCoupon,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        getCartTotal,
+        getCartItemCount,
+        getOrderCalculations,
+        isInCart,
+        getProductQuantity,
+    ]);
 
     return <ContextoCarrito.Provider value={value}>{children}</ContextoCarrito.Provider>;
 }

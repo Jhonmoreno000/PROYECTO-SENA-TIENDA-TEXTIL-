@@ -53,36 +53,63 @@ export function identifyLowStock(batches = [], thresholds = []) {
 export function generateMovementHistory(batches = [], wasteEvents = [], orders = []) {
     const movements = [];
 
+    (batches || []).forEach(batch => {
+        const initialM = Number(batch.initialMeters ?? batch.metrosIniciales ?? 0);
+        if (initialM > 0 && (batch.entryDate || batch.fechaIngreso)) {
+            movements.push({
+                id: `entry-${batch.id}`,
+                date: batch.entryDate || batch.fechaIngreso,
+                type: 'entry',
+                tipo: 'ingreso',
+                user: batch.supplier || batch.proveedor || 'Proveedor',
+                rollId: batch.batchCode || batch.codigoLote || String(batch.id),
+                fabricType: batch.fabricType || batch.tipoTela || 'Tela',
+                metersChanged: initialM,
+                reason: `Ingreso de lote ${batch.batchCode || batch.id}`,
+                status: 'completed'
+            });
+        }
+    });
+
     (wasteEvents || []).forEach(event => {
-        const bId = event.rollId || event.loteId || event.idProducto;
-        const batch = (batches || []).find(b => b.id === bId);
+        const bId = event.batchId || event.rollId || event.loteId || event.idProducto;
+        const batch = (batches || []).find(b => String(b.id) === String(bId) || String(b.batchCode) === String(bId));
         const meters = Number(event.meters ?? event.metros ?? event.metrosPerdidos ?? 0);
 
         movements.push({
             id: `waste-${event.id}`,
-            date: event.date || event.fecha || event.fechaCreacion || new Date().toISOString(),
+            date: event.eventDate || event.date || event.fecha || event.fechaCreacion || new Date().toISOString(),
             type: 'waste',
             tipo: 'merma',
             user: event.responsible || event.responsable || 'Administrador',
-            rollId: bId,
-            fabricType: batch?.fabricType || batch?.tipoTela || 'Desconocido',
+            rollId: batch?.batchCode || bId || 'Sin lote',
+            fabricType: event.fabricType || batch?.fabricType || batch?.tipoTela || 'Desconocido',
             metersChanged: -meters,
-            reason: event.description || event.descripcion || event.motivo || 'Merma textil',
+            reason: event.notes || event.description || event.descripcion || event.reason || event.motivo || 'Merma textil',
             status: 'completed'
         });
     });
 
     (orders || []).forEach(order => {
         const oId = order.id;
+        const lineItems = Array.isArray(order.lineItems) ? order.lineItems : [];
+        const totalOrderMeters = Number(
+            order.totalMeters ||
+            lineItems.reduce((sum, li) => sum + Number(li.quantity ?? li.meters ?? 0), 0)
+        );
+        const fabricNames = Array.isArray(order.productNames) && order.productNames.length > 0
+            ? order.productNames.join(', ')
+            : (lineItems.map(li => li.name).filter(Boolean).join(', ') || 'Varios');
+
         movements.push({
             id: `sale-${oId}`,
             date: order.date || order.fecha || order.fechaCreacion || new Date().toISOString(),
             type: 'sale',
             tipo: 'venta',
-            user: `Cliente ID: ${order.clientId || order.idCliente || order.userId || 'General'}`,
-            rollId: 'Múltiples',
-            fabricType: 'Varios',
-            metersChanged: -Math.floor(Math.random() * 10 + 5),
+            user: order.client || order.clientName || `Cliente ID: ${order.clientId || order.idCliente || order.userId || 'General'}`,
+            rollId: `PED-${oId}`,
+            fabricType: fabricNames,
+            metersChanged: -totalOrderMeters,
             reason: `Pedido #${oId}`,
             status: order.status || order.estado || 'completed'
         });

@@ -8,7 +8,7 @@
  *
  * ¿Cómo funciona?
  *  1. Cuando el usuario escribe su correo y contraseña, llamamos a la API
- *     del backend Java (POST /api/login) para verificar que son correctos.
+ *     del backend Java (POST /api/iniciar-sesion) para verificar que son correctos.
  *  2. Si el login es exitoso, guardamos los datos del usuario en localStorage
  *     (la memoria del navegador) para que no se pierdan al recargar la página.
  *  3. Los datos del usuario están disponibles en toda la app a través del hook
@@ -20,14 +20,16 @@
  *  - 'admin'   → administrador del sistema
  */
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useNotificacion } from './ContextoNotificacion'; // Para mostrar mensajes de éxito o error
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { expiracionDeToken, sesionVigente } from '../utilidades/sesion';
 import { getApiUrl, RUTAS_API } from '../config';
 import LogoutLoader from '../componentes/common/LogoutLoader'; // Animación de carga al cerrar sesión
 
 // Creamos el contexto que va a compartir los datos de sesión con toda la app
 const ContextoAutenticacion = createContext();
+const MENSAJE_SESION_EXPIRADA = 'Tu sesión expiró. Inicia sesión de nuevo.';
 
 /**
  * useAutenticacion — Hook para usar el contexto de autenticación
@@ -48,11 +50,32 @@ export function useAutenticacion() {
  */
 export function AuthProvider({ children }) {
     // 'user' se guarda en localStorage para no perderlo al recargar la página
-    const [user, setUser] = useLocalStorage('authUser', null);
+    const [usuarioGuardado, setUser] = useLocalStorage('authUser', null);
+    const user = sesionVigente(usuarioGuardado) ? usuarioGuardado : null;
+    const tokenActualRef = useRef();
+    tokenActualRef.current = user?.token;
     // Estado para mostrar la animación de carga mientras se cierra la sesión
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     // Función para mostrar mensajes tipo toast (ej: "¡Bienvenido!")
     const { showNotification } = useNotificacion();
+
+    const invalidarSesion = useCallback((tokenRechazado) => {
+        if (tokenRechazado && tokenRechazado !== tokenActualRef.current) return;
+        setUser(null);
+        showNotification('info', MENSAJE_SESION_EXPIRADA);
+    }, [setUser, showNotification]);
+
+    useEffect(() => {
+        if (usuarioGuardado && !user) {
+            invalidarSesion();
+            return;
+        }
+        if (user?.token) {
+            const ms = expiracionDeToken(user.token) - Date.now();
+            const temporizador = setTimeout(() => invalidarSesion(user.token), Math.min(ms, 2147483647));
+            return () => clearTimeout(temporizador);
+        }
+    }, [usuarioGuardado, user, invalidarSesion]);
 
     /**
      * login — Inicia sesión enviando correo y contraseña al backend
@@ -87,10 +110,13 @@ export function AuthProvider({ children }) {
                 const nombreUsuario = rawUser.name || rawUser.nombre || 'Usuario';
                 const loggedInUser = {
                     ...rawUser,
+                    token: datos.token,
                     name: nombreUsuario,
                     nombre: nombreUsuario,
                     email: rawUser.email || rawUser.correo,
                     correo: rawUser.email || rawUser.correo,
+                    phone: rawUser.phone || rawUser.telefono || '',
+                    telefono: rawUser.telefono || rawUser.phone || '',
                     role: normalizedRole,
                     rol: normalizedRole
                 };
@@ -131,7 +157,8 @@ export function AuthProvider({ children }) {
                     email: userData.email || userData.correo,
                     correo: userData.email || userData.correo,
                     password: userData.password || userData.contrasena,
-                    contrasena: userData.password || userData.contrasena
+                    contrasena: userData.password || userData.contrasena,
+                    aceptaHabeasData: Boolean(userData.aceptaHabeasData)
                 })
             });
 
@@ -224,6 +251,7 @@ export function AuthProvider({ children }) {
                 const nombreUsuario = ssoData.nombre || ssoData.name || ('Usuario ' + (ssoData.proveedor || 'SSO'));
                 const loggedInUser = {
                     id: 9999,
+                    sesionLocal: true,
                     name: nombreUsuario,
                     nombre: nombreUsuario,
                     email: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
@@ -260,6 +288,13 @@ export function AuthProvider({ children }) {
         setIsLoggingOut(true);
         setTimeout(() => {
             setUser(null);           // Borramos el usuario del estado y del localStorage
+            try {
+                window.localStorage.removeItem('cart');
+                window.localStorage.removeItem('applied_coupon');
+                window.dispatchEvent(new Event('auth-logout'));
+            } catch (e) {
+                console.error('Error limpiando carrito en logout:', e);
+            }
             setIsLoggingOut(false);  // Ocultamos la animación de logout
             showNotification('info', 'Has cerrado sesión');
         }, 2500); // Esperamos 2.5 segundos para que se vea la animación
@@ -278,14 +313,21 @@ export function AuthProvider({ children }) {
         return user.role === roles;
     };
 
+    const updateUser = (updates) => {
+        setUser(prev => prev ? { ...prev, ...updates } : prev);
+    };
+
     // Todos los datos y funciones que estarán disponibles en la app
     const value = {
         user,                        // Objeto con los datos del usuario conectado (o null)
+        setUser,
+        updateUser,
         isAuthenticated: !!user,     // true si hay sesión activa, false si no
         login,                       // Función para iniciar sesión
         loginConSSO,                 // Función para iniciar sesión mediante SSO (Google / Microsoft)
         register,                    // Función para crear una cuenta
         logout,                      // Función para cerrar sesión
+        invalidarSesion,
         hasRole                      // Función para verificar permisos
     };
 

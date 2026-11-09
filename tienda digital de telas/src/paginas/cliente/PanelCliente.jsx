@@ -120,8 +120,8 @@ function PanelCliente() {
 
   const wishlistCount = wishlistItems.length;
 
-  // Productos recomendados (simulados tomando 3 al azar o los primeros 3)
-  const recommendedProducts = products?.filter(p => p.status === 'active').slice(0, 3) || [];
+  // Productos recomendados reales activos
+  const recommendedProducts = products?.filter(p => p.active !== false).slice(0, 3) || [];
 
   // ── Configuración de acciones rápidas ─────────────────────────────────────
   const quickActions = [
@@ -335,7 +335,7 @@ function PanelCliente() {
                           <p className="text-xs text-gray-500 font-medium mt-0.5">
                             {new Date(order.date).toLocaleDateString('es-CO', {
                               day: '2-digit', month: 'short', year: 'numeric'
-                            })} · {order.items?.length || 0} artículo(s)
+                            })} · {order.lineItems?.length || (Array.isArray(order.items) ? order.items.length : order.items) || 0} artículo(s)
                           </p>
                         </div>
                       </div>
@@ -415,12 +415,12 @@ function PanelCliente() {
                   recommendedProducts.map(product => (
                     <Link 
                       key={product.id} 
-                      to={`/catalogo/producto/${product.id}`}
+                      to={`/producto/${product.id}`}
                       className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
                     >
                       <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 relative">
                         <img 
-                          src={product.image} 
+                          src={product.images?.[0] || product.image || '/placeholder.webp'} 
                           alt={product.name} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />

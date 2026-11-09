@@ -14,8 +14,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     correo VARCHAR(150) NOT NULL UNIQUE,
+    telefono VARCHAR(50),
     contrasena_hash VARCHAR(255) NOT NULL,
-    rol VARCHAR(50) DEFAULT 'cliente',
+    rol VARCHAR(50) DEFAULT 'cliente' CHECK (rol IN ('administrador', 'vendedor', 'cliente')),
     activo BOOLEAN DEFAULT true,
     suspendido BOOLEAN DEFAULT false,
     motivo_suspension TEXT,
@@ -37,14 +38,14 @@ CREATE TABLE IF NOT EXISTS productos (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
     categoria_id INTEGER REFERENCES categorias(id) ON DELETE SET NULL,
-    precio NUMERIC(12,2) NOT NULL,
+    precio NUMERIC(12,2) NOT NULL CHECK (precio >= 0),
     vendedor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     descripcion TEXT,
     material VARCHAR(100),
     ancho VARCHAR(50),
     peso VARCHAR(50),
     cuidados TEXT,
-    stock INTEGER DEFAULT 0,
+    stock NUMERIC(10,2) DEFAULT 0.00 CHECK (stock >= 0),
     destacado BOOLEAN DEFAULT false,
     activo BOOLEAN DEFAULT true,
     estado_moderacion VARCHAR(50) DEFAULT 'approved',
@@ -70,8 +71,10 @@ CREATE TABLE IF NOT EXISTS lotes_inventario (
     producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
     numero_lote VARCHAR(50),
     metros_recibidos NUMERIC(10,2) NOT NULL,
+    metros_actuales NUMERIC(10,2),
     costo_por_metro NUMERIC(10,2) NOT NULL,
     proveedor VARCHAR(100),
+    estado VARCHAR(50) DEFAULT 'active',
     fecha_recepcion DATE DEFAULT CURRENT_DATE,
     notas TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -81,9 +84,13 @@ CREATE TABLE IF NOT EXISTS lotes_inventario (
 CREATE TABLE IF NOT EXISTS eventos_merma (
     id SERIAL PRIMARY KEY,
     producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
+    id_lote VARCHAR(50),
     metros_perdidos NUMERIC(10,2) NOT NULL,
     motivo VARCHAR(100) NOT NULL,
+    descripcion TEXT,
     impacto_costo NUMERIC(10,2),
+    responsable VARCHAR(100),
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -125,6 +132,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     nombre_cliente VARCHAR(150) NOT NULL,
     correo_cliente VARCHAR(150) NOT NULL,
     telefono_cliente VARCHAR(50),
+    documento_cliente VARCHAR(50),
     direccion_envio TEXT NOT NULL,
     ciudad_envio VARCHAR(100),
     departamento_envio VARCHAR(100),
@@ -137,6 +145,11 @@ CREATE TABLE IF NOT EXISTS pedidos (
     estado VARCHAR(50) DEFAULT 'pending',
     metodo_pago VARCHAR(50),
     estado_pago VARCHAR(50) DEFAULT 'pending',
+    referencia_pago VARCHAR(64) UNIQUE,
+    monto_centavos BIGINT,
+    moneda VARCHAR(3) DEFAULT 'COP',
+    wompi_transaccion_id VARCHAR(100),
+    pagado_en TIMESTAMP,
     numero_guia VARCHAR(100),
     notas TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -158,9 +171,10 @@ CREATE TABLE IF NOT EXISTS items_carrito (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-    cantidad INTEGER DEFAULT 1 NOT NULL,
+    cantidad NUMERIC(10,2) DEFAULT 1.00 NOT NULL CHECK (cantidad > 0),
     agregado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP
+    actualizado_en TIMESTAMP,
+    UNIQUE (usuario_id, producto_id)
 );
 
 -- 13. TABLA: resenas
@@ -170,15 +184,18 @@ CREATE TABLE IF NOT EXISTS resenas (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     calificacion INTEGER CHECK (calificacion >= 1 AND calificacion <= 5),
     comentario TEXT NOT NULL,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (producto_id, usuario_id)
 );
 
 -- 14. TABLA: tickets_soporte
 CREATE TABLE IF NOT EXISTS tickets_soporte (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
     nombre_usuario VARCHAR(100),
     correo_usuario VARCHAR(150),
+    categoria VARCHAR(100),
     asunto VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
     estado VARCHAR(50) DEFAULT 'open',
@@ -194,7 +211,12 @@ CREATE TABLE IF NOT EXISTS reportes_errores (
     id SERIAL PRIMARY KEY,
     vendedor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     nombre_vendedor VARCHAR(100),
+    correo_reportante VARCHAR(150),
+    titulo VARCHAR(200),
     area VARCHAR(100),
+    severidad VARCHAR(50),
+    producto_id INTEGER REFERENCES productos(id) ON DELETE SET NULL,
+    nombre_producto VARCHAR(200),
     descripcion TEXT NOT NULL,
     pasos TEXT,
     estado VARCHAR(50) DEFAULT 'new',
@@ -267,8 +289,10 @@ CREATE TABLE IF NOT EXISTS ventas_diarias (
 -- 22. TABLA: ventas_region
 CREATE TABLE IF NOT EXISTS ventas_region (
     id SERIAL PRIMARY KEY,
-    region VARCHAR(100) NOT NULL,
+    region VARCHAR(100) NOT NULL UNIQUE,
+    capital VARCHAR(100),
     ventas_totales NUMERIC(14,2) DEFAULT 0.00,
+    pedidos_totales INTEGER DEFAULT 0,
     porcentaje NUMERIC(5,2) DEFAULT 0.00,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -282,6 +306,14 @@ CREATE TABLE IF NOT EXISTS actividad_reciente (
     accion TEXT NOT NULL,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Índices en claves foráneas de alta frecuencia de consulta
+CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_id ON pedidos(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_items_pedido_pedido_id ON items_pedido(pedido_id);
+CREATE INDEX IF NOT EXISTS idx_items_carrito_usuario_id ON items_carrito(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_resenas_producto_id ON resenas(producto_id);
+CREATE INDEX IF NOT EXISTS idx_productos_vendedor_id ON productos(vendedor_id);
+CREATE INDEX IF NOT EXISTS idx_imagenes_producto_producto_id ON imagenes_producto(producto_id);
 
 -- ============================================================================
 -- DATOS INICIALES EN ESPAÑOL
@@ -317,8 +349,9 @@ INSERT INTO cupones (codigo, valor_descuento, usos_maximos, activo) VALUES
 ('BIENVENIDA20', 20.0, 50, true)
 ON CONFLICT (codigo) DO NOTHING;
 
-INSERT INTO banner_global (activo, mensaje, tipo_banner) VALUES
-(true, '¡Envío gratis en compras superiores a $200.000 COP a todo el país!', 'info');
+INSERT INTO banner_global (activo, mensaje, tipo_banner)
+SELECT true, '¡Envío gratis en compras superiores a $200.000 COP a todo el país!', 'info'
+WHERE NOT EXISTS (SELECT 1 FROM banner_global);
 
 INSERT INTO configuracion_sistema (clave, valor) VALUES
 ('system_config', '{"siteName":"D&D Textil","defaultDarkMode":false,"primaryColor":"#8B5CF6","secondaryColor":"#EC4899","accentColor":"#F59E0B","taxRate":0.19,"shippingCost":15000,"freeShippingThreshold":200000,"lowStockThreshold":20,"maintenanceMode":false}')
@@ -346,3 +379,49 @@ CREATE TABLE IF NOT EXISTS inventario_telas_erp (
     costo_por_metro NUMERIC(12,2) DEFAULT 0.00,
     fecha_ultima_reposicion DATE
 );
+
+-- 26. TABLA: rollos_textil
+CREATE TABLE IF NOT EXISTS rollos_textil (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    codigo_rollo VARCHAR(50) NOT NULL UNIQUE,
+    metraje_inicial NUMERIC(10,2) NOT NULL CHECK (metraje_inicial >= 0),
+    metraje_remanente NUMERIC(10,2) NOT NULL CHECK (metraje_remanente >= 0),
+    lote_tintoreria VARCHAR(50),
+    estado VARCHAR(50) DEFAULT 'disponible',
+    ubicacion_bodega VARCHAR(100),
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 27. TABLA: eventos_pago_wompi
+CREATE TABLE IF NOT EXISTS eventos_pago_wompi (
+    id SERIAL PRIMARY KEY,
+    referencia_pago VARCHAR(64),
+    transaccion_id VARCHAR(100),
+    estado VARCHAR(30),
+    origen VARCHAR(30),
+    resultado VARCHAR(60),
+    carga_util TEXT,
+    recibido_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 28. TABLA: direcciones_usuario
+CREATE TABLE IF NOT EXISTS direcciones_usuario (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    etiqueta VARCHAR(100) DEFAULT 'Casa',
+    nombre_destinatario VARCHAR(150),
+    telefono VARCHAR(50),
+    direccion TEXT NOT NULL,
+    ciudad VARCHAR(100),
+    departamento VARCHAR(100),
+    codigo_postal VARCHAR(20),
+    predeterminada BOOLEAN DEFAULT false,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_pedidos_referencia_pago ON pedidos(referencia_pago);
+CREATE INDEX IF NOT EXISTS idx_eventos_wompi_referencia ON eventos_pago_wompi(referencia_pago);
+CREATE INDEX IF NOT EXISTS idx_direcciones_usuario_id ON direcciones_usuario(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_rollos_textil_producto_id ON rollos_textil(producto_id);

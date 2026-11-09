@@ -120,10 +120,8 @@ function ConfiguracionSistema() {
     };
 
     const handleUndo = () => {
-        if (window.confirm('¿Deshacer todos los cambios no guardados?')) {
-            setConfig(originalConfig);
-            showNotification('info', 'Cambios revertidos al último estado guardado');
-        }
+        setConfig(originalConfig);
+        showNotification('info', 'Cambios revertidos al último estado guardado');
     };
 
     const handleSave = () => {

@@ -32,14 +32,26 @@ export const getTopProducts = (orders = [], products = [], limit = 5) => {
     const productSales = {};
 
     (orders || []).forEach(order => {
+        if (Array.isArray(order.lineItems) && order.lineItems.length > 0) {
+            order.lineItems.forEach(item => {
+                const pid = String(item.productId ?? item.id);
+                if (!productSales[pid]) {
+                    productSales[pid] = { count: 0, revenue: 0 };
+                }
+                productSales[pid].count += Number(item.quantity ?? item.meters ?? 1);
+                productSales[pid].revenue += Number(item.subtotal ?? 0);
+            });
+            return;
+        }
         const pIds = order.productIds || order.idsProductos || [];
         const total = Number(order.total ?? order.montoTotal ?? 0);
         pIds.forEach(productId => {
-            if (!productSales[productId]) {
-                productSales[productId] = { count: 0, revenue: 0 };
+            const pid = String(productId);
+            if (!productSales[pid]) {
+                productSales[pid] = { count: 0, revenue: 0 };
             }
-            productSales[productId].count += 1;
-            productSales[productId].revenue += (pIds.length > 0 ? total / pIds.length : total);
+            productSales[pid].count += 1;
+            productSales[pid].revenue += (pIds.length > 0 ? total / pIds.length : total);
         });
     });
 
@@ -47,7 +59,7 @@ export const getTopProducts = (orders = [], products = [], limit = 5) => {
         .map(([id, datos]) => {
             const product = (products || []).find(p => String(p.id) === String(id));
             return {
-                id: parseInt(id),
+                id: String(id),
                 name: product?.name || product?.nombre || 'Producto Desconocido',
                 sales: datos.count,
                 revenue: datos.revenue,

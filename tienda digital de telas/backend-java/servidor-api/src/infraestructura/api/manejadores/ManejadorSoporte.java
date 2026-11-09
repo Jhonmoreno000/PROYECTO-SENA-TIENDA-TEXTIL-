@@ -1,66 +1,63 @@
 package infraestructura.api.manejadores;
 
-import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import infraestructura.persistencia.jdbc.SoporteDAO;
+import com.sun.net.httpserver.HttpExchange;
 import dominio.modelos.ReporteError;
 import dominio.modelos.TicketSoporte;
+import infraestructura.persistencia.jdbc.SoporteDAO;
+import java.nio.charset.StandardCharsets;
 
 /**
- * Manejador para el módulo de soporte al cliente y reportes de errores.
- * Rutas base: /api/support y /api/soporte
- * Gestiona tickets de soporte y reportes de errores (bugs).
- * Soporta GET (listar), POST (crear) y PUT (actualizar estado).
+ * Controlador HTTP para el módulo de soporte al cliente y reportes de errores técnicos.
+ * Rutas base: `/api/support` y `/api/soporte`.
  */
 public class ManejadorSoporte extends ManejadorBase {
+    /** Objeto de acceso a datos para tickets y reportes (`SoporteDAO`). */
     private final SoporteDAO soporteDAO = new SoporteDAO();
+    /** Serializador JSON (`Gson`). */
     private final Gson gson = new Gson();
 
     /**
-     * Enruta la solicitud según el método HTTP y la ruta.
+     * Enruta las solicitudes `GET`, `POST` y `PUT` para consultar, crear o actualizar tickets y reportes de error.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error durante el procesamiento.
      */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         String metodo = intercambio.getRequestMethod();
         String ruta = intercambio.getRequestURI().getPath();
 
-        // GET — Consulta de tickets y reportes de errores
         if ("GET".equalsIgnoreCase(metodo)) {
-            if (ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets")) {
-                // GET lista de tickets de soporte
+            if (esRutaTickets(ruta)) {
                 enviarRespuestaJson(intercambio, 200, gson.toJson(soporteDAO.obtenerTodosLosTickets()));
-            } else if (ruta.startsWith("/api/support/bugs") || ruta.startsWith("/api/soporte/errores")) {
-                // GET lista de reportes de errores
+            } else if (esRutaReportes(ruta)) {
                 enviarRespuestaJson(intercambio, 200, gson.toJson(soporteDAO.obtenerTodosLosReportesError()));
             } else {
                 enviarRespuestaJson(intercambio, 404, "{}");
             }
 
-        // POST — Creación de nuevos tickets o reportes
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
-            if (ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets")) {
+            if (esRutaTickets(ruta)) {
                 TicketSoporte ticket = gson.fromJson(cuerpo, TicketSoporte.class);
                 boolean exito = soporteDAO.agregarTicket(ticket);
-                enviarRespuestaJson(intercambio, exito ? 201 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error guardando ticket\"}");
-            } else if (ruta.startsWith("/api/support/bugs") || ruta.startsWith("/api/soporte/errores")) {
+                enviarRespuestaJson(intercambio, exito ? 201 : 500,
+                        exito ? "{\"success\":true,\"id\":" + gson.toJson(ticket.getId()) + "}" : "{\"error\":\"Error guardando ticket\"}");
+            } else if (esRutaReportes(ruta)) {
                 ReporteError reporte = gson.fromJson(cuerpo, ReporteError.class);
                 boolean exito = soporteDAO.agregarReporteError(reporte);
-                enviarRespuestaJson(intercambio, exito ? 201 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error guardando reporte\"}");
+                enviarRespuestaJson(intercambio, exito ? 201 : 500,
+                        exito ? "{\"success\":true,\"id\":" + gson.toJson(reporte.getId()) + "}" : "{\"error\":\"Error guardando reporte\"}");
             } else {
                 enviarRespuestaJson(intercambio, 404, "{}");
             }
 
-        // PUT — Actualización del estado de tickets o reportes
         } else if ("PUT".equalsIgnoreCase(metodo)) {
-            InputStream flujoEntrada = intercambio.getRequestBody();
-            String cuerpo = new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
+            String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject objetoJson;
             try {
                 objetoJson = JsonParser.parseString(cuerpo).getAsJsonObject();
@@ -68,33 +65,40 @@ public class ManejadorSoporte extends ManejadorBase {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Cuerpo JSON inválido\"}");
                 return;
             }
-            
-            String estado = "open";
+
+            String estado = null;
             if (objetoJson.has("status") && !objetoJson.get("status").isJsonNull()) {
                 estado = objetoJson.get("status").getAsString();
             } else if (objetoJson.has("estado") && !objetoJson.get("estado").isJsonNull()) {
                 estado = objetoJson.get("estado").getAsString();
             }
 
-            String[] segmentosRuta = ruta.split("/");
-            int identificador = -1;
-            for (String segmento : segmentosRuta) {
-                if (segmento.matches("\\d+")) {
-                    identificador = Integer.parseInt(segmento);
-                    break;
-                }
+            Integer asignadoA = null;
+            if (objetoJson.has("assignedTo") && !objetoJson.get("assignedTo").isJsonNull()) {
+                try { asignadoA = objetoJson.get("assignedTo").getAsInt(); } catch (Exception ignored) {}
+            } else if (objetoJson.has("asignadoA") && !objetoJson.get("asignadoA").isJsonNull()) {
+                try { asignadoA = objetoJson.get("asignadoA").getAsInt(); } catch (Exception ignored) {}
             }
+
+            String prioridad = null;
+            if (objetoJson.has("priority") && !objetoJson.get("priority").isJsonNull()) {
+                prioridad = objetoJson.get("priority").getAsString();
+            } else if (objetoJson.has("prioridad") && !objetoJson.get("prioridad").isJsonNull()) {
+                prioridad = objetoJson.get("prioridad").getAsString();
+            }
+
+            int identificador = extraerIdRuta(ruta);
 
             if (identificador <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador no numérico o inválido en la ruta\"}");
                 return;
             }
 
-            if (ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets")) {
-                boolean exito = soporteDAO.actualizarEstadoTicket(identificador, estado);
+            if (esRutaTickets(ruta)) {
+                boolean exito = soporteDAO.actualizarTicket(identificador, estado, prioridad, asignadoA);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando ticket\"}");
-            } else if (ruta.startsWith("/api/support/bugs") || ruta.startsWith("/api/soporte/errores")) {
-                boolean exito = soporteDAO.actualizarEstadoReporteError(identificador, estado);
+            } else if (esRutaReportes(ruta)) {
+                boolean exito = soporteDAO.actualizarReporteError(identificador, estado, prioridad, asignadoA);
                 enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error actualizando reporte\"}");
             } else {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
@@ -102,5 +106,28 @@ public class ManejadorSoporte extends ManejadorBase {
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
+    }
+
+    /**
+     * Evalúa si la ruta corresponde al subrecurso de tickets de soporte.
+     *
+     * @param ruta Ruta URI (`String`).
+     * @return `true` si corresponde a tickets; `false` en caso contrario.
+     */
+    private boolean esRutaTickets(String ruta) {
+        return ruta.startsWith("/api/support/tickets") || ruta.startsWith("/api/soporte/tickets");
+    }
+
+    /**
+     * Evalúa si la ruta corresponde al subrecurso de reportes de error (`bugs`, `errores` o `reportes`).
+     *
+     * @param ruta Ruta URI (`String`).
+     * @return `true` si corresponde a reportes de error; `false` en caso contrario.
+     */
+    private boolean esRutaReportes(String ruta) {
+        return ruta.startsWith("/api/support/bugs")
+                || ruta.startsWith("/api/support/reports")
+                || ruta.startsWith("/api/soporte/errores")
+                || ruta.startsWith("/api/soporte/reportes");
     }
 }

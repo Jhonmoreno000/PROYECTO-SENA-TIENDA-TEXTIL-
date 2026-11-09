@@ -4,37 +4,59 @@ import dominio.modelos.Usuario;
 import dominio.repositorios.RepositorioUsuario;
 import dominio.excepciones.ExcepcionDominio;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Servicio de Autenticación de la capa de aplicación.
+ * Servicio de autenticación y seguridad de cuentas de la capa de aplicación.
+ * Gestiona el inicio de sesión tradicional, el registro con consentimiento de Habeas Data,
+ * la federación de identidad SSO (Google/Microsoft) y la validación preventiva PCI-DSS.
  */
 public class ServicioAutenticacion {
+
+    /** Puerto de persistencia (`RepositorioUsuario`) para consulta y registro de usuarios. */
     private final RepositorioUsuario repositorioUsuario;
+
+    /** Verificador criptográfico/HTTP (`VerificadorIdentidadSSO`) de tokens OAuth2 externos. */
     private final VerificadorIdentidadSSO verificadorSSO;
 
+    /**
+     * Construye el servicio de autenticación sin proveedor SSO externo.
+     *
+     * @param repositorioUsuario Repositorio de dominio ({@link RepositorioUsuario}) para acceso a usuarios.
+     */
     public ServicioAutenticacion(RepositorioUsuario repositorioUsuario) {
         this(repositorioUsuario, null);
     }
 
+    /**
+     * Construye el servicio de autenticación inyectando el repositorio de usuarios y el verificador SSO.
+     *
+     * @param repositorioUsuario Repositorio de dominio ({@link RepositorioUsuario}) para acceso a usuarios.
+     * @param verificadorSSO Implementación de {@link VerificadorIdentidadSSO} para validar tokens OAuth2.
+     */
     public ServicioAutenticacion(RepositorioUsuario repositorioUsuario, VerificadorIdentidadSSO verificadorSSO) {
         this.repositorioUsuario = repositorioUsuario;
         this.verificadorSSO = verificadorSSO;
     }
 
     /**
-     * Autentica un usuario mediante su correo y contraseña.
-     * @param correo Correo electrónico del usuario.
-     * @param contrasena Contraseña en texto plano.
-     * @return Usuario autenticado.
+     * Autentica un usuario mediante su correo electrónico y contraseña en texto plano.
+     *
+     * @param correo Correo electrónico del usuario (`String`).
+     * @param contrasena Contraseña en texto plano (`String`).
+     * @return Instancia de {@link Usuario} autenticada y activa.
+     * @throws ExcepcionDominio Si faltan credenciales, son inválidas o la cuenta está suspendida.
      */
     public Usuario iniciarSesion(String correo, String contrasena) {
         if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
             throw new ExcepcionDominio("El correo y la contraseña son obligatorios.");
         }
 
+        correo = correo.trim().toLowerCase();
         String hash = generarHashContrasena(contrasena);
         Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYValidarContrasena(correo, hash);
 
@@ -52,11 +74,13 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Registra un nuevo usuario con rol de cliente verificando consentimiento de Habeas Data.
-     * @param nombre Nombre completo.
-     * @param correo Correo electrónico.
-     * @param contrasena Contraseña en texto plano.
-     * @param aceptaHabeasData Consentimiento explícito según Ley 1581 de 2012.
+     * Registra un nuevo usuario con rol `cliente` verificando el consentimiento de Habeas Data (Ley 1581 de 2012).
+     *
+     * @param nombre Nombre completo del cliente (`String`).
+     * @param correo Correo electrónico único (`String`).
+     * @param contrasena Contraseña en texto plano (`String`, mínimo 8 caracteres).
+     * @param aceptaHabeasData Indicador booleano (`boolean`) de aceptación de política de tratamiento de datos.
+     * @throws ExcepcionDominio Si no acepta Habeas Data, los datos son inválidos o el correo ya existe.
      */
     public void registrarCliente(String nombre, String correo, String contrasena, boolean aceptaHabeasData) {
         if (!aceptaHabeasData) {
@@ -67,7 +91,15 @@ public class ServicioAutenticacion {
             throw new ExcepcionDominio("Todos los campos obligatorios deben ser completados.");
         }
 
-        Usuario nuevoUsuario = new Usuario(0, nombre, correo, "cliente", true, false, null, null, null, null, null);
+        correo = correo.trim().toLowerCase();
+        if (!correo.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new ExcepcionDominio("El formato del correo electrónico no es válido.");
+        }
+        if (contrasena.length() < 8) {
+            throw new ExcepcionDominio("La contraseña debe tener al menos 8 caracteres.");
+        }
+
+        Usuario nuevoUsuario = new Usuario(0, nombre.trim(), correo, "cliente", true, false, null, null, null, null, null);
         String contrasenaCifrada = generarHashContrasena(contrasena);
 
         boolean guardadoExitoso = repositorioUsuario.guardar(nuevoUsuario, contrasenaCifrada);
@@ -77,19 +109,12 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Sobrecarga de compatibilidad para registrar cliente.
-     */
-    public void registrarCliente(String nombre, String correo, String contrasena) {
-        registrarCliente(nombre, correo, contrasena, true);
-    }
-
-    /**
-     * Inicia sesión con Google o Microsoft.
-     * El token se valida primero con el proveedor y se usa únicamente el correo que el proveedor certifica;
-     * el correo que envíe el navegador se ignora.
-     * @param proveedor "google" o "microsoft".
-     * @param tokenAcceso Token de acceso emitido por el proveedor.
-     * @return Usuario autenticado (o creado con rol cliente si es su primer ingreso).
+     * Inicia sesión con Google o Microsoft validando previamente el token con el proveedor oficial.
+     *
+     * @param proveedor Identificador del proveedor (`String`: `"google"` o `"microsoft"`).
+     * @param tokenAcceso Token de acceso OAuth2 (`String`) emitido por el proveedor.
+     * @return Objeto {@link Usuario} autenticado o registrado automáticamente.
+     * @throws ExcepcionDominio Si el verificador SSO no está disponible o el token es inválido.
      */
     public Usuario autenticarConSSO(String proveedor, String tokenAcceso) {
         if (verificadorSSO == null) {
@@ -100,19 +125,19 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Autentica o auto-registra un usuario cuyo correo ya fue validado por el proveedor SSO.
-     * Solo debe llamarse con un correo verificado (ver {@link #autenticarConSSO}).
-     * Si el usuario ya existe, actualiza su último acceso.
-     * Si no existe, se crea con rol 'cliente'.
-     * @param correo Correo electrónico validado por el proveedor SSO.
-     * @param nombre Nombre devuelto por el proveedor SSO.
-     * @return Objeto Usuario autenticado.
+     * Autentica o auto-registra un usuario cuyo correo electrónico ya fue verificado por un proveedor SSO.
+     *
+     * @param correo Correo electrónico verificado (`String`).
+     * @param nombre Nombre visible devuelto por el proveedor (`String`).
+     * @return Instancia de {@link Usuario} autenticada.
+     * @throws ExcepcionDominio Si el correo es nulo, la cuenta está suspendida o falla el registro.
      */
     public Usuario autenticarOAutoRegistrarSSO(String correo, String nombre) {
         if (correo == null || correo.isBlank()) {
             throw new ExcepcionDominio("El correo electrónico del proveedor SSO es obligatorio.");
         }
 
+        correo = correo.trim().toLowerCase();
         Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYActivo(correo);
         if (usuarioOpt.isPresent()) {
             Usuario usuario = usuarioOpt.get();
@@ -125,7 +150,7 @@ public class ServicioAutenticacion {
 
         String nombreFinal = (nombre != null && !nombre.isBlank()) ? nombre : correo.split("@")[0];
         Usuario nuevoUsuario = new Usuario(0, nombreFinal, correo, "cliente", true, false, null, null, null, null, null);
-        String contrasenaSeguraSSO = generarHashContrasena("oauth-sso-" + java.util.UUID.randomUUID().toString());
+        String contrasenaSeguraSSO = generarHashContrasena("oauth-sso-" + UUID.randomUUID());
 
         boolean creado = repositorioUsuario.guardar(nuevoUsuario, contrasenaSeguraSSO);
         if (!creado) {
@@ -137,28 +162,28 @@ public class ServicioAutenticacion {
     }
 
     /**
-     * Regla de Seguridad PCI-DSS:
-     * Verifica que ninguna cadena contenga números de tarjeta de crédito (PAN) ni códigos CVV.
-     * La arquitectura delega el procesamiento al SDK de la pasarela y solo admite tokens transaccionales.
+     * Regla de seguridad PCI-DSS que detecta si una cadena contiene números de tarjeta (PAN) o códigos CVV/CVC.
+     *
+     * @param texto Cadena de texto o carga útil JSON (`String`) a inspeccionar.
+     * @return `true` si se detectan patrones de PAN o CVV; `false` si el contenido es seguro.
      */
     public static boolean contieneDatosTarjetaSensibles(String texto) {
         if (texto == null || texto.isBlank()) return false;
-        // Detección de posibles números de tarjeta de crédito (PAN entre 13 y 19 dígitos)
         boolean contienePAN = texto.matches(".*\\b(?:\\d[ -]*?){13,19}\\b.*");
-        // Detección de claves de seguridad CVV/CVC
         boolean contieneCVV = texto.toLowerCase().matches(".*(?:cvv|cvc|codigo_seguridad)[\\s:=]+[0-9]{3,4}.*");
         return contienePAN || contieneCVV;
     }
 
     /**
-     * Genera un hash criptográfico SHA-256 a partir de una contraseña en texto plano con UTF-8.
-     * @param contrasena Contraseña en texto plano.
-     * @return Cadena en formato hexadecimal con el hash SHA-256.
+     * Genera un resumen criptográfico SHA-256 en formato hexadecimal a partir de una contraseña UTF-8.
+     *
+     * @param contrasena Contraseña en texto plano (`String`).
+     * @return Hash SHA-256 (`String`) en minúsculas.
      */
     public static String generarHashContrasena(String contrasena) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(contrasena.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            digest.update(contrasena.getBytes(StandardCharsets.UTF_8));
             byte[] bytes = digest.digest();
             StringBuilder constructorCadena = new StringBuilder();
             for (byte b : bytes) {

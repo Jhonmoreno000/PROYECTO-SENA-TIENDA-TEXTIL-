@@ -4,9 +4,11 @@ import LayoutPanel from '../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../componentes/PaginaAnimada';
 import enlacesAdmin from '../../datos/enlacesAdmin';
 import { getApiUrl } from '../../config';
+import { useNotificacion } from '../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../utilidades/formateadores';
 
 function FacturasAdmin() {
+    const { showNotification } = useNotificacion();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +34,7 @@ function FacturasAdmin() {
         try {
             const res = await fetch(getApiUrl(`/api/facturas/${orderId}`));
             if (!res.ok) {
-                alert('Error al descargar la factura');
+                showNotification('error', 'Error al descargar la factura');
                 return;
             }
             const blob = await res.blob();
@@ -46,7 +48,7 @@ function FacturasAdmin() {
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Error downloading invoice:', err);
-            alert('Error al descargar la factura');
+            showNotification('error', 'Error al descargar la factura');
         }
     };
 
@@ -132,9 +134,9 @@ function FacturasAdmin() {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-gray-900 dark:text-white">
-                                                        FAC-{String(inv.orderId).padStart(6, '0')}
+                                                        FAC-{String(inv.orderId ?? inv.id).padStart(6, '0')}
                                                     </p>
-                                                    <p className="text-xs text-gray-500"># Pedido: {inv.orderId}</p>
+                                                    <p className="text-xs text-gray-500"># Pedido: {inv.orderId ?? inv.id}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -174,7 +176,7 @@ function FacturasAdmin() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
-                                                onClick={() => handleDownload(inv.orderId)}
+                                                onClick={() => handleDownload(inv.orderId ?? inv.id)}
                                                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors text-sm"
                                             >
                                                 <Download className="w-4 h-4" />

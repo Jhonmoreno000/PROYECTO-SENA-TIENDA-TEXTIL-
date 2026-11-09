@@ -19,25 +19,26 @@ import dominio.excepciones.ExcepcionDominio;
 import infraestructura.configuracion.ConfiguracionSSO;
 
 /**
- * Verifica los tokens de acceso de Google y Microsoft consultando directamente a cada proveedor.
- *
- * Google: el endpoint oficial "tokeninfo" confirma que el token es vigente, que fue emitido
- * para el Client ID de esta aplicación (aud) y que el correo está verificado.
- *
- * Microsoft: Microsoft Graph (/me) confirma que el token es vigente y entrega el correo de la cuenta.
- * Cuando el token es un JWT (cuentas de trabajo o escuela) se exige además que haya sido emitido
- * para el Application ID de esta aplicación (appid / azp).
- *
- * El correo que se usa es siempre el que devuelve el proveedor, nunca el que envía el navegador.
+ * Verifica los tokens de acceso de Google y Microsoft consultando directamente a cada proveedor OAuth 2.0.
+ * Confirma vigencia, audiencia (`aud` / `appid`) y correo verificado antes de autorizar el acceso.
  */
 public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
 
+    /** Endpoint oficial de Google OAuth2 para validar e inspeccionar tokens de acceso (`String`). */
     private static final String GOOGLE_TOKENINFO = "https://oauth2.googleapis.com/tokeninfo?access_token=";
+
+    /** Endpoint oficial de Google OpenID Connect para obtener el perfil del usuario autenticado (`String`). */
     private static final String GOOGLE_USERINFO = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+    /** Endpoint oficial de Microsoft Graph para consultar el perfil de la cuenta autenticada (`String`). */
     private static final String MICROSOFT_GRAPH_ME = "https://graph.microsoft.com/v1.0/me";
 
+    /** Cliente HTTP reutilizable (`HttpClient`) con timeout de conexión de 10 segundos. */
     private final HttpClient http;
 
+    /**
+     * Inicializa el verificador HTTP de identidad SSO con el selector de proxy del sistema.
+     */
     public VerificadorIdentidadSSOHttp() {
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -45,6 +46,14 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
                 .build();
     }
 
+    /**
+     * Verifica la validez del token OAuth2 ante el proveedor indicado (`google` o `microsoft`).
+     *
+     * @param proveedor Nombre del proveedor SSO (`String`: `"google"` o `"microsoft"`).
+     * @param tokenAcceso Token de acceso OAuth2 (`String`) emitido por el proveedor.
+     * @return Objeto {@link IdentidadSSO} con el correo verificado y el nombre del titular.
+     * @throws ExcepcionDominio Si el token falta, expiró, no pertenece a la aplicación o el proveedor no es válido.
+     */
     @Override
     public IdentidadSSO verificar(String proveedor, String tokenAcceso) {
         if (tokenAcceso == null || tokenAcceso.isBlank()) {
@@ -58,6 +67,12 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
         };
     }
 
+    /**
+     * Verifica un token de acceso de Google contra `tokeninfo` y `userinfo`.
+     *
+     * @param token Token OAuth2 (`String`) emitido por Google.
+     * @return Identidad verificada ({@link IdentidadSSO}) con correo y nombre.
+     */
     private IdentidadSSO verificarGoogle(String token) {
         String clientId = ConfiguracionSSO.clienteGoogle();
         if (clientId == null) {
@@ -82,10 +97,18 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
         }
         String nombre = null;
         JsonObject perfil = obtenerJson(GOOGLE_USERINFO, token);
-        if (perfil != null) nombre = texto(perfil, "name");
+        if (perfil != null) {
+            nombre = texto(perfil, "name");
+        }
         return new IdentidadSSO(correo.toLowerCase(Locale.ROOT), nombre);
     }
 
+    /**
+     * Verifica un token de acceso de Microsoft validando sus reclamos JWT y consultando Microsoft Graph `/me`.
+     *
+     * @param token Token OAuth2 (`String`) emitido por Microsoft Entra ID.
+     * @return Identidad verificada ({@link IdentidadSSO}) con correo y nombre para mostrar.
+     */
     private IdentidadSSO verificarMicrosoft(String token) {
         String clientId = ConfiguracionSSO.clienteMicrosoft();
         if (clientId == null) {
@@ -94,7 +117,9 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
         JsonObject reclamos = leerReclamosJwt(token);
         if (reclamos != null) {
             String appId = texto(reclamos, "appid");
-            if (appId == null) appId = texto(reclamos, "azp");
+            if (appId == null) {
+                appId = texto(reclamos, "azp");
+            }
             if (!clientId.equals(appId)) {
                 throw new ExcepcionDominio("El token de Microsoft no fue emitido para esta aplicación.");
             }
@@ -107,23 +132,35 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
             throw new ExcepcionDominio("El token de Microsoft no es válido o ya expiró.");
         }
         String correo = texto(yo, "mail");
-        if (correo == null) correo = texto(yo, "userPrincipalName");
+        if (correo == null) {
+            correo = texto(yo, "userPrincipalName");
+        }
         if (correo == null || !correo.contains("@")) {
             throw new ExcepcionDominio("Microsoft no devolvió un correo para esta cuenta.");
         }
         return new IdentidadSSO(correo.toLowerCase(Locale.ROOT), texto(yo, "displayName"));
     }
 
-    /** GET al proveedor; devuelve el JSON si responde 200, o null en cualquier otro caso. */
+    /**
+     * Ejecuta una petición HTTP `GET` al proveedor de identidad y devuelve el cuerpo JSON si responde HTTP 200.
+     *
+     * @param url Dirección URL completa (`String`) del recurso a consultar.
+     * @param tokenBearer Token Bearer opcional (`String`) para la cabecera `Authorization`.
+     * @return Objeto {@link JsonObject} de respuesta o `null` si el código de estado no es 200.
+     */
     private JsonObject obtenerJson(String url, String tokenBearer) {
         try {
             HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
                     .timeout(Duration.ofSeconds(10))
                     .header("Accept", "application/json")
                     .GET();
-            if (tokenBearer != null) req.header("Authorization", "Bearer " + tokenBearer);
+            if (tokenBearer != null) {
+                req.header("Authorization", "Bearer " + tokenBearer);
+            }
             HttpResponse<String> res = http.send(req.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (res.statusCode() != 200) return null;
+            if (res.statusCode() != 200) {
+                return null;
+            }
             return JsonParser.parseString(res.body()).getAsJsonObject();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -134,10 +171,17 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
         }
     }
 
-    /** Lee (sin validar la firma) la carga útil de un JWT; null si el token no es un JWT. */
+    /**
+     * Decodifica el segmento de carga útil (`payload`) de un token en formato JWT sin validar firma criptográfica.
+     *
+     * @param token Cadena del token (`String`) con formato `header.payload.signature`.
+     * @return Objeto {@link JsonObject} con los reclamos del JWT, o `null` si no tiene formato JWT.
+     */
     private static JsonObject leerReclamosJwt(String token) {
         String[] partes = token.split("\\.");
-        if (partes.length != 3) return null;
+        if (partes.length != 3) {
+            return null;
+        }
         try {
             byte[] json = Base64.getUrlDecoder().decode(partes[1]);
             return JsonParser.parseString(new String(json, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -146,8 +190,17 @@ public class VerificadorIdentidadSSOHttp implements VerificadorIdentidadSSO {
         }
     }
 
+    /**
+     * Extrae de forma segura una propiedad de texto desde un {@link JsonObject}.
+     *
+     * @param obj Objeto JSON (`JsonObject`) de origen.
+     * @param clave Nombre de la propiedad (`String`) a leer.
+     * @return Valor de texto (`String`) recortado, o `null` si no existe o está en blanco.
+     */
     private static String texto(JsonObject obj, String clave) {
-        if (obj == null || !obj.has(clave) || obj.get(clave).isJsonNull()) return null;
+        if (obj == null || !obj.has(clave) || obj.get(clave).isJsonNull()) {
+            return null;
+        }
         String v = obj.get(clave).getAsString();
         return v.isBlank() ? null : v.trim();
     }

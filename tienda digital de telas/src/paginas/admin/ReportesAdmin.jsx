@@ -36,14 +36,6 @@ const STATUS_CONFIG = {
     resuelto:    { badge: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', dot: 'bg-emerald-500',              label: 'Resuelto' },
 };
 
-const INITIAL_REPORTS = [
-    { id: '0006', title: 'Consulta sobre tallas', description: 'Necesito saber el ancho exacto de la Seda Italiana.', date: '9/4/2026', severity: 'low', status: 'resolved', user: 'Juan Pérez', email: 'juan@example.com' },
-    { id: '0005', title: 'Demora en el envío', description: 'Mi pedido lleva 5 días y no ha llegado.', date: '9/4/2026', severity: 'medium', status: 'in_progress', user: 'Ana García', email: 'ana@example.com' },
-    { id: '0004', title: 'Producto llegó dañado', description: 'La tela Algodón Premium llegó con manchas de humedad.', date: '9/4/2026', severity: 'high', status: 'open', user: 'Pedro López', email: 'pedro@example.com' },
-    { id: '0003', title: 'Error al aplicar cupón', description: 'El código de descuento PROMO10 no funciona en el carrito.', date: '8/4/2026', severity: 'medium', status: 'open', user: 'María Díaz', email: 'maria@example.com' },
-    { id: '0002', title: 'Foto del producto incorrecta', description: 'La imagen del Lino Natural muestra otra tela.', date: '7/4/2026', severity: 'low', status: 'resolved', user: 'Carlos Ruiz', email: 'carlos@example.com' },
-];
-
 function ReportesAdmin() {
     const { showNotification } = useNotificacion();
     const { bugReports: contextReports, updateBugReportStatus } = useMetricas();
@@ -51,7 +43,7 @@ function ReportesAdmin() {
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [localReports, setLocalReports] = useState(null);
     
-    const reports = localReports || (contextReports && contextReports.length > 0 ? contextReports : INITIAL_REPORTS);
+    const reports = localReports || contextReports || [];
     
     const containerRef = useRef(null);
     const expansionRefs = useRef({});

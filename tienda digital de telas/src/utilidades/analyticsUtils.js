@@ -26,8 +26,9 @@
  */
 export function calculateInventoryVelocity(product, orders) {
     // Filtramos los pedidos que contienen este producto específico
-    const productOrders = orders.filter(order =>
-        order.productIds && order.productIds.includes(product.id)
+    const productOrders = (orders || []).filter(order =>
+        (order.productIds || []).map(String).includes(String(product.id)) ||
+        (order.lineItems || []).some(item => String(item.productId) === String(product.id))
     );
 
     const daysSinceLaunch = 90; // Analizamos los últimos 90 días
@@ -36,27 +37,19 @@ export function calculateInventoryVelocity(product, orders) {
     return salesCount / daysSinceLaunch; // Resultado: ventas por día
 }
 
-/**
- * identifyDeadStock — Identifica productos que no se han vendido en los últimos N días
- * "Stock muerto" significa que el producto ocupa espacio pero no genera ingresos.
- *
- * @param {Array}  products      - Lista de productos del catálogo
- * @param {Array}  orders        - Lista de pedidos
- * @param {number} dayThreshold  - Días sin venta para considerar stock muerto (por defecto 30)
- * @returns {Array} Productos sin ventas recientes con una recomendación
- */
 export function identifyDeadStock(products, orders, dayThreshold = 30) {
     // Calculamos la fecha límite: si el último pedido fue antes de esta fecha, es stock muerto
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - dayThreshold);
 
-    return products.filter(product => {
+    return (products || []).filter(product => {
         // Buscamos si hubo algún pedido reciente que incluya este producto
-        const recentOrders = orders.filter(order => {
+        const recentOrders = (orders || []).filter(order => {
             const orderDate = new Date(order.date);
-            return orderDate >= cutoffDate &&
-                order.productIds &&
-                order.productIds.includes(product.id);
+            return orderDate >= cutoffDate && (
+                (order.productIds || []).map(String).includes(String(product.id)) ||
+                (order.lineItems || []).some(item => String(item.productId) === String(product.id))
+            );
         });
 
         // Si no hay pedidos recientes, es stock muerto
@@ -68,28 +61,40 @@ export function identifyDeadStock(products, orders, dayThreshold = 30) {
     }));
 }
 
-/**
- * identifyBestsellers — Devuelve los productos que más se han vendido
- * Ordena todos los productos por número de ventas de mayor a menor.
- *
- * @param {Array}  products - Lista de productos del catálogo
- * @param {Array}  orders   - Lista de pedidos
- * @param {number} limit    - Cuántos bestsellers devolver (por defecto 10)
- * @returns {Array} Productos ordenados por ventas, con datos de ingresos y velocidad
- */
 export function identifyBestsellers(products, orders, limit = 10) {
-    const productSales = products.map(product => {
+    const productSales = (products || []).map(product => {
+        const prodIdStr = String(product.id);
         // Pedidos donde este producto aparece
-        const productOrders = orders.filter(order =>
-            order.productIds && order.productIds.includes(product.id)
+        const productOrders = (orders || []).filter(order =>
+            (order.productIds || []).map(String).includes(prodIdStr) ||
+            (order.lineItems || []).some(item => String(item.productId) === prodIdStr)
         );
 
-        // Ingresos totales generados por este producto
-        const totalRevenue = productOrders.reduce((sum, order) => sum + order.total, 0);
+        let totalRevenue = 0;
+        let totalMetersSold = 0;
+
+        productOrders.forEach(order => {
+            const matchingItems = (order.lineItems || []).filter(
+                item => String(item.productId) === prodIdStr
+            );
+            if (matchingItems.length > 0) {
+                matchingItems.forEach(item => {
+                    const m = Number(item.quantity ?? item.meters ?? 0);
+                    const rev = Number(item.subtotal ?? (Number(item.unitPrice ?? product.price ?? 0) * m));
+                    totalMetersSold += m;
+                    totalRevenue += rev;
+                });
+            } else {
+                const countInOrder = Math.max(1, (order.productIds || []).length);
+                totalRevenue += Number(order.total || 0) / countInOrder;
+                totalMetersSold += Number(order.totalMeters || 0) / countInOrder;
+            }
+        });
 
         return {
             ...product,
             salesCount: productOrders.length, // Total de veces que se vendió
+            metersSold: Number(totalMetersSold.toFixed(2)),
             revenue: totalRevenue,            // Dinero generado
             velocity: calculateInventoryVelocity(product, orders) // Velocidad de venta diaria
         };
@@ -97,7 +102,7 @@ export function identifyBestsellers(products, orders, limit = 10) {
 
     // Ordenamos de mayor a menor cantidad de ventas y tomamos los primeros N
     return productSales
-        .sort((a, b) => b.salesCount - a.salesCount)
+        .sort((a, b) => b.salesCount - a.salesCount || b.revenue - a.revenue)
         .slice(0, limit);
 }
 
@@ -151,9 +156,9 @@ export function calculateReturnsByFabricType(bugReports) {
  * @returns {Array} Vendedores ordenados por cantidad de reportes (de mayor a menor)
  */
 export function calculateReturnsBySeller(bugReports, sellers) {
-    return sellers.map(vendedor => {
+    return (sellers || []).map(vendedor => {
         // Solo los reportes que pertenecen a este vendedor
-        const sellerReports = bugReports.filter(report => report.sellerId === vendedor.id);
+        const sellerReports = (bugReports || []).filter(report => String(report.sellerId) === String(vendedor.id));
         return {
             sellerId: vendedor.id,
             sellerName: vendedor.name,
@@ -163,6 +168,24 @@ export function calculateReturnsBySeller(bugReports, sellers) {
             highPriorityReports: sellerReports.filter(r => r.priority === 'high').length // Urgentes
         };
     }).sort((a, b) => b.totalReports - a.totalReports); // El vendedor con más reportes primero
+}
+
+export function calculateSellerBIMetrics(vendedor, orders = [], bugReports = []) {
+    const sellerOrders = (orders || []).filter(o => String(o.sellerId) === String(vendedor?.id));
+    const sellerReports = (bugReports || []).filter(r => String(r.sellerId) === String(vendedor?.id));
+    const grossSales = sellerOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const totalOrders = sellerOrders.length;
+    const profitMargin = Number(vendedor?.commissionRate ?? 15);
+    const conversionRate = totalOrders > 0 ? Math.min(100, Number((2.5 + totalOrders * 0.1).toFixed(1))) : 0;
+    const returnsRate = totalOrders > 0 ? Number(((sellerReports.length / totalOrders) * 100).toFixed(1)) : 0;
+    return {
+        grossSales,
+        profitMargin,
+        conversionRate,
+        avgMonthlySales: grossSales > 0 ? grossSales / 3 : 0,
+        totalOrders,
+        returnsRate
+    };
 }
 
 /**
@@ -258,11 +281,29 @@ export function calculateMonthOverMonthGrowth(salesData) {
 export function calculateSalesByCategory(products, orders) {
     const categorySales = {};
 
-    orders.forEach(order => {
+    (orders || []).forEach(order => {
+        if (Array.isArray(order.lineItems) && order.lineItems.length > 0) {
+            order.lineItems.forEach(item => {
+                const product = (products || []).find(p => String(p.id) === String(item.productId));
+                const category = product?.category || 'Sin categoría';
+                if (!categorySales[category]) {
+                    categorySales[category] = {
+                        revenue: 0,
+                        orders: 0,
+                        products: new Set()
+                    };
+                }
+                categorySales[category].revenue += Number(item.subtotal ?? (Number(item.unitPrice || 0) * Number(item.quantity || item.meters || 0)));
+                categorySales[category].orders++;
+                if (item.productId !== undefined) categorySales[category].products.add(String(item.productId));
+            });
+            return;
+        }
+
         if (!order.productIds) return;
 
         order.productIds.forEach(productId => {
-            const product = products.find(p => p.id === productId);
+            const product = (products || []).find(p => String(p.id) === String(productId));
             if (!product) return;
 
             const category = product.category || 'Sin categoría';
@@ -277,7 +318,7 @@ export function calculateSalesByCategory(products, orders) {
             // Distribuimos el total del pedido entre todos los productos que lo componen
             categorySales[category].revenue += order.total / order.productIds.length;
             categorySales[category].orders++;
-            categorySales[category].products.add(productId);
+            categorySales[category].products.add(String(productId));
         });
     });
 

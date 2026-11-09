@@ -212,3 +212,16 @@ Estado: **Completo** = la pantalla guarda y lee de la base de datos por la API �
 ## 5. Relación con los requisitos
 
 La matriz de requisitos actual (`Matriz_de_requerimientos.xlsx`) usa otros identificadores de casos de uso (CU 1.1, CU 1.2…). Al corregir la matriz conviene adoptar los códigos CU-01 a CU-30 de este documento para que la hoja de trazabilidad coincida con los diagramas.
+
+
+---
+
+## Caso de Uso Transversal CU-15: Verificación de Sesión Firmada y Aislamiento de Pedidos por Rol
+
+| Campo | Especificación |
+| :--- | :--- |
+| **Código y Nombre** | **CU-15:** Verificación de Token de Sesión HMAC-SHA256 y Autorización RBAC en Pedidos |
+| **Actores** | Cliente, Vendedor, Administrador y Sistema Backend (`ManejadorBase` / `ManejadorPedidos`) |
+| **Precondiciones** | El actor ha iniciado sesión y posee un token `Bearer <carga>.<firma>` en su cabecera `Authorization`. |
+| **Flujo Principal** | 1. El actor solicita `GET /api/pedidos` o `GET /api/pedidos/{id}`.<br>2. `ManejadorBase` extrae el token Bearer y ejecuta `TokenSesion.verificar(token)` validando firma HMAC-SHA256 y expiración.<br>3. `ManejadorBase` consulta `UsuarioDAO.buscarPorId(sub)` y confirma que el usuario existe, está activo y no está suspendido.<br>4. `ManejadorPedidos` determina el rol vigente en base de datos y retorna únicamente los pedidos del cliente, las líneas de producto del vendedor o el listado global para el administrador. |
+| **Flujos Alternativos** | - **FA-1 (Token adulterado o expirado):** El sistema rechaza la petición con `HTTP 401 Unauthorized` y el frontend cierra la sesión automáticamente.<br>- **FA-2 (Cuenta suspendida en BD):** Aunque el token no haya expirado, `identidadVigente` devuelve vacío y bloquea el acceso de inmediato. |

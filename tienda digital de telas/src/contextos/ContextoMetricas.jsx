@@ -10,8 +10,10 @@
  *   region_sales, recent_activity, global_banner, system_config
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useProductos } from './ContextoProducto';
+import { useAutenticacion } from './ContextoAutenticacion';
+import { useNotificacion } from './ContextoNotificacion';
 import { formatCurrency } from '../utilidades/formateadores';
 
 import { getApiUrl, RUTAS_API } from '../config';
@@ -65,6 +67,24 @@ const normalizarUsuario = (u) => ({
     createdAt: u.createdAt || u.fechaCreacion || ''
 });
 
+const normalizarProducto = (p) => ({
+    ...p,
+    id: String(p.id),
+    name: p.name || p.nombre || '',
+    nombre: p.nombre || p.name || '',
+    category: p.category || p.categoria || '',
+    categoria: p.categoria || p.category || '',
+    price: Number(p.price ?? p.precio ?? 0),
+    precio: Number(p.precio ?? p.price ?? 0),
+    stock: Number(p.stock ?? p.existencias ?? 0),
+    existencias: Number(p.existencias ?? p.stock ?? 0),
+    status: p.status ?? p.estadoModeracion ?? 'approved',
+    rejectionReason: p.rejectionReason ?? p.motivoRechazo ?? '',
+    sellerName: p.sellerName ?? p.nombreVendedor ?? '',
+    createdAt: p.createdAt ?? p.creadoEn ?? '',
+    images: Array.isArray(p.images) ? p.images : (Array.isArray(p.imagenes) ? p.imagenes : [])
+});
+
 const normalizarPedido = (o) => ({
     ...o,
     id: o.id,
@@ -78,11 +98,20 @@ const normalizarPedido = (o) => ({
     montoTotal: Number(o.montoTotal ?? o.total ?? 0),
     date: o.date || o.orderDate || o.fecha || o.fechaPedido || new Date().toISOString(),
     orderDate: o.orderDate || o.date || o.fechaPedido || o.fecha || new Date().toISOString(),
-    clientName: o.clientName || o.nombreCliente || 'Cliente',
-    nombreCliente: o.nombreCliente || o.clientName || 'Cliente',
+    client: o.client || o.clientName || o.nombreCliente || 'Cliente',
+    clientName: o.clientName || o.client || o.nombreCliente || 'Cliente',
+    nombreCliente: o.nombreCliente || o.clientName || o.client || 'Cliente',
     clientEmail: o.clientEmail || o.correoCliente || '',
     correoCliente: o.correoCliente || o.clientEmail || '',
-    items: o.items || o.articulos || []
+    items: o.items ?? o.articulos ?? (Array.isArray(o.lineItems) ? o.lineItems.length : 0),
+    productIds: Array.isArray(o.productIds) ? o.productIds : [],
+    lineItems: Array.isArray(o.lineItems) ? o.lineItems : [],
+    productNames: Array.isArray(o.productNames) ? o.productNames : [],
+    totalMeters: Number(o.totalMeters ?? 0),
+    shippingAddress: o.shippingAddress ?? o.direccionEnvio ?? '',
+    shippingCity: o.shippingCity ?? o.ciudadEnvio ?? '',
+    shippingDepartment: o.shippingDepartment ?? o.departamentoEnvio ?? '',
+    trackingNumber: o.trackingNumber ?? o.numeroGuia ?? ''
 });
 
 const normalizarCupon = (c) => ({
@@ -104,14 +133,19 @@ const normalizarCupon = (c) => ({
 const normalizarTicket = (t) => ({
     ...t,
     id: t.id,
-    clientId: t.clientId ?? t.idCliente,
-    idCliente: t.idCliente ?? t.clientId,
-    clientName: t.clientName || t.nombreCliente || 'Cliente',
-    nombreCliente: t.nombreCliente || t.clientName || 'Cliente',
+    userId: t.userId ?? t.clientId ?? t.idCliente ?? t.idUsuario,
+    clientId: t.clientId ?? t.userId ?? t.idCliente ?? t.idUsuario,
+    idCliente: t.idCliente ?? t.clientId ?? t.userId ?? t.idUsuario,
+    customerName: t.customerName ?? t.nombreUsuario ?? t.clientName ?? t.nombreCliente ?? 'Cliente',
+    clientName: t.clientName ?? t.customerName ?? t.nombreUsuario ?? t.nombreCliente ?? 'Cliente',
+    nombreCliente: t.nombreCliente ?? t.customerName ?? t.clientName ?? 'Cliente',
+    customerEmail: t.customerEmail ?? t.correoUsuario ?? '',
+    orderId: t.orderId ?? t.idPedido ?? null,
     subject: t.subject || t.asunto || '',
     asunto: t.asunto || t.subject || '',
-    description: t.description || t.descripcion || '',
-    descripcion: t.descripcion || t.description || '',
+    description: t.description ?? t.message ?? t.mensaje ?? t.descripcion ?? '',
+    message: t.message ?? t.description ?? t.mensaje ?? t.descripcion ?? '',
+    descripcion: t.descripcion ?? t.description ?? t.message ?? t.mensaje ?? '',
     status: t.status || t.estado || 'open',
     estado: t.estado || t.status || 'abierto',
     priority: t.priority || t.prioridad || 'medium',
@@ -120,13 +154,17 @@ const normalizarTicket = (t) => ({
     updatedAt: t.updatedAt || t.fechaActualizacion || ''
 });
 
-const normalizarReporteError = (r) => ({
+const normalizarReporte = (r) => ({
     ...r,
     id: r.id,
     sellerId: r.sellerId ?? r.idVendedor,
     idVendedor: r.idVendedor ?? r.sellerId,
     sellerName: r.sellerName || r.nombreVendedor || 'Vendedor',
     nombreVendedor: r.nombreVendedor || r.sellerName || 'Vendedor',
+    user: r.user ?? r.sellerName ?? r.nombreVendedor ?? 'Usuario',
+    email: r.email ?? '',
+    date: r.date ?? r.createdAt ?? r.reportadoEn ?? r.fechaCreacion ?? null,
+    clientName: r.clientName ?? r.user ?? r.sellerName ?? 'Usuario',
     title: r.title || r.titulo || '',
     titulo: r.titulo || r.title || '',
     description: r.description || r.descripcion || '',
@@ -137,6 +175,7 @@ const normalizarReporteError = (r) => ({
     estado: r.estado || r.status || 'abierto',
     createdAt: r.createdAt || r.fechaCreacion || ''
 });
+const normalizarReporteError = normalizarReporte;
 
 const normalizarLote = (b) => ({
     ...b,
@@ -164,16 +203,25 @@ const normalizarLote = (b) => ({
  * @param {string} endpoint - Ruta relativa (ej: '/api/usuarios')
  * @returns {Promise<any|null>}
  */
-async function apiFetch(endpoint) {
+/** Consulta la API y distingue el resultado HTTP de los datos recibidos. */
+async function apiFetchDetallado(endpoint, token, alRechazarSesion) {
     try {
-        const res = await fetch(getApiUrl(endpoint));
-        if (!res.ok) return null;
+        const res = await fetch(getApiUrl(endpoint), token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+        if (res.status === 401 && token && alRechazarSesion) alRechazarSesion(token);
+        if (!res.ok) return { exito: false, estado: res.status, datos: null };
         const text = await res.text();
-        if (!text || text === 'null' || text === '{}') return null;
-        return JSON.parse(text);
+        const datos = text ? JSON.parse(text) : null;
+        return { exito: true, estado: res.status, datos };
     } catch {
-        return null;
+        return { exito: false, estado: 0, datos: null };
     }
+}
+
+/** Retorna el JSON de la API o null si falla o no contiene datos. */
+async function apiFetch(endpoint, token, alRechazarSesion) {
+    const { exito, datos } = await apiFetchDetallado(endpoint, token, alRechazarSesion);
+    if (!exito || datos === null || (Object.getPrototypeOf(datos) === Object.prototype && Object.keys(datos).length === 0)) return null;
+    return datos;
 }
 
 /**
@@ -185,11 +233,16 @@ async function apiFetch(endpoint) {
 export function MetricsProvider({ children }) {
     // ── Productos (delegados a ContextoProducto para evitar duplicación) ────
     const { products, refreshProducts } = useProductos();
+    const { user, invalidarSesion } = useAutenticacion();
+    const tokenSesion = user?.token;
+    const cargaVigenteRef = useRef(0);
+    const { showNotification } = useNotificacion();
     const [pendingProducts,   setPendingProducts]   = useState([]);
 
     // ── Estado principal ──────────────────────────────────────────────────
     const [users,             setUsers]             = useState([]);
     const [orders,            setOrders]            = useState([]);
+    const [ordersLoadFailed,  setOrdersLoadFailed]  = useState(false);
     const [coupons,           setCoupons]           = useState([]);
     const [supportTickets,    setSupportTickets]    = useState([]);
     const [bugReports,        setBugReports]        = useState([]);
@@ -210,9 +263,33 @@ export function MetricsProvider({ children }) {
     const [productDiscounts,  setProductDiscounts]  = useState({});
     // Configuración del sistema (nombre, colores, tasas, etc.)
     const [systemConfig,      setSystemConfig]      = useState(defaultSystemConfig);
-    // Lista de deseos de usuarios
-    const [wishlistItems,     setWishlistItems]     = useState(() => { try { const saved = window.localStorage.getItem('dd_wishlist_items'); return saved ? JSON.parse(saved) : []; } catch { return []; } });
-    useEffect(() => { try { window.localStorage.setItem('dd_wishlist_items', JSON.stringify(wishlistItems)); } catch {} }, [wishlistItems]);
+    // Lista de deseos persistida en localStorage por usuario
+    const wishlistStorageKey = user?.id ? `wishlist_${user.id}` : 'wishlist_guest';
+    const [wishlistItems, setWishlistItems] = useState(() => {
+        try {
+            const raw = window.localStorage.getItem(wishlistStorageKey);
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        try {
+            const raw = window.localStorage.getItem(wishlistStorageKey);
+            setWishlistItems(raw ? JSON.parse(raw) : []);
+        } catch {
+            setWishlistItems([]);
+        }
+    }, [wishlistStorageKey]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(wishlistStorageKey, JSON.stringify(wishlistItems));
+        } catch (e) {
+            console.error('Error guardando wishlist en localStorage:', e);
+        }
+    }, [wishlistStorageKey, wishlistItems]);
     // Métricas de ventas para ERP (si aplica)
     const [erpSalesMetrics,   setErpSalesMetrics]   = useState([]);
     // Notificaciones del ERP
@@ -223,10 +300,36 @@ export function MetricsProvider({ children }) {
     const [loading,           setLoading]           = useState(true);
     
 
-    // ── Carga inicial: todos los endpoints en paralelo ───────────────────
+    // ── Carga inicial: endpoints según el rol del usuario ────────────────
     const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
+            const role = user?.role || user?.rol;
+            const isStaff = role === 'admin' || role === 'administrador' || role === 'vendedor';
+            const isClient = role === 'cliente';
+
+            if (!isStaff) {
+                const [apiBanner, apiConfigRaw, apiProductDiscounts, apiCoupons, apiOrders, apiTickets] = await Promise.all([
+                    apiFetch(RUTAS_API?.banner || '/api/banner'),
+                    apiFetch('/api/configuracion/system_config'),
+                    apiFetch('/api/configuracion/product_discounts'),
+                    user ? apiFetch(RUTAS_API?.cupones || '/api/cupones') : Promise.resolve(null),
+                    isClient ? apiFetch(RUTAS_API?.pedidos || '/api/pedidos') : Promise.resolve(null),
+                    isClient ? apiFetch('/api/soporte/tickets') : Promise.resolve(null),
+                ]);
+                if (apiBanner) setGlobalBanner(apiBanner);
+                if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
+                    setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
+                }
+                if (apiProductDiscounts && typeof apiProductDiscounts === 'object') {
+                    setProductDiscounts(apiProductDiscounts);
+                }
+                if (apiCoupons?.length > 0) setCoupons(apiCoupons.map(normalizarCupon));
+                if (apiOrders?.length > 0) setOrders(apiOrders.map(normalizarPedido));
+                if (apiTickets?.length > 0) setSupportTickets(apiTickets.map(normalizarTicket));
+                return;
+            }
+
             const [
                 apiUsers, apiPending, apiOrders, apiCoupons,
                 apiTickets, apiBugs, apiBatches, apiWaste, apiThresholds,
@@ -238,7 +341,7 @@ export function MetricsProvider({ children }) {
                 apiFetch(RUTAS_API?.pedidos || '/api/pedidos'),
                 apiFetch(RUTAS_API?.cupones || '/api/cupones'),
                 apiFetch('/api/soporte/tickets'),
-                apiFetch('/api/soporte/errores'),
+                apiFetch('/api/soporte/reportes').then(r => r || apiFetch('/api/soporte/errores')),
                 apiFetch('/api/inventario/lotes'),
                 apiFetch('/api/inventario/mermas'),
                 apiFetch('/api/inventario/umbrales'),
@@ -253,11 +356,11 @@ export function MetricsProvider({ children }) {
                 apiFetch('/api/configuracion/product_discounts'),
             ]);
             if (apiUsers?.length > 0) setUsers(apiUsers.map(normalizarUsuario));
-            setPendingProducts(apiPending || []);
+            setPendingProducts((apiPending || []).map(normalizarProducto));
             if (apiOrders?.length > 0) setOrders(apiOrders.map(normalizarPedido));
             if (apiCoupons?.length > 0) setCoupons(apiCoupons.map(normalizarCupon));
             if (apiTickets?.length > 0) setSupportTickets(apiTickets.map(normalizarTicket));
-            if (apiBugs?.length > 0) setBugReports(apiBugs.map(normalizarReporteError));
+            if (apiBugs?.length > 0) setBugReports(apiBugs.map(normalizarReporte));
             if (apiBatches?.length > 0) setInventoryBatches(apiBatches.map(normalizarLote));
             if (apiWaste?.length > 0) setWasteEvents(apiWaste);
             if (apiThresholds?.length > 0) setStockThresholds(apiThresholds);
@@ -295,7 +398,7 @@ export function MetricsProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
@@ -338,28 +441,47 @@ export function MetricsProvider({ children }) {
 
     /** Actualiza el rol de un usuario en el backend y estado local */
     const updateUserRole = async (userId, newRole) => {
+        const prevUsers = users;
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole, rol: newRole } : u));
         try {
-            await fetch(getApiUrl(`/api/usuarios/${userId}/rol`), {
+            const res = await fetch(getApiUrl(`/api/usuarios/${userId}/rol`), {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(tokenSesion ? { Authorization: `Bearer ${tokenSesion}` } : {})
+                },
                 body: JSON.stringify({ role: newRole, rol: newRole })
             });
-        } catch (e) { console.error('Error al actualizar rol de usuario:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar rol de usuario:', e);
+            setUsers(prevUsers);
+            showNotification('error', 'No se pudo actualizar el rol del usuario.');
+            return false;
+        }
     };
 
     /** Activa / desactiva un usuario en el backend y estado local */
     const toggleUserActive = async (userId) => {
+        const prevUsers = users;
         const targetUser = users.find(u => u.id === userId);
         const nextActive = targetUser ? !targetUser.active : true;
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, active: nextActive, activo: nextActive } : u));
         try {
-            await fetch(getApiUrl(`/api/usuarios/${userId}/estado`), {
+            const res = await fetch(getApiUrl(`/api/usuarios/${userId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ active: nextActive, activo: nextActive })
             });
-        } catch (e) { console.error('Error al actualizar estado de usuario:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar estado de usuario:', e);
+            setUsers(prevUsers);
+            showNotification('error', 'No se pudo cambiar el estado del usuario.');
+            return false;
+        }
     };
 
     /** Filtra usuarios por rol */
@@ -381,14 +503,22 @@ export function MetricsProvider({ children }) {
      * @param {string} newStatus
      */
     const updateOrderStatus = async (orderId, newStatus) => {
+        const prevOrders = orders;
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, estado: newStatus } : o));
         try {
-            await fetch(getApiUrl(`/api/pedidos/${orderId}/estado`), {
+            const res = await fetch(getApiUrl(`/api/pedidos/${orderId}/estado`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, estado: newStatus })
             });
-        } catch (e) { console.error('Error al actualizar estado de pedido:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar estado de pedido:', e);
+            setOrders(prevOrders);
+            showNotification('error', 'No se pudo actualizar el estado del pedido.');
+            return false;
+        }
     };
 
     // =========================================================================
@@ -404,15 +534,22 @@ export function MetricsProvider({ children }) {
      * @param {number} productId
      * @param {Object} updates - Campos a actualizar
      */
-    const updateProduct = async (productId, updates) => {
+    const updateProduct = async (idOrProduct, maybeUpdates) => {
         try {
+            const isTwoArgs = maybeUpdates !== undefined;
+            const productId = isTwoArgs ? idOrProduct : idOrProduct?.id;
+            const updates = isTwoArgs ? maybeUpdates : idOrProduct;
             await fetch(getApiUrl(`/api/productos/${productId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
             });
             refreshProducts();
-        } catch (e) { console.error('Error al actualizar producto:', e); }
+            return true;
+        } catch (e) {
+            console.error('Error al actualizar producto:', e);
+            return false;
+        }
     };
 
     const deleteProduct = async (productId) => {
@@ -430,9 +567,13 @@ export function MetricsProvider({ children }) {
                 body: JSON.stringify(newProduct)
             });
             if (res.ok) {
+                const saved = await res.json().catch(() => ({}));
+                const created = saved.product || { ...newProduct, id: String(saved.id ?? newProduct.id ?? '') };
                 refreshProducts();
+                return created;
             }
         } catch (e) { console.error('Error al agregar producto:', e); }
+        return null;
     };
 
     // =========================================================================
@@ -444,49 +585,91 @@ export function MetricsProvider({ children }) {
      * @param {number} productId
      */
     const approveProduct = async (productId) => {
+        const prevPending = pendingProducts;
         setPendingProducts(prev => prev.filter(p => String(p.id) !== String(productId)));
         try {
-            await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
+            const res = await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'approved', estado: 'approved' })
             });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             refreshProducts();
-        } catch (e) { console.error('Error al aprobar producto:', e); }
+            return true;
+        } catch (e) {
+            console.error('Error al aprobar producto:', e);
+            setPendingProducts(prevPending);
+            showNotification('error', 'No se pudo aprobar el producto.');
+            return false;
+        }
     };
 
     const rejectProduct = async (productId, reason) => {
+        const prevPending = pendingProducts;
         setPendingProducts(prev => prev.map(p =>
             String(p.id) === String(productId) ? { ...p, status: 'rejected', estado: 'rejected', rejectionReason: reason, motivo: reason } : p
         ));
         try {
-            await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
+            const res = await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected', estado: 'rejected', reason, motivo: reason })
             });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             refreshProducts();
-        } catch (e) { console.error('Error al rechazar producto:', e); }
+            return true;
+        } catch (e) {
+            console.error('Error al rechazar producto:', e);
+            setPendingProducts(prevPending);
+            showNotification('error', 'No se pudo rechazar el producto.');
+            return false;
+        }
     };
 
-    /** Actualiza tasa de comisión de un vendedor localmente */
-    const updateSellerCommission = (sellerId, commissionRate) => {
-        setUsers(prev => prev.map(u => u.id === sellerId ? { ...u, commissionRate, tasaComision: commissionRate } : u));
+    /** Actualiza tasa de comisión de un vendedor en BD y estado local */
+    const updateSellerCommission = async (sellerId, newRate) => {
+        try {
+            await fetch(getApiUrl(`/api/usuarios/${sellerId}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ commissionRate: newRate, tasaComision: newRate })
+            });
+        } catch (e) {
+            console.error('Error al actualizar comisión del vendedor:', e);
+        }
+        setUsers(prev => prev.map(u => u.id === sellerId ? { ...u, commissionRate: newRate, tasaComision: newRate } : u));
     };
 
-    /** Suspende / reactiva un vendedor localmente */
-    const toggleSellerSuspension = (sellerId, reason = null) => {
+    /** Suspende / reactiva un vendedor en BD y estado local */
+    const toggleSellerSuspension = async (sellerId, reason = null) => {
+        const target = users.find(u => u.id === sellerId);
+        const nuevoEstado = target ? !target.suspended : true;
+        try {
+            await fetch(getApiUrl(`/api/usuarios/${sellerId}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    suspended: nuevoEstado,
+                    suspendido: nuevoEstado,
+                    suspensionReason: nuevoEstado ? reason : null,
+                    motivoSuspension: nuevoEstado ? reason : null,
+                    active: !nuevoEstado,
+                    activo: !nuevoEstado
+                })
+            });
+        } catch (e) {
+            console.error('Error al cambiar estado de suspensión del vendedor:', e);
+        }
         setUsers(prev => prev.map(u => {
             if (u.id === sellerId) {
-                const newSuspended = !u.suspended;
                 return {
                     ...u,
-                    suspended: newSuspended,
-                    suspendido: newSuspended,
-                    suspensionReason: newSuspended ? reason : null,
-                    motivoSuspension: newSuspended ? reason : null,
-                    active: !newSuspended,
-                    activo: !newSuspended
+                    suspended: nuevoEstado,
+                    suspendido: nuevoEstado,
+                    suspensionReason: nuevoEstado ? reason : null,
+                    motivoSuspension: nuevoEstado ? reason : null,
+                    active: !nuevoEstado,
+                    activo: !nuevoEstado
                 };
             }
             return u;
@@ -496,6 +679,32 @@ export function MetricsProvider({ children }) {
     // =========================================================================
     // FUNCIONES DE BUG REPORTS
     // =========================================================================
+
+    /**
+     * Crea un nuevo reporte de error en BD y estado local.
+     * @param {Object} newReport
+     */
+    const addBugReport = async (newReport) => {
+        try {
+            const res = await fetch(getApiUrl('/api/soporte/reportes'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newReport)
+            });
+            const saved = res.ok ? await res.json().catch(() => ({})) : {};
+            const reportObj = normalizarReporte({
+                ...newReport,
+                id: saved.id ?? (bugReports.length > 0 ? Math.max(...bugReports.map(r => Number(r.id) || 0)) + 1 : 1),
+                status: 'open',
+                createdAt: new Date().toISOString().split('T')[0]
+            });
+            setBugReports(prev => [...prev, reportObj]);
+            return reportObj;
+        } catch (e) {
+            console.error('Error al crear reporte:', e);
+            return null;
+        }
+    };
 
     /**
      * Actualiza el estado de un bug report.
@@ -534,34 +743,52 @@ export function MetricsProvider({ children }) {
      * @param {Object} newCoupon
      */
     const createCoupon = async (newCoupon) => {
-        const couponObj = {
-            ...newCoupon,
-            id: coupons.length > 0 ? Math.max(...coupons.map(c => c.id)) + 1 : 1,
-            usageCount: 0,
-            conteoUsos: 0,
-            active: true,
-            activo: true,
-            createdAt: new Date().toISOString().split('T')[0]
-        };
-        setCoupons(prev => [...prev, couponObj]);
+        const prevCoupons = coupons;
         try {
-            await fetch(getApiUrl('/api/cupones'), {
+            const res = await fetch(getApiUrl('/api/cupones'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(couponObj)
+                body: JSON.stringify(newCoupon)
             });
-        } catch (e) { console.error('Error al crear cupón:', e); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const saved = await res.json().catch(() => ({}));
+            const couponObj = normalizarCupon({
+                ...newCoupon,
+                id: saved.id ?? (coupons.length > 0 ? Math.max(...coupons.map(c => Number(c.id) || 0)) + 1 : 1),
+                usageCount: 0,
+                conteoUsos: 0,
+                active: true,
+                activo: true,
+                createdAt: new Date().toISOString().split('T')[0]
+            });
+            setCoupons(prev => [...prev, couponObj]);
+            return true;
+        } catch (e) {
+            console.error('Error al crear cupón:', e);
+            setCoupons(prevCoupons);
+            showNotification('error', 'No se pudo crear el cupón.');
+            return false;
+        }
     };
+    const addCoupon = createCoupon;
 
     /**
      * Desactiva un cupón en BD y estado local.
      * @param {number} couponId
      */
     const deactivateCoupon = async (couponId) => {
+        const prevCoupons = coupons;
         setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, active: false, activo: false } : c));
         try {
-            await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), { method: 'PUT' });
-        } catch (e) { console.error('Error al desactivar cupón:', e); }
+            const res = await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), { method: 'PUT' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return true;
+        } catch (e) {
+            console.error('Error al desactivar cupón:', e);
+            setCoupons(prevCoupons);
+            showNotification('error', 'No se pudo desactivar el cupón.');
+            return false;
+        }
     };
 
     /**
@@ -593,22 +820,27 @@ export function MetricsProvider({ children }) {
      * @param {Object} newTicket
      */
     const createTicket = async (newTicket) => {
-        const ticketObj = {
-            ...newTicket,
-            id: supportTickets.length > 0 ? Math.max(...supportTickets.map(t => t.id)) + 1 : 1,
-            status: 'open',
-            estado: 'abierto',
-            createdAt: new Date().toISOString().split('T')[0],
-            updatedAt: new Date().toISOString().split('T')[0]
-        };
-        setSupportTickets(prev => [...prev, ticketObj]);
         try {
-            await fetch(getApiUrl('/api/soporte/tickets'), {
+            const res = await fetch(getApiUrl('/api/soporte/tickets'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(ticketObj)
+                body: JSON.stringify(newTicket)
             });
-        } catch (e) { console.error('Error al crear ticket:', e); }
+            const saved = res.ok ? await res.json().catch(() => ({})) : {};
+            const ticketObj = normalizarTicket({
+                ...newTicket,
+                id: saved.id ?? (supportTickets.length > 0 ? Math.max(...supportTickets.map(t => Number(t.id) || 0)) + 1 : 1),
+                status: 'open',
+                estado: 'abierto',
+                createdAt: new Date().toISOString().split('T')[0],
+                updatedAt: new Date().toISOString().split('T')[0]
+            });
+            setSupportTickets(prev => [...prev, ticketObj]);
+            return ticketObj;
+        } catch (e) {
+            console.error('Error al crear ticket:', e);
+            return null;
+        }
     };
 
     /**
@@ -640,11 +872,18 @@ export function MetricsProvider({ children }) {
         } catch (e) { console.error('Error al actualizar ticket:', e); }
     };
 
-    /** Asigna un ticket a un usuario (solo estado local) */
-    const assignTicket = (ticketId, userId) => {
+    /** Asigna un ticket a un usuario en BD y estado local */
+    const assignTicket = async (ticketId, agentId) => {
         setSupportTickets(prev => prev.map(t =>
-            t.id === ticketId ? { ...t, assignedTo: userId, updatedAt: new Date().toISOString().split('T')[0] } : t
+            t.id === ticketId ? { ...t, assignedTo: agentId, updatedAt: new Date().toISOString().split('T')[0] } : t
         ));
+        try {
+            await fetch(getApiUrl(`/api/soporte/tickets/${ticketId}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assignedTo: agentId })
+            });
+        } catch (e) { console.error('Error al asignar ticket:', e); }
     };
 
     // =========================================================================
@@ -672,37 +911,72 @@ export function MetricsProvider({ children }) {
      * @param {Object} updates
      */
     const updateBatch = async (batchId, updates) => {
+        const computedStatus = updates.currentMeters !== undefined
+            ? (Number(updates.currentMeters) < 10 ? 'critical' : Number(updates.currentMeters) < 20 ? 'low' : 'active')
+            : undefined;
+        const finalUpdates = computedStatus ? { ...updates, status: computedStatus, estado: computedStatus } : updates;
         setInventoryBatches(prev => prev.map(b =>
-            b.id === batchId ? { ...b, ...updates, lastUpdate: new Date().toISOString().split('T')[0] } : b
+            b.id === batchId ? { ...b, ...finalUpdates, lastUpdate: new Date().toISOString().split('T')[0] } : b
         ));
         try {
             await fetch(getApiUrl(`/api/inventario/lotes/${batchId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updates)
+                body: JSON.stringify(finalUpdates)
             });
         } catch (e) { console.error('Error al actualizar lote:', e); }
     };
 
+    const updateBatchMeters = async (batchId, currentMeters) => {
+        const metersNum = Number(currentMeters);
+        const status = metersNum < 10 ? 'critical' : metersNum < 20 ? 'low' : 'active';
+        return updateBatch(batchId, { currentMeters: metersNum, metrosActuales: metersNum, status, estado: status });
+    };
+
     /**
-     * Registra un evento de merma en BD y estado local.
+     * Registra un evento de merma en BD y estado local, descontando metros del lote.
      * @param {Object} wasteEvent
      */
     const logWaste = async (wasteEvent) => {
         const eventObj = {
             ...wasteEvent,
-            id: wasteEvents.length > 0 ? Math.max(...wasteEvents.map(e => e.id)) + 1 : 1,
+            id: wasteEvents.length > 0 ? Math.max(...wasteEvents.map(e => Number(e.id) || 0)) + 1 : 1,
             eventDate: new Date().toISOString().split('T')[0]
         };
         setWasteEvents(prev => [...prev, eventObj]);
+        const wastedMeters = Number(wasteEvent.meters ?? wasteEvent.metros ?? 0);
+        if (wastedMeters > 0 && wasteEvent.batchId) {
+            setInventoryBatches(prev => prev.map(b => {
+                if (String(b.id) === String(wasteEvent.batchId) || String(b.batchCode) === String(wasteEvent.batchId)) {
+                    const updatedMeters = Math.max(0, Number(b.currentMeters || 0) - wastedMeters);
+                    const newStatus = updatedMeters < 10 ? 'critical' : updatedMeters < 20 ? 'low' : 'active';
+                    return {
+                        ...b,
+                        currentMeters: updatedMeters,
+                        metrosActuales: updatedMeters,
+                        status: newStatus,
+                        estado: newStatus,
+                        lastUpdate: new Date().toISOString().split('T')[0]
+                    };
+                }
+                return b;
+            }));
+        }
         try {
-            await fetch(getApiUrl('/api/inventario/mermas'), {
+            const res = await fetch(getApiUrl('/api/inventario/mermas'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(wasteEvent)
             });
+            if (res.ok) {
+                const updatedBatches = await apiFetch('/api/inventario/lotes');
+                if (updatedBatches?.length > 0) {
+                    setInventoryBatches(updatedBatches.map(normalizarLote));
+                }
+            }
         } catch (e) { console.error('Error al registrar merma:', e); }
     };
+    const logWasteEvent = logWaste;
 
     /**
      * Actualiza un umbral de stock mínimo.
@@ -795,6 +1069,7 @@ export function MetricsProvider({ children }) {
         loading,
         users,
         orders,
+        ordersLoadFailed,
         products,
         pendingProducts,
         coupons,
@@ -838,11 +1113,13 @@ export function MetricsProvider({ children }) {
         toggleSellerSuspension,
 
         // Bug Reports
+        addBugReport,
         updateBugReportStatus,
         getBugReportsBySeller,
 
         // Cupones
         createCoupon,
+        addCoupon,
         deactivateCoupon,
         validateCoupon,
 
@@ -855,7 +1132,9 @@ export function MetricsProvider({ children }) {
         // Inventario
         addBatch,
         updateBatch,
+        updateBatchMeters,
         logWaste,
+        logWasteEvent,
         updateStockThreshold,
 
         // Configuración

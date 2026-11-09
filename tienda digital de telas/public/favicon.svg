@@ -1,25 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <defs>
-    <linearGradient id="ddBg" x1="12" y1="8" x2="116" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#EA580C" />
-      <stop offset="52%" stop-color="#F97316" />
-      <stop offset="100%" stop-color="#D97706" />
-    </linearGradient>
-    <linearGradient id="ddShine" x1="20" y1="10" x2="90" y2="75" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28" />
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
-    </linearGradient>
-    <linearGradient id="ddGold" x1="24" y1="86" x2="104" y2="108" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FDE68A" />
-      <stop offset="50%" stop-color="#FBBF24" />
-      <stop offset="100%" stop-color="#FDE68A" />
-    </linearGradient>
-  </defs>
-  <rect x="6" y="6" width="116" height="116" rx="30" fill="url(#ddBg)" />
-  <rect x="6" y="6" width="116" height="116" rx="30" fill="url(#ddShine)" />
-  <rect x="13" y="13" width="102" height="102" rx="24" stroke="#FFF7ED" stroke-opacity="0.45" stroke-width="2.2" stroke-dasharray="6 5" />
-  <path d="M24 30C44 22 84 22 104 30" stroke="url(#ddGold)" stroke-width="3.2" stroke-linecap="round" />
-  <text x="64" y="75" text-anchor="middle" fill="#FFFFFF" font-family="Outfit, Inter, system-ui, -apple-system, sans-serif" font-weight="900" font-size="44" letter-spacing="-1.5">D&amp;D</text>
-  <path d="M24 92C42 100 86 100 104 92" stroke="url(#ddGold)" stroke-width="3.5" stroke-linecap="round" />
-  <text x="64" y="108" text-anchor="middle" fill="#FFFBEB" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="13" letter-spacing="4">TEXTIL</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#0F172A"/>
+  <path d="M16 20h14c7.732 0 14 6.268 14 14s-6.268 14-14 14H16V20z" stroke="#EA580C" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="30" cy="34" r="5" fill="#F97316"/>
 </svg>

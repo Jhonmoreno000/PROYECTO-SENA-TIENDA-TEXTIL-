@@ -142,3 +142,18 @@ Todas las transacciones y mutaciones de inventario generan un registro inmutable
 ```
 
 Este formato estandarizado permite la ingesta directa por sistemas de monitoreo como Grafana Loki, Elasticsearch o AWS CloudWatch.
+
+
+---
+
+## Anexo de Seguridad v2.0: Arquitectura de Sesiones Firmadas (`TokenSesion`) y Autorización en Tiempo Real
+
+Para eliminar cualquier riesgo de suplantación de identidad o escalamiento horizontal/vertical de privilegios, **D&D Textil** implementa un esquema criptográfico propio sin dependencias externas vulnerables:
+
+1. **Estructura del Token (`TokenSesion.java`):**
+   - Cada sesión emitida en `/api/login`, `/api/register` o SSO genera una carga JSON compacta `{"sub": <idUsuario>, "rol": "<rol>", "exp": <epochSegundos>}` codificada en **Base64URL sin relleno**, concatenada mediante un punto (`.`) con su firma **HMAC-SHA256** calculada usando la llave del servidor (`SESSION_SECRET`).
+   - La comparación de firmas utiliza `MessageDigest.isEqual(...)` en tiempo constante para mitigar ataques laterales por temporización (*Timing Attacks*).
+2. **Revalidación de Rol y Estado en Base de Datos (`ManejadorBase.identidadVigente`):**
+   - En cada petición protegida, una vez verificada la firma HMAC y la vigencia temporal (12 horas), el backend consulta el registro actual del usuario en PostgreSQL.
+   - Si la cuenta fue suspendida (`suspendido = true`) o desactivada (`activo = false`), el acceso se revoca de inmediato (`401/403`) sin esperar a que expire el token.
+   - El rol efectivo de autorización se toma siempre del registro vigente en la base de datos y nunca a ciegas del reclamo del token.

@@ -5,10 +5,14 @@ import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight } from 'lucide-react';
 import Counter from './Counter';
+import { useMetricas } from '../contextos/ContextoMetricas';
+import { formatCurrency } from '../utilidades/formateadores';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Portada() {
+    const { systemConfig } = useMetricas();
+    const freeShippingThreshold = Number(systemConfig?.freeShippingThreshold || 200000);
     const containerRef = useRef(null);
     const imageRef = useRef(null);
     const textRef = useRef(null);
@@ -154,7 +158,7 @@ export default function Portada() {
                 <div className="order-1 lg:order-2 h-[50vh] lg:h-[75vh] w-full relative overflow-hidden rounded-bl-[4rem] rounded-tr-[4rem] shadow-2xl shadow-gray-200/50">
                     <img 
                         ref={imageRef}
-                        src="/images/hero-telas-premium.png" 
+                        src="/images/hero-telas-premium.webp" 
                         alt="Telas de Lujo"
                         className="w-full h-full object-cover origin-center will-change-transform"
                         style={{ clipPath: "inset(100% 0% 0% 0%)" }}
@@ -170,7 +174,7 @@ export default function Portada() {
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
                         </div>
                         <span className="text-xs font-semibold text-gray-900 uppercase tracking-widest">
-                            Envío Gratis +$100.000
+                            Envío Gratis +{formatCurrency(freeShippingThreshold)}
                         </span>
                     </div>
                 </div>

@@ -13,15 +13,9 @@
   "categories": ["shopping", "business", "lifestyle"],
   "icons": [
     {
-      "src": "/icono/dd-textil-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/proyecto-preview.png",
+      "src": "/images/hero-telas-premium.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     }
   ]

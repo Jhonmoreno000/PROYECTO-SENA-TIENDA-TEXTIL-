@@ -11,7 +11,7 @@
 
 **D&D Textil** es una plataforma tecnológica integral de comercio electrónico (*E-Commerce B2B/B2C*) y gestión logística de bodega especializada en la industria textil y de insumos para la confección en Colombia. A diferencia de las plataformas genéricas de comercio electrónico que operan bajo unidades discretas (piezas o cajas cerradas), **D&D Textil** ha sido arquitecturada desde su núcleo de dominio (*Domain-Driven Design*) para gestionar la naturaleza continua, fraccionable y físico-química de las telas: **venta por metraje lineal decimal, trazabilidad por lote de tintorería (*dye lot*), continuidad de pieza por rollo físico y liquidación automatizada de mermas y retazos**.
 
-El propósito del proyecto es digitalizar la cadena de suministro entre importadores/distribuidores textiles, talleres de confección, diseñadores independientes y compradores minoristas, conectando en tiempo real el **piso de corte en bodega** con una **vitrina digital omnicanal** (Web SPA/PWA en React 18 y Aplicación Móvil Android nativa) respaldada por un motor transaccional en **Java 21** y **PostgreSQL 15** con integración financiera **Wompi** y facturación electrónica con **CUFE**.
+El propósito del proyecto es digitalizar la cadena de suministro entre importadores/distribuidores textiles, talleres de confección, diseñadores independientes y compradores minoristas, conectando en tiempo real el **piso de corte en bodega** con una **vitrina digital omnicanal** (Web SPA/PWA en React 18 y Aplicación Móvil Android nativa) respaldada por un motor transaccional en **Java 21** y **PostgreSQL 17** con integración financiera **Wompi** y facturación electrónica con **CUFE**.
 
 ---
 
@@ -96,7 +96,7 @@ Gracias a una decisión arquitectónica deliberada —**Backend en Java 21 nativ
 
 | Categoría | Componente / Servicio | Especificación Técnica | Costo Mensual Estimado (USD / COP) |
 | :--- | :--- | :--- | :--- |
-| **Cómputo y Contenedores** | Servidor VPS Cloud (AWS Lightsail / DigitalOcean / Hetzner) | 2 vCPU, 4 GB RAM, 80 GB NVMe SSD ejecutando Docker Compose (`nginx`, `backend-java`, `postgres:15-alpine`) | \$24 USD (~ \$100.000 COP) |
+| **Cómputo y Contenedores** | Servidor VPS Cloud (AWS Lightsail / DigitalOcean / Hetzner) | 2 vCPU, 4 GB RAM, 80 GB NVMe SSD ejecutando Docker Compose (`nginx`, `backend-java`, `postgres:17`) | \$24 USD (~ \$100.000 COP) |
 | **Almacenamiento y Backups (DRP)** | Object Storage (AWS S3 / Backblaze B2) | Almacenamiento de imágenes de catálogo WebP y respaldos automatizados de PostgreSQL (RPO $\le 24\text{h}$, retención 7 días) | \$5 USD (~ \$21.000 COP) |
 | **Dominio, DNS y Seguridad** | Cloudflare + Dominio `.com` / `.co` | Certificado TLS/SSL, CDN para activos estáticos, mitigación DDoS y WAF básico | \$3 USD (~ \$13.000 COP) |
 | **Correo Transaccional** | Proveedor SMTP / API Transaccional | Envío automático de confirmaciones de pedido, alertas de stock y facturas | \$0 – \$10 USD (~ \$42.000 COP) |
@@ -166,3 +166,13 @@ Para evaluar objetivamente la salud comercial, operativa y tecnológica del nego
 * **Tasa de Errores Transaccionales y Sobreventa:** Cantidad de inconsistencias de stock en concurrencia alta (Meta: **0.0 %** garantizado por bloqueo `FOR UPDATE` y suite de 44 pruebas automatizadas).
 * **Disponibilidad del Servicio (*Uptime SLA*) y Resiliencia DRP:** Disponibilidad operativa del contenedor API/Frontend (Meta: $\ge 99.5\text{ \%}$ con **RPO $\le 24\text{h}$** y **RTO $\le 15\text{ min}$**).
 
+
+
+---
+
+## 9. Adopción Operativa y Autoservicio con el Manual de Usuario Oficial
+
+Para reducir el costo de soporte al cliente (*Customer Acquisition & Support Cost*) y acelerar la curva de aprendizaje de nuevos vendedores y operarios de bodega, el ecosistema **D&D Textil** incorpora el [**Manual de Usuario Oficial**](./documentacion/13-manual-de-usuario.md) ([versión PDF](./documentacion/Manual_de_usuario_DD_Textil.pdf)):
+
+- **Autoservicio B2C / B2B:** guía el uso autónomo de la **Calculadora de Metraje por Proyecto**, el seguimiento de guías logísticas y la descarga de facturas con CUFE, disminuyendo las consultas operativas de primer nivel.
+- **Capacitación Rápida de Vendedores y Administradores:** documenta el flujo completo de creación de productos, cola de moderación, control de lotes de tintorería y calculadora de mermas, permitiendo incorporar nuevos distribuidores textiles al marketplace en menos de una jornada.

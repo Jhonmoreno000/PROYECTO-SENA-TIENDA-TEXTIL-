@@ -26,29 +26,21 @@ import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useProductos } from '../../../contextos/ContextoProducto';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 
 function Wishlist() {
     const { wishlistItems = [], addToWishlist, removeFromWishlist, updateWishlistItem } = useMetricas();
     const { products } = useProductos();
+    const { showNotification } = useNotificacion();
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [newCategory, setNewCategory] = useState('');
     const [editingNotes, setEditingNotes] = useState(null);
     const [tempNotes, setTempNotes] = useState('');
 
-    // Si no hay ítems reales en wishlist, generamos una demo usando productos reales del catálogo
-    const mockWishlist = products.slice(0, 4).map((p, i) => ({
-        id: i + 1,
-        productId: p.id,
-        category: p.category || 'General',
-        notes: '',
-        notifyOnStock: false,
-        addedAt: '2026-01-15'
-    }));
-
-    const wishlist = wishlistItems.length > 0 ? wishlistItems : mockWishlist;
-    const categories = ['all', ...new Set(wishlist.map(w => w.category))];
+    const wishlist = Array.isArray(wishlistItems) ? wishlistItems : [];
+    const categories = ['all', ...new Set(wishlist.map(w => w.category).filter(Boolean))];
 
     const filteredWishlist = selectedCategory === 'all'
         ? wishlist
@@ -60,22 +52,22 @@ function Wishlist() {
 
     const handleAddCategory = () => {
         if (newCategory.trim()) {
-            // In real app, save to contextos
             setShowAddCategory(false);
             setNewCategory('');
         }
     };
 
     const handleSaveNotes = (itemId) => {
-        // In real app, update via contextos
+        if (updateWishlistItem) {
+            updateWishlistItem(itemId, { notes: tempNotes });
+        }
         setEditingNotes(null);
         setTempNotes('');
     };
 
     const handleRemoveItem = (itemId) => {
-        if (confirm('¿Eliminar esta tela de tu lista de deseos?')) {
-            // removeFromWishlist(itemId);
-        }
+        removeFromWishlist(itemId);
+        showNotification('info', 'Tela eliminada de tu lista de deseos');
     };
 
     return (
@@ -160,7 +152,7 @@ function Wishlist() {
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredWishlist.map(item => {
-                            const product = getProductById(item.productId);
+                            const product = getProductById(item.productId ?? item.id) || item;
                             if (!product) return null;
                             const isOutOfStock = (product.stock ?? 1) === 0;
 
@@ -169,7 +161,7 @@ function Wishlist() {
                                     {/* Imagen */}
                                     <div className="aspect-square relative overflow-hidden bg-slate-100 dark:bg-slate-800">
                                         <img
-                                            src={product?.images?.[0] || '/placeholder.png'}
+                                            src={product?.images?.[0] || '/placeholder.webp'}
                                             alt={product?.name || 'Producto'}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         />

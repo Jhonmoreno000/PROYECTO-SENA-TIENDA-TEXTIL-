@@ -42,7 +42,10 @@ function TarjetaProducto({ product }) {
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const result = addToCart(product, 1);
+        const productToAdd = hasDiscount
+            ? { ...product, price: discountedPrice, originalPrice: basePrice }
+            : product;
+        const result = addToCart(productToAdd, 1);
         if (result) {
             setShowAddedMessage(true);
             if (messageRef.current) {
@@ -130,11 +133,11 @@ function TarjetaProducto({ product }) {
             <div className="relative h-64 overflow-hidden bg-gray-100 dark:bg-slate-800 rounded-t-2xl">
                 <Link to={`/producto/${product.id}`} className="block h-full w-full">
                     <img
-                        src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.png'}
+                        src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.webp'}
                         alt={product.name || product.nombre}
                         loading="lazy"
                         decoding="async"
-                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
+                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.webp'; }}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                 </Link>

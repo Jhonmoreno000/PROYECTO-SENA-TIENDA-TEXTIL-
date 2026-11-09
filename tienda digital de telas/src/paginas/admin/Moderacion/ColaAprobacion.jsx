@@ -121,7 +121,7 @@ function ColaAprobacion() {
                         <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredProducts.map(product => {
                                 const prodPrice = Number(product.price ?? product.precio ?? 0);
-                                const prodImg = product.images?.[0] || product.image || product.imagen || '/placeholder.png';
+                                const prodImg = product.images?.[0] || product.image || product.imagen || '/placeholder.webp';
                                 const prodSeller = getSellerName(product);
                                 const prodDate = product.submittedAt || product.createdAt || product.fechaCreacion || new Date();
 
@@ -186,7 +186,7 @@ function ColaAprobacion() {
                                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">Vista Previa</h3>
                                 <button onClick={closePreview} className="p-3 bg-white hover:bg-slate-50 dark:bg-slate-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm transition-all"><X size={20} /></button>
                             </div>
-                            <img src={selectedProduct.images?.[0] || selectedProduct.image || selectedProduct.imagen || '/placeholder.png'} alt={selectedProduct.name || selectedProduct.nombre} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
+                            <img src={selectedProduct.images?.[0] || selectedProduct.image || selectedProduct.imagen || '/placeholder.webp'} alt={selectedProduct.name || selectedProduct.nombre} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
                             <h4 className="text-xl font-black text-slate-900 dark:text-white mb-1">{selectedProduct.name || selectedProduct.nombre}</h4>
                             <p className="text-2xl font-black text-[#f97316] mb-4">{formatCurrency(selectedProduct.price ?? selectedProduct.precio ?? 0)}<span className="text-sm font-normal text-slate-400 dark:text-slate-500"> /m</span></p>
                             <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">{selectedProduct.description || selectedProduct.descripcion}</p>

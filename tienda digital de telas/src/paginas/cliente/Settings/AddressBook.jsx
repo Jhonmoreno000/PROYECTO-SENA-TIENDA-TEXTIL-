@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
     MapPin, 
     Plus, 
@@ -18,6 +18,9 @@ import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
+import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
+import { getApiUrl } from '../../../config';
 
 const COLOMBIA_DEPARTMENTS = [
     'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar', 'Boyacá',
@@ -34,33 +37,27 @@ const ADDRESS_LABELS = [
     { value: 'other', label: 'Otro', icon: Building2 }
 ];
 
+const normalizarDireccion = (d) => ({
+    ...d,
+    id: d.id,
+    userId: d.userId,
+    label: d.label || 'home',
+    recipientName: d.recipientName || d.fullName || '',
+    fullName: d.fullName || d.recipientName || '',
+    phone: d.phone || '',
+    department: d.department || '',
+    city: d.city || '',
+    neighborhood: d.neighborhood || '',
+    address: d.address || '',
+    additionalInfo: d.additionalInfo || '',
+    postalCode: d.postalCode || '',
+    isDefault: Boolean(d.isDefault)
+});
+
 function AddressBook() {
-    const [addresses, setAddresses] = useState([
-        {
-            id: 1,
-            label: 'home',
-            fullName: 'María García',
-            phone: '3001234567',
-            department: 'Cundinamarca',
-            city: 'Bogotá',
-            neighborhood: 'Chapinero',
-            address: 'Cra 7 #45-23',
-            additionalInfo: 'Apto 502',
-            isDefault: true
-        },
-        {
-            id: 2,
-            label: 'workshop',
-            fullName: 'María García - Taller',
-            phone: '3009876543',
-            department: 'Cundinamarca',
-            city: 'Bogotá',
-            neighborhood: 'Zona Industrial',
-            address: 'Calle 13 #68-45',
-            additionalInfo: 'Bodega 12',
-            isDefault: false
-        }
-    ]);
+    const { showNotification } = useNotificacion();
+    const { user } = useAutenticacion();
+    const [addresses, setAddresses] = useState([]);
 
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -73,8 +70,26 @@ function AddressBook() {
         neighborhood: '',
         address: '',
         additionalInfo: '',
+        postalCode: '',
         isDefault: false
     });
+
+    const fetchAddresses = useCallback(async () => {
+        if (!user?.id) return;
+        try {
+            const res = await fetch(getApiUrl(`/api/usuarios/${user.id}/direcciones`));
+            if (res.ok) {
+                const data = await res.json();
+                setAddresses(Array.isArray(data) ? data.map(normalizarDireccion) : []);
+            }
+        } catch (err) {
+            console.error('Error al cargar direcciones:', err);
+        }
+    }, [user?.id]);
+
+    useEffect(() => {
+        fetchAddresses();
+    }, [fetchAddresses]);
 
     const resetForm = () => {
         setFormData({
@@ -86,6 +101,7 @@ function AddressBook() {
             neighborhood: '',
             address: '',
             additionalInfo: '',
+            postalCode: '',
             isDefault: false
         });
         setShowForm(false);
@@ -93,51 +109,107 @@ function AddressBook() {
     };
 
     const handleEdit = (address) => {
-        setFormData(address);
+        setFormData({
+            ...address,
+            fullName: address.fullName || address.recipientName || ''
+        });
         setEditingId(address.id);
         setShowForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDelete = (id) => {
-        if (confirm('¿Eliminar esta dirección de forma permanente?')) {
-            setAddresses(prev => prev.filter(a => a.id !== id));
+    const handleDelete = async (id) => {
+        if (!user?.id) return;
+        try {
+            const res = await fetch(getApiUrl(`/api/usuarios/${user.id}/direcciones/${id}`), {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setAddresses(prev => prev.filter(a => a.id !== id));
+                showNotification('info', 'Dirección eliminada correctamente');
+            } else {
+                showNotification('error', 'No se pudo eliminar la dirección');
+            }
+        } catch (err) {
+            console.error('Error al eliminar dirección:', err);
+            showNotification('error', 'Error de conexión al eliminar la dirección');
         }
     };
 
-    const handleSetDefault = (id) => {
-        setAddresses(prev => prev.map(a => ({
-            ...a,
-            isDefault: a.id === id
-        })));
+    const handleSetDefault = async (id) => {
+        if (!user?.id) return;
+        const target = addresses.find(a => a.id === id);
+        if (!target) return;
+        try {
+            const res = await fetch(getApiUrl(`/api/usuarios/${user.id}/direcciones/${id}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...target,
+                    recipientName: target.recipientName || target.fullName,
+                    isDefault: true
+                })
+            });
+            if (res.ok) {
+                setAddresses(prev => prev.map(a => ({
+                    ...a,
+                    isDefault: a.id === id
+                })));
+                showNotification('success', 'Dirección principal actualizada');
+            }
+        } catch (err) {
+            console.error('Error al predeterminar dirección:', err);
+        }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formData.fullName || !formData.phone || !formData.department || !formData.city || !formData.address) {
-            alert('Por favor completa todos los campos requeridos (*).');
+            showNotification('warning', 'Por favor completa todos los campos requeridos (*).');
             return;
         }
 
-        if (editingId) {
-            setAddresses(prev => prev.map(a =>
-                a.id === editingId
-                    ? { ...formData, id: editingId }
-                    : formData.isDefault
-                        ? { ...a, isDefault: false }
-                        : a
-            ));
-        } else {
-            const newAddress = {
-                ...formData,
-                id: Date.now()
-            };
-            if (formData.isDefault) {
-                setAddresses(prev => [...prev.map(a => ({ ...a, isDefault: false })), newAddress]);
+        if (!user?.id) return;
+
+        const payload = {
+            userId: user.id,
+            label: formData.label,
+            recipientName: formData.fullName,
+            fullName: formData.fullName,
+            phone: formData.phone,
+            address: [formData.address, formData.neighborhood, formData.additionalInfo].filter(Boolean).join(' - '),
+            city: formData.city,
+            department: formData.department,
+            postalCode: formData.postalCode || '',
+            isDefault: Boolean(formData.isDefault)
+        };
+
+        try {
+            if (editingId) {
+                const res = await fetch(getApiUrl(`/api/usuarios/${user.id}/direcciones/${editingId}`), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    await fetchAddresses();
+                    showNotification('success', 'Dirección actualizada correctamente');
+                }
             } else {
-                setAddresses(prev => [...prev, newAddress]);
+                const res = await fetch(getApiUrl(`/api/usuarios/${user.id}/direcciones`), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    await fetchAddresses();
+                    showNotification('success', 'Dirección guardada correctamente');
+                }
             }
+        } catch (err) {
+            console.error('Error al guardar dirección:', err);
+            showNotification('error', 'No se pudo guardar la dirección');
         }
 
         resetForm();

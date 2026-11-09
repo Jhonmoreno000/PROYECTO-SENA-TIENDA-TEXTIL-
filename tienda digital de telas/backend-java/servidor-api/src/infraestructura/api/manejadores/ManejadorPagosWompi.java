@@ -1,6 +1,5 @@
 package infraestructura.api.manejadores;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,40 +12,48 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 
+import aplicacion.servicios.ServicioAutenticacion;
 import aplicacion.servicios.ServicioCriptoWompi;
-import dominio.excepciones.ExcepcionDominio;
+import aplicacion.servicios.ServicioNotificacionesEmail;
 import dominio.modelos.TransaccionWompi;
 import infraestructura.configuracion.ConfiguracionWompi;
 import infraestructura.persistencia.jdbc.PagoWompiDAO;
 import infraestructura.persistencia.jdbc.PagoWompiDAO.ResultadoIntencionPago;
 
 /**
- * Controlador REST para el flujo de pago con Wompi (Bancolombia).
- *
- * Endpoints:
- *  - POST /api/pagos/intencion (crear intención con firma criptográfica SHA-256)
- *  - POST /api/pagos/webhook   (recibir eventos de Wompi con validación de firma e idempotencia)
- *  - GET  /api/pagos/estado    (consultar estado del pedido por referencia de pago)
- *  - GET  /api/pagos/config    (consultar llave pública y estado de configuración)
+ * Controlador REST para el flujo de pagos seguros con Wompi (Bancolombia).
+ * Soporta creación de intención de pago con firma SHA-256, confirmación de pago,
+ * recepción de Webhooks firmados y consulta de estado por referencia.
  */
 public class ManejadorPagosWompi extends ManejadorBase {
 
+    /** Objeto de acceso a datos de pagos y pedidos Wompi (`PagoWompiDAO`). */
     private final PagoWompiDAO pagoWompiDAO;
+    /** Serializador JSON (`Gson`). */
     private final Gson gson;
-    private final aplicacion.servicios.ServicioNotificacionesEmail servicioNotificaciones;
+    /** Servicio de envío de notificaciones transaccionales por correo (`ServicioNotificacionesEmail`). */
+    private final ServicioNotificacionesEmail servicioNotificaciones;
 
+    /**
+     * Inicializa el manejador de pagos Wompi con su DAO y servicio de notificaciones.
+     */
     public ManejadorPagosWompi() {
         this.pagoWompiDAO = new PagoWompiDAO();
         this.gson = new Gson();
-        this.servicioNotificaciones = new aplicacion.servicios.ServicioNotificacionesEmail();
+        this.servicioNotificaciones = new ServicioNotificacionesEmail();
     }
 
+    /**
+     * Enruta las peticiones `GET` y `POST` sobre `/api/pagos/*` y `/api/payments/*`.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error durante el procesamiento.
+     */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
         String metodo = intercambio.getRequestMethod();
         String ruta = intercambio.getRequestURI().getPath();
 
-        // 1. GET /api/pagos/config
         if ("GET".equalsIgnoreCase(metodo) && (ruta.endsWith("/config") || ruta.endsWith("/configuracion"))) {
             JsonObject config = new JsonObject();
             config.addProperty("configured", ConfiguracionWompi.estaConfigurada());
@@ -57,7 +64,6 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        // 2. GET /api/pagos/estado o /api/payments/status
         if ("GET".equalsIgnoreCase(metodo) && (ruta.contains("/estado") || ruta.contains("/status"))) {
             String referencia = obtenerParametroConsulta(intercambio, "reference");
             if (referencia == null || referencia.isBlank()) {
@@ -78,13 +84,16 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        // 3. POST /api/pagos/intencion (Crear Intención de Pago)
         if ("POST".equalsIgnoreCase(metodo) && (ruta.endsWith("/intencion") || ruta.endsWith("/intent"))) {
             manejarIntencionPago(intercambio);
             return;
         }
 
-        // 4. POST /api/pagos/webhook (Recepción de Webhook Wompi)
+        if ("POST".equalsIgnoreCase(metodo) && (ruta.endsWith("/confirmar") || ruta.endsWith("/confirm"))) {
+            manejarConfirmarPago(intercambio);
+            return;
+        }
+
         if ("POST".equalsIgnoreCase(metodo) && (ruta.endsWith("/webhook") || ruta.endsWith("/wompi-webhook"))) {
             manejarWebhook(intercambio);
             return;
@@ -94,11 +103,18 @@ public class ManejadorPagosWompi extends ManejadorBase {
     }
 
     /**
-     * Endpoint para generar la orden y la firma de integridad SHA-256 antes de abrir el Widget.
+     * Genera la orden en estado pendiente y la firma criptográfica SHA-256 de integridad antes de abrir Wompi Widget.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error validando precios o persistiendo el pedido.
      */
     private void manejarIntencionPago(HttpExchange intercambio) throws Exception {
-        InputStream is = intercambio.getRequestBody();
-        String cuerpo = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
+
+        if (ServicioAutenticacion.contieneDatosTarjetaSensibles(cuerpo)) {
+            enviarRespuestaError(intercambio, 400, "Rechazado por seguridad PCI-DSS: no se permite enviar datos sensibles de tarjeta (PAN/CVV) al servidor.");
+            return;
+        }
 
         JsonObject json;
         try {
@@ -108,23 +124,27 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        int userId = 1;
+        int userId = -1;
         if (json.has("userId") && !json.get("userId").isJsonNull()) {
             userId = json.get("userId").getAsInt();
         } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
             userId = json.get("idUsuario").getAsInt();
+        }
+        if (userId <= 0) {
+            enviarRespuestaError(intercambio, 400, "El identificador del usuario es obligatorio.");
+            return;
         }
 
         JsonObject customer = json.has("customerInfo") && json.get("customerInfo").isJsonObject()
                 ? json.getAsJsonObject("customerInfo")
                 : (json.has("cliente") && json.get("cliente").isJsonObject() ? json.getAsJsonObject("cliente") : new JsonObject());
 
-        String fullName = extraerTexto(customer, "fullName", extraerTexto(customer, "nombre", "Cliente"));
-        String email = extraerTexto(customer, "email", extraerTexto(customer, "correo", "cliente@tienda.com"));
-        String phone = extraerTexto(customer, "phone", extraerTexto(customer, "telefono", ""));
-        String address = extraerTexto(customer, "address", extraerTexto(customer, "direccion", "No especificada"));
-        String city = extraerTexto(customer, "city", extraerTexto(customer, "ciudad", "Bogotá"));
-        String state = extraerTexto(customer, "state", extraerTexto(customer, "departamento", "Cundinamarca"));
+        String fullName = extraerTexto(customer, "fullName", extraerTexto(customer, "nombre", null));
+        String email = extraerTexto(customer, "email", extraerTexto(customer, "correo", null));
+        String phone = extraerTexto(customer, "phone", extraerTexto(customer, "telefono", null));
+        String address = extraerTexto(customer, "address", extraerTexto(customer, "direccion", null));
+        String city = extraerTexto(customer, "city", extraerTexto(customer, "ciudad", null));
+        String state = extraerTexto(customer, "state", extraerTexto(customer, "departamento", null));
         String notes = extraerTexto(customer, "notes", extraerTexto(customer, "notas", ""));
 
         String couponCode = json.has("couponCode") && !json.get("couponCode").isJsonNull()
@@ -184,11 +204,75 @@ public class ManejadorPagosWompi extends ManejadorBase {
     }
 
     /**
-     * Endpoint Webhook de Wompi. Valida la firma del evento y procesa la transacción de forma idempotente.
+     * Procesa la confirmación directa de un pago por su referencia actualizando el estado e inventario en PostgreSQL.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error procesando la confirmación.
+     */
+    private void manejarConfirmarPago(HttpExchange intercambio) throws Exception {
+        String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
+
+        if (ServicioAutenticacion.contieneDatosTarjetaSensibles(cuerpo)) {
+            enviarRespuestaError(intercambio, 400, "Rechazado por seguridad PCI-DSS: no se permite enviar datos sensibles de tarjeta (PAN/CVV) al servidor.");
+            return;
+        }
+
+        JsonObject json;
+        try {
+            json = JsonParser.parseString(cuerpo).getAsJsonObject();
+        } catch (Exception e) {
+            enviarRespuestaError(intercambio, 400, "Cuerpo JSON inválido.");
+            return;
+        }
+
+        String referencia = extraerTexto(json, "reference", extraerTexto(json, "referencia", null));
+        String transaccionId = extraerTexto(json, "transactionId", extraerTexto(json, "wompiTransactionId", extraerTexto(json, "transaccionId", null)));
+        String metodoPago = extraerTexto(json, "paymentMethod", extraerTexto(json, "metodoPago", "WOMPI"));
+        String estadoPago = extraerTexto(json, "status", extraerTexto(json, "estado", "APPROVED"));
+
+        if (referencia == null || referencia.isBlank()) {
+            enviarRespuestaError(intercambio, 400, "La referencia de pago es obligatoria.");
+            return;
+        }
+
+        boolean procesado = pagoWompiDAO.confirmarPagoPorReferencia(referencia, transaccionId, metodoPago, estadoPago);
+        if (!procesado) {
+            enviarRespuestaError(intercambio, 404, "No se pudo confirmar el pedido con referencia: " + referencia);
+            return;
+        }
+
+        Map<String, Object> pedido = pagoWompiDAO.consultarPedidoPorReferencia(referencia);
+        if (pedido != null && "APPROVED".equalsIgnoreCase(estadoPago)) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> customerInfo = (Map<String, Object>) pedido.get("customerInfo");
+                String correo = customerInfo != null && customerInfo.get("email") != null ? String.valueOf(customerInfo.get("email")) : null;
+                String nombre = customerInfo != null && customerInfo.get("fullName") != null ? String.valueOf(customerInfo.get("fullName")) : "Cliente";
+                double total = pedido.get("total") instanceof Number ? ((Number) pedido.get("total")).doubleValue() : 0.0;
+                if (correo != null && !correo.isBlank()) {
+                    servicioNotificaciones.enviarNotificacionPagoAprobado(correo, nombre, referencia, total);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        JsonObject respuesta = new JsonObject();
+        respuesta.addProperty("success", true);
+        respuesta.addProperty("reference", referencia);
+        respuesta.addProperty("status", estadoPago.toUpperCase());
+        if (pedido != null && pedido.get("id") instanceof Number) {
+            respuesta.addProperty("orderId", ((Number) pedido.get("id")).intValue());
+        }
+        enviarRespuestaJson(intercambio, 200, gson.toJson(respuesta));
+    }
+
+    /**
+     * Recibe el evento Webhook de Wompi, valida su firma criptográfica y actualiza el pedido de forma idempotente.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error en la lectura o respuesta del Webhook.
      */
     private void manejarWebhook(HttpExchange intercambio) throws Exception {
-        InputStream is = intercambio.getRequestBody();
-        String payloadRaw = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        String payloadRaw = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
         try {
@@ -198,8 +282,6 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        // Validación de firma criptográfica
-        // Si el secreto de eventos está configurado, la firma es obligatoria
         String secretoEventos = ConfiguracionWompi.secretoEventos();
         if (secretoEventos != null && !secretoEventos.isBlank()) {
             boolean firmaValida = ServicioCriptoWompi.validarFirmaWebhook(json);
@@ -208,11 +290,14 @@ public class ManejadorPagosWompi extends ManejadorBase {
                 enviarRespuestaError(intercambio, 401, "Firma criptográfica inválida.");
                 return;
             }
+        } else if (ConfiguracionWompi.esProduccion()) {
+            System.err.println("[WOMPI SEGURIDAD] Rechazado webhook en producción porque WOMPI_EVENTS_SECRET no está configurado.");
+            enviarRespuestaError(intercambio, 401, "Configuración de firma de eventos requerida en producción.");
+            return;
         } else {
-            System.out.println("[WOMPI AVISO] Webhook recibido sin validación estricta porque WOMPI_EVENTS_SECRET no está definido.");
+            System.out.println("[WOMPI AVISO] Webhook recibido en sandbox sin validación estricta porque WOMPI_EVENTS_SECRET no está definido.");
         }
 
-        // Extraer datos de la transacción
         if (!json.has("data") || !json.get("data").isJsonObject()) {
             enviarRespuestaJson(intercambio, 200, "{\"received\": true, \"ignored\": \"no data field\"}");
             return;
@@ -234,22 +319,43 @@ public class ManejadorPagosWompi extends ManejadorBase {
 
         TransaccionWompi tx = new TransaccionWompi(txId, referencia, estado, montoCentavos, moneda, metodoPago);
 
-        pagoWompiDAO.procesarTransaccionWompi(tx, payloadRaw);
+        boolean exito = pagoWompiDAO.procesarTransaccionWompi(tx, payloadRaw);
 
-        if ("APPROVED".equalsIgnoreCase(estado)) {
-            String correoCliente = extraerTexto(txObj, "customer_email", "cliente@ddtextil.com");
-            double montoCop = montoCentavos / 100.0;
-            try {
-                servicioNotificaciones.enviarNotificacionPagoAprobado(correoCliente, "Cliente D&D Textil", referencia, montoCop);
-            } catch (Exception e) {
-                System.err.println("[NOTIFICACIONES] Error al despachar correo de pago: " + e.getMessage());
+        if (exito && "APPROVED".equalsIgnoreCase(estado)) {
+            String correoCliente = extraerTexto(txObj, "customer_email", null);
+            String nombreCliente = "Cliente D&D Textil";
+            Map<String, Object> pedidoBd = pagoWompiDAO.consultarPedidoPorReferencia(referencia);
+            if (pedidoBd != null && pedidoBd.get("customerInfo") instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> info = (Map<String, Object>) pedidoBd.get("customerInfo");
+                if (correoCliente == null || correoCliente.isBlank()) {
+                    correoCliente = info.get("email") != null ? String.valueOf(info.get("email")) : null;
+                }
+                if (info.get("fullName") != null) {
+                    nombreCliente = String.valueOf(info.get("fullName"));
+                }
+            }
+            if (correoCliente != null && !correoCliente.isBlank()) {
+                double montoCop = montoCentavos / 100.0;
+                try {
+                    servicioNotificaciones.enviarNotificacionPagoAprobado(correoCliente, nombreCliente, referencia, montoCop);
+                } catch (Exception e) {
+                    System.err.println("[NOTIFICACIONES] Error al despachar correo de pago: " + e.getMessage());
+                }
             }
         }
 
-        // Siempre responder 200 OK a Wompi para acusar recibo
         enviarRespuestaJson(intercambio, 200, "{\"received\": true, \"status\": \"PROCESSED\"}");
     }
 
+    /**
+     * Extrae una propiedad de texto de un objeto JSON o devuelve el valor por defecto.
+     *
+     * @param obj          Objeto JSON (`JsonObject`).
+     * @param clave        Clave buscada (`String`).
+     * @param valorDefecto Valor por defecto si la clave no existe (`String`).
+     * @return Cadena extraída o `valorDefecto`.
+     */
     private static String extraerTexto(JsonObject obj, String clave, String valorDefecto) {
         if (obj != null && obj.has(clave) && !obj.get(clave).isJsonNull()) {
             return obj.get(clave).getAsString();

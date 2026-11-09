@@ -7,26 +7,23 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 
 /**
- * Manejador para servir archivos estáticos (imágenes, documentos, facturas, etc.)
- * desde el directorio de subidas configurado.
- * Ruta base: /uploads
- * Traduce la ruta URI a una ruta de archivo local y la envía al cliente con el tipo MIME adecuado.
+ * Controlador para servir archivos estáticos (imágenes de productos, facturas, recursos)
+ * almacenados en el directorio local `uploads` con protección contra ataques de Path Traversal.
  */
 public class ManejadorArchivosEstaticos extends ManejadorBase {
 
     /**
-     * Sirve cualquier archivo solicitado bajo /uploads.
-     * Ej: /uploads/imagenes/producto123.jpg → busca en uploads/imagenes/producto123.jpg
-     * Si el archivo no existe o es un directorio, responde con 404.
+     * Resuelve de forma segura la ruta solicitada bajo `/uploads` y transmite el archivo binario con su tipo MIME.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error de entrada/salida al leer o transmitir el archivo.
      */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
-        // Extrae la ruta del archivo desde la URI (ej: /uploads/foto.png → uploads/foto.png)
         String rutaUri = intercambio.getRequestURI().getPath();
         String rutaArchivo = rutaUri.startsWith("/") ? rutaUri.substring(1) : rutaUri;
         File archivo = new File(rutaArchivo);
 
-        // Prevención de ataques de Path Traversal: asegurar que el archivo esté dentro de uploads/
         File directorioSubidas = new File("uploads").getCanonicalFile();
         File archivoCanonico = archivo.getCanonicalFile();
         java.nio.file.Path rutaDirectorioSubidas = directorioSubidas.toPath().normalize();
@@ -36,19 +33,16 @@ public class ManejadorArchivosEstaticos extends ManejadorBase {
             return;
         }
 
-        // Si el archivo no existe o es un directorio, devuelve 404
         if (!archivoCanonico.exists() || archivoCanonico.isDirectory()) {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Archivo no encontrado\"}");
             return;
         }
 
-        // Determina el tipo MIME del archivo (ej: image/png, application/pdf)
         String tipoMime = Files.probeContentType(archivoCanonico.toPath());
         if (tipoMime == null) {
             tipoMime = "application/octet-stream";
         }
 
-        // Configura la cabecera Content-Type y envía el archivo
         intercambio.getResponseHeaders().set("Content-Type", tipoMime);
 
         if ("HEAD".equalsIgnoreCase(intercambio.getRequestMethod())) {

@@ -76,9 +76,9 @@ export default function PanelVendedor() {
   const {
     products, orders, bugReports,
     getProductsBySeller, getOrdersBySeller, getBugReportsBySeller,
-    updateProduct, deleteProduct, refreshData,
+    deleteProduct, refreshData,
   } = useMetricas();
-  const { refreshProducts } = useProductos();
+  const { updateProduct, refreshProducts } = useProductos();
 
   // ── Filtros de la barra superior (rango de fechas y categoría) ────────
   // Estos valores controlan qué periodo y qué tipo de producto se muestra.
@@ -170,10 +170,10 @@ export default function PanelVendedor() {
 
   // ── Handlers de edición inline ─────────────────────────────────────────
 
-  /** Elimina un producto tras confirmación del usuario */
-  const deleteItem = (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
-      deleteProduct(id);
+  /** Elimina un producto y notifica el resultado */
+  const deleteItem = async (id) => {
+    const eliminado = await deleteProduct(id);
+    if (eliminado) {
       showNotification('success', 'Producto eliminado');
     }
   };
@@ -215,7 +215,7 @@ export default function PanelVendedor() {
       }
     }
 
-    await updateProduct(productId, updatedForm);
+    await updateProduct({ ...updatedForm, id: productId });
     setEditingId(null);
     showNotification('success', 'Producto actualizado correctamente');
 
@@ -338,7 +338,7 @@ export default function PanelVendedor() {
             {/* Gráfica de área: muestra ventas reales vs. meta por día */}
             <div className="lg:col-span-2 card p-6 bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800">
                 <ErpAreaChart
-                    datos={chartData}
+                    data={chartData}
                     title="Desempeño de Ventas Diarias"
                     subtitle="Evolución de ingresos de tus productos (Últimos 7 días)"
                 />
@@ -444,7 +444,7 @@ export default function PanelVendedor() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-gray-200 dark:border-slate-700">
                             <img
-                              src={product.images?.length > 0 ? product.images[0] : '/placeholder.png'}
+                              src={product.images?.length > 0 ? product.images[0] : '/placeholder.webp'}
                               alt=""
                               className="w-full h-full object-cover"
                             />

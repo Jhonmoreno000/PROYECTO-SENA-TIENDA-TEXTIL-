@@ -10,7 +10,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
     volumes:
-      - "./BASE DE DATOS:/docker-entrypoint-initdb.d:ro"
+      - "./BASE DE DATOS/01_esquema_espanol.sql:/docker-entrypoint-initdb.d/01_esquema_espanol.sql:ro"
+      - "./BASE DE DATOS/02_datos_iniciales.sql:/docker-entrypoint-initdb.d/02_datos_iniciales.sql:ro"
       - pgdata:/var/lib/postgresql/data
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -32,14 +33,16 @@ services:
     env_file:
       - .env
     environment:
-      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/tienda_digital_textiles_db}
+      # Dentro de Docker la base de datos siempre es el servicio "db" (no localhost).
+      # Por eso no se lee DB_URL del .env, que apunta a localhost para desarrollo local.
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-tienda_digital_textiles_db}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-mysecretpassword}
-      PORT: ${BACKEND_PORT:-8081}
-      WOMPI_PUBLIC_KEY: ${WOMPI_PUBLIC_KEY:-pub_test_Q5yDA9xoKdePzhSGeVe9HAUr19rhZCQSQ}
-      WOMPI_PRIVATE_KEY: ${WOMPI_PRIVATE_KEY:-prv_test_V0Pq3O3wHqI0kO6vC4Q9Z7P6w2N5m8L1}
-      WOMPI_INTEGRITY_SECRET: ${WOMPI_INTEGRITY_SECRET:-test_integrity_b0Xy0KqP3rI8zQ9x7W5m4V2n1L6s8F0d}
-      WOMPI_EVENTS_SECRET: ${WOMPI_EVENTS_SECRET:-test_events_j8K2m4N6p8Q0r2T4v6X8z0B2d4F6h8J0}
+      # Puerto interno fijo: el mapeo de puertos y el healthcheck usan 8081.
+      # Para exponerlo en otro puerto del host cambia solo BACKEND_PORT.
+      PORT: 8081
+      # Las llaves de Wompi (WOMPI_PUBLIC_KEY, WOMPI_PRIVATE_KEY, WOMPI_INTEGRITY_SECRET,
+      # WOMPI_EVENTS_SECRET) se leen solo del archivo .env (env_file); no se dejan valores por defecto aqui.
       WOMPI_ENV: ${WOMPI_ENV:-sandbox}
     ports:
       - "${BACKEND_PORT:-8081}:8081"

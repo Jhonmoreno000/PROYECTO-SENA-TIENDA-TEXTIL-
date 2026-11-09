@@ -580,3 +580,19 @@ El servidor escucha por defecto en el puerto **`8081`** y expone cabeceras CORS 
 | `POST` | `/api/inventory/waste` | Registro manual de merma en corte | JSON con metros perdidos y motivo | 201, 400 |
 | `GET` | `/health/live` | Probe de liveness (servidor vivo) | N/A | 200 |
 | `GET` | `/health/ready` | Probe de readiness (conexion PostgreSQL activa) | N/A | 200, 503 |
+
+
+---
+
+## Anexo de Arquitectura Backend: Aislamiento Multi-Tenancy de Pedidos por Rol
+
+El controlador `ManejadorPedidos` y el componente de persistencia `PedidoDAO` aplican aislamiento estricto de datos según la identidad verificada en `TokenSesion.Identidad`:
+
+- **Rol Administrador (`esAdministrador()`):** accede al consolidado completo de órdenes (`obtenerTodosLosPedidos()`) y a cualquier pedido individual para auditoría y soporte.
+- **Rol Vendedor (`esVendedor()`):** al consultar `GET /api/pedidos` o `GET /api/pedidos/{id}`, el DAO filtra las órdenes mediante `JOIN` con `articulos_pedido` y `productos` donde `p.id_vendedor = ?`, reconstruyendo el objeto `Pedido` únicamente con las líneas de tela que pertenecen a ese vendedor y recalculando su subtotal correspondiente.
+- **Rol Cliente:** solo puede listar y consultar pedidos cuyo `id_cliente` coincida exactamente con el `idUsuario` autenticado en su token de sesión.
+
+### Evolución de Plataforma a OpenJDK 21 LTS y Persistencia Directa PostgreSQL
+
+- **Runtime Backend:** El servidor HTTP nativo (`com.sun.net.httpserver.HttpServer`) y el contenedor Docker multi-etapa operan sobre **Eclipse Temurin OpenJDK 21 LTS**, aprovechando mejoras de rendimiento en manejo de hilos y recolector de basura.
+- **Sincronización Frontend-Backend sin Mocks Residuales:** Los contextos de React (`ContextoAutenticacion`, `ContextoMetricas`) y las vistas de pedidos y soporte consultan directamente los endpoints transaccionales de PostgreSQL, garantizando consistencia de datos entre sesiones y roles.

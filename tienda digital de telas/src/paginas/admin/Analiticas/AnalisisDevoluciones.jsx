@@ -35,9 +35,9 @@ function AnalisisDevoluciones() {
     });
     const returnsByTypeArray = Object.values(returnsByType);
 
-    const returnsBySeller = users.filter(u => u.role === 'vendedor' || u.role === 'vendedor').map(vendedor => {
-        const sr = bugReports.filter(r => r.sellerId === vendedor.id);
-        const so = orders.filter(o => o.sellerId === vendedor.id);
+    const returnsBySeller = users.filter(u => u.role === 'vendedor' || u.rol === 'vendedor').map(vendedor => {
+        const sr = bugReports.filter(r => String(r.sellerId) === String(vendedor.id));
+        const so = orders.filter(o => String(o.sellerId) === String(vendedor.id));
         return { sellerId: vendedor.id, sellerName: vendedor.name, count: sr.length, rate: so.length > 0 ? (sr.length / so.length) * 100 : 0 };
     }).filter(s => s.count > 0).sort((a, b) => b.count - a.count);
 
@@ -92,7 +92,7 @@ function AnalisisDevoluciones() {
                             {returnsByTypeArray.length > 0 ? (
                                 <ResponsiveContainer width="100%" height={300}>
                                     <PieChart>
-                                        <Pie datos={returnsByTypeArray} cx="50%" cy="50%" outerRadius={90} dataKey="count" label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                                        <Pie data={returnsByTypeArray} cx="50%" cy="50%" outerRadius={90} dataKey="count" label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
                                             {returnsByTypeArray.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                         </Pie>
                                         <Tooltip />
@@ -156,7 +156,7 @@ function AnalisisDevoluciones() {
                                                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{report.status === 'open' ? 'Abierto' : report.status === 'resolved' ? 'Resuelto' : 'En revisión'}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-xs font-bold text-slate-400 dark:text-slate-500">{new Date(report.date).toLocaleDateString('es-CO')}</td>
+                                            <td className="px-6 py-4 text-xs font-bold text-slate-400 dark:text-slate-500">{(report.date || report.createdAt) ? new Date(report.date || report.createdAt).toLocaleDateString('es-CO') : 'N/A'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

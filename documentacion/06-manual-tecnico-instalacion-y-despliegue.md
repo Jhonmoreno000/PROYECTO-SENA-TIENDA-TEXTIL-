@@ -25,7 +25,7 @@ Para garantizar el desempeno optimo, la estabilidad y la resiliencia operativa d
 | Componente | Version Minima Exigida | Proposito en la Plataforma |
 | :--- | :--- | :--- |
 | **Sistema Operativo** | Ubuntu Server 22.04 LTS / Windows 10/11 / macOS 12+ | Sistema operativo anfitrion para servicios |
-| **Java Development Kit (JDK)** | OpenJDK o Eclipse Temurin 17 LTS | Compilacion y ejecucion del backend Vanilla Java |
+| **Java Development Kit (JDK)** | OpenJDK o Eclipse Temurin 21 LTS | Compilacion y ejecucion del backend Vanilla Java |
 | **Node.js** | v18.17.0 LTS o v20.x LTS | Entorno de ejecucion para tooling de frontend |
 | **Gestor de Paquetes npm** | v9.6.0 o superior | Resolucion de dependencias de React y TailwindCSS |
 | **Motor de Base de Datos** | PostgreSQL 14.x, 15.x, 16.x o 17.x | Persistencia relacional ACID con soporte UTF-8 |
@@ -77,7 +77,7 @@ flowchart TD
     UserApp -->|"HTTP / Puerto 8081"| ContBackend
 
     ContFrontend -->|"HTTP REST / Proxy: 8081<br/>[frontend-net]"| ContBackend
-    ContBackend -->|"JDBC HikariCP / Puerto 5432<br/>[backend-net]"| ContPostgres
+    ContBackend -->|"JDBC PostgreSQL / Puerto 5432<br/>[backend-net]"| ContPostgres
 
     ContPostgres --- VolData
     ContBackend --- VolUploads
@@ -140,7 +140,7 @@ El sistema desacopla la configuracion sensible del codigo fuente mediante archiv
 # =============================================================================
 DB_HOST=postgres
 DB_PORT=5432
-DB_NAME=tienda_textil
+DB_NAME=tienda_digital_textiles_db
 DB_USER=postgres
 DB_PASSWORD=postgres_secure_password_2026
 
@@ -148,7 +148,7 @@ DB_PASSWORD=postgres_secure_password_2026
 # VARIABLES DE CONFIGURACION DEL BACKEND (JAVA)
 # =============================================================================
 SERVER_PORT=8081
-JWT_SECRET=b8c4d2e8f1a0e9c7b5d3a1f8e6c4b2a0d9e7f5c3b1a9e7f5d3c1b9a7f5e3d1c9
+WOMPI_ENV=sandbox
 ENVIRONMENT=production
 LOG_LEVEL=INFO
 
@@ -215,46 +215,50 @@ En estaciones de trabajo para desarrollo local donde no se disponga de Docker, l
    ```
 2. Crear la base de datos con codificacion internacional UTF-8:
    ```sql
-   CREATE DATABASE tienda_textil WITH ENCODING 'UTF8';
-   \c tienda_textil;
+   CREATE DATABASE tienda_digital_textiles_db WITH ENCODING 'UTF8';
+   \c tienda_digital_textiles_db;
    ```
 3. Ejecutar los scripts de estructura DDL y datos de prueba:
    ```bash
-   psql -U postgres -d tienda_textil -f "tienda digital de telas/backend-java/servidor-api/schema.sql"```
+   psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/01_esquema_espanol.sql"
+   psql -U postgres -d tienda_digital_textiles_db -f "BASE DE DATOS/02_datos_iniciales.sql"
+   ```
 
 ### 5.2. Compilacion y Ejecucion del Backend Java
 1. Ubicarse en la carpeta del backend:
    ```bash
-   cd "tienda digital de telas/backend-java/servidor-api"```
+   cd "tienda digital de telas/backend-java/servidor-api"
+   ```
 2. Crear la carpeta para los binarios compilados:
    ```bash
    mkdir -p bin
    ```
-3. Compilar todas las clases del codigo fuente incluyendo las librerias JAR de dependencias (`postgresql-*.jar`, `gson-*.jar`, `HikariCP-*.jar`, `slf4j-*.jar`):
+3. Compilar todas las clases del codigo fuente hacia el directorio `bin/` incluyendo las librerias JAR de dependencias (`postgresql-*.jar`, `gson-*.jar`, `pdfbox-app-*.jar`):
    - En sistemas Linux / macOS:
      ```bash
-     javac -encoding UTF-8 -cp "lib/*:src"-d bin $(find src -name "*.java")
+     javac --release 21 -encoding UTF-8 -cp "lib/*:src" -d bin $(find src -name "*.java")
      ```
    - En sistemas Microsoft Windows (PowerShell):
      ```powershell
-     $jars = (Get-ChildItem -Path "lib\*.jar"| ForEach-Object { $_.FullName }) -join ";"$sources = (Get-ChildItem -Path "src"-Recurse -Filter "*.java"| ForEach-Object { $_.FullName })
-     javac -encoding UTF-8 -cp "$jars;src"-d bin $sources
+     $jars = (Get-ChildItem -Path "lib\*.jar" | ForEach-Object { $_.FullName }) -join ";"
+     $sources = (Get-ChildItem -Path "src" -Recurse -Filter "*.java" | ForEach-Object { $_.FullName })
+     javac --release 21 -encoding UTF-8 -cp "$jars;src" -d bin $sources
      ```
-4. Iniciar el servidor HTTP del backend:
+4. Iniciar el servidor HTTP del backend (`App`):
    - En Linux / macOS:
      ```bash
-     java -cp "bin:lib/*"Servidor
+     java -cp "bin:lib/*" App
      ```
    - En Windows (PowerShell):
      ```powershell
-     java -cp "bin;$jars"Servidor
+     java -cp "bin;$jars" App
      ```
 5. Salida de inicio exitoso:
    ```text
    ==================================================
    SERVIDOR TEXTIL INICIADO EXITOSAMENTE
    Puerto de Escucha: 8081
-   Pool de Conexiones HikariCP: ACTIVO
+   Conexion JDBC PostgreSQL: ACTIVA
    Pool de Hilos de Peticiones: 32 hilos concurrentes
    ==================================================
    ```
@@ -397,3 +401,41 @@ TASA DE EXITO: 100.0%
   Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
   ```
   En peticiones de sondeo previo (`OPTIONS`), responder inmediatamente con codigo `204 No Content`.
+
+
+---
+
+## Anexo de Configuración de Seguridad en Despliegue (`SESSION_SECRET` y Modo Demo)
+
+Al desplegar **D&D Textil** en entornos de pruebas o producción, tenga en cuenta las siguientes variables de entorno adicionales:
+
+| Variable de Entorno | Componente | Descripción y Comportamiento por Defecto |
+| :--- | :--- | :--- |
+| `SESSION_SECRET` | Backend Java (`TokenSesion`) | Llave secreta de mínimo 32 bytes para firmar tokens de sesión con `HmacSHA256`. Si no se define en desarrollo local, el servidor genera una llave aleatoria criptográfica (`SecureRandom`) al arrancar e invalida sesiones previas al reiniciar. |
+| `VITE_ENABLE_DEMO_ACCOUNTS` | Frontend React (`IniciarSesion.jsx`) | Cuando es `true` en desarrollo local, habilita los botones de acceso rápido (**Cliente**, **Vendedor**, **Admin**) y permite sesiones locales de demostración. En producción debe omitirse o fijarse en `false`. |
+
+
+---
+
+## Anexo de Configuración de Seguridad en Despliegue (`SESSION_SECRET` y Modo Demo)
+
+Al desplegar **D&D Textil** en entornos de pruebas o producción, tenga en cuenta las siguientes variables de entorno adicionales:
+
+| Variable de Entorno | Componente | Descripción y Comportamiento por Defecto |
+| :--- | :--- | :--- |
+| `SESSION_SECRET` | Backend Java (`TokenSesion`) | Llave secreta de mínimo 32 bytes para firmar tokens de sesión con `HmacSHA256`. Si no se define en desarrollo local, el servidor genera una llave aleatoria criptográfica (`SecureRandom`) al arrancar e invalida sesiones previas al reiniciar. |
+| `VITE_ENABLE_DEMO_ACCOUNTS` | Frontend React (`IniciarSesion.jsx`) | Cuando es `true` en desarrollo local, habilita los botones de acceso rápido (**Cliente**, **Vendedor**, **Admin**) y permite sesiones locales de demostración. En producción debe omitirse o fijarse en `false`. |
+
+### Verificación Rápida de Compilación sobre OpenJDK 21 LTS
+
+Para validar localmente la compilación del backend y las 4 suites de pruebas sin requerir demonios externos:
+
+```bash
+cd "tienda digital de telas/backend-java/servidor-api"
+mkdir -p bin
+javac -encoding UTF-8 -cp "lib/*" -d bin $(find src -name "*.java")
+java -ea -cp "bin:lib/*" PruebasReglasNegocioTextil
+java -ea -cp "bin:lib/*" PruebasSeguridadIntegridad
+java -ea -cp "bin:lib/*" PruebasConcurrenciaYPagos
+java -ea -cp "bin:lib/*" PruebasContratoApi
+```

@@ -30,9 +30,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/three') || id.includes('react-globe.gl')) {
-            return 'three-vendor';
-          }
           if (id.includes('node_modules/gsap') || id.includes('@gsap/react')) {
             return 'gsap-vendor';
           }
@@ -41,9 +38,6 @@ export default defineConfig({
           }
           if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
             return 'react-vendor';
-          }
-          if (id.includes('node_modules/@studio-freight/lenis') || id.includes('node_modules/lenis')) {
-            return 'lenis-vendor';
           }
         }
       }

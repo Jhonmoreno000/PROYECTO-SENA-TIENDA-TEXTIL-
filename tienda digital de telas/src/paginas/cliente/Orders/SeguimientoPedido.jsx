@@ -18,17 +18,19 @@ import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
+import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 
 function SeguimientoPedido() {
     const { orders } = useMetricas();
+    const { user } = useAutenticacion();
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get('id');
     const [trackingInput, setTrackingInput] = useState(orderId || '');
 
     // Encontrar pedido por ID o número de guía
     const cleanInput = (trackingInput || '').toString().trim().toLowerCase();
-    const order = orders.find(o =>
+    const order = orders.filter(o => o.clientId === user?.id || o.idCliente === user?.id).find(o =>
         (o.id && o.id.toString() === cleanInput) ||
         (o.trackingNumber && o.trackingNumber.toString().toLowerCase() === cleanInput) ||
         (o.numeroGuia && o.numeroGuia.toString().toLowerCase() === cleanInput)
@@ -72,23 +74,26 @@ function SeguimientoPedido() {
         return 'pending';
     };
 
-    // Items del pedido dinámicos o de muestra
-    const rawItems = order?.items || order?.detalles || order?.productos || [];
-    const orderItems = order ? (rawItems.length > 0 ? rawItems.map((item, idx) => ({
-        id: item.id || item.productoId || idx,
-        name: item.name || item.nombre || item.productName || 'Tela Premium',
-        meters: Number(item.meters || item.metros || item.quantity || item.cantidad || 1),
-        unitPrice: Number(item.unitPrice || item.precioUnitario || item.price || item.precio || 0),
+    // Items reales del pedido desde la base de datos
+    const rawItems = Array.isArray(order?.lineItems)
+        ? order.lineItems
+        : (Array.isArray(order?.items) ? order.items : (order?.detalles || order?.productos || []));
+    const orderItems = order ? rawItems.map((item, idx) => ({
+        id: item.id || item.productId || item.productoId || idx,
+        name: item.name || item.nombre || item.productName || 'Tela',
+        meters: Number(item.meters ?? item.quantity ?? item.metros ?? item.cantidad ?? 1),
+        unitPrice: Number(item.unitPrice ?? item.precioUnitario ?? item.price ?? item.precio ?? 0),
+        subtotal: Number(item.subtotal ?? (Number(item.meters ?? item.quantity ?? 1) * Number(item.unitPrice ?? item.price ?? 0))),
         image: item.image || item.imagen || null
-    })) : [
-        { id: 1, name: 'Lino Blanco Premium', meters: 3.5, unitPrice: 45000, image: null },
-        { id: 2, name: 'Algodón Estampado Flores', meters: 2.0, unitPrice: 32000, image: null }
-    ]) : [];
+    })) : [];
 
     const orderTotal = Number(order?.total ?? order?.montoTotal ?? 0);
+    const orderSubtotal = Number(order?.subtotal ?? (orderTotal * 0.81));
+    const orderTax = Number(order?.tax ?? (orderTotal * 0.19));
+    const orderShipping = Number(order?.shippingCost ?? 0);
     const orderDate = order?.date || order?.fecha || order?.createdAt || new Date();
     const trackingNum = order?.trackingNumber || order?.numeroGuia;
-    const courier = order?.courierName || order?.empresaEnvio || 'Servientrega';
+    const courier = order?.courierName || order?.empresaEnvio || 'Transportadora Nacional';
 
     return (
         <LayoutPanel title="Rastreo de Pedido" links={enlacesCliente}>
@@ -293,15 +298,17 @@ function SeguimientoPedido() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-gray-500">Subtotal</span>
-                                        <span className="text-gray-900 dark:text-white">{formatCurrency(orderTotal * 0.81)}</span>
+                                        <span className="text-gray-900 dark:text-white">{formatCurrency(orderSubtotal)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-gray-500">IVA (19%)</span>
-                                        <span className="text-gray-900 dark:text-white">{formatCurrency(orderTotal * 0.19)}</span>
+                                        <span className="text-gray-900 dark:text-white">{formatCurrency(orderTax)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-gray-500">Envío</span>
-                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">Gratis</span>
+                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                            {orderShipping > 0 ? formatCurrency(orderShipping) : 'Gratis'}
+                                        </span>
                                     </div>
                                     <div className="border-t border-gray-100 dark:border-slate-800 pt-4 mt-4">
                                         <div className="flex justify-between items-center">
@@ -322,20 +329,26 @@ function SeguimientoPedido() {
                                         <MapPin className="w-5 h-5 text-orange-500" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">Mi Casa</p>
+                                        <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">Dirección de Envío</p>
                                         <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                                            Cra 7 #45-23, Apto 502<br />
-                                            Chapinero, Bogotá<br />
-                                            Cundinamarca
+                                            {order.shippingAddress || 'Sin dirección especificada'}
+                                            {(order.shippingCity || order.shippingDepartment) && (
+                                                <>
+                                                    <br />
+                                                    {[order.shippingCity, order.shippingDepartment].filter(Boolean).join(', ')}
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-sm">
-                                        <Phone className="w-5 h-5 text-orange-500" />
+                                {order.client && (
+                                    <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                            <Phone className="w-5 h-5 text-orange-500" />
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{order.client}</span>
                                     </div>
-                                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">300 123 4567</span>
-                                </div>
+                                )}
                             </div>
 
                             {/* Ayuda */}

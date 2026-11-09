@@ -1,17 +1,19 @@
-import React from 'react';
-import { Package, AlertCircle, TrendingDown, Archive } from 'lucide-react';
+import React, { useState } from 'react';
+import { Package, AlertCircle, TrendingDown, Archive, X } from 'lucide-react';
 import LayoutPanel from '../../componentes/layouts/LayoutPanel';
 import enlacesVendedor from '../../datos/enlacesVendedor';
 import BackButton from '../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../contextos/ContextoMetricas';
 import { useAutenticacion } from '../../contextos/ContextoAutenticacion';
+import { useNotificacion } from '../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../utilidades/formateadores';
 
 function StockAlerts() {
     const { user } = useAutenticacion();
-    const { getProductsBySeller, getBugReportsBySeller, systemConfig } = useMetricas();
-
-
+    const { getProductsBySeller, getBugReportsBySeller, systemConfig, updateProduct } = useMetricas();
+    const { showNotification } = useNotificacion();
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [restockAmount, setRestockAmount] = useState('');
 
     // Obtener solo productos del vendedor actual
     const sellerProducts = getProductsBySeller(user?.id);
@@ -19,12 +21,31 @@ function StockAlerts() {
 
     // Filtrar por niveles de stock
     const lowStockThreshold = systemConfig?.lowStockThreshold || 20;
-    const criticalStockItems = sellerProducts.filter(p => p.stock < 10);
+    const criticalStockItems = sellerProducts.filter(p => p.stock > 0 && p.stock < 10);
     const lowStockItems = sellerProducts.filter(p => p.stock >= 10 && p.stock < lowStockThreshold);
     const outOfStockItems = sellerProducts.filter(p => p.stock === 0);
 
     // Reportes abiertos
     const openReports = sellerBugReports.filter(r => r.status === 'open');
+
+    const openRestockModal = (item) => {
+        setSelectedProduct(item);
+        setRestockAmount(String((Number(item.stock) || 0) + 50));
+    };
+
+    const handleConfirmRestock = async (e) => {
+        e.preventDefault();
+        if (!selectedProduct) return;
+        const nuevoStock = Number(restockAmount);
+        if (isNaN(nuevoStock) || nuevoStock < 0) {
+            showNotification('error', 'Ingresa una cantidad válida de metros');
+            return;
+        }
+        await updateProduct(selectedProduct.id, { ...selectedProduct, stock: nuevoStock });
+        showNotification('success', `Stock de "${selectedProduct.name}" actualizado a ${nuevoStock}m`);
+        setSelectedProduct(null);
+        setRestockAmount('');
+    };
 
     return (
         <LayoutPanel title="Alertas de Stock" links={enlacesVendedor}>
@@ -99,7 +120,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.webp'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
@@ -110,7 +131,11 @@ function StockAlerts() {
                                     <div className="font-bold text-lg text-red-600 dark:text-red-400">
                                         {item.stock} m
                                     </div>
-                                    <button className="text-xs text-primary-600 dark:text-primary-400 font-bold hover:underline">
+                                    <button
+                                        type="button"
+                                        onClick={() => openRestockModal(item)}
+                                        className="text-xs text-primary-600 dark:text-primary-400 font-bold hover:underline"
+                                    >
                                         Reponer Urgente
                                     </button>
                                 </div>
@@ -132,7 +157,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.webp'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h4 className="font-semibold text-gray-900 dark:text-white">{item.name}</h4>
@@ -143,7 +168,11 @@ function StockAlerts() {
                                     <div className="font-bold text-lg text-orange-600 dark:text-orange-400">
                                         {item.stock} m
                                     </div>
-                                    <button className="text-xs text-primary-600 dark:text-primary-400 font-medium hover:underline">
+                                    <button
+                                        type="button"
+                                        onClick={() => openRestockModal(item)}
+                                        className="text-xs text-primary-600 dark:text-primary-400 font-medium hover:underline"
+                                    >
                                         Reponer Stock
                                     </button>
                                 </div>
@@ -165,7 +194,7 @@ function StockAlerts() {
                             <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 opacity-60">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.png'} alt="" className="w-full h-full object-cover grayscale" />
+                                        <img src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder.webp'} alt="" className="w-full h-full object-cover grayscale" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
@@ -176,7 +205,11 @@ function StockAlerts() {
                                     <div className="font-bold text-lg text-gray-500">
                                         AGOTADO
                                     </div>
-                                    <button className="text-xs text-primary-600 dark:text-primary-400 font-bold hover:underline">
+                                    <button
+                                        type="button"
+                                        onClick={() => openRestockModal(item)}
+                                        className="text-xs text-primary-600 dark:text-primary-400 font-bold hover:underline"
+                                    >
                                         Reponer
                                     </button>
                                 </div>
@@ -231,6 +264,59 @@ function StockAlerts() {
                     <p className="text-gray-500 dark:text-gray-400">
                         No tienes alertas de stock ni reportes pendientes en este momento.
                     </p>
+                </div>
+            )}
+            {/* Modal de Reposición de Stock */}
+            {selectedProduct && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="card max-w-md w-full p-6 bg-white dark:bg-slate-900">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                Reponer Stock
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedProduct(null)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Producto: <strong>{selectedProduct.name}</strong> (Actual: {selectedProduct.stock}m)
+                        </p>
+                        <form onSubmit={handleConfirmRestock} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-1.5">
+                                    Nuevo stock total disponible (metros)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="0.5"
+                                    value={restockAmount}
+                                    onChange={(e) => setRestockAmount(e.target.value)}
+                                    className="input-field"
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedProduct(null)}
+                                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-sm font-medium"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-primary px-5 py-2 text-sm font-bold"
+                                >
+                                    Guardar Stock
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </LayoutPanel>

@@ -13,7 +13,7 @@ Este directorio contiene los artefactos de inicialización, definición DDL, dat
 
 * **`01_esquema_espanol.sql`**: Script DDL principal que define las 25 tablas relacionales en español, sus restricciones de integridad (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`), valores por defecto y tipos de datos numéricos de alta precisión para textiles y moneda.
 * **`02_datos_iniciales.sql`**: Script DML con datos iniciales para categorías textiles, telas base de alta rotación, usuarios con roles tipificados (Administrador, Vendedor, Cliente), métricas y configuración global del sistema.
-* **`TIENDA DIGITAL TEXTIL.sql`**: Respaldo consolidado de estructura y datos históricos para auditoría y restauración rápida.
+* **`legado/TIENDA DIGITAL TEXTIL.sql`**: Volcado antiguo con las tablas en inglés. Está en una subcarpeta para que Docker no lo ejecute al iniciar la base de datos; el backend no lo usa.
 * **`README.md`**: Este documento de especificación formal del **Modelo Relacional** y el patrón **Modelo-Vista-Controlador (MVC)**.
 
 ---
