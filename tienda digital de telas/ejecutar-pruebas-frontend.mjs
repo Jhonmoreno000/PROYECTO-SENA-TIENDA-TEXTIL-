@@ -56,6 +56,9 @@ assert(monedaCero.includes('0') && monedaCero.includes('COP'), 'formatCurrency(0
 const monedaMillones = formatCurrency(1500000);
 assert(monedaMillones.includes('1.500.000') && monedaMillones.includes('COP'), 'formatCurrency(1500000) debe incluir separadores de miles colombianos');
 
+const monedaNegativa = formatCurrency(-5000);
+assert(monedaNegativa.includes('-5.000') && monedaNegativa.includes('COP'), 'formatCurrency(-5000) debe conservar el signo negativo y sufijo COP');
+
 const fechaFormateada = formatDate('2026-10-15T12:00:00Z');
 assert(typeof fechaFormateada === 'string' && fechaFormateada.includes('2026') && fechaFormateada.includes('15'), 'formatDate debe formatear fechas ISO en formato legible en español');
 
@@ -87,13 +90,21 @@ assert(margenAplicado === margenEsperado, 'Margen tecnico del +10% para encogimi
 let errorCapturado = false;
 try {
     calcularMetrajeCortina(-2.0, 1.5);
-} catch (e) {
+} catch {
     errorCapturado = true;
 }
 assert(errorCapturado, 'Calculadora debe rechazar dimensiones negativas o iguales a cero');
 
 const cortinaFruncidoTriple = calcularMetrajeCortina(2.0, 2.2, 3.0);
 assert(cortinaFruncidoTriple > metrosCortina, 'Un factor de fruncido 3.0x debe requerir mayor metraje que el fruncido estandar 2.0x');
+
+let errorAltoCero = false;
+try {
+    calcularMetrajeCortina(2.0, 0);
+} catch {
+    errorAltoCero = true;
+}
+assert(errorAltoCero, 'calcularMetrajeCortina debe rechazar alto de cortina igual a cero');
 
 // -----------------------------------------------------------------------------
 // 3. Pruebas de Integracion Financiera Wompi (Checkout)
@@ -115,6 +126,9 @@ assert(errorWompiNegativo, 'convertirACentavosWompi debe rechazar montos negativ
 
 const ref = generarReferenciaPedido(42, 1729000000000);
 assert(ref === 'PED-42-1729000000000' && ref.startsWith('PED-'), 'Referencia de pago debe cumplir estructura PED-{id}-{timestamp}');
+
+const refAuto = generarReferenciaPedido(2050);
+assert(/^PED-2050-\d+$/.test(refAuto), 'generarReferenciaPedido sin timestamp explícito debe usar marca de tiempo numérica');
 
 // -----------------------------------------------------------------------------
 // 4. Pruebas de vigencia de sesiones
@@ -149,6 +163,7 @@ assert(!sesionVigente({ id: 7 }, ahora), 'Un usuario sin token no debe tener ses
 assert(!sesionVigente({ token: tokenExpirado }, ahora), 'Un usuario con token expirado no debe tener sesión vigente');
 assert(sesionVigente({ token: tokenValido }, ahora), 'Un usuario con token válido debe tener sesión vigente');
 assert(sesionVigente({ sesionLocal: true }, ahora), 'Una sesión local explícita debe seguir vigente sin token');
+assert(!sesionVigente({}, ahora), 'Un objeto de usuario vacío sin token ni marca local no debe tener sesión vigente');
 
 const tokenConAcentos = Buffer.from(JSON.stringify({ sub: 99, nombre: 'María José Calderón', rol: 'administrador', exp: expiracionFutura }), 'utf8').toString('base64url') + '.firma';
 assert(sesionVigente({ token: tokenConAcentos }, ahora), 'Un token con caracteres UTF-8 acentuados en su carga debe decodificarse y validarse correctamente');
@@ -171,39 +186,3 @@ if (pruebasFallidas > 0) {
 } else {
     process.exit(0);
 }
-
-ejecutarPrueba('Referencia de pago debe cumplir estructura PED-{id}-{timestamp}', () => {
-    const ref = generarReferenciaPedido(1042, 1711929600000);
-    assert.strictEqual(ref, 'PED-1042-1711929600000');
-});
-
-ejecutarPrueba('generarReferenciaPedido sin timestamp explícito debe usar marca de tiempo numérica', () => {
-    const ref = generarReferenciaPedido(2050);
-    assert.match(ref, /^PED-2050-\d+$/);
-});
-
-ejecutarPrueba('Un factor de fruncido 3.0x debe requerir mayor metraje que el fruncido estandar 2.0x', () => {
-    const m2 = calcularMetrajeCortina(200, 220, 150, 2.0);
-    const m3 = calcularMetrajeCortina(200, 220, 150, 3.0);
-    assert.ok(m3 > m2);
-});
-
-ejecutarPrueba('calcularMetrajeCortina debe rechazar ancho de rollo igual a cero', () => {
-    assert.throws(() => calcularMetrajeCortina(200, 220, 0, 2.0), /Dimensiones invalidas/);
-});
-
-ejecutarPrueba('formatCurrency(1500000) debe incluir separadores de miles colombianos', () => {
-    const resultado = formatCurrency(1500000);
-    assert.ok(resultado.includes('1.500.000') && resultado.endsWith('COP'));
-});
-
-ejecutarPrueba('formatCurrency(-5000) debe conservar el signo negativo y sufijo COP', () => {
-    const resultado = formatCurrency(-5000);
-    assert.ok(resultado.includes('-5.000') && resultado.endsWith('COP'));
-});
-
-ejecutarPrueba('Un objeto de usuario vacío sin token ni marca local no debe tener sesión vigente', () => {
-    assert.strictEqual(sesionVigente({}, 1_700_000_000_000), false);
-});
-
-ejecutarPrueba('Un token con caracteres UTF-8 acentuados en su carga debe decodificarse y validarse correctamente', () => {
