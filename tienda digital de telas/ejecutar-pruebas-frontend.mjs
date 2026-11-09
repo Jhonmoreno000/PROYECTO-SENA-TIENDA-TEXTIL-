@@ -191,3 +191,13 @@ ejecutarPrueba('Un factor de fruncido 3.0x debe requerir mayor metraje que el fr
 ejecutarPrueba('calcularMetrajeCortina debe rechazar ancho de rollo igual a cero', () => {
     assert.throws(() => calcularMetrajeCortina(200, 220, 0, 2.0), /Dimensiones invalidas/);
 });
+
+ejecutarPrueba('formatCurrency(1500000) debe incluir separadores de miles colombianos', () => {
+    const resultado = formatCurrency(1500000);
+    assert.ok(resultado.includes('1.500.000') && resultado.endsWith('COP'));
+});
+
+ejecutarPrueba('formatCurrency(-5000) debe conservar el signo negativo y sufijo COP', () => {
+    const resultado = formatCurrency(-5000);
+    assert.ok(resultado.includes('-5.000') && resultado.endsWith('COP'));
+});
