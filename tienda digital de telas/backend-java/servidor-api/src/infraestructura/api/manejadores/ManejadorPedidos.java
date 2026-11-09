@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import dominio.modelos.Pedido;
+import infraestructura.seguridad.TokenSesion;
 import infraestructura.persistencia.jdbc.PedidoDAO;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -219,6 +220,21 @@ public class ManejadorPedidos extends ManejadorBase {
      * @param claves Lista de nombres de propiedad candidatos (`String...`).
      * @return Valor de texto recortado o `null` si ninguno existe.
      */
+    /**
+     * Determina si una identidad autenticada tiene permiso para consultar un pedido específico.
+     * Un administrador ve cualquier pedido; un vendedor solo sus líneas de productos;
+     * cualquier otro rol solo los que realizó como cliente.
+     *
+     * @param identidad Identidad verificada en la sesión (`TokenSesion.Identidad`).
+     * @param pedido    Entidad de pedido a evaluar (`Pedido`).
+     * @return `true` si está autorizado; `false` en caso contrario.
+     */
+    public static boolean puedeVerPedido(TokenSesion.Identidad identidad, Pedido pedido) {
+        if (identidad.esAdministrador()) return true;
+        if (identidad.esVendedor()) return pedido.getIdVendedor() == identidad.idUsuario();
+        return pedido.getIdCliente() == identidad.idUsuario();
+    }
+
     private String extraerCampoTexto(JsonObject json, String... claves) {
         for (String clave : claves) {
             if (json.has(clave) && !json.get(clave).isJsonNull()) {

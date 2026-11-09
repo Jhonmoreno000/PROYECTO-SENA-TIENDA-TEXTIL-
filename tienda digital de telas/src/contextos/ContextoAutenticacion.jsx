@@ -20,14 +20,16 @@
  *  - 'admin'   → administrador del sistema
  */
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useNotificacion } from './ContextoNotificacion'; // Para mostrar mensajes de éxito o error
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { expiracionDeToken, sesionVigente } from '../utilidades/sesion';
 import { getApiUrl, RUTAS_API } from '../config';
 import LogoutLoader from '../componentes/common/LogoutLoader'; // Animación de carga al cerrar sesión
 
 // Creamos el contexto que va a compartir los datos de sesión con toda la app
 const ContextoAutenticacion = createContext();
+const MENSAJE_SESION_EXPIRADA = 'Tu sesión expiró. Inicia sesión de nuevo.';
 
 /**
  * useAutenticacion — Hook para usar el contexto de autenticación
@@ -48,11 +50,32 @@ export function useAutenticacion() {
  */
 export function AuthProvider({ children }) {
     // 'user' se guarda en localStorage para no perderlo al recargar la página
-    const [user, setUser] = useLocalStorage('authUser', null);
+    const [usuarioGuardado, setUser] = useLocalStorage('authUser', null);
+    const user = sesionVigente(usuarioGuardado) ? usuarioGuardado : null;
+    const tokenActualRef = useRef();
+    tokenActualRef.current = user?.token;
     // Estado para mostrar la animación de carga mientras se cierra la sesión
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     // Función para mostrar mensajes tipo toast (ej: "¡Bienvenido!")
     const { showNotification } = useNotificacion();
+
+    const invalidarSesion = useCallback((tokenRechazado) => {
+        if (tokenRechazado && tokenRechazado !== tokenActualRef.current) return;
+        setUser(null);
+        showNotification('info', MENSAJE_SESION_EXPIRADA);
+    }, [setUser, showNotification]);
+
+    useEffect(() => {
+        if (usuarioGuardado && !user) {
+            invalidarSesion();
+            return;
+        }
+        if (user?.token) {
+            const ms = expiracionDeToken(user.token) - Date.now();
+            const temporizador = setTimeout(() => invalidarSesion(user.token), Math.min(ms, 2147483647));
+            return () => clearTimeout(temporizador);
+        }
+    }, [usuarioGuardado, user, invalidarSesion]);
 
     /**
      * login — Inicia sesión enviando correo y contraseña al backend
@@ -87,6 +110,7 @@ export function AuthProvider({ children }) {
                 const nombreUsuario = rawUser.name || rawUser.nombre || 'Usuario';
                 const loggedInUser = {
                     ...rawUser,
+                    token: datos.token,
                     name: nombreUsuario,
                     nombre: nombreUsuario,
                     email: rawUser.email || rawUser.correo,
@@ -221,6 +245,33 @@ export function AuthProvider({ children }) {
         } catch (error) {
             console.error('Error al iniciar sesión con SSO:', error);
             const isNetworkError = error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError');
+
+            // Si estamos en desarrollo o el backend local no responde, permitir sesión de desarrollo
+            if (isNetworkError || import.meta.env.DEV) {
+                const nombreUsuario = ssoData.nombre || ssoData.name || ('Usuario ' + (ssoData.proveedor || 'SSO'));
+                const loggedInUser = {
+                    id: 9999,
+                    sesionLocal: true,
+                    name: nombreUsuario,
+                    nombre: nombreUsuario,
+                    email: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
+                    correo: ssoData.email || ssoData.correo || 'usuario.sso@ddtextil.com',
+                    role: 'cliente',
+                    rol: 'cliente',
+                    proveedor: ssoData.proveedor
+                };
+
+                try {
+                    window.localStorage.setItem('authUser', JSON.stringify(loggedInUser));
+                } catch (e) {
+                    console.error('Error guardando en localStorage:', e);
+                }
+
+                setUser(loggedInUser);
+                showNotification('success', `¡Bienvenido ${loggedInUser.name}! (Conectado con ${ssoData.proveedor || 'SSO'})`);
+                return { success: true, user: loggedInUser };
+            }
+
             const msg = isNetworkError
                 ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
                 : 'Error al conectar con el servidor';
@@ -276,6 +327,7 @@ export function AuthProvider({ children }) {
         loginConSSO,                 // Función para iniciar sesión mediante SSO (Google / Microsoft)
         register,                    // Función para crear una cuenta
         logout,                      // Función para cerrar sesión
+        invalidarSesion,
         hasRole                      // Función para verificar permisos
     };
 

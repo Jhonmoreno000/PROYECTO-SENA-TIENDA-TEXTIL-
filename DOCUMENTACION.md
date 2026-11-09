@@ -99,9 +99,18 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Backend Java:** Clases de dominio y vista por capas (`dominio`, `aplicacion`, `infraestructura`) generadas desde el codigo fuente.
 
 ### 12. [12. Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)
-*   **Flujos clave:** Inicio de sesion, registro, compra con bloqueo de stock, factura en PDF y motor de corte textil.
+*   **Flujos clave:** Inicio de sesion, registro, compra con bloqueo de stock, sesiones firmadas HMAC-SHA256, factura en PDF y motor de corte textil.
 
-### 13. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
+### 13. [13. Manual de Usuario Oficial (Markdown + PDF)](documentacion/13-manual-de-usuario.md)
+*   **Guia paso a paso por roles:** Recorrido ilustrado para Visitantes, Clientes, Vendedores y Administradores, calculadora de metraje, pasarelas de pago y preguntas frecuentes. Disponible tambien en **[PDF Oficial Descargable](documentacion/Manual_de_usuario_DD_Textil.pdf)**.
+
+### 14. [14. Plan Maestro y Reporte de Pruebas ISO/IEC 25010](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)
+*   **Certificacion QA integral:** Resultados detallados de las suites de Backend Java (reglas de negocio, sesiones HMAC-SHA256 y RBAC, concurrencia y contratos OpenAPI), suite automatizada de Frontend y matriz de cierre de defectos v1.0 a v2.0.
+
+### 15. [15. Glosario Tecnico y Catalogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)
+*   **Dominio Ubicuo Textil (DDD):** Terminologia industrial (gramaje GSM, lote de tintoreria, urdimbre/trama, mermas), especificaciones de telas, formulas matematicas de confeccion y normatividad de etiquetado NTC.
+
+### 16. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
 *   Especificacion Swagger / OpenAPI v3.0 completa y estandarizada de todos los endpoints de la API REST, con esquemas de peticion, esquemas de respuesta y codigos de error HTTP.
 
 ### 14. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx)
@@ -121,3 +130,5 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 ## Certificacion de Conformidad Tecnica
 
 La presente documentacion tecnica satisface la totalidad de los criterios de evaluacion tecnica para proyectos de software del Servicio Nacional de Aprendizaje (SENA) en el programa **ADSO**, garantizando rigor metodologico, coherencia arquitectonica e inmutabilidad operativa.
+
+102 casos de prueba automatizados (56 backend + 46 frontend)

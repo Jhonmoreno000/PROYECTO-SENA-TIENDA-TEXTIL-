@@ -151,3 +151,16 @@ Antes de dar inicio a la presentacion formal ante los instructores y jurados:
 ## 9. Conclusion de la Sustentacion
 
 Concluir destacando que **D&D Textil** no es un e-commerce generico adaptado, sino una solucion industrial especializada para el sector textil confeccionista que integra diseno de software de alta ingenieria, rigor matematico en inventario continuo y estandares internacionales de ciberseguridad y calidad.
+
+
+---
+
+## Anexo: Lista de Chequeo Rápida con el Manual de Usuario Oficial
+
+Antes de iniciar la sustentación ante el jurado evaluador del SENA, verifique los siguientes puntos apoyándose en el [Manual de Usuario Oficial](./13-manual-de-usuario.md) ([versión PDF](./Manual_de_usuario_DD_Textil.pdf)):
+
+1. **Verificación de Suites de Prueba en Consola (< 15 segundos):**
+   - Ejecutar `node "tienda digital de telas/ejecutar-pruebas-frontend.mjs"` y mostrar el **100 % de aprobación**.
+   - Ejecutar `java -cp "bin;lib/*" pruebas.PruebasSeguridadYSesiones` en el backend para demostrar la validación de tokens HMAC-SHA256 y el aislamiento por roles.
+2. **Recorrido Multi-Rol con Botones de Acceso Rápido (`/login`):**
+   - Usar los tres botones de demostración (**Cliente**, **Vendedor**, **Admin**) documentados en la **Sección 2.6 del Manual de Usuario** para alternar entre los paneles sin perder tiempo digitando contraseñas en vivo.

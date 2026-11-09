@@ -166,3 +166,13 @@ Para evaluar objetivamente la salud comercial, operativa y tecnológica del nego
 * **Tasa de Errores Transaccionales y Sobreventa:** Cantidad de inconsistencias de stock en concurrencia alta (Meta: **0.0 %** garantizado por bloqueo `FOR UPDATE` y suite de 44 pruebas automatizadas).
 * **Disponibilidad del Servicio (*Uptime SLA*) y Resiliencia DRP:** Disponibilidad operativa del contenedor API/Frontend (Meta: $\ge 99.5\text{ \%}$ con **RPO $\le 24\text{h}$** y **RTO $\le 15\text{ min}$**).
 
+
+
+---
+
+## 9. Adopción Operativa y Autoservicio con el Manual de Usuario Oficial
+
+Para reducir el costo de soporte al cliente (*Customer Acquisition & Support Cost*) y acelerar la curva de aprendizaje de nuevos vendedores y operarios de bodega, el ecosistema **D&D Textil** incorpora el [**Manual de Usuario Oficial**](./documentacion/13-manual-de-usuario.md) ([versión PDF](./documentacion/Manual_de_usuario_DD_Textil.pdf)):
+
+- **Autoservicio B2C / B2B:** guía el uso autónomo de la **Calculadora de Metraje por Proyecto**, el seguimiento de guías logísticas y la descarga de facturas con CUFE, disminuyendo las consultas operativas de primer nivel.
+- **Capacitación Rápida de Vendedores y Administradores:** documenta el flujo completo de creación de productos, cola de moderación, control de lotes de tintorería y calculadora de mermas, permitiendo incorporar nuevos distribuidores textiles al marketplace en menos de una jornada.

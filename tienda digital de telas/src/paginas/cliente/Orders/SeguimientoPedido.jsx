@@ -18,17 +18,19 @@ import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
+import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 
 function SeguimientoPedido() {
     const { orders } = useMetricas();
+    const { user } = useAutenticacion();
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get('id');
     const [trackingInput, setTrackingInput] = useState(orderId || '');
 
     // Encontrar pedido por ID o número de guía
     const cleanInput = (trackingInput || '').toString().trim().toLowerCase();
-    const order = orders.find(o =>
+    const order = orders.filter(o => o.clientId === user?.id || o.idCliente === user?.id).find(o =>
         (o.id && o.id.toString() === cleanInput) ||
         (o.trackingNumber && o.trackingNumber.toString().toLowerCase() === cleanInput) ||
         (o.numeroGuia && o.numeroGuia.toString().toLowerCase() === cleanInput)

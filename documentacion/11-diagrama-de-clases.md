@@ -344,3 +344,9 @@ classDiagram
 6. **`InventarioDAO` concentra seis temas** (lotes, merma, umbrales, banner, ventas y actividad). Separarlo haría más fácil probar cada parte.
 
 Fuentes editables en PlantUML: `diagramas/fuentes/clases_dominio.puml` y `diagramas/fuentes/clases_capas.puml`.
+
+### Consolidación de Persistencia de Usuarios en `JdbcRepositorioUsuarioImpl`
+
+Con la unificación de la capa de acceso a datos JDBC:
+- `JdbcRepositorioUsuarioImpl` centraliza tanto el contrato de dominio (`RepositorioUsuario`) como las operaciones extendidas de administración (`actualizarUsuarioCompleto`, `eliminarUsuario`) y libreta de direcciones (`obtenerDireccionesUsuario`, `agregarDireccionUsuario`, `actualizarDireccionUsuario`, `eliminarDireccionUsuario`).
+- `ConfiguracionSistemaDAO` incorpora la gestión de `notificaciones_sistema` (`obtenerNotificaciones`, `crearNotificacion`, `marcarNotificacionLeida`, `marcarTodasNotificacionesLeidas`).

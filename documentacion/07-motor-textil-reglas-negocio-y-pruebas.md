@@ -287,3 +287,19 @@ Cobertura de Pruebas: Reglas Textiles, Seguridad, Concurrencia, Pagos y Contrato
 Dictamen Tecnico: APTO PARA SUSTENTACION Y DESPLIEGUE EN PRODUCCION
 ================================================================================
 ```
+
+
+---
+
+## Anexo de Ejecución de la Suite de Seguridad y Sesiones (`PruebasSeguridadYSesiones`)
+
+Además de las pruebas unitarias del motor de corte (`PruebasUnitariasTextil`) y de concurrencia (`PruebasConcurrenciaYSeguridad`), el backend incluye la suite dedicada `pruebas.PruebasSeguridadYSesiones`:
+
+```powershell
+# Compilar y ejecutar la suite de seguridad de sesiones y autorización por rol
+cd "tienda digital de telas/backend-java/servidor-api"
+javac -encoding UTF-8 -cp "lib/*" -d bin (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
+java -cp "bin;lib/*" pruebas.PruebasSeguridadYSesiones
+```
+
+Esta suite ejecuta **18 verificaciones deterministas** sobre emisión, expiración, detección de adulteraciones de firma HMAC-SHA256, revocación de cuentas suspendidas/inactivas y aislamiento de pedidos entre roles.

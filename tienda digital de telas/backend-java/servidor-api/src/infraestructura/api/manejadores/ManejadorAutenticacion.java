@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import dominio.excepciones.ExcepcionDominio;
 import dominio.modelos.Usuario;
+import infraestructura.seguridad.TokenSesion;
 
 import java.nio.charset.StandardCharsets;
 
@@ -64,7 +65,8 @@ public class ManejadorAutenticacion extends ManejadorBase {
 
             Usuario usuario = servicioAutenticacion.iniciarSesion(correo, contrasena);
             String jsonUsuario = gson.toJson(usuario);
-            enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"user\": " + jsonUsuario + "}");
+            String tokenSesion = TokenSesion.emitir(usuario.getId(), usuario.getRol());
+            enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"token\": " + gson.toJson(tokenSesion) + ", \"user\": " + jsonUsuario + "}");
 
         } else if (ruta.endsWith("/register") || ruta.endsWith("/registro")) {
             String nombre = extraerTexto(jsonObjeto, "name", extraerTexto(jsonObjeto, "nombre", null));
@@ -99,7 +101,8 @@ public class ManejadorAutenticacion extends ManejadorBase {
                 return;
             }
             String jsonUsuario = gson.toJson(usuario);
-            enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"user\": " + jsonUsuario + "}");
+            String tokenSesion = TokenSesion.emitir(usuario.getId(), usuario.getRol());
+            enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"token\": " + gson.toJson(tokenSesion) + ", \"user\": " + jsonUsuario + "}");
 
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\": \"Ruta no encontrada\"}");

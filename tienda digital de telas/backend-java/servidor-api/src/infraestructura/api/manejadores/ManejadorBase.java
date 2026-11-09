@@ -6,7 +6,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
+import dominio.modelos.Usuario;
+import dominio.repositorios.RepositorioUsuario;
+import infraestructura.persistencia.jdbc.JdbcRepositorioUsuarioImpl;
+import infraestructura.seguridad.TokenSesion;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,6 +27,7 @@ public abstract class ManejadorBase implements HttpHandler {
 
     /** Nombre identificador del microservicio en los registros de auditoría (`String`). */
     private static final String NOMBRE_SERVICIO = "ddtextil-backend";
+    private static final RepositorioUsuario USUARIOS = new JdbcRepositorioUsuarioImpl();
     /** Número máximo de peticiones permitidas por IP dentro de una ventana de tiempo (`int`). */
     private static final int MAX_PETICIONES_POR_VENTANA = 1200;
     /** Duración de la ventana de control de tasa en milisegundos (`long`). */
@@ -202,6 +208,38 @@ public abstract class ManejadorBase implements HttpHandler {
      * @throws Exception Si ocurre un error durante el procesamiento.
      */
     protected abstract void procesarPeticion(HttpExchange intercambio) throws Exception;
+
+    /**
+     * Verifica la sesión Bearer y relee el rol y estado activo/suspendido de la base de datos en cada llamada.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @return {@link Optional} con la identidad verificada o vacío si no es válida.
+     */
+    protected Optional<TokenSesion.Identidad> obtenerIdentidad(HttpExchange intercambio) {
+        String autorizacion = intercambio.getRequestHeaders().getFirst("Authorization");
+        if (autorizacion == null) return Optional.empty();
+        String[] partes = autorizacion.trim().split("\\s+", 2);
+        if (partes.length != 2 || !"Bearer".equalsIgnoreCase(partes[0])) return Optional.empty();
+        return TokenSesion.verificar(partes[1]).flatMap(reclamada ->
+                identidadVigente(reclamada, USUARIOS.buscarPorId(reclamada.idUsuario()).orElse(null)));
+    }
+
+    /**
+     * Valida que el registro actual del usuario en la base de datos siga activo, no esté suspendido
+     * y coincida con el sujeto del token, reconstruyendo la {@link TokenSesion.Identidad} con el rol
+     * vigente en base de datos sin confiar ciegamente en el rol reclamado cuando se emitió el token.
+     *
+     * @param reclamada Identidad extraída tras verificar la firma HMAC-SHA256 del token.
+     * @param actual    Entidad {@link Usuario} recién consultada en PostgreSQL.
+     * @return {@link Optional} con la identidad vigente, o vacío si la cuenta fue suspendida/inactivada.
+     */
+    public static Optional<TokenSesion.Identidad> identidadVigente(TokenSesion.Identidad reclamada, Usuario actual) {
+        if (actual == null || !actual.isActivo() || actual.isSuspendido()
+                || actual.getId() != reclamada.idUsuario()) {
+            return Optional.empty();
+        }
+        return Optional.of(new TokenSesion.Identidad(actual.getId(), actual.getRol()));
+    }
 
     /**
      * Envía una respuesta HTTP con cuerpo en formato JSON codificado en UTF-8.

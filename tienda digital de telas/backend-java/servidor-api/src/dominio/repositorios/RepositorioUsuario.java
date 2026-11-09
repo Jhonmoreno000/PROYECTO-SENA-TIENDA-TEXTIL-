@@ -11,6 +11,14 @@ import java.util.Optional;
 public interface RepositorioUsuario {
 
     /**
+     * Busca un usuario por su identificador único.
+     *
+     * @param idUsuario Identificador único del usuario (`int`).
+     * @return {@link Optional} con el {@link Usuario} encontrado o vacío si no existe.
+     */
+    Optional<Usuario> buscarPorId(int idUsuario);
+
+    /**
      * Busca un usuario por su correo electrónico verificando que su cuenta se encuentre activa.
      *
      * @param correo Correo electrónico del usuario (`String`).

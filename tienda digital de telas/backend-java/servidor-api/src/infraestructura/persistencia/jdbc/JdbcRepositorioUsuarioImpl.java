@@ -28,6 +28,31 @@ public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
     public JdbcRepositorioUsuarioImpl() {}
 
     /**
+     * Busca un usuario por su identificador único en la tabla `usuarios`.
+     *
+     * @param idUsuario Identificador único del usuario (`int`).
+     * @return {@link Optional} con el {@link Usuario} si existe.
+     */
+    @Override
+    public Optional<Usuario> buscarPorId(int idUsuario) {
+        String consulta = "SELECT id, nombre, correo, telefono, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
+                "registrado_en, ultimo_acceso FROM usuarios WHERE id = ?";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(consulta)) {
+            pst.setInt(1, idUsuario);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapearUsuario(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error buscando usuario por identificador: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Busca un usuario activo por su dirección de correo electrónico.
      *
      * @param correo Correo electrónico del usuario (`String`).
