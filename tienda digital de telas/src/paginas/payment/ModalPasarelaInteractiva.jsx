@@ -20,9 +20,9 @@ import { formatCurrency } from '../../utilidades/formateadores';
 const CONFIG_PASARELAS = {
     wompi: {
         nombre: 'Wompi Bancolombia',
-        subtitulo: 'Sandbox API v1 • Cifrado SHA-256',
-        colorHeader: 'from-[#002a8d] via-[#1c4ed8] to-[#0ea5e9]',
-        acento: 'bg-[#00c389] hover:bg-[#00a876] text-slate-950',
+        subtitulo: 'Sandbox API v1 • Cifrado Criptográfico SHA-256',
+        colorHeader: 'from-slate-900 via-slate-800 to-slate-900',
+        acento: 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/25',
         prefijoTx: 'WOMPI-SBX-',
         metodosInternos: [
             { id: 'nequi_wompi', label: 'Nequi Push', desc: 'Notificación al celular', icon: Smartphone },
@@ -34,8 +34,8 @@ const CONFIG_PASARELAS = {
     mercadopago: {
         nombre: 'Mercado Pago Checkout Pro',
         subtitulo: 'API Sandbox Developers • Compra Protegida',
-        colorHeader: 'from-[#009ee3] to-[#007eb5]',
-        acento: 'bg-[#009ee3] hover:bg-[#008ACA] text-white',
+        colorHeader: 'from-slate-900 via-sky-950 to-slate-900',
+        acento: 'bg-sky-600 hover:bg-sky-500 text-white border border-sky-400/25',
         prefijoTx: 'MP-COL-',
         metodosInternos: [
             { id: 'mp_wallet', label: 'Dinero en Mercado Pago', desc: 'Aprobación instantánea', icon: Wallet },
@@ -47,8 +47,8 @@ const CONFIG_PASARELAS = {
     epayco: {
         nombre: 'ePayco / PayU Colombia',
         subtitulo: 'Pasarela Multicaja & Efectivo Nacional',
-        colorHeader: 'from-[#ff5a00] to-[#e04800]',
-        acento: 'bg-[#ff5a00] hover:bg-[#e04800] text-white',
+        colorHeader: 'from-slate-900 via-amber-950 to-slate-900',
+        acento: 'bg-amber-600 hover:bg-amber-500 text-white border border-amber-400/25',
         prefijoTx: 'EPAYCO-CO-',
         metodosInternos: [
             { id: 'efecty_pin', label: 'Efecty / Baloto', desc: 'Convenio 110452 sin costo extra', icon: Banknote },
@@ -110,10 +110,10 @@ function ModalPasarelaInteractiva({
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                {/* Encabezado de la pasarela */}
-                <div className={`bg-gradient-to-r ${config.colorHeader} text-white px-6 py-5 flex items-center justify-between`}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 overflow-y-auto">
+            <div className="w-full max-w-lg bg-white/95 dark:bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] border border-slate-200/80 dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* Encabezado de la pasarela con Glassmorphism */}
+                <div className={`bg-gradient-to-r ${config.colorHeader} text-white px-6 py-5 flex items-center justify-between border-b border-white/10`}>
                     <div>
                         <div className="flex items-center gap-2">
                             <Lock className="w-4 h-4 text-white/90" />
@@ -132,18 +132,18 @@ function ModalPasarelaInteractiva({
                 </div>
 
                 {/* Resumen del comercio y monto */}
-                <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                <div className="px-6 py-4 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between backdrop-blur-md">
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             Comercio Verificado
                         </p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
                             D&amp;D Textil Medellín • Ref: <span className="font-mono text-primary-600 dark:text-primary-400">{orderInfo.reference}</span>
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Total a pagar</p>
-                        <p className="text-xl font-black text-gray-900 dark:text-white">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Total a pagar</p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white">
                             {formatCurrency(orderInfo.total)}
                         </p>
                     </div>
@@ -154,7 +154,7 @@ function ModalPasarelaInteractiva({
                     {etapa === 'seleccion' && (
                         <div className="space-y-5">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2.5">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                                     Selecciona el medio dentro de {config.nombre}:
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -166,20 +166,20 @@ function ModalPasarelaInteractiva({
                                                 key={m.id}
                                                 type="button"
                                                 onClick={() => setMetodoElegido(m.id)}
-                                                className={`flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                                                className={`flex items-start gap-3 p-3 rounded-2xl border text-left transition-all cursor-pointer backdrop-blur-sm ${
                                                     activo
-                                                        ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-900/20 shadow-sm'
-                                                        : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
+                                                        ? 'border-slate-800 dark:border-white/30 bg-slate-100/90 dark:bg-slate-800/90 shadow-sm ring-1 ring-black/5'
+                                                        : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 bg-white/60 dark:bg-slate-800/40'
                                                 }`}
                                             >
-                                                <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                                                <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                                                     <Icon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
+                                                    <p className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
                                                         {m.label}
                                                     </p>
-                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                                         {m.desc}
                                                     </p>
                                                 </div>
