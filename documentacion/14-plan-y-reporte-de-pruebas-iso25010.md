@@ -124,3 +124,5 @@ Durante la auditoría integral de calidad e integración entre repositorios se i
 | **BUG-UX-01** | Media | Las imágenes locales inexistentes en `/uploads/` recibían el `index.html` con estado `200 OK` en el servidor de desarrollo, rompiendo el `onError` de `<img>`. | Middleware en `vite.config.js` que verifica existencia física en `public/uploads` y devuelve `404 Not Found` inmediato cuando el archivo no existe. | **CERRADO** |
 | **BUG-UX-02** | Media | El filtro de proyecto **"Tapicería"** no coincidía con categorías sin tilde (`"Tapiceria"`) y **"Verano"** omitía telas con tilde en `material` (`"Algodón"`). | Normalización NFD sin diacríticos tanto en `category` como en `material` dentro de `ProductGrid.jsx`. | **CERRADO** |
 | **BUG-OPS-01** | Media | En `docker-compose.yml`, `DB_URL` del archivo `.env` (`localhost`) sobrescribía el hostname interno `db` de la red Docker. | Fijación explícita de `DB_URL: jdbc:postgresql://db:5432/...` y `PORT: 8081` en el servicio `backend` de `docker-compose.yml`. | **CERRADO** |
+
+Suite Frontend (Node.js ESM):     46 / 46 pruebas superadas (100%)
