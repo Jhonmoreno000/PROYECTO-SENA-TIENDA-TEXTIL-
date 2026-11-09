@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Truck, Check, Clock } from 'lucide-react';
+import { ShoppingBag, Truck, Check, Clock, Scissors, Package } from 'lucide-react';
 import LayoutPanel from '../../componentes/layouts/LayoutPanel';
 import enlacesVendedor from '../../datos/enlacesVendedor';
 import BackButton from '../../componentes/dashboard/BackButton';
@@ -8,13 +8,13 @@ import { useAutenticacion } from '../../contextos/ContextoAutenticacion';
 import { useNotificacion } from '../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../utilidades/formateadores';
 
+const PREPARING_STATUSES = ['pending', 'paid', 'cutting', 'packed', 'preparing'];
+
 function PedidosVendedor() {
     const { user } = useAutenticacion();
-    const { orders, getOrdersBySeller, updateOrderStatus, users } = useMetricas();
+    const { getOrdersBySeller, updateOrderStatus, users } = useMetricas();
     const { showNotification } = useNotificacion();
     const [filterStatus, setFilterStatus] = useState('all');
-
-    
 
     // Obtener solo pedidos del vendedor actual
     const sellerOrders = getOrdersBySeller(user?.id);
@@ -22,15 +22,21 @@ function PedidosVendedor() {
     // Filtrar por estado
     const filteredOrders = filterStatus === 'all'
         ? sellerOrders
-        : sellerOrders.filter(order => order.status === filterStatus);
+        : filterStatus === 'preparing'
+            ? sellerOrders.filter(order => PREPARING_STATUSES.includes(order.status))
+            : sellerOrders.filter(order => order.status === filterStatus);
 
-    const handleStatusChange = (orderId, newStatus) => {
-        updateOrderStatus(orderId, newStatus);
+    const handleStatusChange = async (orderId, newStatus) => {
+        await updateOrderStatus(orderId, newStatus);
         showNotification('success', `Estado del pedido actualizado a ${getStatusLabel(newStatus)}`);
     };
 
     const getStatusLabel = (status) => {
         const labels = {
+            pending: 'Pendiente',
+            paid: 'Pagado',
+            cutting: 'En Corte',
+            packed: 'Empacado',
             preparing: 'Preparando',
             shipped: 'Enviado',
             delivered: 'Entregado'
@@ -40,6 +46,10 @@ function PedidosVendedor() {
 
     const getStatusColor = (status) => {
         const colors = {
+            pending: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/10 dark:text-amber-400',
+            paid: 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/10 dark:text-indigo-400',
+            cutting: 'bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-400',
+            packed: 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/10 dark:text-purple-400',
             preparing: 'bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-400',
             shipped: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/10 dark:text-blue-400',
             delivered: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/10 dark:text-emerald-400'
@@ -49,6 +59,10 @@ function PedidosVendedor() {
 
     const getStatusIcon = (status) => {
         const icons = {
+            pending: Clock,
+            paid: Clock,
+            cutting: Scissors,
+            packed: Package,
             preparing: Clock,
             shipped: Truck,
             delivered: Check
@@ -56,9 +70,11 @@ function PedidosVendedor() {
         return icons[status] || ShoppingBag;
     };
 
-    const getClientName = (clientId) => {
-        const cliente = users.find(u => u.id === clientId);
-        return cliente?.name || 'Cliente Desconocido';
+    const getClientName = (order) => {
+        if (order?.client && order.client !== 'Cliente') return order.client;
+        if (order?.clientName) return order.clientName;
+        const cliente = users.find(u => String(u.id) === String(order?.clientId));
+        return cliente?.name || order?.client || 'Cliente';
     };
 
     return (
@@ -83,9 +99,9 @@ function PedidosVendedor() {
                 <div className="card p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 text-sm font-semibold mb-1">Preparando</p>
+                            <p className="text-gray-500 text-sm font-semibold mb-1">En Preparación</p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                {sellerOrders.filter(o => o.status === 'preparing').length}
+                                {sellerOrders.filter(o => PREPARING_STATUSES.includes(o.status)).length}
                             </h3>
                         </div>
                         <div className="w-12 h-12 rounded-lg bg-yellow-50 border border-yellow-100 flex items-center justify-center text-yellow-500 dark:bg-yellow-900/20 dark:border-yellow-800">
@@ -132,7 +148,7 @@ function PedidosVendedor() {
                             <p className="text-sm text-gray-500 mt-1">{filteredOrders.length} pedidos</p>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => setFilterStatus('all')}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'all'
@@ -149,7 +165,7 @@ function PedidosVendedor() {
                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-700'
                                     }`}
                             >
-                                Preparando
+                                En Preparación
                             </button>
                             <button
                                 onClick={() => setFilterStatus('shipped')}
@@ -189,6 +205,7 @@ function PedidosVendedor() {
                         <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                             {filteredOrders.map((order) => {
                                 const StatusIcon = getStatusIcon(order.status);
+                                const itemCount = order.lineItems?.length || order.items || 0;
                                 return (
                                     <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                         <td className="px-6 py-4">
@@ -196,19 +213,19 @@ function PedidosVendedor() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900 dark:text-white">
-                                                {getClientName(order.clientId)}
+                                                {getClientName(order)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-500">
-                                            {new Date(order.date).toLocaleDateString('es-CO', {
+                                            {order.date ? new Date(order.date).toLocaleDateString('es-CO', {
                                                 day: '2-digit',
                                                 month: 'short',
                                                 year: 'numeric'
-                                            })}
+                                            }) : '—'}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300">
-                                                {order.items} items
+                                                {itemCount} items
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">
@@ -216,7 +233,7 @@ function PedidosVendedor() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5">
-                                                <StatusIcon className={`w-4 h-4 ${order.status === 'preparing' ? 'text-yellow-600' : order.status === 'shipped' ? 'text-blue-600' : 'text-emerald-600'}`} />
+                                                <StatusIcon className={`w-4 h-4 ${PREPARING_STATUSES.includes(order.status) ? 'text-yellow-600' : order.status === 'shipped' ? 'text-blue-600' : 'text-emerald-600'}`} />
                                                 <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wider ${getStatusColor(order.status)}`}>
                                                     {getStatusLabel(order.status)}
                                                 </span>
@@ -224,7 +241,23 @@ function PedidosVendedor() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex justify-end gap-2">
-                                                {order.status === 'preparing' && (
+                                                {(order.status === 'pending' || order.status === 'paid' || order.status === 'preparing') && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(order.id, 'cutting')}
+                                                        className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold rounded-lg text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20 transition-colors"
+                                                    >
+                                                        Iniciar Corte
+                                                    </button>
+                                                )}
+                                                {order.status === 'cutting' && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(order.id, 'packed')}
+                                                        className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold rounded-lg text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 transition-colors"
+                                                    >
+                                                        Marcar Empacado
+                                                    </button>
+                                                )}
+                                                {(order.status === 'packed' || order.status === 'preparing') && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, 'shipped')}
                                                         className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"

@@ -31,6 +31,11 @@ function MetricasCliente() {
     const avgSpent = clientsWithMetrics.reduce((s, c) => s + c.metrics.totalSpent, 0) / (clientsWithMetrics.length || 1);
     const avgPurchases = clientsWithMetrics.reduce((s, c) => s + c.metrics.totalPurchases, 0) / (clientsWithMetrics.length || 1);
     const avgTicket = clientsWithMetrics.reduce((s, c) => s + c.metrics.averageOrderValue, 0) / (clientsWithMetrics.length || 1);
+    const clientsWithOrders = clientsWithMetrics.filter(c => c.metrics.totalPurchases > 0);
+    const repeatClients = clientsWithOrders.filter(c => c.metrics.totalPurchases > 1);
+    const retentionRate = clientsWithOrders.length > 0
+        ? ((repeatClients.length / clientsWithOrders.length) * 100).toFixed(1)
+        : '0.0';
 
     useGSAP(() => {
         gsap.fromTo('.segment-card', 
@@ -123,9 +128,9 @@ function MetricasCliente() {
                     <div className="grid md:grid-cols-4 gap-6">
                         {[
                             { label: 'Valor Promedio Cliente', value: formatCurrency(avgSpent), icon: DollarSign, color: 'amber' },
-                            { label: 'Compras Promedio', value: avgPurchases.toFixed(1), sub: 'por cliente', icon: ShoppingBag, color: 'blue' },
+                            { label: 'Tasa de Retención', value: `${retentionRate}%`, sub: `${repeatClients.length} recurrentes de ${clientsWithOrders.length}`, icon: ShoppingBag, color: 'blue' },
                             { label: 'Mejor Cliente', value: topClients[0]?.name || 'N/A', sub: topClients[0] ? formatCurrency(topClients[0].metrics.totalSpent) : formatCurrency(0), icon: Award, color: 'indigo' },
-                            { label: 'Ticket Promedio', value: formatCurrency(avgTicket), icon: TrendingUp, color: 'emerald' },
+                            { label: 'Ticket Promedio', value: formatCurrency(avgTicket), sub: `${avgPurchases.toFixed(1)} compras prom.`, icon: TrendingUp, color: 'emerald' },
                         ].map(({ label, value, sub, icon: Icon, color }) => (
                             <div key={label} className={`stats-card ${glassCard} p-6 overflow-hidden relative group hover:-translate-y-1 transition-all duration-300`}>
                                 <div className={`absolute -right-4 -top-4 w-20 h-20 bg-${color}-50 rounded-full opacity-40 group-hover:scale-150 transition-transform duration-500`} />

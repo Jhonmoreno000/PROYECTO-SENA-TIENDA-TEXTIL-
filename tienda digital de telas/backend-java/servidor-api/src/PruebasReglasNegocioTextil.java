@@ -1,29 +1,36 @@
-import dominio.modelos.RolloTextil;
-import dominio.modelos.EventoMerma;
 import aplicacion.servicios.ServicioCorteTextil;
-import aplicacion.servicios.ServicioCorteTextil.*;
+import aplicacion.servicios.ServicioCorteTextil.ResultadoProcesamientoCorte;
+import aplicacion.servicios.ServicioCorteTextil.ResultadoValidacionCorte;
+import aplicacion.servicios.ServicioCorteTextil.TarifaCalculada;
+import dominio.modelos.EventoMerma;
+import dominio.modelos.RolloTextil;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Suite de Pruebas Unitarias para las Reglas de Negocio Textil de D&D Textil.
- * Valida los 3 requerimientos críticos exigidos por el SENA:
- * 1. Validación de metraje continuo vs rollos fragmentados (anti-empates y lotes de color).
- * 2. Algoritmo de mermas y reclasificación de retazos (< 1.0 m con 40% de descuento).
- * 3. Cálculo automático de precios escalonados (detal, mayorista >= 15m, rollo cerrado >= 50m).
+ * Suite de pruebas unitarias para las reglas de negocio textil de D&D Textil.
+ * Verifica validación de metraje continuo vs rollos fragmentados, reclasificación de retazos
+ * sub-metro y cálculo de tarifas escalonadas por volumen.
  */
 public class PruebasReglasNegocioTextil {
 
+    /** Contador de casos de prueba exitosos (`int`). */
     private static int pruebasExitosas = 0;
+    /** Contador de casos de prueba fallidos (`int`). */
     private static int pruebasFallidas = 0;
+    /** Instancia del motor de reglas textiles bajo prueba (`ServicioCorteTextil`). */
     private static final ServicioCorteTextil motorTextil = new ServicioCorteTextil();
 
+    /**
+     * Punto de entrada principal que ejecuta las 14 pruebas de reglas de negocio textil.
+     *
+     * @param args Argumentos de línea de comandos (`String[]`).
+     */
     public static void main(String[] args) {
         System.out.println("=================================================================");
         System.out.println("   SUITE DE PRUEBAS UNITARIAS: MOTOR TEXTIL Y CORTE (SENA ADSO)  ");
         System.out.println("=================================================================");
 
-        // --- BLOQUE 1: VALIDACIÓN DE METRAJE CONTINUO VS ROLLOS FRAGMENTADOS ---
         ejecutarPrueba("1. Metraje continuo exitoso en un solo rollo del lote solicitado", () -> {
             List<RolloTextil> bodega = new ArrayList<>();
             bodega.add(new RolloTextil(1, 101, "ROL-501", 20.0, 15.0, "LOT-2026-A", "disponible"));
@@ -44,7 +51,6 @@ public class PruebasReglasNegocioTextil {
 
         ejecutarPrueba("2. Rechazo estricto cuando el stock está fragmentado entre varios rollos (anti-empates)", () -> {
             List<RolloTextil> bodega = new ArrayList<>();
-            // Dos rollos de 4 metros cada uno: total 8m, pero ninguno tiene 6m continuos
             bodega.add(new RolloTextil(1, 101, "ROL-101", 10.0, 4.0, "LOT-2026-A", "disponible"));
             bodega.add(new RolloTextil(2, 101, "ROL-102", 10.0, 4.0, "LOT-2026-A", "disponible"));
 
@@ -63,7 +69,6 @@ public class PruebasReglasNegocioTextil {
 
         ejecutarPrueba("3. Rechazo de metraje continuo por inconsistencia de lote de tintorería (Lot Drift)", () -> {
             List<RolloTextil> bodega = new ArrayList<>();
-            // Hay un rollo de 10m pero pertenece al lote B, y el cliente solicitó lote A
             bodega.add(new RolloTextil(1, 101, "ROL-201", 20.0, 10.0, "LOT-2026-B", "disponible"));
 
             ResultadoValidacionCorte resultado = motorTextil.validarMetrajeContinuo(bodega, 6.0, "LOT-2026-A");
@@ -87,7 +92,6 @@ public class PruebasReglasNegocioTextil {
             }
         });
 
-        // --- BLOQUE 2: PROCESAMIENTO DE CORTE Y RECLASIFICACIÓN DE MERMAS ---
         ejecutarPrueba("5. Corte normal con remanente comercializable (>= 1.0 m) mantiene estado disponible", () -> {
             RolloTextil rollo = new RolloTextil(1, 101, "ROL-90", 20.0, 15.0, "LOT-2026-A", "disponible");
 
@@ -105,7 +109,6 @@ public class PruebasReglasNegocioTextil {
         });
 
         ejecutarPrueba("6. Reclasificación automática a retazo liquidado cuando el remanente es < 1.0 m", () -> {
-            // Rollo con 4.5m, cortamos 3.8m -> queda 0.7m (< 1.0m)
             RolloTextil rollo = new RolloTextil(2, 101, "ROL-88", 20.0, 4.5, "LOT-2026-A", "disponible");
 
             ResultadoProcesamientoCorte corte = motorTextil.procesarCorteYRemanente(rollo, 3.8, 30000.0);
@@ -119,7 +122,6 @@ public class PruebasReglasNegocioTextil {
             if (!"retazo_liquidado".equals(corte.getEstadoFinalRollo())) {
                 throw new AssertionError("El estado final debió ser 'retazo_liquidado'.");
             }
-            // Precio base $30.000 con 40% de descuento -> $18.000
             if (corte.getPrecioPorMetroRetazo() != 18000.0) {
                 throw new AssertionError("Precio de retazo esperado $18.000. Obtenido: " + corte.getPrecioPorMetroRetazo());
             }
@@ -162,11 +164,10 @@ public class PruebasReglasNegocioTextil {
                 motorTextil.procesarCorteYRemanente(rollo, 5.5, 30000.0);
                 throw new AssertionError("Debió lanzarse IllegalStateException por sobrecorte.");
             } catch (IllegalStateException e) {
-                // Correcto: excepción esperada
+                // Excepción esperada
             }
         });
 
-        // --- BLOQUE 3: CÁLCULO DE PRECIOS ESCALONADOS ---
         ejecutarPrueba("10. Tarifa escalonada al DETAL (< 15 metros, 0% descuento)", () -> {
             TarifaCalculada tarifa = motorTextil.calcularPrecioEscalonado(30000.0, 8.0);
 
@@ -182,7 +183,6 @@ public class PruebasReglasNegocioTextil {
         });
 
         ejecutarPrueba("11. Tarifa escalonada MAYORISTA (15.0 a 49.99 metros, 15% descuento)", () -> {
-            // 20 metros a $30.000 base -> 15% desc ($25.500/m) -> Total $510.000
             TarifaCalculada tarifa = motorTextil.calcularPrecioEscalonado(30000.0, 20.0);
 
             if (!"MAYORISTA".equals(tarifa.getTipoTarifa())) {
@@ -203,7 +203,6 @@ public class PruebasReglasNegocioTextil {
         });
 
         ejecutarPrueba("12. Tarifa escalonada ROLLO CERRADO (>= 50 metros, 25% descuento)", () -> {
-            // 60 metros a $30.000 base -> 25% desc ($22.500/m) -> Total $1.350.000
             TarifaCalculada tarifa = motorTextil.calcularPrecioEscalonado(30000.0, 60.0);
 
             if (!"ROLLO_CERRADO".equals(tarifa.getTipoTarifa())) {
@@ -248,7 +247,6 @@ public class PruebasReglasNegocioTextil {
             }
         });
 
-        // --- RESUMEN DE EJECUCIÓN ---
         System.out.println("\n=================================================================");
         System.out.println("                    RESUMEN DE PRUEBAS UNITARIAS                ");
         System.out.println("=================================================================");
@@ -263,6 +261,12 @@ public class PruebasReglasNegocioTextil {
         }
     }
 
+    /**
+     * Ejecuta un caso de prueba individual contabilizando su éxito o fallo.
+     *
+     * @param nombre Nombre descriptivo del caso de prueba (`String`).
+     * @param accion Bloque ejecutable de la prueba (`AccionPrueba`).
+     */
     private static void ejecutarPrueba(String nombre, AccionPrueba accion) {
         System.out.print("[TEST] " + nombre + " ... ");
         try {
@@ -275,8 +279,16 @@ public class PruebasReglasNegocioTextil {
         }
     }
 
+    /**
+     * Interfaz funcional que representa una acción de prueba que puede lanzar cualquier excepción o aserción.
+     */
     @FunctionalInterface
     interface AccionPrueba {
+        /**
+         * Ejecuta las validaciones del caso de prueba.
+         *
+         * @throws Throwable Si ocurre un error o falla una aserción.
+         */
         void ejecutar() throws Throwable;
     }
 }

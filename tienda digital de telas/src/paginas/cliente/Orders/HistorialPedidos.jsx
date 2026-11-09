@@ -10,8 +10,7 @@ import {
     Filter,
     ArrowRight,
     Truck,
-    CheckCircle2,
-    TriangleAlert
+    CheckCircle2
 } from 'lucide-react';
 
 import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
@@ -57,7 +56,7 @@ function getStatusBadge(status) {
 }
 
 function HistorialPedidos() {
-    const { orders, ordersLoadFailed, refreshData } = useMetricas();
+    const { orders } = useMetricas();
     const { products } = useProductos();
     const { user } = useAutenticacion();
     const { showNotification } = useNotificacion();
@@ -65,8 +64,8 @@ function HistorialPedidos() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Filtrar pedidos para el cliente actual
-    const clientOrders = orders
-        .filter(order => (order.clientId === user?.id || order.idCliente === user?.id))
+    const userOrders = orders.filter(order => String(order.clientId ?? order.idCliente) === String(user?.id));
+    const clientOrders = userOrders
         .filter(order => filterStatus === 'all' || order.status === filterStatus || order.estado === filterStatus)
         .filter(order =>
             searchTerm === '' ||
@@ -75,9 +74,9 @@ function HistorialPedidos() {
         )
         .sort((a, b) => new Date(b.date || b.orderDate || b.fecha || 0) - new Date(a.date || a.orderDate || a.fecha || 0));
 
-    const totalOrders = orders.filter(order => order.clientId === user?.id || order.idCliente === user?.id).length;
-    const activeOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id) && ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
-    const deliveredOrders = orders.filter(o => (o.clientId === user?.id || o.idCliente === user?.id) && (o.status === 'delivered' || o.estado === 'entregado')).length;
+    const totalOrders = userOrders.length;
+    const activeOrders = userOrders.filter(o => ['paid', 'cutting', 'packed', 'shipped', 'pagado', 'en corte', 'empacado', 'enviado'].includes(o.status || o.estado)).length;
+    const deliveredOrders = userOrders.filter(o => (o.status === 'delivered' || o.estado === 'entregado')).length;
 
     const handleDownloadInvoice = async (orderId) => {
         try {
@@ -192,22 +191,10 @@ function HistorialPedidos() {
                     </div>
                 </div>
 
-                {ordersLoadFailed && (
-                    <div role="alert" className="card p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
-                        <TriangleAlert className="w-5 h-5 shrink-0" />
-                        <p className="flex-1 text-sm font-medium">
-                            No se pudieron actualizar tus pedidos. Es posible que la información mostrada esté desactualizada.
-                        </p>
-                        <button onClick={refreshData} className="px-4 py-2 rounded-xl text-sm font-bold bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/60 transition-colors">
-                            Reintentar
-                        </button>
-                    </div>
-                )}
-
                 {/* ================================================================
                     LISTA DE PEDIDOS
                 ================================================================ */}
-                {clientOrders.length === 0 ? (!ordersLoadFailed && (
+                {clientOrders.length === 0 ? (
                     <div className="card p-16 text-center flex flex-col items-center justify-center border-dashed border-2">
                         <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
                             <ShoppingBag className="w-10 h-10 text-slate-300 dark:text-slate-600" />
@@ -229,7 +216,7 @@ function HistorialPedidos() {
                             </Link>
                         )}
                     </div>
-                )) : (
+                ) : (
                     <div className="space-y-6">
                         {clientOrders.map(order => (
                             <div key={order.id} className="card overflow-hidden hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 group">
@@ -277,7 +264,7 @@ function HistorialPedidos() {
                                     <div className="flex items-center gap-4 p-4 bg-gray-50/80 dark:bg-slate-800/30 rounded-xl border border-gray-100 dark:border-slate-700/50 mb-6 group-hover:bg-gray-50 dark:group-hover:bg-slate-800/50 transition-colors">
                                         <div className="flex -space-x-3">
                                             {(order.productIds ? order.productIds.slice(0, 3) : [null, null, null].slice(0, order.items || 1)).map((id, i) => {
-                                                const productItem = id ? (products?.find(p => p.id === id)) : null;
+                                                const productItem = id ? (products?.find(p => String(p.id) === String(id))) : null;
                                                 return (
                                                     <div key={i} className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white dark:border-slate-800 bg-white shadow-sm">
                                                         {productItem?.images?.[0] ? (
@@ -302,10 +289,12 @@ function HistorialPedidos() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-gray-900 dark:text-white truncate">
-                                                {order.productNames || 'Telas variadas'}
+                                                {Array.isArray(order.productNames) && order.productNames.length > 0
+                                                    ? order.productNames.join(', ')
+                                                    : (order.productNames || 'Telas')}
                                             </p>
                                             <p className="text-sm font-medium text-gray-500">
-                                                {order.totalMeters || '5.0'} metros totales
+                                                {order.totalMeters || (order.lineItems || []).reduce((s, li) => s + Number(li.quantity ?? li.meters ?? 0), 0)} metros totales
                                             </p>
                                         </div>
                                     </div>

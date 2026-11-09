@@ -34,74 +34,7 @@ function MyTickets() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [expandedTicket, setExpandedTicket] = useState(null);
 
-    // Mock tickets for demo
-    const mockTickets = [
-        {
-            id: 1,
-            orderId: 1001,
-            subject: '🩹 Manchas en la tela',
-            description: 'La tela llegó con una mancha café de aproximadamente 10cm en una esquina del rollo.',
-            priority: 'high',
-            status: 'open',
-            createdAt: '2026-01-28',
-            updatedAt: '2026-01-28',
-            photos: [],
-            responses: []
-        },
-        {
-            id: 2,
-            orderId: 1002,
-            subject: '📏 Metraje incorrecto',
-            description: 'Pedí 5 metros pero solo recibí 4.5 metros según mi medición.',
-            priority: 'high',
-            status: 'in_progress',
-            createdAt: '2026-01-25',
-            updatedAt: '2026-01-27',
-            photos: [],
-            responses: [
-                {
-                    id: 1,
-                    from: 'vendedor',
-                    name: 'Textiles Premium',
-                    message: 'Hola, lamentamos el inconveniente. Vamos a revisar el caso y te contactamos con una solución.',
-                    date: '2026-01-26'
-                },
-                {
-                    id: 2,
-                    from: 'vendedor',
-                    name: 'Textiles Premium',
-                    message: 'Confirmamos que hubo un error en el corte. Te enviaremos los 0.5m faltantes sin costo adicional. ¿Es esta dirección correcta para el envío?',
-                    date: '2026-01-27'
-                }
-            ]
-        },
-        {
-            id: 3,
-            orderId: 998,
-            subject: '🎨 Color incorrecto',
-            description: 'El color de la tela es más claro que el mostrado en las fotos.',
-            priority: 'medium',
-            status: 'resolved',
-            createdAt: '2026-01-15',
-            updatedAt: '2026-01-20',
-            resolution: 'refund',
-            resolutionDetails: 'Se realizó reembolso completo de 185.000 COP',
-            photos: [],
-            responses: [
-                {
-                    id: 1,
-                    from: 'admin',
-                    name: 'Soporte D&D Textil',
-                    message: 'Hemos revisado tu caso. Efectivamente hay diferencia de color. Procederemos con el reembolso.',
-                    date: '2026-01-18'
-                }
-            ]
-        }
-    ];
-
-    const tickets = supportTickets.length > 0
-        ? supportTickets.filter(t => t.clientId === user?.id || t.usuarioId === user?.id)
-        : mockTickets;
+    const tickets = (supportTickets || []).filter(t => String(t.userId ?? t.clientId) === String(user?.id));
 
     const filteredTickets = filterStatus === 'all'
         ? tickets

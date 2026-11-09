@@ -166,7 +166,10 @@ function DetalleProducto() {
      * El mensaje de confirmación desaparece automáticamente después de 3 segundos.
      */
     const handleAddToCart = () => {
-        const added = addToCart(product, totalMeters);
+        const productToAdd = hasDiscount
+            ? { ...product, price: discountedPrice, originalPrice: product.price }
+            : product;
+        const added = addToCart(productToAdd, totalMeters);
         if (added) {
             setShowSuccess(true);
             setShowStockError(false);
@@ -181,7 +184,10 @@ function DetalleProducto() {
      * handleBuyNow — Agrega al carrito y lleva directamente a la pantalla del carrito
      */
     const handleBuyNow = () => {
-        const added = addToCart(product, totalMeters);
+        const productToAdd = hasDiscount
+            ? { ...product, price: discountedPrice, originalPrice: product.price }
+            : product;
+        const added = addToCart(productToAdd, totalMeters);
         if (added) {
             navigate('/carrito');
         } else {

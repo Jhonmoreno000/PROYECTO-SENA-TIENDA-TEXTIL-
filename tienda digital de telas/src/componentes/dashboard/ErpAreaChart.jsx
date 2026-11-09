@@ -7,7 +7,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
  * Muestra una comparativa entre "Ventas Reales" y "Objetivos de Venta",
  * usando áreas superpuestas para una lectura rápida de cumplimiento.
  */
-export default function ErpAreaChart({ datos, title, subtitle }) {
+export default function ErpAreaChart({ data, datos, title, subtitle }) {
+    const chartData = data || datos || [];
     
     // Formateador de moneda para el tooltip
     const formatCurrency = (value) => {
@@ -28,7 +29,7 @@ export default function ErpAreaChart({ datos, title, subtitle }) {
             <div className="flex-1 w-full min-h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
-                        datos={datos}
+                        data={chartData}
                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                     >
                         <defs>

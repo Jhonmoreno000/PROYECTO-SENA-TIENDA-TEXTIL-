@@ -77,13 +77,17 @@ INSERT INTO umbrales_stock (tipo_tela, metros_minimos, alerta_activa) VALUES
 ON CONFLICT (tipo_tela) DO NOTHING;
 
 -- 5. VENTAS POR REGIÓN
-INSERT INTO ventas_region (region, ventas_totales, porcentaje) VALUES
-('Bogotá D.C.', 43955905.83, 35.50),
-('Antioquia', 20517276.65, 18.20),
-('Valle del Cauca', 29667382.08, 22.40),
-('Atlántico', 33479140.61, 15.10),
-('Santander', 33396670.43, 8.80)
-ON CONFLICT DO NOTHING;
+INSERT INTO ventas_region (region, capital, ventas_totales, pedidos_totales, porcentaje) VALUES
+('Bogotá D.C.', 'Bogotá', 43955905.83, 145, 35.50),
+('Antioquia', 'Medellín', 20517276.65, 82, 18.20),
+('Valle del Cauca', 'Cali', 29667382.08, 98, 22.40),
+('Atlántico', 'Barranquilla', 33479140.61, 64, 15.10),
+('Santander', 'Bucaramanga', 33396670.43, 41, 8.80)
+ON CONFLICT (region) DO UPDATE SET
+    capital = EXCLUDED.capital,
+    ventas_totales = EXCLUDED.ventas_totales,
+    pedidos_totales = EXCLUDED.pedidos_totales,
+    porcentaje = EXCLUDED.porcentaje;
 
 -- 6. ACTIVIDAD RECIENTE
 INSERT INTO actividad_reciente (tipo, usuario_id, nombre_usuario, accion) VALUES
@@ -107,3 +111,46 @@ INSERT INTO notificaciones_sistema_erp (tipo, titulo, mensaje, leido) VALUES
 ('warning', 'Retraso de Proveedor', 'El envío de Seda Pura desde Italia presenta 2 días de retraso.', false),
 ('success', 'Pedido Mayorista B2B', 'Textiles Premium SAS solicitó 500m de Lino Blanco.', false),
 ('info', 'Reporte Semanal Generado', 'El balance de ventas semanales está listo para descarga.', false);
+
+-- 9. LOTES DE INVENTARIO
+INSERT INTO lotes_inventario (id, producto_id, numero_lote, metros_recibidos, metros_actuales, costo_por_metro, proveedor, estado, fecha_recepcion, notas) VALUES
+(1, 1, 'LOT-2026-ALG01', 120.00, 100.00, 15000.00, 'Textil Corp', 'active', '2026-06-01', 'Lote inicial de Algodón Premium'),
+(2, 2, 'LOT-2026-SED01', 60.00, 50.00, 52000.00, 'Importaciones V&G', 'active', '2026-06-05', 'Seda importada grado A'),
+(3, 3, 'LOT-2026-LIN01', 100.00, 80.00, 28000.00, 'Textil Corp', 'active', '2026-06-10', 'Lino orgánico certificado'),
+(4, 4, 'LOT-2026-LAN01', 40.00, 30.00, 42000.00, 'Lanera del Sur', 'low', '2026-06-12', 'Lote de Lana Merino'),
+(5, 5, 'LOT-2026-DRL01', 150.00, 120.00, 21000.00, 'Drilones Industriales', 'active', '2026-06-15', 'Dril elástico industrial')
+ON CONFLICT (id) DO UPDATE SET
+    metros_actuales = EXCLUDED.metros_actuales,
+    estado = EXCLUDED.estado;
+
+SELECT pg_catalog.setval('public.lotes_inventario_id_seq', 5, true);
+
+-- 10. ROLLOS TEXTILES FÍSICOS
+INSERT INTO rollos_textil (codigo_rollo, producto_id, metraje_inicial, metraje_remanente, lote_tintoreria, estado, ubicacion_bodega) VALUES
+('ROL-001', 3, 50.00, 45.00, 'LOT-2026-A', 'disponible', 'PAS-02-EST-04'),
+('ROL-002', 1, 100.00, 100.00, 'LOT-2026-ALG01', 'disponible', 'PAS-01-EST-01'),
+('ROL-003', 2, 60.00, 50.00, 'LOT-2026-SED01', 'disponible', 'PAS-03-EST-02'),
+('ROL-004', 4, 40.00, 30.00, 'LOT-2026-LAN01', 'disponible', 'PAS-04-EST-01'),
+('ROL-005', 5, 150.00, 120.00, 'LOT-2026-DRL01', 'disponible', 'PAS-01-EST-05')
+ON CONFLICT (codigo_rollo) DO UPDATE SET
+    metraje_remanente = EXCLUDED.metraje_remanente,
+    ubicacion_bodega = EXCLUDED.ubicacion_bodega;
+
+-- 11. VENTAS DIARIAS E HISTÓRICO ERP
+INSERT INTO ventas_diarias (fecha_venta, ventas_totales, pedidos_totales) VALUES
+(CURRENT_DATE - INTERVAL '6 days', 1850000.00, 6),
+(CURRENT_DATE - INTERVAL '5 days', 2420000.00, 8),
+(CURRENT_DATE - INTERVAL '4 days', 1980000.00, 5),
+(CURRENT_DATE - INTERVAL '3 days', 3150000.00, 11),
+(CURRENT_DATE - INTERVAL '2 days', 2760000.00, 9),
+(CURRENT_DATE - INTERVAL '1 day', 3490000.00, 12),
+(CURRENT_DATE, 2890000.00, 10)
+ON CONFLICT (fecha_venta) DO NOTHING;
+
+INSERT INTO metricas_ventas_erp (fecha_registro, ventas_reales, ventas_objetivo, margen_ganancia) VALUES
+(CURRENT_DATE - INTERVAL '4 days', 1980000.00, 2200000.00, 31.50),
+(CURRENT_DATE - INTERVAL '3 days', 3150000.00, 2800000.00, 34.20),
+(CURRENT_DATE - INTERVAL '2 days', 2760000.00, 2600000.00, 32.80),
+(CURRENT_DATE - INTERVAL '1 day', 3490000.00, 3000000.00, 35.10),
+(CURRENT_DATE, 2890000.00, 3100000.00, 33.40)
+ON CONFLICT (fecha_registro) DO NOTHING;

@@ -1,24 +1,25 @@
 package infraestructura.api.manejadores;
 
-import infraestructura.persistencia.jdbc.ResenasDAO;
-import dominio.modelos.Resena;
-import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.InputStream;
+import com.sun.net.httpserver.HttpExchange;
+import dominio.modelos.Resena;
+import infraestructura.persistencia.jdbc.ResenasDAO;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Manejador para la gestión de reseñas de productos.
- * Opera sobre las rutas /api/reviews y /api/resenas.
- * Maneja GET (listar reseñas de un producto) y POST (crear una reseña).
+ * Controlador HTTP para la gestión de reseñas y calificaciones de productos.
+ * Opera sobre las rutas `/api/reviews` y `/api/resenas`.
  */
 public class ManejadorResenas extends ManejadorBase {
 
     /**
-     * Enruta la solicitud según el método HTTP al método privado correspondiente.
+     * Enruta las solicitudes `GET` y `POST` para listar o registrar reseñas de un producto.
+     *
+     * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
+     * @throws Exception Si ocurre un error durante el procesamiento.
      */
     @Override
     protected void procesarPeticion(HttpExchange intercambio) throws Exception {
@@ -29,14 +30,19 @@ public class ManejadorResenas extends ManejadorBase {
         if ("GET".equalsIgnoreCase(metodo)) {
             manejarGet(intercambio, resenasDAO, gson);
         } else if ("POST".equalsIgnoreCase(metodo)) {
-            manejarPost(intercambio, resenasDAO, gson);
+            manejarPost(intercambio, resenasDAO);
         } else {
             enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
     }
 
     /**
-     * GET /api/reviews?productId=N o /api/resenas?idProducto=N - Lista las reseñas de un producto.
+     * Lista las reseñas asociadas a un producto específico según el parámetro `productId` o `idProducto`.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @param dao         Instancia de `ResenasDAO`.
+     * @param gson        Serializador JSON (`Gson`).
+     * @throws Exception Si falla la consulta o envío de respuesta.
      */
     private void manejarGet(HttpExchange intercambio, ResenasDAO dao, Gson gson) throws Exception {
         int idProducto = obtenerParametroConsultaEntero(intercambio, "productId", -1);
@@ -54,10 +60,13 @@ public class ManejadorResenas extends ManejadorBase {
     }
 
     /**
-     * POST /api/reviews — Crea una nueva reseña.
-     * Cuerpo esperado: { "productId": 1, "userId": 2, "rating": 5, "comment": "..." }
+     * Valida y registra una nueva reseña verificando rango de estrellas y unicidad por usuario/producto.
+     *
+     * @param intercambio Contexto HTTP (`HttpExchange`).
+     * @param dao         Instancia de `ResenasDAO`.
+     * @throws Exception Si falla la lectura o inserción.
      */
-    private void manejarPost(HttpExchange intercambio, ResenasDAO dao, Gson gson) throws Exception {
+    private void manejarPost(HttpExchange intercambio, ResenasDAO dao) throws Exception {
         String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         JsonObject json;
@@ -68,7 +77,6 @@ public class ManejadorResenas extends ManejadorBase {
             return;
         }
 
-        // Valida presencia de campos (en inglés o español)
         boolean tieneProducto = json.has("productId") || json.has("idProducto");
         boolean tieneUsuario = json.has("userId") || json.has("idUsuario");
         boolean tieneCalificacion = json.has("rating") || json.has("calificacion");
@@ -84,19 +92,16 @@ public class ManejadorResenas extends ManejadorBase {
         int calificacion = json.has("rating") ? json.get("rating").getAsInt() : json.get("calificacion").getAsInt();
         String comentario = json.has("comment") ? json.get("comment").getAsString().trim() : json.get("comentario").getAsString().trim();
 
-        // La calificación debe estar entre 1 y 5 estrellas
         if (calificacion < 1 || calificacion > 5) {
             enviarRespuestaJson(intercambio, 400, "{\"error\":\"La calificación debe estar entre 1 y 5 estrellas\"}");
             return;
         }
 
-        // El comentario no puede estar vacío
         if (comentario.isEmpty()) {
             enviarRespuestaJson(intercambio, 400, "{\"error\":\"El comentario no puede estar vacío\"}");
             return;
         }
 
-        // Un mismo usuario no puede reseñar dos veces el mismo producto
         if (dao.usuarioYaReseno(idProducto, idUsuario)) {
             enviarRespuestaJson(intercambio, 409, "{\"error\":\"Ya has reseñado este producto\"}");
             return;
@@ -110,7 +115,7 @@ public class ManejadorResenas extends ManejadorBase {
 
         boolean exito = dao.agregarResena(resena);
         if (exito) {
-            enviarRespuestaJson(intercambio, 201, "{\"success\":true}");
+            enviarRespuestaJson(intercambio, 201, "{\"success\":true,\"id\":" + resena.getId() + "}");
         } else {
             enviarRespuestaJson(intercambio, 500, "{\"error\":\"No se pudo guardar la reseña\"}");
         }

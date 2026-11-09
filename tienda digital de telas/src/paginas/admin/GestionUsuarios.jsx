@@ -180,6 +180,7 @@ function GestionUsuarios() {
                                             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 hidden sm:block">Rol:</span>
                                             <select value={user.role || user.rol || 'cliente'} onChange={e => handleRoleChange(user.id, e.target.value)} className={`border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-2 outline-none focus:border-indigo-300 cursor-pointer`}>
                                                 <option value="admin">Administrador</option>
+                                                <option value="administrador">Administrador (BD)</option>
                                                 <option value="vendedor">Vendedor</option>
                                                 <option value="cliente">Cliente</option>
                                             </select>

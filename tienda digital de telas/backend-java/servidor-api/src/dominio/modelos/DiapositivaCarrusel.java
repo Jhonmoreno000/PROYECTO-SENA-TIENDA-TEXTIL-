@@ -3,46 +3,59 @@ package dominio.modelos;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Modelo que representa una diapositiva del carrusel de inicio.
- * Mapea a la tabla "carousel_slides" en PostgreSQL.
+ * Modelo de dominio que representa una diapositiva del carrusel principal de inicio.
+ * Mapea a la tabla `diapositivas_carrusel` en PostgreSQL.
  */
 public class DiapositivaCarrusel {
-    /** Identificador único del slide. */
+
+    /** Identificador único de la diapositiva (`int`). */
     @SerializedName(value = "id", alternate = {"idDiapositiva"})
     private int id;
 
-    /** Título principal del slide. */
+    /** Título principal mostrado en la diapositiva (`String`). */
     @SerializedName(value = "title", alternate = {"titulo"})
     private String titulo;
 
-    /** Subtítulo de apoyo mostrado bajo el título. */
+    /** Subtítulo descriptivo de apoyo (`String`). */
     @SerializedName(value = "subtitle", alternate = {"subtitulo"})
     private String subtitulo;
 
-    /** URL de la imagen de fondo del slide. */
+    /** Ruta o URL de la imagen de fondo (`String`). */
     @SerializedName(value = "image", alternate = {"imagen", "urlImagen"})
     private String imagen;
 
-    /** Texto del botón de acción (Call to Action). */
+    /** Texto del botón de llamada a la acción (`String`). */
     @SerializedName(value = "cta", alternate = {"textoBoton"})
     private String textoBoton;
 
-    /** Clave de la sección del catálogo a la que enlaza. */
+    /** Clave de la sección del catálogo vinculada al botón (`String`). */
     @SerializedName(value = "sectionKey", alternate = {"claveSeccion"})
     private String claveSeccion;
 
-    /** Indica si el slide está activo. */
+    /** Indica si la diapositiva está activa en la portada (`boolean`). */
     @SerializedName(value = "active", alternate = {"activo"})
     private boolean activo;
 
-    /** Orden de visualización en el carrusel. */
+    /** Posición de ordenamiento dentro del carrusel (`int`). */
     @SerializedName(value = "sortOrder", alternate = {"orden"})
     private int orden;
 
-    /** Constructor vacío. */
+    /**
+     * Constructor vacío requerido para serialización JSON y mapeo JDBC.
+     */
     public DiapositivaCarrusel() {}
 
-    /** Constructor con datos principales. */
+    /**
+     * Construye una diapositiva con sus atributos principales.
+     *
+     * @param titulo Título principal (`String`).
+     * @param subtitulo Subtítulo descriptivo (`String`).
+     * @param imagen URL de la imagen (`String`).
+     * @param textoBoton Texto del botón CTA (`String`).
+     * @param claveSeccion Clave de sección destino (`String`).
+     * @param activo Indicador de estado activo (`boolean`).
+     * @param orden Posición de visualización (`int`).
+     */
     public DiapositivaCarrusel(String titulo, String subtitulo, String imagen, String textoBoton, String claveSeccion, boolean activo, int orden) {
         this.titulo = titulo;
         this.subtitulo = subtitulo;
@@ -53,58 +66,116 @@ public class DiapositivaCarrusel {
         this.orden = orden;
     }
 
-    /** Obtiene el identificador único. */
+    /**
+     * Obtiene el identificador único de la diapositiva.
+     *
+     * @return Identificador numérico (`int`).
+     */
     public int getId() { return id; }
-    /** Asigna el identificador único. */
+
+    /**
+     * Establece el identificador único de la diapositiva.
+     *
+     * @param id Identificador numérico (`int`).
+     */
     public void setId(int id) { this.id = id; }
 
-    /** Obtiene el título. */
+    /**
+     * Obtiene el título principal.
+     *
+     * @return Título (`String`).
+     */
     public String getTitulo() { return titulo; }
-    /** Asigna el título. */
+
+    /**
+     * Establece el título principal.
+     *
+     * @param titulo Título (`String`).
+     */
     public void setTitulo(String titulo) { this.titulo = titulo; }
 
-    /** Obtiene el subtítulo. */
+    /**
+     * Obtiene el subtítulo descriptivo.
+     *
+     * @return Subtítulo (`String`).
+     */
     public String getSubtitulo() { return subtitulo; }
-    /** Asigna el subtítulo. */
+
+    /**
+     * Establece el subtítulo descriptivo.
+     *
+     * @param subtitulo Subtítulo (`String`).
+     */
     public void setSubtitulo(String subtitulo) { this.subtitulo = subtitulo; }
 
-    /** Obtiene la imagen. */
+    /**
+     * Obtiene la URL de la imagen.
+     *
+     * @return URL de imagen (`String`).
+     */
     public String getImagen() { return imagen; }
-    /** Asigna la imagen. */
+
+    /**
+     * Establece la URL de la imagen.
+     *
+     * @param imagen URL de imagen (`String`).
+     */
     public void setImagen(String imagen) { this.imagen = imagen; }
 
-    /** Obtiene el texto del botón. */
+    /**
+     * Obtiene el texto del botón de acción (CTA).
+     *
+     * @return Texto del botón (`String`).
+     */
     public String getTextoBoton() { return textoBoton; }
-    /** Asigna el texto del botón. */
+
+    /**
+     * Establece el texto del botón de acción (CTA).
+     *
+     * @param textoBoton Texto del botón (`String`).
+     */
     public void setTextoBoton(String textoBoton) { this.textoBoton = textoBoton; }
 
-    /** Obtiene la clave de sección. */
+    /**
+     * Obtiene la clave de la sección asociada.
+     *
+     * @return Clave de sección (`String`).
+     */
     public String getClaveSeccion() { return claveSeccion; }
-    /** Asigna la clave de sección. */
+
+    /**
+     * Establece la clave de la sección asociada.
+     *
+     * @param claveSeccion Clave de sección (`String`).
+     */
     public void setClaveSeccion(String claveSeccion) { this.claveSeccion = claveSeccion; }
 
-    /** Indica si está activo. */
+    /**
+     * Indica si la diapositiva está activa.
+     *
+     * @return `true` si está activa; `false` en caso contrario.
+     */
     public boolean isActivo() { return activo; }
-    /** Asigna estado activo. */
+
+    /**
+     * Establece si la diapositiva está activa.
+     *
+     * @param activo Estado activo (`boolean`).
+     */
     public void setActivo(boolean activo) { this.activo = activo; }
 
-    /** Obtiene el orden de visualización. */
+    /**
+     * Obtiene el orden de visualización.
+     *
+     * @return Orden numérico (`int`).
+     */
     public int getOrden() { return orden; }
-    /** Asigna el orden de visualización. */
-    public void setOrden(int orden) { this.orden = orden; }
 
-    // Métodos alias para compatibilidad
-    public String getTitle() { return getTitulo(); }
-    public void setTitle(String title) { setTitulo(title); }
-    public String getSubtitle() { return getSubtitulo(); }
-    public void setSubtitle(String subtitle) { setSubtitulo(subtitle); }
-    public String getImage() { return getImagen(); }
-    public void setImage(String image) { setImagen(image); }
-    public String getCta() { return getTextoBoton(); }
-    public void setCta(String cta) { setTextoBoton(cta); }
-    public String getSectionKey() { return getClaveSeccion(); }
-    public void setSectionKey(String sectionKey) { setClaveSeccion(sectionKey); }
-    public boolean isActive() { return isActivo(); }
-    public int getSortOrder() { return getOrden(); }
-    public void setSortOrder(int sortOrder) { setOrden(sortOrder); }
+    /**
+     * Establece el orden de visualización.
+     *
+     * @param orden Orden numérico (`int`).
+     */
+    public void setOrden(int orden) { this.orden = orden; }
 }
+

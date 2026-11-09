@@ -5,10 +5,14 @@ import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight } from 'lucide-react';
 import Counter from './Counter';
+import { useMetricas } from '../contextos/ContextoMetricas';
+import { formatCurrency } from '../utilidades/formateadores';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Portada() {
+    const { systemConfig } = useMetricas();
+    const freeShippingThreshold = Number(systemConfig?.freeShippingThreshold || 200000);
     const containerRef = useRef(null);
     const imageRef = useRef(null);
     const textRef = useRef(null);
@@ -170,7 +174,7 @@ export default function Portada() {
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
                         </div>
                         <span className="text-xs font-semibold text-gray-900 uppercase tracking-widest">
-                            Envío Gratis +$100.000
+                            Envío Gratis +{formatCurrency(freeShippingThreshold)}
                         </span>
                     </div>
                 </div>
