@@ -181,3 +181,13 @@ ejecutarPrueba('generarReferenciaPedido sin timestamp explícito debe usar marca
     const ref = generarReferenciaPedido(2050);
     assert.match(ref, /^PED-2050-\d+$/);
 });
+
+ejecutarPrueba('Un factor de fruncido 3.0x debe requerir mayor metraje que el fruncido estandar 2.0x', () => {
+    const m2 = calcularMetrajeCortina(200, 220, 150, 2.0);
+    const m3 = calcularMetrajeCortina(200, 220, 150, 3.0);
+    assert.ok(m3 > m2);
+});
+
+ejecutarPrueba('calcularMetrajeCortina debe rechazar ancho de rollo igual a cero', () => {
+    assert.throws(() => calcularMetrajeCortina(200, 220, 0, 2.0), /Dimensiones invalidas/);
+});
