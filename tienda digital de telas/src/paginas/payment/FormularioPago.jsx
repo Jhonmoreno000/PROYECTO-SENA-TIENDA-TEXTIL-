@@ -192,15 +192,15 @@ function FormularioPago({ onSubmit, onCardDataChange, onCVVFocus, onCVVBlur, isP
                 )}
             </div>
 
-            {/* Botón de envío */}
+            {/* Botón de envío alineado con la marca D&D Textil */}
             <button
                 type="submit"
                 disabled={!isValid || isProcessing}
-                className="btn-primary w-full py-4 text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-4 px-6 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-base shadow-lg shadow-primary-600/25 hover:shadow-xl hover:shadow-primary-600/35 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
                 {isProcessing ? (
                     <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                         Procesando...
                     </>
                 ) : (

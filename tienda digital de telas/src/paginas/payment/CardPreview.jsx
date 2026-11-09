@@ -9,9 +9,9 @@ gsap.registerPlugin(useGSAP);
 
 const TEMAS_PASARELA = {
     wompi: {
-        gradiente: 'from-[#0b192c] via-[#132e53] to-[#07111e]',
-        borde: 'border-emerald-400/35',
-        glow: 'rgba(0, 195, 137, 0.38)',
+        gradiente: 'from-[#080f1e] via-[#0f1d38] to-[#070b14]',
+        borde: 'border-cyan-400/25',
+        glow: 'rgba(56, 189, 248, 0.16)',
         marca: 'D&D TEXTIL × WOMPI',
         subtitulo: 'PASARELA OFICIAL GRUPO BANCOLOMBIA',
         numeroDefault: '3027  0589  5100  2026',
@@ -19,9 +19,9 @@ const TEMAS_PASARELA = {
         badgeTexto: 'SHA-256 ACTIVO',
     },
     mercadopago: {
-        gradiente: 'from-[#003f6e] via-[#0077b6] to-[#00294d]',
-        borde: 'border-sky-300/40',
-        glow: 'rgba(0, 158, 227, 0.42)',
+        gradiente: 'from-[#07182c] via-[#0b2746] to-[#05111f]',
+        borde: 'border-sky-400/25',
+        glow: 'rgba(14, 165, 233, 0.16)',
         marca: 'D&D TEXTIL × MERCADO PAGO',
         subtitulo: 'CHECKOUT PRO • COMPRA PROTEGIDA',
         numeroDefault: '5490  1200  8842  2026',
@@ -29,9 +29,9 @@ const TEMAS_PASARELA = {
         badgeTexto: 'HASTA 12 CUOTAS',
     },
     nequi: {
-        gradiente: 'from-[#1a0024] via-[#3c065f] to-[#6b0942]',
-        borde: 'border-pink-400/45',
-        glow: 'rgba(255, 0, 128, 0.42)',
+        gradiente: 'from-[#0f0a17] via-[#1a1027] to-[#12081c]',
+        borde: 'border-purple-300/25',
+        glow: 'rgba(168, 85, 247, 0.16)',
         marca: 'D&D TEXTIL × NEQUI',
         subtitulo: 'TRANSFERENCIA INMEDIATA 0% COMISIÓN',
         numeroDefault: '302   705   8951   D&D',
@@ -39,9 +39,9 @@ const TEMAS_PASARELA = {
         badgeTexto: 'QR INMEDIATO',
     },
     epayco: {
-        gradiente: 'from-[#3b1105] via-[#8a2c0e] to-[#b83b0a]',
-        borde: 'border-amber-400/40',
-        glow: 'rgba(255, 90, 0, 0.4)',
+        gradiente: 'from-[#190c06] via-[#2a140b] to-[#130703]',
+        borde: 'border-amber-400/25',
+        glow: 'rgba(249, 115, 22, 0.15)',
         marca: 'D&D TEXTIL × ePAYCO',
         subtitulo: 'EFECTY • GANA ANTIOQUIA • BALOTO',
         numeroDefault: '1104  5200  3027  0589',
@@ -49,9 +49,9 @@ const TEMAS_PASARELA = {
         badgeTexto: 'MULTICAJA ACTIVO',
     },
     card: {
-        gradiente: 'from-slate-900 via-slate-800 to-amber-950',
-        borde: 'border-amber-400/35',
-        glow: 'rgba(245, 158, 11, 0.38)',
+        gradiente: 'from-[#0f172a] via-[#1e293b] to-[#0b1220]',
+        borde: 'border-amber-400/25',
+        glow: 'rgba(217, 119, 6, 0.15)',
         marca: 'D&D TEXTIL PLATINUM',
         subtitulo: 'TARJETA CRÉDITO / DÉBITO',
         numeroDefault: '####  ####  ####  ####',
@@ -59,9 +59,9 @@ const TEMAS_PASARELA = {
         badgeTexto: '3D SECURE 2.0',
     },
     pse: {
-        gradiente: 'from-[#001d3d] via-[#003566] to-[#042f2e]',
-        borde: 'border-amber-300/35',
-        glow: 'rgba(56, 189, 248, 0.38)',
+        gradiente: 'from-[#061922] via-[#0c2a38] to-[#041017]',
+        borde: 'border-teal-400/25',
+        glow: 'rgba(20, 184, 166, 0.15)',
         marca: 'D&D TEXTIL × PSE ACH',
         subtitulo: 'DÉBITO BANCARIO & CONTRAENTREGA',
         numeroDefault: 'ACH   COL   3027   0589',
@@ -193,12 +193,12 @@ function CardPreview({
                 >
                     {/* ================= CARA FRONTAL ================= */}
                     <div
-                        className={`absolute inset-0 rounded-2xl p-5 sm:p-6 bg-gradient-to-br ${tema.gradiente} border ${tema.borde} overflow-hidden flex flex-col justify-between text-white`}
+                        className={`absolute inset-0 rounded-2xl p-5 sm:p-6 bg-gradient-to-br ${tema.gradiente} border ${tema.borde} backdrop-blur-xl overflow-hidden flex flex-col justify-between text-white`}
                         style={{
                             backfaceVisibility: 'hidden',
                             boxShadow: isHovered
-                                ? `0 25px 50px -12px rgba(0,0,0,0.65), 0 0 30px ${tema.glow}`
-                                : '0 20px 30px -10px rgba(0,0,0,0.45)',
+                                ? `0 20px 40px -10px rgba(0,0,0,0.5), 0 0 25px ${tema.glow}`
+                                : '0 15px 25px -8px rgba(0,0,0,0.35)',
                         }}
                     >
                         {/* Brillo holográfico interactivo */}

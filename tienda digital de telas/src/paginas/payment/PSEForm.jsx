@@ -16,18 +16,16 @@ function PSEForm({ onSubmit, isProcessing }) {
 
     return (
         <div className="space-y-6">
-            {/* Info Panel */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            {/* Info Panel con Glassmorfismo */}
+            <div className="bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 rounded-2xl p-4.5 backdrop-blur-md">
                 <div className="flex gap-3">
                     <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-1">
-                            ¿Qué es PSE?
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1">
+                            ¿Qué es PSE (Pagos Seguros en Línea)?
                         </h4>
-                        <p className="text-sm text-blue-800 dark:text-blue-200">
-                            PSE (Pagos Seguros en Línea) es un servicio que te permite realizar pagos
-                            en línea desde tu cuenta bancaria de forma segura. Serás redirigido al
-                            portal de tu banco para completar la transacción.
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Servicio interbancario de ACH Colombia para debitar directamente desde tu cuenta de ahorros o corriente sin comisiones adicionales.
                         </p>
                     </div>
                 </div>
@@ -123,15 +121,15 @@ function PSEForm({ onSubmit, isProcessing }) {
                     </p>
                 </div>
 
-                {/* Botón de envío */}
+                {/* Botón de envío alineado con la marca D&D Textil */}
                 <button
                     type="submit"
                     disabled={!isValid || isProcessing}
-                    className="btn-primary w-full py-4 text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-4 px-6 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-base shadow-lg shadow-primary-600/25 hover:shadow-xl hover:shadow-primary-600/35 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
                     {isProcessing ? (
                         <>
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                             Procesando...
                         </>
                     ) : (
