@@ -370,3 +370,8 @@ Estas tablas no tienen llaves foráneas porque se consultan por clave, fecha o c
 5. **Faltan restricciones UNIQUE compuestas.** Nada impide repetir el mismo producto dos veces en el carrito de un usuario (`items_carrito(usuario_id, producto_id)`) ni la misma pareja en `categorias_cupon(cupon_id, categoria_id)`.
 6. **Valores libres en columnas de estado.** `usuarios.rol`, `pedidos.estado`, `pedidos.estado_pago` y `tickets_soporte.estado` son `VARCHAR` sin `CHECK`; un error de escritura crea un estado nuevo.
 7. **Inventario duplicado.** `inventario_telas_erp` repite datos de `productos` y `lotes_inventario` (nombre, categoría como texto, costo por metro) sin relación con ellas.
+
+### Relación `usuarios` 1:N `notificaciones_sistema`
+
+- **Cardinalidad:** Un usuario (`usuarios.id`) puede recibir cero o muchas notificaciones operativas (`notificaciones_sistema.usuario_id`), mientras que las notificaciones con `usuario_id IS NULL` actúan como difusión general para los paneles administrativos.
+- **Integridad Referencial:** `ON DELETE CASCADE` garantiza que al eliminar físicamente un registro de usuario se depuren automáticamente sus notificaciones históricas.
