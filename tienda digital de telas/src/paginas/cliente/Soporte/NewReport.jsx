@@ -24,6 +24,8 @@ import {
 import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
+import enlacesVendedor from '../../../datos/enlacesVendedor';
+import enlacesAdmin from '../../../datos/enlacesAdmin';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
@@ -37,7 +39,9 @@ const ISSUE_TYPES = [
     { value: 'damaged', label: 'Tela dañada en transporte', priority: 'high' },
     { value: 'wrong_fabric', label: 'Tela equivocada', priority: 'high' },
     { value: 'quality', label: 'Calidad diferente a la esperada', priority: 'medium' },
-    { value: 'other', label: 'Otro problema', priority: 'low' }
+    { value: 'delay', label: 'Retraso en la entrega / Despacho', priority: 'medium' },
+    { value: 'payment', label: 'Inquietud con pago o facturación', priority: 'medium' },
+    { value: 'other', label: 'Otro problema o consulta', priority: 'low' }
 ];
 
 /**
@@ -56,16 +60,20 @@ function NewReport() {
     const [searchParams] = useSearchParams();
     const preselectedOrderId = searchParams.get('orderId');
 
-    const [selectedOrder, setSelectedOrder] = useState(preselectedOrderId || '');
-    const [issueType, setIssueType] = useState('');
+    const [selectedOrder, setSelectedOrder] = useState(preselectedOrderId || 'general');
+    const [issueType, setIssueType] = useState('stain');
     const [description, setDescription] = useState('');
     const [photos, setPhotos] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Filter delivered orders (only those can have issues reported)
-    const deliveredOrders = orders.filter(o =>
-        (o.status === 'delivered' || o.estado === 'entregado') &&
-        String(o.clientId ?? o.idCliente) === String(user?.id)
+    const isVendor = user?.role === 'vendedor' || user?.rol === 'vendedor';
+    const isAdmin = user?.role === 'admin' || user?.rol === 'administrador';
+    const panelLinks = isVendor ? enlacesVendedor : (isAdmin ? enlacesAdmin : enlacesCliente);
+    const backTarget = isVendor ? '/vendedor' : (isAdmin ? '/admin' : '/cliente');
+
+    // Pedidos disponibles del usuario o sistema
+    const availableOrders = orders.filter(o =>
+        String(o.clientId ?? o.idCliente) === String(user?.id) || isVendor || isAdmin
     );
 
     const handlePhotoUpload = (e) => {
@@ -94,14 +102,15 @@ function NewReport() {
 
         try {
             const issue = ISSUE_TYPES.find(t => t.value === issueType) || { label: 'Reporte de pedido', priority: 'medium' };
+            const isGeneral = !selectedOrder || selectedOrder === 'general';
             const newTicket = {
                 userId: user?.id,
                 clientId: user?.id,
                 customerName: user?.name || 'Cliente',
                 clientName: user?.name || 'Cliente',
                 customerEmail: user?.email || '',
-                orderId: selectedOrder ? parseInt(selectedOrder, 10) : null,
-                subject: issue.label,
+                orderId: isGeneral ? null : parseInt(selectedOrder, 10),
+                subject: isGeneral ? `[Soporte General] ${issue.label}` : `[Pedido #${selectedOrder}] ${issue.label}`,
                 category: issueType,
                 issueType: issueType,
                 message: description,
@@ -125,11 +134,11 @@ function NewReport() {
     const selectedIssue = ISSUE_TYPES.find(t => t.value === issueType);
 
     return (
-        <LayoutPanel title="Reportar un Problema" links={enlacesCliente}>
+        <LayoutPanel title="Reportar un Problema" links={panelLinks}>
             <PaginaAnimada>
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
-                        <BackButton to="/cliente" label="Volver a Mi Panel" />
+                        <BackButton to={backTarget} label="Volver al Panel" />
                         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mt-4 tracking-tight flex items-center gap-3">
                             Abrir Ticket de Soporte
                             <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
@@ -159,7 +168,7 @@ function NewReport() {
                                     ¿Tuviste algún inconveniente?
                                 </h3>
                                 <p className="text-orange-800/80 dark:text-orange-200/80 font-medium leading-relaxed max-w-xl">
-                                    Lamentamos la situación. Por favor, proporciona todos los detalles posibles y adjunta fotografías para que nuestro equipo de calidad pueda darte una solución en menos de 24 horas.
+                                    Estamos aquí para respaldarte. Si tu tela presentó fallas, tu entrega se retrasó o tienes alguna consulta técnica, selecciona tu pedido o asunto y te responderemos en breve.
                                 </p>
                             </div>
                         </div>
@@ -174,7 +183,7 @@ function NewReport() {
                         <div className="space-y-3">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                                 <Package className="w-4 h-4 text-orange-500" />
-                                1. Pedido Afectado
+                                1. Pedido o Asunto Afectado
                             </label>
                             <div className="relative">
                                 <select
@@ -183,10 +192,10 @@ function NewReport() {
                                     required
                                     className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all font-medium text-gray-900 dark:text-white appearance-none"
                                 >
-                                    <option value="" disabled>Selecciona un pedido de la lista...</option>
-                                    {deliveredOrders.map(order => (
+                                    <option value="general">Consulta general / Sin pedido específico</option>
+                                    {availableOrders.map(order => (
                                         <option key={order.id} value={order.id}>
-                                            Pedido #{String(order.id).padStart(4, '0')} — Entregado el {new Date(order.date).toLocaleDateString('es-CO')}
+                                            Pedido #{String(order.id).padStart(4, '0')} — Estado: {order.status || 'Activo'} — {new Date(order.date).toLocaleDateString('es-CO')}
                                         </option>
                                     ))}
                                 </select>
@@ -194,12 +203,6 @@ function NewReport() {
                                     <ChevronDown className="w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
-                            {deliveredOrders.length === 0 && (
-                                <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1.5">
-                                    <AlertCircle className="w-4 h-4" />
-                                    No tienes pedidos entregados recientemente para reportar.
-                                </p>
-                            )}
                         </div>
 
                         {/* Tipo de Problema */}

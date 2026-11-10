@@ -24,6 +24,8 @@ import {
 import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
+import enlacesVendedor from '../../../datos/enlacesVendedor';
+import enlacesAdmin from '../../../datos/enlacesAdmin';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
@@ -34,7 +36,16 @@ function MyTickets() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [expandedTicket, setExpandedTicket] = useState(null);
 
-    const tickets = (supportTickets || []).filter(t => String(t.userId ?? t.clientId) === String(user?.id));
+    const isVendor = user?.role === 'vendedor' || user?.rol === 'vendedor';
+    const isAdmin = user?.role === 'admin' || user?.rol === 'administrador';
+    const panelLinks = isVendor ? enlacesVendedor : (isAdmin ? enlacesAdmin : enlacesCliente);
+    const backTarget = isVendor ? '/vendedor' : (isAdmin ? '/admin' : '/cliente');
+
+    const tickets = (supportTickets || []).filter(t => 
+        String(t.userId ?? t.clientId) === String(user?.id) || 
+        (isVendor && String(t.sellerId) === String(user?.id)) ||
+        isAdmin
+    );
 
     const filteredTickets = filterStatus === 'all'
         ? tickets
@@ -75,11 +86,11 @@ function MyTickets() {
     };
 
     return (
-        <LayoutPanel title="Mis Tickets de Soporte" links={enlacesCliente}>
+        <LayoutPanel title="Mis Tickets de Soporte" links={panelLinks}>
             <PaginaAnimada>
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
-                        <BackButton to="/cliente" label="Volver a Mi Panel" />
+                        <BackButton to={backTarget} label="Volver a Mi Panel" />
                         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mt-4 tracking-tight flex items-center gap-3">
                             Soporte y Ayuda
                             <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
