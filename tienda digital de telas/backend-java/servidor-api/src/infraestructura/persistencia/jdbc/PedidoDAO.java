@@ -27,7 +27,7 @@ public class PedidoDAO {
      *
      * @return Lista de objetos `Pedido` ordenados por identificador ascendente.
      */
-    public List<Pedido> obtenerTodosLosPedidos() {
+    public List<Pedido> consultarPedidos(String clausulaWhere, Integer parametro) {
         Map<Integer, Pedido> mapaPedidos = new LinkedHashMap<>();
 
         String consulta = "SELECT o.*, " +
@@ -37,20 +37,26 @@ public class PedidoDAO {
                 "FROM pedidos o " +
                 "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "LEFT JOIN productos p ON oi.producto_id = p.id " +
+                (clausulaWhere != null && !clausulaWhere.isBlank() ? " " + clausulaWhere : "") + " " +
                 "ORDER BY o.id ASC, oi.id ASC";
 
         try (Connection con = Conexion.obtenerConexion();
-             PreparedStatement pst = con.prepareStatement(consulta);
-             ResultSet rs = pst.executeQuery()) {
+             PreparedStatement pst = con.prepareStatement(consulta)) {
 
-            while (rs.next()) {
-                int idPedido = rs.getInt("id");
-                Pedido pedido = mapaPedidos.get(idPedido);
-                if (pedido == null) {
-                    pedido = mapearCabeceraPedido(rs);
-                    mapaPedidos.put(idPedido, pedido);
+            if (parametro != null) {
+                pst.setInt(1, parametro);
+            }
+
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    int idPedido = rs.getInt("id");
+                    Pedido pedido = mapaPedidos.get(idPedido);
+                    if (pedido == null) {
+                        pedido = mapearCabeceraPedido(rs);
+                        mapaPedidos.put(idPedido, pedido);
+                    }
+                    agregarLineaDesdeResultSet(rs, pedido);
                 }
-                agregarLineaDesdeResultSet(rs, pedido);
             }
 
         } catch (SQLException e) {
@@ -59,6 +65,18 @@ public class PedidoDAO {
         }
 
         return new ArrayList<>(mapaPedidos.values());
+    }
+
+    public List<Pedido> obtenerTodosLosPedidos() {
+        return consultarPedidos(null, null);
+    }
+
+    public List<Pedido> obtenerPedidosPorUsuario(int idUsuario) {
+        return consultarPedidos("WHERE o.usuario_id = ?", idUsuario);
+    }
+
+    public List<Pedido> obtenerPedidosPorVendedor(int idVendedor) {
+        return consultarPedidos("WHERE o.vendedor_id = ?", idVendedor);
     }
 
     /**

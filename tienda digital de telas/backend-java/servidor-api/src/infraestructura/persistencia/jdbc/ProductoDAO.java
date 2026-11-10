@@ -28,11 +28,14 @@ public class ProductoDAO {
      * @return Instancia de `Producto` o `null` si no existe o está inactivo.
      */
     public Producto obtenerProductoPorId(int idProducto) {
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor " +
+        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
+                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
                 "FROM productos p " +
                 "LEFT JOIN categorias c ON p.categoria_id = c.id " +
                 "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
-                "WHERE p.id = ? AND p.activo = true";
+                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
+                "WHERE p.id = ? AND p.activo = true " +
+                "GROUP BY p.id, c.nombre, u.nombre";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
@@ -57,11 +60,14 @@ public class ProductoDAO {
     public List<Producto> obtenerTodosLosProductos() {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor " +
+        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
+                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
                 "FROM productos p " +
                 "LEFT JOIN categorias c ON p.categoria_id = c.id " +
                 "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
+                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
                 "WHERE p.activo = true " +
+                "GROUP BY p.id, c.nombre, u.nombre " +
                 "ORDER BY p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
@@ -87,11 +93,14 @@ public class ProductoDAO {
     public List<Producto> obtenerProductosPorVendedor(int idVendedor) {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor " +
+        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
+                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
                 "FROM productos p " +
                 "LEFT JOIN categorias c ON p.categoria_id = c.id " +
                 "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
+                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
                 "WHERE p.vendedor_id = ? AND p.activo = true " +
+                "GROUP BY p.id, c.nombre, u.nombre " +
                 "ORDER BY p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
@@ -278,11 +287,14 @@ public class ProductoDAO {
             columna = "es_nueva_coleccion";
         }
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor " +
+        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
+                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
                 "FROM productos p " +
                 "LEFT JOIN categorias c ON p.categoria_id = c.id " +
                 "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
+                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
                 "WHERE p.activo = true AND p." + columna + " = true " +
+                "GROUP BY p.id, c.nombre, u.nombre " +
                 "ORDER BY p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
@@ -307,11 +319,14 @@ public class ProductoDAO {
     public List<Producto> obtenerProductosPendientes() {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor " +
+        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
+                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
                 "FROM productos p " +
                 "LEFT JOIN categorias c ON p.categoria_id = c.id " +
                 "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
+                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
                 "WHERE p.estado_moderacion = 'pending' " +
+                "GROUP BY p.id, c.nombre, u.nombre " +
                 "ORDER BY p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
@@ -608,7 +623,29 @@ public class ProductoDAO {
         if (resultado.getTimestamp("creado_en") != null) {
             producto.setFechaCreacion(resultado.getTimestamp("creado_en").toString().split(" ")[0]);
         }
-        producto.setImagenes(obtenerImagenesProducto(conexion, idProducto));
+
+        List<String> imagenes = new ArrayList<>();
+        boolean imagenesLeidasDeAgregado = false;
+        try {
+            String agregadas = resultado.getString("imagenes_agrupadas");
+            if (agregadas != null) {
+                imagenesLeidasDeAgregado = true;
+                if (!agregadas.isBlank()) {
+                    for (String url : agregadas.split("\\|\\|\\|")) {
+                        if (url != null && !url.isBlank()) {
+                            imagenes.add(url.trim());
+                        }
+                    }
+                }
+            }
+        } catch (SQLException colException) {
+            imagenesLeidasDeAgregado = false;
+        }
+
+        if (!imagenesLeidasDeAgregado && conexion != null) {
+            imagenes = obtenerImagenesProducto(conexion, idProducto);
+        }
+        producto.setImagenes(imagenes);
         return producto;
     }
 
