@@ -121,24 +121,35 @@ function Encabezado() {
                                 </span>
                             </Link>
 
-                            <div className="flex items-center space-x-1">
+                            <div className="flex items-center gap-1.5">
                                 <button
                                     onClick={toggleDarkMode}
-                                    className="p-2 rounded-lg active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100"
-                                    aria-label="Toggle dark mode"
+                                    className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100"
+                                    aria-label="Cambiar tema visual"
                                 >
                                     {darkMode ? (
                                         <Sun className="w-5 h-5 text-yellow-500" />
                                     ) : (
-                                        <Moon className="w-5 h-5 text-gray-700" />
+                                        <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                                     )}
                                 </button>
+
+                                <Link to="/carrito" className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100">
+                                    <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 bg-primary-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+
+                                <div className="h-5 w-px bg-gray-200 dark:bg-slate-700 mx-0.5" aria-hidden="true" />
 
                                 {user ? (
                                     <div className="relative">
                                         <button
                                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                            className="p-2 rounded-lg active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100"
+                                            className="p-1.5 rounded-xl active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100"
                                         >
                                             <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold text-xs border border-primary-200 dark:border-primary-800">
                                                 {(user.name || user.nombre || 'U').charAt(0).toUpperCase()}
@@ -174,19 +185,10 @@ function Encabezado() {
                                         )}
                                     </div>
                                 ) : (
-                                    <Link to="/login" className="flex items-center gap-1 p-2 rounded-lg text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100">
-                                        <User className="w-5 h-5" />
+                                    <Link to="/login" className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-700 dark:text-gray-300 bg-gray-100/80 dark:bg-slate-800/80 border border-gray-200/70 dark:border-slate-700 active:scale-90 transition-all duration-100">
+                                        <User className="w-4 h-4" />
                                     </Link>
                                 )}
-
-                                <Link to="/carrito" className="relative p-2 rounded-lg active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100 block">
-                                    <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                                    {cartCount > 0 && (
-                                        <span className="absolute -top-0.5 -right-0.5 bg-primary-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                                            {cartCount}
-                                        </span>
-                                    )}
-                                </Link>
                             </div>
                         </div>
                     </nav>
@@ -283,33 +285,81 @@ function Encabezado() {
                         ))}
                     </div>
 
-                    <div className="flex items-center space-x-3 md:space-x-4">
+                    <div className="flex items-center gap-2 md:gap-2.5">
+                        {/* Grupo de acciones rápidas e iconos de compra (Tema, Favoritos, Carrito) */}
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-gray-100/60 dark:bg-slate-800/60 p-1 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
+                            <button
+                                onClick={toggleDarkMode}
+                                onMouseDown={handleBtnDown}
+                                onMouseUp={handleBtnUp}
+                                className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-slate-700/80 hover:shadow-sm transition-all duration-200"
+                                aria-label="Cambiar modo de color"
+                                title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                            >
+                                {darkMode ? (
+                                    <Sun className="w-[18px] h-[18px] text-amber-500" />
+                                ) : (
+                                    <Moon className="w-[18px] h-[18px] text-gray-700 dark:text-gray-300" />
+                                )}
+                            </button>
 
-                        <button
-                            onClick={toggleDarkMode}
-                            onMouseDown={handleBtnDown}
-                            onMouseUp={handleBtnUp}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                            aria-label="Toggle dark mode"
-                        >
-                            {darkMode ? (
-                                <Sun className="w-5 h-5 text-yellow-500" />
-                            ) : (
-                                <Moon className="w-5 h-5 text-gray-700" />
-                            )}
-                        </button>
+                            <Link
+                                to={user ? "/cliente/coleccion" : "/catalogo"}
+                                className="relative group"
+                                aria-label="Mis telas favoritas"
+                                title={wishlistCount > 0 ? `${wishlistCount} tela(s) en favoritos` : 'Mis telas favoritas'}
+                            >
+                                <div className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-slate-700/80 hover:shadow-sm transition-all duration-200 group-hover:scale-105 active:scale-95">
+                                    <Heart
+                                        className={`w-[18px] h-[18px] transition-colors ${
+                                            wishlistCount > 0
+                                                ? 'text-red-500 fill-red-500'
+                                                : 'text-gray-700 dark:text-gray-300 group-hover:text-red-500'
+                                        }`}
+                                    />
+                                    {wishlistCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-sm">
+                                            {wishlistCount}
+                                        </span>
+                                    )}
+                                </div>
+                            </Link>
 
+                            <Link
+                                to="/carrito"
+                                className="relative group"
+                                aria-label="Carrito de compras"
+                                title={cartCount > 0 ? `${cartCount} producto(s) en el carrito` : 'Carrito de compras'}
+                            >
+                                <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/80 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-700 shadow-sm transition-all duration-200 group-hover:scale-105 active:scale-95">
+                                    <ShoppingCart className="w-[18px] h-[18px] text-gray-700 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
+
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 bg-primary-600 text-white text-[11px] font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-sm">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </div>
+                            </Link>
+                        </div>
+
+                        <div className="hidden sm:block h-6 w-px bg-gray-200/80 dark:bg-slate-700/80" aria-hidden="true" />
+
+                        {/* Acción de Cuenta / Perfil de Usuario */}
                         {user ? (
                             <div className="relative">
                                 <button
                                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                                     onMouseDown={handleBtnDown}
                                     onMouseUp={handleBtnUp}
-                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                                    className="px-2.5 py-1.5 rounded-2xl bg-gray-100/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-gray-200/60 dark:border-slate-700/60 hover:shadow-sm transition-all duration-200 flex items-center gap-2"
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold border border-primary-200 dark:border-primary-800">
+                                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 font-bold text-sm border border-primary-200 dark:border-primary-800">
                                         {(user.name || user.nombre || 'U').charAt(0).toUpperCase()}
                                     </div>
+                                    <span className="hidden lg:block text-sm font-semibold text-gray-700 dark:text-gray-200 max-w-[110px] truncate pr-1">
+                                        {(user.name || user.nombre || 'Mi Cuenta').split(' ')[0]}
+                                    </span>
                                 </button>
 
                                 {userMenuOpen && (
@@ -318,26 +368,26 @@ function Encabezado() {
                                             className="fixed inset-0 z-40"
                                             onClick={() => setUserMenuOpen(false)}
                                         />
-                                        <div className="absolute right-0 top-full mt-2 w-48 transform origin-top-right z-50">
-                                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
-                                                <div className="p-3 border-b border-gray-100 dark:border-slate-700">
+                                        <div className="absolute right-0 top-full mt-2 w-52 transform origin-top-right z-50">
+                                            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
+                                                <div className="p-3.5 border-b border-gray-100 dark:border-slate-700">
                                                     <p className="font-bold text-gray-900 dark:text-white truncate">{user.name || user.nombre || 'Usuario'}</p>
                                                     <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
                                                 </div>
 
-                                                <div className="p-1">
+                                                <div className="p-1.5">
                                                     <Link
                                                         to={user.role === 'cliente' ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
                                                         onClick={() => setUserMenuOpen(false)}
-                                                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg"
+                                                        className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/70 rounded-xl transition-colors"
                                                     >
-                                                        <LayoutDashboard className="w-4 h-4" />
+                                                        <LayoutDashboard className="w-4 h-4 text-primary-600" />
                                                         Panel de Control
                                                     </Link>
 
                                                     <button
                                                         onClick={() => { logout(); setUserMenuOpen(false); }}
-                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg"
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
                                                     >
                                                         <LogOut className="w-4 h-4" />
                                                         Cerrar Sesión
@@ -349,51 +399,20 @@ function Encabezado() {
                                 )}
                             </div>
                         ) : (
-                            <Link to="/login" className="flex items-center gap-2 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary-600 font-medium transition-colors">
-                                <User className="w-5 h-5" />
+                            <Link
+                                to="/login"
+                                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-100/70 dark:bg-slate-800/70 hover:bg-primary-600 hover:text-white dark:hover:bg-primary-600 dark:hover:text-white border border-gray-200/70 dark:border-slate-700/70 hover:border-primary-600 shadow-sm transition-all duration-200 active:scale-95"
+                            >
+                                <User className="w-4 h-4" />
                                 <span className="hidden md:block">Ingresar</span>
                             </Link>
                         )}
-
-                        <Link
-                            to={user ? "/cliente/coleccion" : "/catalogo"}
-                            className="relative group"
-                            aria-label="Mis telas favoritas"
-                            title={wishlistCount > 0 ? `${wishlistCount} tela(s) en favoritos` : 'Mis telas favoritas'}
-                        >
-                            <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group-hover:scale-105 active:scale-95">
-                                <Heart
-                                    className={`w-5 h-5 transition-colors ${
-                                        wishlistCount > 0
-                                            ? 'text-red-500 fill-red-500'
-                                            : 'text-gray-700 dark:text-gray-300'
-                                    }`}
-                                />
-                                {wishlistCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                                        {wishlistCount}
-                                    </span>
-                                )}
-                            </div>
-                        </Link>
-
-                        <Link to="/carrito" className="relative group" aria-label="Carrito de compras">
-                            <div className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group-hover:scale-105 active:scale-95">
-                                <ShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-
-                                {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
-                                        {cartCount}
-                                    </span>
-                                )}
-                            </div>
-                        </Link>
 
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             onMouseDown={handleBtnDown}
                             onMouseUp={handleBtnUp}
-                            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                             aria-label="Toggle menu"
                         >
                             {mobileMenuOpen ? (
