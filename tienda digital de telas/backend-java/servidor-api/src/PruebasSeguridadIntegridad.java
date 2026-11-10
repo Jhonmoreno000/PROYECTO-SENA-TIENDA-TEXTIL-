@@ -477,6 +477,50 @@ public class PruebasSeguridadIntegridad {
             }
         });
 
+        ejecutarPrueba("16. Criptografía Avanzada: PBKDF2 con sal y compatibilidad SHA-256", () -> {
+            String password = "ClaveSegura#2026";
+            String pbkdf2Hash = ServicioAutenticacion.generarHashPBKDF2(password);
+
+            if (!ServicioAutenticacion.esHashPBKDF2(pbkdf2Hash)) {
+                throw new AssertionError("El hash generado no tiene el formato estándar pbkdf2$.");
+            }
+            if (!ServicioAutenticacion.verificarContrasena(password, pbkdf2Hash)) {
+                throw new AssertionError("Fallo en la verificación de contraseña con hash PBKDF2.");
+            }
+            if (ServicioAutenticacion.verificarContrasena("ClaveErronea", pbkdf2Hash)) {
+                throw new AssertionError("Se aceptó una contraseña incorrecta en verificación PBKDF2.");
+            }
+
+            // Validar compatibilidad hacia atrás con SHA-256 legado
+            String sha256Hash = ServicioAutenticacion.generarHashContrasena(password);
+            if (!ServicioAutenticacion.verificarContrasena(password, sha256Hash)) {
+                throw new AssertionError("Fallo en la verificación compatible con SHA-256 legado.");
+            }
+        });
+
+        ejecutarPrueba("17. Algoritmo Textil Best-Fit Anti-Merma: Selección inteligente de rollos", () -> {
+            aplicacion.servicios.ServicioCorteTextil motor = new aplicacion.servicios.ServicioCorteTextil();
+            java.util.List<dominio.modelos.RolloTextil> rollos = new java.util.ArrayList<>();
+
+            // Rollo 1: 100 metros (rollo maestro)
+            rollos.add(new dominio.modelos.RolloTextil(1, 1, "R-100M", "LOTE-A", 100.0, 100.0, "disponible", null, null, null, null));
+            // Rollo 2: 5 metros (rollo menor que deja 1 m limpio)
+            rollos.add(new dominio.modelos.RolloTextil(2, 1, "R-5M", "LOTE-A", 5.0, 5.0, "disponible", null, null, null, null));
+            // Rollo 3: 4.5 metros (dejaría 0.5 m sub-metro merma)
+            rollos.add(new dominio.modelos.RolloTextil(3, 1, "R-4.5M", "LOTE-A", 4.5, 4.5, "disponible", null, null, null, null));
+
+            // Solicitamos 4 metros continuos:
+            // Best-fit debe elegir el Rollo 2 (5 m) que deja 1.0 m limpio (sin merma) y protege el rollo maestro de 100 m.
+            var resultado = motor.validarMetrajeContinuo(rollos, 4.0, "LOTE-A");
+            if (!resultado.esValido()) {
+                throw new AssertionError("El motor reportó corte inválido cuando existían rollos suficientes.");
+            }
+            if (resultado.getRolloAsignado() == null || !"R-5M".equals(resultado.getRolloAsignado().getCodigoRollo())) {
+                throw new AssertionError("El algoritmo Best-Fit no seleccionó el rollo óptimo R-5M. Asignado: "
+                        + (resultado.getRolloAsignado() != null ? resultado.getRolloAsignado().getCodigoRollo() : "ninguno"));
+            }
+        });
+
         System.out.println("\n=================================================================");
         System.out.println("                    RESUMEN DE PRUEBAS                          ");
         System.out.println("=================================================================");
