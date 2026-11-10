@@ -1,8 +1,8 @@
-import { Package, ShoppingBag, TrendingUp, Settings } from 'lucide-react';
+import { Package, ShoppingBag, TrendingUp, Settings, LifeBuoy } from 'lucide-react';
 
 const enlacesVendedor = [
     {
-        label: 'Panel Principal',
+        label: 'Resumen',
         path: '/vendedor',
         icon: TrendingUp
     },
@@ -21,6 +21,14 @@ const enlacesVendedor = [
         badge: 5,
         children: [
             { label: 'Gestión de Pedidos', path: '/vendedor/pedidos', badge: 5 },
+        ]
+    },
+    {
+        label: 'Ayuda y Soporte',
+        icon: LifeBuoy,
+        children: [
+            { label: 'Reportar Problema', path: '/cliente/soporte/nuevo' },
+            { label: 'Mis Tickets', path: '/cliente/soporte/tickets' },
         ]
     },
     {

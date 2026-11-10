@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Save, Lock, Mail, Phone, User, Bell, Check } from 'lucide-react';
 import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import PaginaAnimada from '../../../componentes/PaginaAnimada';
 import enlacesCliente from '../../../datos/enlacesCliente';
+import enlacesVendedor from '../../../datos/enlacesVendedor';
+import enlacesAdmin from '../../../datos/enlacesAdmin';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
 import { useNotificacion } from '../../../contextos/ContextoNotificacion';
@@ -11,6 +14,12 @@ import { getApiUrl } from '../../../config';
 function Perfil() {
     const { user, updateUser } = useAutenticacion();
     const { showNotification } = useNotificacion();
+    const location = useLocation();
+
+    const isVendor = location.pathname.startsWith('/vendedor') || user?.role === 'vendedor' || user?.rol === 'vendedor';
+    const isAdmin = location.pathname.startsWith('/admin') || user?.role === 'admin' || user?.rol === 'administrador';
+    const panelLinks = isVendor ? enlacesVendedor : (isAdmin ? enlacesAdmin : enlacesCliente);
+    const backTarget = isVendor ? '/vendedor' : (isAdmin ? '/admin' : '/cliente');
 
     const [formData, setFormData] = useState({
         name: user?.name || '',
@@ -114,9 +123,9 @@ function Perfil() {
     };
 
     return (
-        <LayoutPanel title="Mi Perfil" links={enlacesCliente}>
+        <LayoutPanel title="Mi Perfil" links={panelLinks}>
             <PaginaAnimada>
-            <BackButton to="/cliente" label="Volver a Mi Panel" />
+            <BackButton to={backTarget} label="Volver a Mi Panel" />
             <div className="max-w-3xl mx-auto">
                 <form onSubmit={handleSave}>
                     {/* Perfil Picture */}
