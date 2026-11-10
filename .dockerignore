@@ -1,0 +1,9 @@
+.git
+.vscode
+node_modules
+dist
+bin
+*.log
+.gradle
+BASE DE DATOS/respaldos/*.gz
+BASE DE DATOS/respaldos/*.sql
