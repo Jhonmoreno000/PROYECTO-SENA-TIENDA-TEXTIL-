@@ -1,5 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#0F172A"/>
-  <path d="M16 20h14c7.732 0 14 6.268 14 14s-6.268 14-14 14H16V20z" stroke="#EA580C" stroke-width="5" stroke-linejoin="round"/>
-  <circle cx="30" cy="34" r="5" fill="#F97316"/>
+  <!-- Fondo blanco con borde suave para máximo contraste en pestañas oscuras y claras -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#FFFFFF" stroke="#FED7AA" stroke-width="2" />
+
+  <!-- Primera D (bicolor naranja claro a la izquierda + naranja corporativo a la derecha, fiel al logo D&D) -->
+  <path
+    d="M6 19H14.5C21.2 19 25.5 23.4 25.5 32C25.5 40.6 21.2 45 14.5 45H6V19ZM11.5 24.2V39.8H14.2C17.9 39.8 20 37 20 32C20 27 17.9 24.2 14.2 24.2H11.5Z"
+    fill="#EA630E"
+  />
+  <!-- Franja izquierda naranja cálido de la primera D -->
+  <path d="M6 19H11.5V45H6V19Z" fill="#F47D26" />
+
+  <!-- Símbolo & central en naranja corporativo -->
+  <path
+    d="M36.8 45L35.1 42.9C33.6 44.4 31.7 45.3 29.4 45.3C25.6 45.3 23.2 42.9 23.2 39.5C23.2 36.6 24.9 34.6 27.7 33.1C26.5 31.4 25.9 29.9 25.9 28.2C25.9 25.1 28.3 23 31.7 23C34.9 23 37.2 25 37.2 28C37.2 30.6 35.5 32.4 32.7 33.8L35.6 37.4C36.2 36.1 36.6 34.6 36.9 33H40.8C40.3 35.8 39.4 38.2 38.1 40.2L41.8 45H36.8ZM29.9 41.4C31.1 41.4 32.1 40.9 33 39.9L29.7 35.8C28.2 36.7 27.5 37.8 27.5 39.1C27.5 40.6 28.5 41.4 29.9 41.4ZM31.6 26.5C30.4 26.5 29.6 27.2 29.6 28.3C29.6 29.3 30.1 30.3 31.1 31.5C32.8 30.6 33.5 29.6 33.5 28.3C33.5 27.2 32.7 26.5 31.6 26.5Z"
+    fill="#EA630E"
+  />
+
+  <!-- Segunda D en naranja corporativo -->
+  <path
+    d="M41.5 19H50C56.7 19 61 23.4 61 32C61 40.6 56.7 45 50 45H41.5V19ZM47 24.2V39.8H49.7C53.4 39.8 55.5 37 55.5 32C55.5 27 53.4 24.2 49.7 24.2H47Z"
+    fill="#EA630E"
+  />
 </svg>
