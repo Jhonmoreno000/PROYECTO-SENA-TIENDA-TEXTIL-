@@ -1,5 +1,6 @@
 package infraestructura.persistencia.jdbc;
 
+import aplicacion.servicios.ServicioAutenticacion;
 import dominio.modelos.Usuario;
 import dominio.repositorios.RepositorioUsuario;
 import infraestructura.configuracion.Conexion;
@@ -86,17 +87,24 @@ public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
      * @return {@link Optional} con el {@link Usuario} autenticado o vacío si no coincide.
      */
     @Override
-    public Optional<Usuario> buscarPorCorreoYValidarContrasena(String correo, String hashPlano) {
+    public Optional<Usuario> buscarPorCorreoYValidarContrasena(String correo, String contrasenaOCredencial) {
         String consulta = "SELECT id, nombre, correo, telefono, rol, activo, suspendido, motivo_suspension, tasa_comision, " +
-                "registrado_en, ultimo_acceso FROM usuarios WHERE correo = ? AND contrasena_hash = ? AND activo = true";
+                "registrado_en, ultimo_acceso, contrasena_hash FROM usuarios WHERE correo = ? AND activo = true";
 
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta)) {
             pst.setString(1, correo);
-            pst.setString(2, hashPlano);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapearUsuario(rs));
+                    String hashAlmacenado = rs.getString("contrasena_hash");
+                    if (ServicioAutenticacion.verificarContrasena(contrasenaOCredencial, hashAlmacenado)
+                            || (hashAlmacenado != null && hashAlmacenado.equalsIgnoreCase(contrasenaOCredencial))) {
+                        // Migración transparente a PBKDF2 con sal si la cuenta aún tenía hash antiguo SHA-256
+                        if (!ServicioAutenticacion.esHashPBKDF2(hashAlmacenado) && !contrasenaOCredencial.equals(hashAlmacenado)) {
+                            actualizarHashContrasena(rs.getInt("id"), ServicioAutenticacion.generarHashPBKDF2(contrasenaOCredencial));
+                        }
+                        return Optional.of(mapearUsuario(rs));
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -104,6 +112,26 @@ public class JdbcRepositorioUsuarioImpl implements RepositorioUsuario {
             e.printStackTrace();
         }
         return Optional.empty();
+    }
+
+    /**
+     * Actualiza el hash de contraseña de un usuario directamente en la base de datos.
+     *
+     * @param idUsuario Identificador del usuario (`int`).
+     * @param nuevoHash Hash de la contraseña (`String`).
+     * @return `true` si se actualizó; `false` en caso contrario.
+     */
+    public boolean actualizarHashContrasena(int idUsuario, String nuevoHash) {
+        String sql = "UPDATE usuarios SET contrasena_hash = ? WHERE id = ?";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setString(1, nuevoHash);
+            pst.setInt(2, idUsuario);
+            return pst.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error actualizando hash de contraseña: " + e.getMessage());
+            return false;
+        }
     }
 
     /**
