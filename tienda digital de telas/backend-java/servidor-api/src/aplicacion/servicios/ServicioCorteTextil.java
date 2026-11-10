@@ -126,7 +126,7 @@ public class ServicioCorteTextil {
         }
 
         double metrajeTotalLote = 0.0;
-        RolloTextil rolloCandidatoContinuo = null;
+        List<RolloTextil> candidatos = new java.util.ArrayList<>();
 
         for (RolloTextil rollo : rollos) {
             if (!"disponible".equalsIgnoreCase(rollo.getEstado())) {
@@ -137,18 +137,35 @@ public class ServicioCorteTextil {
             }
 
             metrajeTotalLote += rollo.getMetrajeRemanente();
-
-            if (rolloCandidatoContinuo == null && rollo.getMetrajeRemanente() >= metrajeSolicitado) {
-                rolloCandidatoContinuo = rollo;
+            if (rollo.getMetrajeRemanente() >= metrajeSolicitado) {
+                candidatos.add(rollo);
             }
         }
 
-        if (rolloCandidatoContinuo != null) {
+        if (!candidatos.isEmpty()) {
+            // Algoritmo Best-Fit Anti-Merma:
+            // Categoría 0: Coincidencia exacta (sobrante == 0) -> prioridad máxima
+            // Categoría 1: Sin merma (sobrante >= UMBRAL_RETAZO_METROS) -> menor sobrante para proteger rollos maestros
+            // Categoría 2: Con merma inevitable (sobrante < UMBRAL_RETAZO_METROS) -> menor merma
+            candidatos.sort((r1, r2) -> {
+                double s1 = r1.getMetrajeRemanente() - metrajeSolicitado;
+                double s2 = r2.getMetrajeRemanente() - metrajeSolicitado;
+
+                int cat1 = (Math.abs(s1) < 0.001) ? 0 : (s1 >= UMBRAL_RETAZO_METROS ? 1 : 2);
+                int cat2 = (Math.abs(s2) < 0.001) ? 0 : (s2 >= UMBRAL_RETAZO_METROS ? 1 : 2);
+
+                if (cat1 != cat2) {
+                    return Integer.compare(cat1, cat2);
+                }
+                return Double.compare(s1, s2);
+            });
+
+            RolloTextil mejorRollo = candidatos.get(0);
             return new ResultadoValidacionCorte(
                 true,
                 "CORTE_CONTINUO_OK",
-                "Metraje continuo disponible en rollo " + rolloCandidatoContinuo.getCodigoRollo(),
-                rolloCandidatoContinuo,
+                "Metraje continuo disponible en rollo " + mejorRollo.getCodigoRollo(),
+                mejorRollo,
                 metrajeTotalLote
             );
         }
