@@ -3,7 +3,7 @@
  * Estandares: Progressive Web App, Cache-First para estaticos y Network-First para API.
  */
 
-const NOMBRE_CACHE = 'ddtextil-v7';
+const NOMBRE_CACHE = 'ddtextil-v8';
 const RECURSOS_PRECACHE = [
   '/',
   '/index.html',
@@ -38,10 +38,21 @@ self.addEventListener('fetch', (evento) => {
   const solicitud = evento.request;
   const url = new URL(solicitud.url);
 
-  // Solicitudes API se procesan con Network-First sin bloquear
+  // Solicitudes API GET: Network-First guardando copia en cache para respaldo offline
   if (url.pathname.startsWith('/api/')) {
+    if (solicitud.method !== 'GET') {
+      return;
+    }
     evento.respondWith(
-      fetch(solicitud).catch(() => caches.match(solicitud))
+      fetch(solicitud)
+        .then((respuestaRed) => {
+          if (respuestaRed && respuestaRed.status === 200) {
+            const copia = respuestaRed.clone();
+            caches.open(NOMBRE_CACHE).then((cache) => cache.put(solicitud, copia));
+          }
+          return respuestaRed;
+        })
+        .catch(() => caches.match(solicitud))
     );
     return;
   }

@@ -137,7 +137,16 @@ function TarjetaProducto({ product }) {
                         alt={product.name || product.nombre}
                         loading="lazy"
                         decoding="async"
-                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.webp'; }}
+                        onError={(e) => {
+                            const fallbackSecundario = product.images && product.images.length > 1 ? product.images[1] : '/images/hero-telas-premium.webp';
+                            if (!e.target.dataset.triedFallback && e.target.src && !e.target.src.endsWith(fallbackSecundario)) {
+                                e.target.dataset.triedFallback = 'true';
+                                e.target.src = fallbackSecundario;
+                            } else {
+                                e.target.onerror = null;
+                                e.target.src = '/placeholder.webp';
+                            }
+                        }}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                 </Link>
