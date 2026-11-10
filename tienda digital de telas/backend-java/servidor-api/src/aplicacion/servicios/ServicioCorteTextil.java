@@ -126,6 +126,71 @@ public class ServicioCorteTextil {
         }
 
         double metrajeTotalLote = 0.0;
+        RolloTextil rolloCandidatoContinuo = null;
+
+        for (RolloTextil rollo : rollos) {
+            if (!"disponible".equalsIgnoreCase(rollo.getEstado())) {
+                continue;
+            }
+            if (loteTintoreria != null && !loteTintoreria.isBlank() && !Objects.equals(rollo.getLoteTintoreria(), loteTintoreria)) {
+                continue;
+            }
+
+            metrajeTotalLote += rollo.getMetrajeRemanente();
+
+            if (rolloCandidatoContinuo == null && rollo.getMetrajeRemanente() >= metrajeSolicitado) {
+                rolloCandidatoContinuo = rollo;
+            }
+        }
+
+        if (rolloCandidatoContinuo != null) {
+            return new ResultadoValidacionCorte(
+                true,
+                "CORTE_CONTINUO_OK",
+                "Metraje continuo disponible en rollo " + rolloCandidatoContinuo.getCodigoRollo(),
+                rolloCandidatoContinuo,
+                metrajeTotalLote
+            );
+        }
+
+        if (metrajeTotalLote >= metrajeSolicitado) {
+            return new ResultadoValidacionCorte(
+                false,
+                "FRAGMENTED_STOCK",
+                "El stock total del lote (" + metrajeTotalLote + " m) es suficiente pero está fragmentado en rollos menores. Requiere división o autorización de empates.",
+                null,
+                metrajeTotalLote
+            );
+        }
+
+        return new ResultadoValidacionCorte(
+            false,
+            "INSUFFICIENT_STOCK",
+            "Stock insuficiente en el lote. Solicitados: " + metrajeSolicitado + " m, disponibles: " + metrajeTotalLote + " m.",
+            null,
+            metrajeTotalLote
+        );
+    }
+
+    /**
+     * Valida el metraje continuo aplicando el algoritmo de optimización Best-Fit anti-merma.
+     * Selecciona el rollo que minimiza el desperdicio textil y preserva los rollos maestros.
+     *
+     * @param rollos Lista de rollos físicos (`List<RolloTextil>`).
+     * @param metrajeSolicitado Cantidad requerida (`double`).
+     * @param loteTintoreria Lote opcional (`String`).
+     * @return Dictamen de validación de corte continuo óptimo.
+     */
+    public ResultadoValidacionCorte validarMetrajeContinuoBestFit(List<RolloTextil> rollos, double metrajeSolicitado, String loteTintoreria) {
+        if (metrajeSolicitado <= 0) {
+            throw new IllegalArgumentException("El metraje solicitado debe ser mayor a cero.");
+        }
+
+        if (rollos == null || rollos.isEmpty()) {
+            return new ResultadoValidacionCorte(false, "SIN_STOCK", "No existen rollos registrados para la tela solicitada.", null, 0.0);
+        }
+
+        double metrajeTotalLote = 0.0;
         List<RolloTextil> candidatos = new java.util.ArrayList<>();
 
         for (RolloTextil rollo : rollos) {

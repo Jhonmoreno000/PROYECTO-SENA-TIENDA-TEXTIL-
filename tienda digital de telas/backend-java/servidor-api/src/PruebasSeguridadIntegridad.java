@@ -511,7 +511,7 @@ public class PruebasSeguridadIntegridad {
 
             // Solicitamos 4 metros continuos:
             // Best-fit debe elegir el Rollo 2 (5 m) que deja 1.0 m limpio (sin merma) y protege el rollo maestro de 100 m.
-            var resultado = motor.validarMetrajeContinuo(rollos, 4.0, "LOTE-A");
+            var resultado = motor.validarMetrajeContinuoBestFit(rollos, 4.0, "LOTE-A");
             if (!resultado.esValido()) {
                 throw new AssertionError("El motor reportó corte inválido cuando existían rollos suficientes.");
             }
