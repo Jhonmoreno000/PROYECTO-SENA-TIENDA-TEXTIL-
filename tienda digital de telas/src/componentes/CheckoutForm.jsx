@@ -23,8 +23,16 @@ import {
     LogoTarjetas,
 } from '../paginas/payment/LogosPasarelas';
 
-function CheckoutForm({ onSubmit, formData, setFormData }) {
-    const [errors, setErrors] = useState({});
+function CheckoutForm({
+    onSubmit,
+    formData,
+    setFormData,
+    errors: externalErrors,
+    setErrors: setExternalErrors,
+}) {
+    const [internalErrors, setInternalErrors] = useState({});
+    const errors = externalErrors || internalErrors;
+    const setErrors = setExternalErrors || setInternalErrors;
 
     const validateField = (name, value = '') => {
         const val = String(value || '');
@@ -36,17 +44,18 @@ function CheckoutForm({ onSubmit, formData, setFormData }) {
                 break;
             case 'email':
                 if (!val.trim()) error = 'El correo electrónico es requerido';
-                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) error = 'Correo electrónico inválido';
+                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) error = 'Correo electrónico inválido';
                 break;
             case 'phone':
-                if (!val.trim()) error = 'El teléfono es requerido';
-                else if (!/^\d{10}$/.test(val.replace(/\s/g, ''))) error = 'Teléfono inválido (10 dígitos)';
+                if (!val.trim()) error = 'El teléfono móvil es requerido';
+                else if (!/^\d{10}$/.test(val.replace(/\s/g, ''))) error = 'Teléfono inválido (debe tener 10 dígitos)';
                 break;
             case 'address':
-                if (!val.trim()) error = 'La dirección es requerida';
+                if (!val.trim()) error = 'La dirección de entrega es requerida';
+                else if (val.trim().length < 5) error = 'Ingresa una dirección completa (mínimo 5 caracteres)';
                 break;
             case 'city':
-                if (!val.trim()) error = 'La ciudad es requerida';
+                if (!val.trim()) error = 'La ciudad o municipio es requerida';
                 break;
             case 'state':
                 if (!val.trim()) error = 'El departamento es requerido';
@@ -68,13 +77,12 @@ function CheckoutForm({ onSubmit, formData, setFormData }) {
     };
 
     const handleSubmit = (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+        const requiredFields = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
         const newErrors = {};
-        Object.keys(formData).forEach((key) => {
-            if (key !== 'notes') {
-                const error = validateField(key, formData[key]);
-                if (error) newErrors[key] = error;
-            }
+        requiredFields.forEach((key) => {
+            const error = validateField(key, formData[key] || '');
+            if (error) newErrors[key] = error;
         });
         setErrors(newErrors);
         if (Object.keys(newErrors).length === 0) {
@@ -83,7 +91,7 @@ function CheckoutForm({ onSubmit, formData, setFormData }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form id="checkout-shipping-form" onSubmit={handleSubmit} className="space-y-8">
             {/* SECCIÓN 1: INFORMACIÓN DE CONTACTO */}
             <div>
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-200/80 dark:border-white/10 mb-5">
