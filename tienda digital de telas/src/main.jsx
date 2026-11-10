@@ -24,8 +24,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 // Registro del Service Worker para soporte PWA y cache offline
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((error) => {
-            console.debug('Service Worker no activo en entorno local:', error);
-        });
+        navigator.serviceWorker
+            .register('/sw.js')
+            .then((reg) => {
+                reg.update();
+            })
+            .catch((error) => {
+                console.debug('Service Worker no activo en entorno local:', error);
+            });
     });
 }

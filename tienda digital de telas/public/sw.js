@@ -3,11 +3,13 @@
  * Estandares: Progressive Web App, Cache-First para estaticos y Network-First para API.
  */
 
-const NOMBRE_CACHE = 'ddtextil-v4';
+const NOMBRE_CACHE = 'ddtextil-v7';
 const RECURSOS_PRECACHE = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/icono/dd-textil-icon.svg',
+  '/favicon.svg',
   '/images/hero-telas-premium.webp'
 ];
 
