@@ -81,6 +81,11 @@ public class ManejadorProductos extends ManejadorBase {
         }
 
         if (ruta.endsWith("/pending") || ruta.endsWith("/pendientes")) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty() || (!identidad.get().esAdministrador() && !identidad.get().esVendedor())) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: se requieren permisos de vendedor o administrador\"}");
+                return;
+            }
             productos = dao.obtenerProductosPendientes();
         } else if (idVendedor > 0) {
             productos = dao.obtenerProductosPorVendedor(idVendedor);
@@ -108,7 +113,18 @@ public class ManejadorProductos extends ManejadorBase {
             return;
         }
 
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return;
+        }
+
         if (ruta.contains("/moderate") || ruta.contains("/moderar")) {
+            if (!identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: solo los administradores pueden moderar productos\"}");
+                return;
+            }
+
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             String estado = (json.has("status") && !json.get("status").isJsonNull()) ? json.get("status").getAsString()
@@ -127,6 +143,18 @@ public class ManejadorProductos extends ManejadorBase {
             enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error en moderación\"}");
 
         } else if (ruta.matches("^/api/(products|productos)/\\d+/image$") || ruta.matches("^/api/(products|productos)/\\d+/imagen$")) {
+            Producto existente = dao.obtenerProductoPorId(idProducto);
+            if (existente == null) {
+                enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
+                return;
+            }
+            boolean esAdmin = identidad.get().esAdministrador();
+            boolean esDuenio = (identidad.get().idUsuario() == existente.getIdVendedor());
+            if (!esAdmin && !esDuenio) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no tiene permisos para actualizar imágenes de este producto\"}");
+                return;
+            }
+
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             String imagenBase64 = null;
@@ -153,6 +181,13 @@ public class ManejadorProductos extends ManejadorBase {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
                 return;
             }
+            boolean esAdmin = identidad.get().esAdministrador();
+            boolean esDuenio = (identidad.get().idUsuario() == existente.getIdVendedor());
+            if (!esAdmin && !esDuenio) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no tiene permisos para modificar este producto\"}");
+                return;
+            }
+
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             Producto actualizaciones = gson.fromJson(json, Producto.class);
@@ -193,6 +228,16 @@ public class ManejadorProductos extends ManejadorBase {
      * @throws Exception Si falla la inserción.
      */
     private void manejarPost(HttpExchange intercambio, ProductoDAO dao, Gson gson) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return;
+        }
+        if (!identidad.get().esAdministrador() && !identidad.get().esVendedor()) {
+            enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: solo vendedores o administradores pueden publicar productos\"}");
+            return;
+        }
+
         String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
         Producto nuevoProducto = gson.fromJson(cuerpo, Producto.class);
         if (nuevoProducto == null || nuevoProducto.getNombre() == null || nuevoProducto.getNombre().isBlank()
@@ -200,6 +245,11 @@ public class ManejadorProductos extends ManejadorBase {
             enviarRespuestaJson(intercambio, 400, "{\"error\":\"Nombre, precio mayor a cero y stock no negativo son obligatorios\"}");
             return;
         }
+
+        if (!identidad.get().esAdministrador()) {
+            nuevoProducto.setIdVendedor(identidad.get().idUsuario());
+        }
+
         boolean exito = dao.agregarProducto(nuevoProducto);
         if (exito) {
             JsonObject resp = new JsonObject();
@@ -221,10 +271,23 @@ public class ManejadorProductos extends ManejadorBase {
      * @throws Exception Si falla el borrado lógico.
      */
     private void manejarDelete(HttpExchange intercambio, String ruta, ProductoDAO dao) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return;
+        }
+
         int idProducto = extraerIdRuta(ruta);
         if (idProducto > 0) {
-            if (dao.obtenerProductoPorId(idProducto) == null) {
+            Producto existente = dao.obtenerProductoPorId(idProducto);
+            if (existente == null) {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
+                return;
+            }
+            boolean esAdmin = identidad.get().esAdministrador();
+            boolean esDuenio = (identidad.get().idUsuario() == existente.getIdVendedor());
+            if (!esAdmin && !esDuenio) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no tiene permisos para eliminar este producto\"}");
                 return;
             }
             boolean exito = dao.eliminarProducto(idProducto);
