@@ -73,9 +73,12 @@ const SOCIAL_LINKS = [
     {
         name: 'Instagram',
         url: 'https://www.instagram.com/',
-        bg: 'from-pink-500 via-red-500 to-amber-500',
+        badgeBg: 'bg-pink-500/10 dark:bg-pink-500/15',
+        badgeBorder: 'border-pink-500/25 dark:border-pink-500/35',
+        textColor: 'text-pink-600 dark:text-pink-400',
+        hoverStyle: 'hover:bg-gradient-to-br hover:from-pink-500 hover:via-red-500 hover:to-amber-500 hover:text-white hover:border-transparent hover:shadow-pink-500/25',
         icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
@@ -85,9 +88,12 @@ const SOCIAL_LINKS = [
     {
         name: 'Facebook',
         url: 'https://www.facebook.com/',
-        bg: 'from-blue-600 to-blue-700',
+        badgeBg: 'bg-blue-600/10 dark:bg-blue-600/15',
+        badgeBorder: 'border-blue-600/25 dark:border-blue-600/35',
+        textColor: 'text-blue-600 dark:text-blue-400',
+        hoverStyle: 'hover:bg-blue-600 hover:text-white hover:border-transparent hover:shadow-blue-600/25',
         icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
             </svg>
         )
@@ -95,9 +101,12 @@ const SOCIAL_LINKS = [
     {
         name: 'WhatsApp',
         url: 'https://wa.me/573027058951?text=Hola%20D%26D%20Textil,%20quiero%20cotizar%20telas',
-        bg: 'from-emerald-500 to-green-600',
+        badgeBg: 'bg-emerald-600/10 dark:bg-emerald-600/15',
+        badgeBorder: 'border-emerald-600/25 dark:border-emerald-600/35',
+        textColor: 'text-emerald-600 dark:text-emerald-400',
+        hoverStyle: 'hover:bg-emerald-600 hover:text-white hover:border-transparent hover:shadow-emerald-600/25',
         icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
             </svg>
         )
@@ -105,9 +114,12 @@ const SOCIAL_LINKS = [
     {
         name: 'X (Twitter)',
         url: 'https://x.com/',
-        bg: 'from-slate-700 to-slate-900',
+        badgeBg: 'bg-slate-700/10 dark:bg-slate-700/20',
+        badgeBorder: 'border-slate-700/25 dark:border-slate-600/35',
+        textColor: 'text-slate-700 dark:text-slate-300',
+        hoverStyle: 'hover:bg-slate-900 hover:text-white hover:border-transparent hover:shadow-slate-900/25',
         icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 4.01c-1 .49-1.98.68-3 .99-1.12-1.26-2.7-1.5-4.18-1.14-1.46.36-2.61 1.51-2.97 2.97-.36 1.48.12 3.06 1.14 4.18-4.52-.22-8.58-2.39-11.23-5.96-.34.61-.51 1.3-.51 2.01 0 1.94 1 3.73 2.61 4.81-.92-.03-1.81-.28-2.59-.73v.03c0 2.05 1.46 3.86 3.47 4.26-.54.15-1.1.22-1.66.22-.44 0-.87-.04-1.3-.12.54 1.74 2.18 2.97 4 3.01-1.46 1.15-3.26 1.78-5.11 1.78-.44 0-.88-.03-1.32-.08 2 1.28 4.35 1.96 6.78 1.96 8.14 0 12.59-6.74 12.59-12.59 0-.19 0-.38-.01-.57 1.05-.76 1.96-1.72 2.69-2.83-.96.43-1.99.72-3.05.85 1.11-.66 1.96-1.71 2.36-2.96z"></path>
             </svg>
         )
@@ -142,18 +154,18 @@ function InteractiveMap({ location, onRandomizeLocation }) {
     };
 
     return (
-        <div className="flex flex-col w-full h-full bg-white dark:bg-slate-800">
-            {/* Barra superior dedicada de controles del mapa (no tapa controles internos de Google) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-900 text-white border-b border-slate-700/80">
+        <div className="flex flex-col w-full h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg">
+            {/* Barra superior de controles del mapa con la paleta de la tienda */}
+            <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-50/90 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-800">
                 {/* Selector Mapa / Satélite */}
-                <div className="inline-flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+                <div className="inline-flex items-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <button
                         type="button"
                         onClick={() => cambiarModoMapa('roadmap')}
                         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
                             mapMode === 'roadmap'
-                                ? 'bg-primary-600 text-white shadow-md'
-                                : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                                ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30'
+                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60'
                         }`}
                     >
                         <MapIcon className="w-3.5 h-3.5" />
@@ -164,8 +176,8 @@ function InteractiveMap({ location, onRandomizeLocation }) {
                         onClick={() => cambiarModoMapa('satellite')}
                         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
                             mapMode === 'satellite'
-                                ? 'bg-primary-600 text-white shadow-md'
-                                : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                                ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30'
+                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60'
                         }`}
                     >
                         <Satellite className="w-3.5 h-3.5" />
@@ -178,9 +190,9 @@ function InteractiveMap({ location, onRandomizeLocation }) {
                     type="button"
                     onClick={cambiarUbicacionAzar}
                     title="Generar otra dirección exacta en el Centro de Medellín"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold transition-all active:scale-95"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-primary-50 dark:hover:bg-primary-950/40 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700/60 text-xs font-bold transition-all duration-200 shadow-sm active:scale-95"
                 >
-                    <Shuffle className="w-3.5 h-3.5" />
+                    <Shuffle className="w-3.5 h-3.5 text-primary-500" />
                     <span>Otra sede en el Centro</span>
                 </button>
             </div>
@@ -188,8 +200,8 @@ function InteractiveMap({ location, onRandomizeLocation }) {
             {/* Contenedor del Mapa Interactivo */}
             <div className="relative flex-1 w-full min-h-[380px]">
                 {isLoadingMap && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px]">
-                        <div className="px-4 py-2 rounded-xl bg-slate-900/90 text-white text-xs font-bold flex items-center gap-2 shadow-lg">
+                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+                        <div className="px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-xs font-bold flex items-center gap-2.5 shadow-xl border border-slate-200 dark:border-slate-700">
                             <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                             <span>Actualizando vista ({mapMode === 'satellite' ? 'Satélite' : 'Mapa'})...</span>
                         </div>
@@ -207,13 +219,13 @@ function InteractiveMap({ location, onRandomizeLocation }) {
                     referrerPolicy="no-referrer-when-downgrade"
                 />
 
-                {/* Etiqueta flotante con la dirección exacta activa */}
-                <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-xs bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2.5 rounded-xl border border-white/15 shadow-xl z-10 pointer-events-none">
-                    <div className="flex items-center gap-1.5 text-primary-400 text-[11px] font-bold uppercase tracking-wider">
+                {/* Etiqueta flotante con la dirección exacta activa adaptada al tema */}
+                <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl text-slate-900 dark:text-white px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl z-10 pointer-events-none">
+                    <div className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400 text-[11px] font-bold uppercase tracking-wider">
                         <Store className="w-3.5 h-3.5 shrink-0" />
                         <span>{location.sector}</span>
                     </div>
-                    <p className="text-xs font-semibold text-white mt-0.5 truncate">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate">
                         {location.address}
                     </p>
                 </div>
@@ -224,10 +236,10 @@ function InteractiveMap({ location, onRandomizeLocation }) {
                     onClick={openDirections}
                     onMouseDown={(e) => microPress(e.currentTarget)}
                     onMouseUp={(e) => microRelease(e.currentTarget)}
-                    className="absolute bottom-3 right-3 z-10 hidden sm:flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-lg transition-all duration-200"
+                    className="absolute bottom-3 right-3 z-10 hidden sm:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-primary-600/30 hover:scale-[1.02] active:scale-95 transition-all duration-200"
                 >
                     <Navigation className="w-4 h-4" />
-                    Cómo Llegar
+                    <span>Cómo Llegar</span>
                 </button>
             </div>
         </div>
@@ -287,10 +299,44 @@ function Contact() {
     };
 
     const contactInfo = [
-        { icon: MapPin, title: 'Dirección Exacta', info: currentLocation.address, info2: currentLocation.city, color: 'from-blue-500 to-cyan-500' },
-        { icon: Phone, title: 'Teléfono', info: INFO_CONTACTO_BASE.phone, info2: INFO_CONTACTO_BASE.phone2, href: 'tel:+573027058951', color: 'from-green-500 to-emerald-500' },
-        { icon: Mail, title: 'Email', info: INFO_CONTACTO_BASE.email, info2: INFO_CONTACTO_BASE.email2, href: 'mailto:dydtextil222medellin@gmail.com', color: 'from-purple-500 to-pink-500' },
-        { icon: Clock, title: 'Horario', info: INFO_CONTACTO_BASE.hours, info2: INFO_CONTACTO_BASE.hours2, color: 'from-orange-500 to-red-500' },
+        {
+            icon: MapPin,
+            title: 'Dirección Exacta',
+            info: currentLocation.address,
+            info2: currentLocation.city,
+            iconColor: 'text-white',
+            badgeBg: 'bg-sky-500 shadow-md shadow-sky-500/30',
+            glow: 'rgba(14, 165, 233, 0.15)',
+        },
+        {
+            icon: Phone,
+            title: 'Teléfono',
+            info: INFO_CONTACTO_BASE.phone,
+            info2: INFO_CONTACTO_BASE.phone2,
+            href: 'tel:+573027058951',
+            iconColor: 'text-white',
+            badgeBg: 'bg-emerald-500 shadow-md shadow-emerald-500/30',
+            glow: 'rgba(16, 185, 129, 0.15)',
+        },
+        {
+            icon: Mail,
+            title: 'Email',
+            info: INFO_CONTACTO_BASE.email,
+            info2: INFO_CONTACTO_BASE.email2,
+            href: 'mailto:dydtextil222medellin@gmail.com',
+            iconColor: 'text-white',
+            badgeBg: 'bg-purple-600 shadow-md shadow-purple-600/30',
+            glow: 'rgba(168, 85, 247, 0.15)',
+        },
+        {
+            icon: Clock,
+            title: 'Horario',
+            info: INFO_CONTACTO_BASE.hours,
+            info2: INFO_CONTACTO_BASE.hours2,
+            iconColor: 'text-white',
+            badgeBg: 'bg-orange-500 shadow-md shadow-orange-500/30',
+            glow: 'rgba(249, 115, 22, 0.15)',
+        },
     ];
 
     useGSAP(() => {
@@ -309,24 +355,24 @@ function Contact() {
     }, { scope: containerRef });
 
     return (
-        <div className="min-h-screen flex flex-col" ref={containerRef}>
+        <div className="min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950 transition-colors" ref={containerRef}>
             <Encabezado />
 
             <PaginaAnimada className="flex-1">
-                <section className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-20">
+                <section className="bg-gradient-to-r from-primary-600 via-primary-700 to-accent-600 text-white py-16 sm:py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="contact-hero-text text-center">
-                            <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
+                            <h1 className="text-4xl md:text-5xl font-display font-extrabold tracking-tight mb-4">
                                 Contáctanos
                             </h1>
-                            <p className="text-xl text-white/90 max-w-3xl mx-auto">
-                                Visítanos en el corazón textil del Centro de Medellín o escríbenos para asesoría personalizada.
+                            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium">
+                                Visítanos en el corazón textil del Centro de Medellín o escríbenos para asesoría técnica personalizada.
                             </p>
                         </div>
                     </div>
                 </section>
 
-                <section className="py-16 bg-white dark:bg-slate-900 contact-cards">
+                <section className="py-14 contact-cards">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {contactInfo.map((item, index) => {
@@ -334,14 +380,31 @@ function Contact() {
                                 return (
                                     <div
                                         key={index}
-                                        className="contact-card card p-6 text-center shadow-sm border border-gray-100 dark:border-slate-700 transition-all hover:-translate-y-1 hover:shadow-xl"
+                                        className="contact-card relative p-7 text-center rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/10 shadow-lg shadow-slate-900/5 hover:shadow-2xl hover:border-primary-500/40 hover:-translate-y-1.5 transition-all duration-300 group overflow-hidden"
+                                        style={{
+                                            background: `radial-gradient(circle at 50% 15%, ${item.glow}, transparent 75%)`,
+                                        }}
                                     >
-                                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br ${item.color} mb-4`}>
-                                            <Icon className="w-8 h-8 text-white" />
+                                        <div className="mb-5 flex justify-center">
+                                            <div className={`w-16 h-16 rounded-full ${item.badgeBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                                                <Icon className="w-8 h-8 text-white" />
+                                            </div>
                                         </div>
-                                        <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                                        {item.href ? <a href={item.href} className="text-gray-600 dark:text-gray-400 hover:text-primary-500 text-sm font-medium block break-all transition-colors">{item.info}</a> : <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{item.info}</p>}
-                                        <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{item.info2}</p>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                            {item.title}
+                                        </h3>
+                                        {item.href ? (
+                                            <a href={item.href} className="text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-semibold block break-all transition-colors">
+                                                {item.info}
+                                            </a>
+                                        ) : (
+                                            <p className="text-slate-600 dark:text-slate-400 text-sm font-semibold">
+                                                {item.info}
+                                            </p>
+                                        )}
+                                        <p className="text-slate-500 dark:text-slate-400 text-xs mt-1.5 font-medium">
+                                            {item.info2}
+                                        </p>
                                     </div>
                                 );
                             })}
@@ -361,35 +424,81 @@ function Contact() {
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
-                                    <label htmlFor="name" className="block font-semibold mb-2">Nombre Completo *</label>
-                                    <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="input-field" placeholder="Juan Pérez" />
+                                    <label htmlFor="name" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nombre Completo *</label>
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        name="name" 
+                                        value={formData.name} 
+                                        onChange={handleChange} 
+                                        required 
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm" 
+                                        placeholder="Juan Pérez" 
+                                    />
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
-                                        <label htmlFor="email" className="block font-semibold mb-2">Email *</label>
-                                        <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="input-field" placeholder="juan@ejemplo.com" />
+                                        <label htmlFor="email" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email *</label>
+                                        <input 
+                                            type="email" 
+                                            id="email" 
+                                            name="email" 
+                                            value={formData.email} 
+                                            onChange={handleChange} 
+                                            required 
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm" 
+                                            placeholder="juan@ejemplo.com" 
+                                        />
                                     </div>
                                     <div>
-                                        <label htmlFor="phone" className="block font-semibold mb-2">Teléfono</label>
-                                        <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className="input-field" placeholder="302 705 8951" />
+                                        <label htmlFor="phone" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Teléfono</label>
+                                        <input 
+                                            type="tel" 
+                                            id="phone" 
+                                            name="phone" 
+                                            value={formData.phone} 
+                                            onChange={handleChange} 
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm" 
+                                            placeholder="302 705 8951" 
+                                        />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label htmlFor="subject" className="block font-semibold mb-2">Asunto *</label>
-                                    <input type="text" id="subject" name="subject" value={formData.subject} onChange={handleChange} required className="input-field" placeholder="¿En qué podemos ayudarte?" />
+                                    <label htmlFor="subject" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Asunto *</label>
+                                    <input 
+                                        type="text" 
+                                        id="subject" 
+                                        name="subject" 
+                                        value={formData.subject} 
+                                        onChange={handleChange} 
+                                        required 
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm" 
+                                        placeholder="¿En qué podemos ayudarte?" 
+                                    />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="message" className="block font-semibold mb-2">Mensaje *</label>
-                                    <textarea id="message" name="message" value={formData.message} onChange={handleChange} required rows="5" className="input-field resize-none" placeholder="Escribe tu mensaje aquí..."></textarea>
+                                    <label htmlFor="message" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Mensaje *</label>
+                                    <textarea 
+                                        id="message" 
+                                        name="message" 
+                                        value={formData.message} 
+                                        onChange={handleChange} 
+                                        required 
+                                        rows="5" 
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm resize-none" 
+                                        placeholder="Escribe tu mensaje aquí..."
+                                    ></textarea>
                                 </div>
 
-                                <button type="submit"
+                                <button 
+                                    type="submit"
                                     onMouseDown={(e) => microPress(e.currentTarget)}
                                     onMouseUp={(e) => microRelease(e.currentTarget)}
-                                    className="btn-primary w-full flex items-center justify-center gap-2">
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/25 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer"
+                                >
                                     <Send className="w-4 h-4" />
                                     Enviar Mensaje
                                 </button>
@@ -481,7 +590,7 @@ function Contact() {
                                     aria-label={social.name}
                                     onMouseDown={(e) => microPress(e.currentTarget)}
                                     onMouseUp={(e) => microRelease(e.currentTarget)}
-                                    className={`inline-flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-gradient-to-br ${social.bg} text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all`}
+                                    className={`inline-flex items-center gap-3 px-6 py-3.5 rounded-2xl ${social.badgeBg} ${social.badgeBorder} ${social.textColor} ${social.hoverStyle} border backdrop-blur-md font-bold text-sm shadow-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 group`}
                                 >
                                     {social.icon}
                                     <span>{social.name}</span>
