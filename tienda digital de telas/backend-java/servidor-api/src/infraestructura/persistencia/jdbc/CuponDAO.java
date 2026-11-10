@@ -148,4 +148,23 @@ public class CuponDAO {
             return false;
         }
     }
+
+    /**
+     * Reactiva un cupón existente (`activo = true`).
+     * Solo debe ser invocado con autorización del administrador.
+     *
+     * @param id Identificador numérico del cupón (`int`).
+     * @return `true` si se actualizó el registro; `false` en caso contrario.
+     */
+    public boolean activarCupon(int id) {
+        String consulta = "UPDATE cupones SET activo = true WHERE id = ?";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(consulta)) {
+            pst.setInt(1, id);
+            return pst.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error activando cupon: " + e.getMessage());
+            return false;
+        }
+    }
 }

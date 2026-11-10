@@ -157,16 +157,20 @@ public class ManejadorProductos extends ManejadorBase {
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
             Producto actualizaciones = gson.fromJson(json, Producto.class);
 
-            Boolean destacado = json.has("featured") && !json.get("featured").isJsonNull() ? json.get("featured").getAsBoolean()
-                              : (json.has("destacado") && !json.get("destacado").isJsonNull() ? json.get("destacado").getAsBoolean() : null);
-            Boolean esNueva = json.has("isNewCollection") && !json.get("isNewCollection").isJsonNull() ? json.get("isNewCollection").getAsBoolean()
-                            : (json.has("esNuevaColeccion") && !json.get("esNuevaColeccion").isJsonNull() ? json.get("esNuevaColeccion").getAsBoolean() : null);
-            Boolean esExclusivo = json.has("isExclusive") && !json.get("isExclusive").isJsonNull() ? json.get("isExclusive").getAsBoolean()
-                                : (json.has("esExclusivo") && !json.get("esExclusivo").isJsonNull() ? json.get("esExclusivo").getAsBoolean() : null);
-            Boolean esOferta = json.has("isOffer") && !json.get("isOffer").isJsonNull() ? json.get("isOffer").getAsBoolean()
-                             : (json.has("esOferta") && !json.get("esOferta").isJsonNull() ? json.get("esOferta").getAsBoolean() : null);
-            Double stockExplicito = json.has("stock") && !json.get("stock").isJsonNull() ? json.get("stock").getAsDouble()
-                                   : (json.has("existencias") && !json.get("existencias").isJsonNull() ? json.get("existencias").getAsDouble() : null);
+            Boolean destacado = extraerBooleano(json, "featured", "destacado");
+            Boolean esNueva = extraerBooleano(json, "isNewCollection", "esNuevaColeccion");
+            Boolean esExclusivo = extraerBooleano(json, "isExclusive", "esExclusivo");
+            Boolean esOferta = extraerBooleano(json, "isOffer", "esOferta");
+
+            // Regla de negocio: Solo el administrador puede activar o desactivar ofertas en los productos
+            if (esOferta != null) {
+                java.util.Optional<infraestructura.seguridad.TokenSesion.Identidad> identidad = obtenerIdentidad(intercambio);
+                if (identidad.isEmpty() || !identidad.get().esAdministrador()) {
+                    enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
+                    return;
+                }
+            }
+            Double stockExplicito = extraerDouble(json, "stock", "existencias");
 
             boolean exito = dao.actualizarProductoSelectivo(idProducto, actualizaciones, destacado, esNueva, esExclusivo, esOferta, stockExplicito);
             if (exito && stockExplicito != null && stockExplicito <= 20.0) {
@@ -232,5 +236,29 @@ public class ManejadorProductos extends ManejadorBase {
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
         }
+    }
+
+    private static Boolean extraerBooleano(JsonObject json, String... claves) {
+        if (json == null) return null;
+        for (String clave : claves) {
+            if (json.has(clave) && !json.get(clave).isJsonNull()) {
+                try {
+                    return Boolean.valueOf(json.get(clave).getAsBoolean());
+                } catch (Exception ignored) {}
+            }
+        }
+        return null;
+    }
+
+    private static Double extraerDouble(JsonObject json, String... claves) {
+        if (json == null) return null;
+        for (String clave : claves) {
+            if (json.has(clave) && !json.get(clave).isJsonNull()) {
+                try {
+                    return Double.valueOf(json.get(clave).getAsDouble());
+                } catch (Exception ignored) {}
+            }
+        }
+        return null;
     }
 }
