@@ -80,11 +80,12 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Entidad RolloTextil:** Estados del ciclo de vida (`DISPONIBLE`, `RESERVADO`, `RETAZO_LIQUIDADO`, `AGOTADO`) y metodos de corte.
 *   **Servicio de Corte Textil:** Algoritmo Best Fit para seleccion de rollo con menor desperdicio y formula de liquidacion con descuentos (12% mayorista, 25% rollo cerrado, 40% retazos).
 *   **Suite 1 (Reglas de Negocio Textiles):** Detalle de los 14 casos de prueba unitarios ejecutados en `PruebasReglasNegocioTextil.java` (100% aprobados).
-*   **Suite 2 (Seguridad e Integridad):** Detalle de los 12 casos de prueba ejecutados en `PruebasSeguridadIntegridad.java` (100% aprobados).
+*   **Suite 2 (Seguridad e Integridad):** Detalle de los 17 casos de prueba ejecutados en `PruebasSeguridadIntegridad.java` (hashing PBKDF2 con sal, algoritmo Best-Fit anti-merma, RBAC estricto, 100% aprobados).
 *   **Suite 3 (Concurrencia, Pagos Wompi y Dominio Financiero):** Detalle de los 11 casos de prueba ejecutados en `PruebasConcurrenciaYPagos.java` (100% aprobados).
 *   **Suite 4 (Contratos OpenAPI v3 y Arquitectura API):** Detalle de los 7 casos de prueba ejecutados en `PruebasContratoApi.java` (100% aprobados).
+*   **Guia de Comandos de Terminal:** Instrucciones paso a paso para compilacion y ejecucion en terminal nativa (PowerShell y Bash), pruebas de seguridad con cURL y validacion de CI/CD con GitHub CLI (`gh`).
 *   **Framework de Rendimiento:** Pruebas de carga concurrentes multi-herramienta en `pruebas-carga/` (k6, PowerShell y Bash).
-*   **Certificacion de Resultados:** Registro oficial de ejecucion de las 44 pruebas automatizadas en Java (100% aprobadas).
+*   **Certificacion de Resultados:** Registro oficial de ejecucion de las pruebas automatizadas en Java y Frontend (100% aprobadas).
 
 ### 8. [08. Modelo Entidad-Relacion](documentacion/08-modelo-entidad-relacion.md)
 *   **DER completo y simplificado:** Las 25 tablas del esquema `01_esquema_espanol.sql` con sus 20 llaves foraneas, cardinalidades y diccionario resumido.

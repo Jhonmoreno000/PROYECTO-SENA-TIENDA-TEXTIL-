@@ -154,23 +154,99 @@ Usuarios sembrados en la base de datos para validar los niveles de acceso del so
 
 ## Calidad de Software y Suite de Pruebas Automatizadas
 
-El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con cuatro suites integrales con **44 pruebas automatizadas** en Java (14 de reglas de negocio textiles, 12 de seguridad y tolerancia a fallos, 11 de concurrencia, pagos Wompi y dominio financiero, y 7 de contratos OpenAPI v3), ademas de un framework completo de pruebas de carga y desempeno:
+El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con pruebas unitarias de frontend, cuatro suites integrales en Java nativo (reglas de negocio textiles, seguridad e integridad con PBKDF2 y Best-Fit, concurrencia y pagos Wompi, y contratos OpenAPI v3), ademas de un framework completo de pruebas de carga y desempeno.
 
+### 🧪 Guia de Comandos de Terminal para Pruebas y Validaciones (CLI)
+
+#### 1. Pruebas y Compilacion del Frontend (React + Vite + Vitest + ESLint)
+Ejecutar desde el directorio del frontend:
 ```bash
-# Navegar al directorio del backend
+# Navegar al directorio de la aplicacion React
+cd "tienda digital de telas"
+
+# 1.1. Instalar dependencias oficiales
+npm ci
+
+# 1.2. Validar reglas de estilo y sintaxis (ESLint)
+npm run lint
+
+# 1.3. Ejecutar pruebas unitarias automatizadas (Vitest)
+npm test
+
+# 1.4. Validar compilacion de produccion
+npm run build
+```
+
+#### 2. Compilacion y Ejecucion de Pruebas del Backend (Java 21)
+El backend dispone de 4 suites de pruebas automatizadas:
+```bash
+# Navegar al directorio del servidor backend
 cd "tienda digital de telas/backend-java/servidor-api"
 
-# Ejecutar las 4 suites de pruebas automatizadas (Windows: punto y coma)
-java -cp "lib/*;bin" PruebasReglasNegocioTextil
-java -cp "lib/*;bin" PruebasSeguridadIntegridad
-java -cp "lib/*;bin" PruebasConcurrenciaYPagos
-java -cp "lib/*;bin" PruebasContratoApi
+# 2.1. Compilacion en Linux / macOS / Git Bash:
+mkdir -p bin
+find src -name "*.java" > sources.txt
+javac -d bin -cp "lib/*" @sources.txt
 
-# En Linux / macOS / Docker (usar dos puntos como separador)
-java -cp "lib/*:bin" PruebasReglasNegocioTextil
-java -cp "lib/*:bin" PruebasSeguridadIntegridad
-java -cp "lib/*:bin" PruebasConcurrenciaYPagos
-java -cp "lib/*:bin" PruebasContratoApi
+# 2.1. Compilacion en Windows PowerShell:
+New-Item -ItemType Directory -Force -Path bin
+javac -encoding UTF-8 -d bin -cp "lib/*" (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
+
+# 2.2. Ejecutar las 4 suites de pruebas:
+# En Windows (PowerShell / CMD - separador punto y coma ';'):
+java -cp "bin;lib/*" PruebasReglasNegocioTextil
+java -cp "bin;lib/*" PruebasSeguridadIntegridad
+java -cp "bin;lib/*" PruebasConcurrenciaYPagos
+java -cp "bin;lib/*" PruebasContratoApi
+
+# En Linux / macOS / Docker (separador dos puntos ':'):
+java -cp "bin:lib/*" PruebasReglasNegocioTextil
+java -cp "bin:lib/*" PruebasSeguridadIntegridad
+java -cp "bin:lib/*" PruebasConcurrenciaYPagos
+java -cp "bin:lib/*" PruebasContratoApi
+```
+
+#### 3. Validacion de Infraestructura y Contenedores (Docker)
+```bash
+# 3.1. Validar sintaxis y variables de docker-compose
+docker compose config
+
+# 3.2. Levantar los tres servicios y reconstruir imagenes
+docker compose up -d --build
+
+# 3.3. Consultar estado y salud de los contenedores
+docker compose ps
+
+# 3.4. Validar sondas de salud (Healthchecks):
+curl -I http://localhost:8081/health/live
+curl -I http://localhost:8081/health/ready
+curl -I http://localhost:3001
+```
+
+#### 4. Validacion de Seguridad y RBAC via Terminal (cURL)
+```bash
+# 4.1. Probar rechazo sin autenticacion a usuarios protegidos (esperado: 401 Unauthorized):
+curl -i http://localhost:8081/api/usuarios
+
+# 4.2. Probar proteccion estricta PCI-DSS ante datos de tarjeta (esperado: 400 Bad Request):
+curl -i -X POST http://localhost:8081/api/pedidos \
+  -H "Content-Type: application/json" \
+  -d '{"pan": "4532012345678910", "cvv": "123"}'
+
+# 4.3. Probar trazabilidad con identificador unico X-Correlation-ID:
+curl -i -H "X-Correlation-ID: test-sena-2026" http://localhost:8081/api/productos
+```
+
+#### 5. Monitoreo y Verificacion de CI/CD con GitHub CLI (`gh`)
+```bash
+# 5.1. Listar las ultimas ejecuciones de los flujos de integracion continua:
+gh run list
+
+# 5.2. Ver el detalle de jobs de la ejecucion mas reciente:
+gh run view
+
+# 5.3. Inspeccionar logs detallados en caso de diagnostico:
+gh run view --log-failed
 ```
 
 ### Pruebas de Carga y Rendimiento Concurrente
