@@ -503,11 +503,11 @@ public class PruebasSeguridadIntegridad {
             java.util.List<dominio.modelos.RolloTextil> rollos = new java.util.ArrayList<>();
 
             // Rollo 1: 100 metros (rollo maestro)
-            rollos.add(new dominio.modelos.RolloTextil(1, 1, "R-100M", "LOTE-A", 100.0, 100.0, "disponible", null, null, null, null));
+            rollos.add(new dominio.modelos.RolloTextil(1, 1, "R-100M", 100.0, 100.0, "LOTE-A", "disponible"));
             // Rollo 2: 5 metros (rollo menor que deja 1 m limpio)
-            rollos.add(new dominio.modelos.RolloTextil(2, 1, "R-5M", "LOTE-A", 5.0, 5.0, "disponible", null, null, null, null));
+            rollos.add(new dominio.modelos.RolloTextil(2, 1, "R-5M", 5.0, 5.0, "LOTE-A", "disponible"));
             // Rollo 3: 4.5 metros (dejaría 0.5 m sub-metro merma)
-            rollos.add(new dominio.modelos.RolloTextil(3, 1, "R-4.5M", "LOTE-A", 4.5, 4.5, "disponible", null, null, null, null));
+            rollos.add(new dominio.modelos.RolloTextil(3, 1, "R-4.5M", 4.5, 4.5, "LOTE-A", "disponible"));
 
             // Solicitamos 4 metros continuos:
             // Best-fit debe elegir el Rollo 2 (5 m) que deja 1.0 m limpio (sin merma) y protege el rollo maestro de 100 m.
