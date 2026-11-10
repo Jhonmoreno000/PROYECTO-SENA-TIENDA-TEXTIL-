@@ -37,6 +37,7 @@ import { useCarrito } from '../contextos/ContextoCarrito';
 import { formatCurrency } from '../utilidades/formateadores';
 import { useProductos } from '../contextos/ContextoProducto';
 import { useMetricas } from '../contextos/ContextoMetricas';
+import { useNotificacion } from '../contextos/ContextoNotificacion';
 
 // Registramos el plugin de GSAP para que useGSAP funcione correctamente
 gsap.registerPlugin(useGSAP);
@@ -49,6 +50,7 @@ function DetalleProducto() {
     const { addToCart } = useCarrito(); // Función para agregar al carrito
     const { getProductById, loading, products } = useProductos(); // Datos de productos
     const { isInWishlist, addToWishlist, removeFromWishlist, productDiscounts } = useMetricas(); // Funciones de wishlist
+    const { showNotification } = useNotificacion();
 
     // Cantidad de metros por corte que el cliente quiere comprar (por defecto 1)
     const [metersPerCut, setMetersPerCut] = useState(1);
@@ -143,8 +145,10 @@ function DetalleProducto() {
     }
 
     const discountInfo = productDiscounts?.[product.id];
-    const hasDiscount = discountInfo?.active && discountInfo?.percent > 0;
-    const discountedPrice = hasDiscount ? product.price * (1 - discountInfo.percent / 100) : product.price;
+    const isOffer = Boolean(product?.isOffer || product?.esOferta);
+    const discountPercent = discountInfo?.percent || (isOffer ? (product?.discountPercent || 15) : 0);
+    const hasDiscount = (discountInfo?.active && discountInfo?.percent > 0) || (isOffer && discountPercent > 0);
+    const discountedPrice = hasDiscount ? product.price * (1 - discountPercent / 100) : product.price;
     const isOutOfStock = (product.stock ?? 0) <= 0;
 
     // Total de metros = metros por corte × cantidad de cortes
@@ -211,8 +215,33 @@ function DetalleProducto() {
     const handleToggleWishlist = () => {
         if (isInWishlist(product.id)) {
             removeFromWishlist(product.id);
+            if (showNotification) {
+                showNotification('info', `"${product.name || 'Tela'}" eliminada de tus favoritos`);
+            }
         } else {
             addToWishlist(product);
+            if (showNotification) {
+                showNotification('success', `"${product.name || 'Tela'}" guardada en tus favoritos ❤️`);
+            }
+        }
+    };
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: product.name,
+                    text: `Mira esta tela en D&D Textil: ${product.name}`,
+                    url: window.location.href,
+                });
+            } catch (err) {
+                // Compartir cancelado por el usuario
+            }
+        } else {
+            navigator.clipboard?.writeText(window.location.href);
+            if (showNotification) {
+                showNotification('info', 'Enlace copiado al portapapeles');
+            }
         }
     };
 
@@ -279,11 +308,21 @@ function DetalleProducto() {
                                 )}
                                 <div className="text-gray-500 dark:text-gray-400">por metro</div>
                                 {hasDiscount && (
-                                    <span className="ml-2 px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">
-                                        -{discountInfo.percent}% OFF
+                                    <span className="ml-2 px-3 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-black uppercase tracking-wider rounded-full shadow-sm animate-pulse">
+                                        -{discountPercent}% OFF
                                     </span>
                                 )}
                             </div>
+
+                            {/* Alerta de Oferta Especial */}
+                            {hasDiscount && (
+                                <div className="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 dark:border-amber-400/25 flex items-center gap-3 text-amber-900 dark:text-amber-200">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                                    <p className="text-xs sm:text-sm font-semibold">
+                                        ¡Oferta activa de administración! Ahorras {formatCurrency(product.price - discountedPrice)} por cada metro adquirido.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Descripción del producto */}
                             <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -369,12 +408,12 @@ function DetalleProducto() {
                                         />
                                     </div>
                                 </div>
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
-                                    <div className="text-sm text-slate-600 dark:text-slate-300">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 bg-primary-50/70 dark:bg-slate-800/80 border border-primary-200/50 dark:border-slate-700/80 rounded-xl">
+                                    <div className="text-sm text-slate-700 dark:text-slate-200 font-medium">
                                         Total: <span className="font-black text-slate-900 dark:text-white">{totalMetersLabel} metros</span>
-                                        <span className="text-slate-400"> · {cuts} corte{cuts > 1 ? 's' : ''} de {metersPerCut % 1 === 0 ? metersPerCut : metersPerCut.toFixed(1).replace('.', ',')} m</span>
+                                        <span className="text-slate-500 dark:text-slate-400 font-normal"> · {cuts} corte{cuts > 1 ? 's' : ''} de {metersPerCut % 1 === 0 ? metersPerCut : metersPerCut.toFixed(1).replace('.', ',')} m</span>
                                     </div>
-                                    <div className="font-black text-lg text-primary-600 dark:text-primary-400">
+                                    <div className="font-black text-xl text-primary-600 dark:text-primary-400">
                                         {formatCurrency(discountedPrice * totalMeters)}
                                     </div>
                                 </div>
@@ -385,9 +424,9 @@ function DetalleProducto() {
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={isOutOfStock}
-                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-transform rounded-xl py-3 px-6 font-bold ${isOutOfStock
+                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl py-3.5 px-6 font-bold shadow-lg ${isOutOfStock
                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                        : 'btn-primary'
+                                        : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25 cursor-pointer'
                                     }`}
                                 >
                                     <ShoppingCart className="w-5 h-5" /> {isOutOfStock ? 'Agotado' : 'Agregar al Carrito'}
@@ -395,9 +434,9 @@ function DetalleProducto() {
                                 <button
                                     onClick={handleBuyNow}
                                     disabled={isOutOfStock}
-                                    className={`flex-1 active:scale-95 transition-transform rounded-xl py-3 px-6 font-bold ${isOutOfStock
+                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl py-3.5 px-6 font-bold shadow-sm ${isOutOfStock
                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        : 'btn-secondary'
+                                        : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-700/50 cursor-pointer'
                                     }`}
                                 >
                                     Comprar Ahora
@@ -408,16 +447,19 @@ function DetalleProducto() {
                             <div className="flex gap-3">
                                 <button 
                                     onClick={handleToggleWishlist}
-                                    className={`flex-1 flex items-center justify-center gap-2 transition-colors ${
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold transition-all border ${
                                         isInWishlist(product?.id) 
-                                            ? 'btn-secondary text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20' 
-                                            : 'btn-outline'
+                                            ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800/50 shadow-sm' 
+                                            : 'bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                                 >
                                     <Heart className="w-5 h-5" fill={isInWishlist(product?.id) ? "currentColor" : "none"} /> 
                                     {isInWishlist(product?.id) ? 'En Favoritos' : 'Favoritos'}
                                 </button>
-                                <button className="flex-1 btn-outline flex items-center justify-center gap-2">
+                                <button 
+                                    onClick={handleShare}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold transition-all border bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                >
                                     <Share2 className="w-5 h-5" /> Compartir
                                 </button>
                             </div>
