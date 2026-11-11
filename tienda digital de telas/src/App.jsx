@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProviders } from './componentes/AppProviders';
-import { ProtectedRoute, DesplazarArriba, SmoothScrollProvider } from './componentes';
+import { ProtectedRoute, DesplazarArriba, SmoothScrollProvider, ErrorBoundary } from './componentes';
 import CursorFoco from './componentes/CursorFoco';
 import TruckLoader from './componentes/TruckLoader';
 import BotonWhatsAppFlotante from './componentes/common/BotonWhatsAppFlotante';
@@ -415,7 +415,9 @@ function App() {
                 <DesplazarArriba />
                 <CursorFoco />
                 <SmoothScrollProvider>
-                    <AppRoutes />
+                    <ErrorBoundary>
+                        <AppRoutes />
+                    </ErrorBoundary>
                     <BotonWhatsAppFlotante />
                 </SmoothScrollProvider>
             </Router>
