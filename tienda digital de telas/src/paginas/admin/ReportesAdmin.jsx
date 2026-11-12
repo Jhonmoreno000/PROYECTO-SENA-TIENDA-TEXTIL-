@@ -67,7 +67,7 @@ function ReportesAdmin() {
         if (selectedTicket) {
             const currentRef = expansionRefs.current[selectedTicket.id];
             if (currentRef) {
-                gsap.to(currentRef, { height: 0, opacity: 0, duration: 0.3, ease: "power2.inOut" });
+                gsap.to(currentRef, { height: 0, opacity: 0, duration: 0.18, ease: "power2.in" });
             }
         }
 
@@ -77,7 +77,7 @@ function ReportesAdmin() {
             if (targetRef) {
                 gsap.fromTo(targetRef, 
                     { height: 0, opacity: 0 }, 
-                    { height: 'auto', opacity: 1, duration: 0.4, ease: "power2.out" }
+                    { height: 'auto', opacity: 1, duration: 0.22, ease: "power2.out" }
                 );
             }
         } else {
@@ -87,12 +87,12 @@ function ReportesAdmin() {
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.report-item', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out", delay: 0.2 }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.25, stagger: 0.02, ease: "power3.out", delay: 0.05, force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 

@@ -340,18 +340,18 @@ function Contact() {
     ];
 
     useGSAP(() => {
-        gsap.fromTo('.contact-hero-text', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: EASES.smooth });
+        gsap.fromTo('.contact-hero-text', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.28, ease: EASES.smooth, force3D: true, clearProps: 'transform' });
 
         gsap.fromTo('.contact-card',
-            { opacity: 0, y: 30 },
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: EASES.springGentle,
-                scrollTrigger: { trigger: '.contact-cards', start: "top 80%", once: true } }
+            { opacity: 0, y: 18 },
+            { opacity: 1, y: 0, duration: 0.32, stagger: 0.03, ease: "power3.out", force3D: true, clearProps: 'transform',
+                scrollTrigger: { trigger: '.contact-cards', start: "top 88%", once: true } }
         );
 
-        gsap.fromTo('.contact-form', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6, ease: EASES.smooth,
-            scrollTrigger: { trigger: '.contact-form-section', start: "top 80%", once: true } });
-        gsap.fromTo('.contact-map', { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: EASES.smooth,
-            scrollTrigger: { trigger: '.contact-form-section', start: "top 80%", once: true } });
+        gsap.fromTo('.contact-form', { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.32, ease: EASES.smooth, force3D: true, clearProps: 'transform',
+            scrollTrigger: { trigger: '.contact-form-section', start: "top 88%", once: true } });
+        gsap.fromTo('.contact-map', { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.32, ease: EASES.smooth, force3D: true, clearProps: 'transform',
+            scrollTrigger: { trigger: '.contact-form-section', start: "top 88%", once: true } });
     }, { scope: containerRef });
 
     return (

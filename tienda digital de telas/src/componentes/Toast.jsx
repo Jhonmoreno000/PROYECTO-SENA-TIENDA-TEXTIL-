@@ -57,13 +57,14 @@ function Toast({ type, message, onClose }) {
     const progressRef = useRef(null);
 
     useGSAP(() => {
-        // Animación de entrada
+        // Animación de entrada optimizada y rápida
         gsap.from(toastRef.current, { 
             opacity: 0, 
-            y: 50, 
-            scale: 0.9, 
-            duration: 0.5, 
-            ease: "back.out(1.5)",
+            y: 20, 
+            scale: 0.96, 
+            duration: 0.28, 
+            ease: "power3.out",
+            force3D: true,
             clearProps: "all" 
         });
 
@@ -79,10 +80,11 @@ function Toast({ type, message, onClose }) {
         if (toastRef.current) {
             gsap.to(toastRef.current, {
                 opacity: 0, 
-                scale: 0.8, 
-                x: 100,
-                duration: 0.3, 
-                ease: "power3.in",
+                scale: 0.95, 
+                x: 40,
+                duration: 0.2, 
+                ease: "power2.in",
+                force3D: true,
                 onComplete: onClose
             });
         } else {

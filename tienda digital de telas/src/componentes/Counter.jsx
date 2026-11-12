@@ -13,12 +13,12 @@ function Counter({ value, suffix = "", delay = 0 }) {
         const obj = { val: 0 };
         gsap.to(obj, {
             val: numericValue,
-            duration: 2,
+            duration: 1.2,
             delay: delay,
-            ease: "power3.out",
+            ease: "power2.out",
             scrollTrigger: {
                 trigger: ref.current,
-                start: "top 90%",
+                start: "top 92%",
                 once: true
             },
             onUpdate: () => {

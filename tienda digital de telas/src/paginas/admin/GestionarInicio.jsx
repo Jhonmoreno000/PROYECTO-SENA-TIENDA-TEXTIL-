@@ -41,12 +41,12 @@ function GestionarInicio() {
 
     useGSAP(() => {
         gsap.fromTo('.section-item', 
-            { opacity: 0, y: 16 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo(footerRef.current, 
             { opacity: 0 }, 
-            { opacity: 1, duration: 0.5, delay: 0.5 }
+            { opacity: 1, duration: 0.25, delay: 0.1 }
         );
     }, { scope: containerRef });
 

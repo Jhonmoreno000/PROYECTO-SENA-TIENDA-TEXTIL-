@@ -93,15 +93,15 @@ function ControlLotes() {
 
     useGSAP(() => {
         gsap.fromTo('.stat-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 
     useGSAP(() => {
         gsap.fromTo('.batch-card', 
-            { opacity: 0, scale: 0.95, y: 20 }, 
-            { opacity: 1, scale: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "back.out(1.2)", clearProps: "all" }
+            { opacity: 0, scale: 0.98, y: 12 }, 
+            { opacity: 1, scale: 1, y: 0, duration: 0.25, stagger: 0.02, ease: "back.out(1.15)", force3D: true, clearProps: "all" }
         );
     }, { scope: containerRef, dependencies: [filterType] });
 

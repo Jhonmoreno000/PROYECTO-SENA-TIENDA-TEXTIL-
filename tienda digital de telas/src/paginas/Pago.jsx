@@ -45,8 +45,8 @@ function Pago() {
     useGSAP(() => {
         if (headerRef.current) {
             gsap.fromTo(headerRef.current,
-                { opacity: 0, y: 15 },
-                { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+                { opacity: 0, y: 12 },
+                { opacity: 1, y: 0, duration: 0.28, ease: 'power3.out', force3D: true, clearProps: 'transform' }
             );
         }
     }, { scope: headerRef });

@@ -49,24 +49,28 @@ function GestionUsuarios() {
 
         // 1. Entrance for KPI Cards
         tl.fromTo('.kpi-card', 
-            { opacity: 0, y: 20, scale: 0.95 },
+            { opacity: 0, y: 14, scale: 0.98 },
             { 
                 opacity: 1, y: 0, scale: 1, 
-                duration: 0.5, stagger: 0.08, 
-                ease: "back.out(1.4)" 
+                duration: 0.28, stagger: 0.025, 
+                ease: "back.out(1.2)",
+                force3D: true,
+                clearProps: "transform"
             }
         );
 
         // 2. Entrance for User List items
         gsap.fromTo('.user-item',
-            { opacity: 0, x: -15 },
+            { opacity: 0, x: -10 },
             { 
                 opacity: 1, x: 0, 
-                duration: 0.4, stagger: 0.05, 
-                ease: "power2.out",
+                duration: 0.25, stagger: 0.02, 
+                ease: "power3.out",
+                force3D: true,
+                clearProps: "transform",
                 scrollTrigger: {
                     trigger: '.user-list-container',
-                    start: "top 80%"
+                    start: "top 85%"
                 }
             }
         );

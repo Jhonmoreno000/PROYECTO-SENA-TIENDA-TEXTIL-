@@ -112,7 +112,7 @@ export default function Carrito() {
         if (listRef.current) {
             const items = listRef.current.querySelectorAll('[datos-animate]');
             if (items.length > 0) {
-                staggerItems(items, { stagger: 0.06 });
+                staggerItems(items, { stagger: 0.025 });
             }
         }
     }, { dependencies: [cartItems.length], scope: listRef });

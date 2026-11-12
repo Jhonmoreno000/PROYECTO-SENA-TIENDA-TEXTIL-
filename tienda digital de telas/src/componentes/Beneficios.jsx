@@ -55,17 +55,19 @@ function Beneficios() {
     useGSAP(() => {
         const cards = gsap.utils.toArray('.benefit-card');
         gsap.fromTo(cards, 
-            { opacity: 0, y: 35, filter: 'blur(8px)' },
+            { opacity: 0, y: 18, scale: 0.98 },
             { 
                 opacity: 1, 
                 y: 0, 
-                filter: 'blur(0px)',
-                duration: 0.8, 
-                stagger: 0.12, 
-                ease: "power2.out",
+                scale: 1,
+                duration: 0.32, 
+                stagger: 0.03, 
+                ease: "power3.out",
+                force3D: true,
+                clearProps: "transform",
                 scrollTrigger: {
                     trigger: containerRef.current,
-                    start: "top 85%",
+                    start: "top 88%",
                     once: true
                 }
             }

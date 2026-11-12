@@ -50,16 +50,16 @@ function AnalisisDevoluciones() {
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.chart-panel', 
-            { opacity: 0, scale: 0.95 }, 
-            { opacity: 1, scale: 1, duration: 0.6, stagger: 0.1, ease: "back.out(1.2)", delay: 0.3 }
+            { opacity: 0, scale: 0.98 }, 
+            { opacity: 1, scale: 1, duration: 0.28, stagger: 0.03, ease: "power3.out", delay: 0.04, force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.table-container', 
-            { opacity: 0, y: 30 }, 
-            { opacity: 1, y: 0, duration: 0.5, delay: 0.6, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, delay: 0.06, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 
