@@ -199,8 +199,7 @@ public class ManejadorProductos extends ManejadorBase {
 
             // Regla de negocio: Solo el administrador puede activar o desactivar ofertas en los productos
             if (esOferta != null) {
-                java.util.Optional<infraestructura.seguridad.TokenSesion.Identidad> identidad = obtenerIdentidad(intercambio);
-                if (identidad.isEmpty() || !identidad.get().esAdministrador()) {
+                if (!identidad.get().esAdministrador()) {
                     enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
                     return;
                 }
