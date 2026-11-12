@@ -54,8 +54,11 @@ function ProtectedRoute({ children, roles }) {
             (canonicalUserRole === 'admin' && (canonicalAllowedRoles.includes('vendedor') || canonicalAllowedRoles.includes('cliente')));
 
         if (!hasPermission) {
-            // El usuario está autenticado pero no tiene el rol necesario → lo mandamos al inicio
-            return <Navigate to="/" replace />;
+            // El usuario está autenticado pero no tiene el rol necesario → lo dirigimos a su propio panel correspondiente
+            const fallbackDashboard = (canonicalUserRole === 'admin' || canonicalUserRole === 'administrador')
+                ? '/admin'
+                : (canonicalUserRole === 'vendedor' ? '/vendedor' : '/cliente');
+            return <Navigate to={fallbackDashboard} replace />;
         }
     }
 

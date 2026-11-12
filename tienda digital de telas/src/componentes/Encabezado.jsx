@@ -43,6 +43,11 @@ function Encabezado() {
     const { wishlistItems, globalBanner } = useMetricas();
     const [darkMode, toggleDarkMode] = useDarkMode();
     const { user, logout } = useAutenticacion();
+    const rawRole = String(user?.role || user?.rol || 'cliente').toLowerCase();
+    const esAdmin = rawRole === 'admin' || rawRole === 'administrador';
+    const esVendedor = rawRole === 'vendedor';
+    const rutaDashboard = esAdmin ? '/admin' : (esVendedor ? '/vendedor' : '/cliente');
+    const etiquetaRol = esAdmin ? 'Administrador' : (esVendedor ? 'Vendedor' : 'Cliente');
     const cartCount = getCartItemCount();
     const wishlistCount = Array.isArray(wishlistItems) ? wishlistItems.length : 0;
     const containerRef = useRef(null);
@@ -197,11 +202,11 @@ function Encabezado() {
                                                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
                                                     <div className="p-3 border-b border-gray-100 dark:border-slate-700">
                                                         <p className="font-bold text-gray-900 dark:text-white truncate text-sm">{user.name || user.nombre || 'Usuario'}</p>
-                                                        <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
+                                                        <p className="text-xs text-gray-500 capitalize">{etiquetaRol}</p>
                                                     </div>
                                                     <div className="p-1">
                                                         <Link
-                                                            to={user.role === 'cliente' ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
+                                                            to={rutaDashboard}
                                                             onClick={() => setMobileMenuOpen(false)}
                                                             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-slate-700 rounded-lg"
                                                         >
@@ -431,12 +436,12 @@ function Encabezado() {
                                             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
                                                 <div className="p-3.5 border-b border-gray-100 dark:border-slate-700">
                                                     <p className="font-bold text-gray-900 dark:text-white truncate">{user.name || user.nombre || 'Usuario'}</p>
-                                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' || user.role === 'administrador' ? 'Administrador' : (user.role === 'vendedor' ? 'Vendedor' : 'Cliente')}</p>
+                                                    <p className="text-xs text-gray-500 capitalize">{etiquetaRol}</p>
                                                 </div>
 
                                                 <div className="p-1.5">
                                                     <Link
-                                                        to={user.role === 'cliente' ? '/cliente' : (user.role === 'admin' || user.role === 'administrador') ? '/admin' : '/vendedor/productos'}
+                                                        to={rutaDashboard}
                                                         onClick={() => setUserMenuOpen(false)}
                                                         className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/70 rounded-xl transition-colors"
                                                     >
