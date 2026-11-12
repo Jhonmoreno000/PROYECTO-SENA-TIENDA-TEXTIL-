@@ -111,19 +111,22 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 ### 15. [15. Glosario Tecnico y Catalogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)
 *   **Dominio Ubicuo Textil (DDD):** Terminologia industrial (gramaje GSM, lote de tintoreria, urdimbre/trama, mermas), especificaciones de telas, formulas matematicas de confeccion y normatividad de etiquetado NTC.
 
-### 16. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
-*   Especificacion Swagger / OpenAPI v3.0 completa y estandarizada de todos los endpoints de la API REST, con esquemas de peticion, esquemas de respuesta y codigos de error HTTP.
-
-### 14. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx)
-*   Requerimientos funcionales y no funcionales (ISO/IEC 25010) y matriz de trazabilidad hacia casos de uso y clases de diseno.
-
-### 15. [Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)
-*   Herramientas automatizadas de estres y desempeno: Script Grafana k6 (`script_k6_estres_tienda.js`), simulador concurrente nativo PowerShell (`simulador_carga_concurrente.ps1`) y script Bash (`simulador_carga_concurrente.sh`) con evaluacion de percentiles P50 a P99 y throughput.
-
-### 16. [Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)
+### 16. [16. Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)
 *   Protocolo formal de sustentacion paso a paso (25 minutos): roles de cliente, operario de corte en bodega, vendedor y administrador, emision de factura PDF con CUFE, impresion de etiquetas termicas con QR, ejecucion de pruebas automatizadas y banco de preguntas tecnicas del jurado evaluador.
 
-### 17. [Modelo de Negocio y Estrategia de Producto](MODELO_DE_NEGOCIO.md)
+### 17. [17. Manual de Identidad Visual y Guia de Marca (Markdown + PDF)](documentacion/17-manual-de-identidad-visual.md)
+*   **Guia de marca oficial:** Pilares de marca, tono de voz, construccion del logo tipografico e isotipo, paleta cromatica (`#F97316`, `#0F172A`, `#FFFFFF`), escalas completas de `tailwind.config.js`, contraste WCAG, jerarquia tipografica (`Outfit` e `Inter`) y aplicacion en la interfaz. Disponible tambien en **[PDF Oficial Descargable](documentacion/Manual_de_identidad_visual_DD_Textil.pdf)**.
+
+### 18. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
+*   Especificacion Swagger / OpenAPI v3.0 completa y estandarizada de todos los endpoints de la API REST, con esquemas de peticion, esquemas de respuesta y codigos de error HTTP.
+
+### 19. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx)
+*   Requerimientos funcionales y no funcionales (ISO/IEC 25010) y matriz de trazabilidad hacia casos de uso y clases de diseno.
+
+### 20. [Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)
+*   Herramientas automatizadas de estres y desempeno: Script Grafana k6 (`script_k6_estres_tienda.js`), simulador concurrente nativo PowerShell (`simulador_carga_concurrente.ps1`) y script Bash (`simulador_carga_concurrente.sh`) con evaluacion de percentiles P50 a P99 y throughput.
+
+### 21. [Modelo de Negocio y Estrategia de Producto](MODELO_DE_NEGOCIO.md)
 *   Estructuracion ejecutiva y comercial del proyecto: Resumen Ejecutivo, Propuesta de Valor (dolores del sector textil y solucion tecnologica), Segmentacion de Clientes (B2B, B2C y Aliados), Modelo de Ingresos y Monetizacion, Estructura de Costos (CAPEX/OPEX), Canales de Distribucion y Adquisicion, Ventaja Competitiva (Matriz Comparativa y Foso Tecnologico) y Metricas Clave (KPIs financieros, comerciales, logísticos y SLA).
 
 ---
