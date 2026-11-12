@@ -50,14 +50,25 @@ function ProductGrid({ products }) {
         return filtered;
     }, [products, selectedCategory, sortBy, priceRange]);
 
-    // Stagger animation for product cards
+    // Stagger animation for product cards - Optimized snappy grid entrance
     useGSAP(() => {
         if (gridRef.current) {
             const cards = gridRef.current.querySelectorAll('.product-card-wrapper');
-            gsap.fromTo(cards,
-                { opacity: 0, y: 20 },
-                { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "power2.out" }
-            );
+            if (cards.length > 0) {
+                gsap.fromTo(cards,
+                    { opacity: 0, y: 14, scale: 0.98 },
+                    { 
+                        opacity: 1, 
+                        y: 0, 
+                        scale: 1, 
+                        duration: 0.28, 
+                        stagger: 0.025, 
+                        ease: "power3.out", 
+                        force3D: true, 
+                        clearProps: "transform" 
+                    }
+                );
+            }
         }
     }, { scope: gridRef, dependencies: [filteredProducts] });
 

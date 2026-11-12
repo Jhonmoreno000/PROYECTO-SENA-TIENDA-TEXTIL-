@@ -54,8 +54,8 @@ function TarjetaProducto({ product }) {
             setShowAddedMessage(true);
             if (messageRef.current) {
                 gsap.fromTo(messageRef.current,
-                    { opacity: 0, y: -20, x: '-50%', scale: 0.9 },
-                    { opacity: 1, y: 0, x: '-50%', scale: 1, duration: 0.35, ease: "back.out(1.8)", force3D: true }
+                    { opacity: 0, y: -12, x: '-50%', scale: 0.95 },
+                    { opacity: 1, y: 0, x: '-50%', scale: 1, duration: 0.25, ease: "back.out(1.2)", force3D: true }
                 );
             }
             setTimeout(() => setShowAddedMessage(false), 2000);
@@ -86,9 +86,9 @@ function TarjetaProducto({ product }) {
 
     const handleMouseEnter = () => {
         gsap.to(cardRef.current, {
-            scale: 1.04,
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            duration: 0.4,
+            scale: 1.03,
+            boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.22)",
+            duration: 0.22,
             force3D: true,
             ease: "power2.out"
         });
@@ -100,9 +100,9 @@ function TarjetaProducto({ product }) {
             rotationY: 0,
             rotationX: 0,
             boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-            duration: 0.5,
+            duration: 0.22,
             force3D: true,
-            ease: "power2.inOut"
+            ease: "power2.out"
         });
     };
 
@@ -123,7 +123,7 @@ function TarjetaProducto({ product }) {
             gsap.to(cardRef.current, {
                 rotationX: rotateX,
                 rotationY: rotateY,
-                duration: 0.4,
+                duration: 0.18,
                 force3D: true,
                 ease: "power1.out",
                 overwrite: "auto"
