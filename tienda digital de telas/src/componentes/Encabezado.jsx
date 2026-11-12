@@ -71,12 +71,14 @@ function Encabezado() {
 
         if (navRef.current) {
             gsap.from(navRef.current.children, {
-                y: -10,
+                y: -8,
                 opacity: 0,
-                stagger: 0.08,
-                duration: 0.6,
-                ease: "power3.out",
-                delay: 0.2
+                stagger: 0.025,
+                duration: 0.28,
+                ease: "power2.out",
+                delay: 0.05,
+                force3D: true,
+                clearProps: "all"
             });
         }
     }, { scope: containerRef });
@@ -84,11 +86,12 @@ function Encabezado() {
     useGSAP(() => {
         if (mobileMenuOpen && mobileMenuRef.current) {
             gsap.from(mobileMenuRef.current.children, {
-                x: -16,
+                x: -12,
                 opacity: 0,
-                stagger: 0.04,
-                duration: 0.35,
-                ease: EASES.springGentle,
+                stagger: 0.02,
+                duration: 0.22,
+                ease: "power2.out",
+                force3D: true,
                 clearProps: "all"
             });
         }

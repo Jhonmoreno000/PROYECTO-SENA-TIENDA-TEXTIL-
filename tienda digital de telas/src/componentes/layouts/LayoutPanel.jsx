@@ -207,7 +207,7 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
             gsap.to(contentRef.current, {
                 height: "auto",
                 opacity: 1,
-                duration: 0.4,
+                duration: 0.22,
                 ease: "power2.out",
                 display: "block"
             });
@@ -215,7 +215,7 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
             gsap.to(contentRef.current, {
                 height: 0,
                 opacity: 0,
-                duration: 0.3,
+                duration: 0.18,
                 ease: "power2.in",
                 onComplete: () => {
                     if (contentRef.current) contentRef.current.style.display = "none";
@@ -344,11 +344,12 @@ function LayoutPanel({ children, title, links, subtitle }) {
     useGSAP(() => {
         const items = navRef.current.querySelectorAll('.nav-item-anim');
         gsap.from(items, {
-            x: -20,
+            x: -12,
             opacity: 0,
-            stagger: 0.05,
-            duration: 0.6,
-            ease: "back.out(1.7)",
+            stagger: 0.02,
+            duration: 0.28,
+            ease: "back.out(1.2)",
+            force3D: true,
             clearProps: "all"
         });
     }, { dependencies: [], scope: containerRef });
@@ -359,8 +360,8 @@ function LayoutPanel({ children, title, links, subtitle }) {
         
         gsap.to(sidebarRef.current, {
             width: isRailMode ? 80 : 256,
-            duration: 0.4,
-            ease: "power3.inOut"
+            duration: 0.25,
+            ease: "power2.out"
         });
     }, { dependencies: [isRailMode], scope: containerRef });
 

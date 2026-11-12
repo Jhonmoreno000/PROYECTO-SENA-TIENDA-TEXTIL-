@@ -18,8 +18,8 @@ export default function NotificationFeed({ notifications = [] }) {
     useGSAP(() => {
         if (notifications.length > 0) {
             gsap.fromTo('.notif-item', 
-                { opacity: 0, x: 20 }, 
-                { opacity: 1, x: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
+                { opacity: 0, x: 12 }, 
+                { opacity: 1, x: 0, duration: 0.25, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
             );
         }
     }, { scope: containerRef, dependencies: [notifications.length] });
