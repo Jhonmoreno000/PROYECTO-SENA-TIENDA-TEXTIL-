@@ -2,7 +2,7 @@ name: CI/CD Pipeline - Tienda Textil SENA
 
 on:
   push:
-    branches: [ "main", "master", "feature/**", "desarrollo" ]
+    branches: [ "main", "master", "feature/**", "feat/**", "fix/**", "docs/**", "desarrollo" ]
   pull_request:
     branches: [ "main", "master" ]
 
