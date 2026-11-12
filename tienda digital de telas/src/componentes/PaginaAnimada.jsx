@@ -9,6 +9,11 @@ function PaginaAnimada({ children, className = "" }) {
     const navType = useNavigationType();
 
     useGSAP(() => {
+        // Garantizar que la página siempre inicie arriba al montarse o cambiar de ruta
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+
         gsap.fromTo(containerRef.current,
             { opacity: 0, y: 10, scale: 0.995 },
             { 

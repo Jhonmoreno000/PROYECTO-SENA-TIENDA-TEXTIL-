@@ -325,6 +325,14 @@ function LayoutPanel({ children, title, links, subtitle }) {
     const sidebarRef = useRef(null);
     const navRef = useRef(null);
     const containerRef = useRef(null);
+    const mainContentRef = useRef(null);
+
+    // Reiniciar scroll del contenedor principal al navegar entre vistas del panel
+    useEffect(() => {
+        if (mainContentRef.current) {
+            mainContentRef.current.scrollTop = 0;
+        }
+    }, [location.pathname]);
 
     // Estado del Command Palette (Ctrl+K)
     const [cmdOpen, setCmdOpen] = useState(false);
@@ -598,7 +606,7 @@ function LayoutPanel({ children, title, links, subtitle }) {
                 </header>
 
                 {/* Contenido de la página */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                <main ref={mainContentRef} className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     <div className="max-w-7xl mx-auto">
                         {/* Encabezado de escritorio con título */}
                         <div className="hidden lg:flex items-center justify-between mb-8">
