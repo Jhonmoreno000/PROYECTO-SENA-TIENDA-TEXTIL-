@@ -56,8 +56,8 @@ function CreacionCupones() {
     };
 
     const closeModal = () => {
-        gsap.to(modalRef.current, { scale: 0.95, y: 20, opacity: 0, duration: 0.3, ease: "power2.in" });
-        gsap.to(modalOverlayRef.current, { opacity: 0, duration: 0.3, onComplete: () => setShowCreateModal(false) });
+        gsap.to(modalRef.current, { scale: 0.98, y: 12, opacity: 0, duration: 0.18, ease: "power2.in" });
+        gsap.to(modalOverlayRef.current, { opacity: 0, duration: 0.18, onComplete: () => setShowCreateModal(false) });
     };
 
     const openModal = () => {
@@ -66,8 +66,8 @@ function CreacionCupones() {
 
     useGSAP(() => {
         if (showCreateModal) {
-            gsap.fromTo(modalOverlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.3 });
-            gsap.fromTo(modalRef.current, { scale: 0.95, y: 20, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: "back.out(1.4)" });
+            gsap.fromTo(modalOverlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.18 });
+            gsap.fromTo(modalRef.current, { scale: 0.98, y: 12, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.24, ease: "power3.out", force3D: true, clearProps: "transform" });
         }
     }, { dependencies: [showCreateModal] });
 
@@ -84,12 +84,12 @@ function CreacionCupones() {
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 20, scale: 0.97 }, 
-            { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+            { opacity: 0, y: 12, scale: 0.98 }, 
+            { opacity: 1, y: 0, scale: 1, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.coupon-card', 
-            { opacity: 0, y: 20, scale: 0.97 }, 
-            { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.08, ease: "power2.out", delay: 0.2 }
+            { opacity: 0, y: 12, scale: 0.98 }, 
+            { opacity: 1, y: 0, scale: 1, duration: 0.28, stagger: 0.025, ease: "power3.out", delay: 0.04, force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 

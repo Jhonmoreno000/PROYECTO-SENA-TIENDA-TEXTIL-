@@ -61,6 +61,11 @@ export function AuthProvider({ children }) {
 
     const invalidarSesion = useCallback((tokenRechazado) => {
         if (tokenRechazado && tokenRechazado !== tokenActualRef.current) return;
+        try {
+            window.localStorage.removeItem('authUser');
+            window.localStorage.removeItem('token');
+            window.localStorage.removeItem('erp_pinned_items');
+        } catch {}
         setUser(null);
         showNotification('info', MENSAJE_SESION_EXPIRADA);
     }, [setUser, showNotification]);
@@ -129,6 +134,7 @@ export function AuthProvider({ children }) {
                     if (datos.token) {
                         window.localStorage.setItem('token', datos.token);
                     }
+                    window.localStorage.removeItem('erp_pinned_items');
                 } catch (e) {
                     console.error('Error escribiendo authUser a localStorage:', e);
                 }
@@ -291,22 +297,31 @@ export function AuthProvider({ children }) {
 
     /**
      * logout — Cierra la sesión del usuario
-     * Muestra una animación de 2.5 segundos antes de limpiar los datos de sesión.
+     * Limpia datos de autenticación y previene residuos entre roles (admin/vendedor/cliente).
      */
     const logout = () => {
         setIsLoggingOut(true);
         setTimeout(() => {
             setUser(null);           // Borramos el usuario del estado y del localStorage
             try {
+                window.localStorage.removeItem('authUser');
+                window.localStorage.removeItem('token');
                 window.localStorage.removeItem('cart');
                 window.localStorage.removeItem('applied_coupon');
+                window.localStorage.removeItem('erp_pinned_items');
                 window.dispatchEvent(new Event('auth-logout'));
             } catch (e) {
-                console.error('Error limpiando carrito en logout:', e);
+                console.error('Error limpiando datos de sesión en logout:', e);
             }
-            setIsLoggingOut(false);  // Ocultamos la animación de logout
-            showNotification('info', 'Has cerrado sesión');
-        }, 2500); // Esperamos 2.5 segundos para que se vea la animación
+            setIsLoggingOut(false);
+            showNotification('info', 'Has cerrado sesión exitosamente');
+
+            // Si se cerró sesión desde una vista privada, redirigir a /login limpiamente
+            const pathActual = window.location.pathname;
+            if (pathActual.startsWith('/admin') || pathActual.startsWith('/vendedor') || pathActual.startsWith('/cliente')) {
+                window.location.href = '/login';
+            }
+        }, 1000);
     };
 
     /**

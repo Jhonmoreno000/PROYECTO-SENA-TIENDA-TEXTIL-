@@ -41,16 +41,16 @@ function RankingRotacion() {
 
     useGSAP(() => {
         gsap.fromTo('.header-item', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 30, scale: 0.95 }, 
-            { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.1, ease: "power2.out", delay: 0.2 }
+            { opacity: 0, y: 12, scale: 0.98 }, 
+            { opacity: 1, y: 0, scale: 1, duration: 0.28, stagger: 0.025, ease: "power3.out", delay: 0.04, force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.table-panel', 
-            { opacity: 0, y: 30 }, 
-            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power2.out", delay: 0.4 }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", delay: 0.06, force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 

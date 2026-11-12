@@ -32,8 +32,8 @@ export default function LogoutLoader({ children, isLoggingOut }) {
 
   useEffect(() => {
     if (isLoggingOut) {
-      if (overlayRef.current) gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.35 });
-      if (contentRef.current) gsap.fromTo(contentRef.current, { scale: 0.85, opacity: 0, y: 20 }, { scale: 1, opacity: 1, y: 0, duration: 0.3, delay: 0.1, ease: "power2.out" });
+      if (overlayRef.current) gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.22, force3D: true });
+      if (contentRef.current) gsap.fromTo(contentRef.current, { scale: 0.95, opacity: 0, y: 12 }, { scale: 1, opacity: 1, y: 0, duration: 0.24, ease: "power3.out", force3D: true });
     }
   }, [isLoggingOut]);
 

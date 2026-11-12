@@ -112,13 +112,13 @@ export default function ReviewsSection({ productId }) {
         if (sectionRef.current) {
             gsap.fromTo(
                 sectionRef.current,
-                { opacity: 0, y: 30 },
-                { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }
+                { opacity: 0, y: 16 },
+                { opacity: 1, y: 0, duration: 0.32, ease: 'power3.out', force3D: true, clearProps: 'transform' }
             );
         }
     }, { scope: sectionRef });
 
-    // ── Navegación del carrusel con GSAP (scroll suave) ────────────────────
+    // ── Navegación del carrusel con GSAP (scroll suave y rápido) ───────────
     const scrollByCard = (direction) => {
         const el = scrollRef.current;
         if (!el) return;
@@ -126,8 +126,8 @@ export default function ReviewsSection({ productId }) {
         const amount = direction * (card ? card.offsetWidth + 24 : 360);
         gsap.to(el, {
             scrollLeft: Math.max(0, Math.min(el.scrollLeft + amount, el.scrollWidth - el.clientWidth)),
-            duration: 0.6,
-            ease: 'power3.out',
+            duration: 0.35,
+            ease: 'power2.out',
         });
     };
 

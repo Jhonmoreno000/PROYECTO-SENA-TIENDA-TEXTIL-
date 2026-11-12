@@ -51,19 +51,19 @@ function HistorialMovimientos() {
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.table-panel', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.6, delay: 0.3, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, delay: 0.04, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 
     useGSAP(() => {
         gsap.fromTo('.table-row', 
-            { opacity: 0, x: -10 }, 
-            { opacity: 1, x: 0, duration: 0.3, stagger: 0.02, ease: "power2.out" }
+            { opacity: 0, x: -8 }, 
+            { opacity: 1, x: 0, duration: 0.22, stagger: 0.015, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef, dependencies: [filterType, searchTerm] });
 

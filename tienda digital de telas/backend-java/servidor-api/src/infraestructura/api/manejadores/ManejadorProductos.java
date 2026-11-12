@@ -33,16 +33,12 @@ public class ManejadorProductos extends ManejadorBase {
         ProductoDAO dao = new ProductoDAO();
         Gson gson = new Gson();
 
-        if ("GET".equals(metodo)) {
-            manejarGet(intercambio, ruta, dao, gson);
-        } else if ("PUT".equals(metodo)) {
-            manejarPut(intercambio, ruta, dao, gson);
-        } else if ("POST".equals(metodo)) {
-            manejarPost(intercambio, dao, gson);
-        } else if ("DELETE".equals(metodo)) {
-            manejarDelete(intercambio, ruta, dao);
-        } else {
-            enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
+        switch (metodo) {
+            case "GET" -> manejarGet(intercambio, ruta, dao, gson);
+            case "PUT" -> manejarPut(intercambio, ruta, dao, gson);
+            case "POST" -> manejarPost(intercambio, dao, gson);
+            case "DELETE" -> manejarDelete(intercambio, ruta, dao);
+            default -> enviarRespuestaJson(intercambio, 405, "{\"error\":\"Método no permitido\"}");
         }
     }
 
@@ -198,11 +194,9 @@ public class ManejadorProductos extends ManejadorBase {
             Boolean esOferta = extraerBooleano(json, "isOffer", "esOferta");
 
             // Regla de negocio: Solo el administrador puede activar o desactivar ofertas en los productos
-            if (esOferta != null) {
-                if (!identidad.get().esAdministrador()) {
-                    enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
-                    return;
-                }
+            if (esOferta != null && !identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
+                return;
             }
             Double stockExplicito = extraerDouble(json, "stock", "existencias");
 
@@ -306,7 +300,7 @@ public class ManejadorProductos extends ManejadorBase {
             if (json.has(clave) && !json.get(clave).isJsonNull()) {
                 try {
                     return Boolean.valueOf(json.get(clave).getAsBoolean());
-                } catch (Exception ignored) {}
+                } catch (UnsupportedOperationException | IllegalStateException | ClassCastException ignored) {}
             }
         }
         return null;
@@ -318,7 +312,7 @@ public class ManejadorProductos extends ManejadorBase {
             if (json.has(clave) && !json.get(clave).isJsonNull()) {
                 try {
                     return Double.valueOf(json.get(clave).getAsDouble());
-                } catch (Exception ignored) {}
+                } catch (NumberFormatException | UnsupportedOperationException | IllegalStateException | ClassCastException ignored) {}
             }
         }
         return null;

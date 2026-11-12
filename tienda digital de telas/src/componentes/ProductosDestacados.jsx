@@ -21,18 +21,19 @@ function ProductosDestacados() {
 
     useGSAP(() => {
         const tl = gsap.timeline({
+            defaults: { force3D: true },
             scrollTrigger: {
                 trigger: containerRef.current,
-                start: "top 85%",
+                start: "top 88%",
                 once: true
             }
         });
 
         tl.fromTo('.fp-header',
-            { opacity: 0, y: 30 },
+            { opacity: 0, y: 16 },
             {
                 opacity: 1, y: 0,
-                duration: 0.8, stagger: 0.1, ease: "power2.out"
+                duration: 0.28, stagger: 0.03, ease: "power2.out"
             }
         );
 
@@ -40,29 +41,31 @@ function ProductosDestacados() {
             tl.fromTo('.fp-card',
                 {
                     opacity: 0,
-                    y: 40,
-                    scale: 0.97
+                    y: 18,
+                    scale: 0.98
                 },
                 {
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    duration: 0.7,
+                    duration: 0.32,
                     force3D: true,
-                    stagger: 0.08,
-                    ease: "power3.out"
+                    stagger: 0.03,
+                    ease: "power3.out",
+                    clearProps: "transform"
                 },
-                "-=0.4"
+                "-=0.18"
             );
         }
 
         tl.fromTo('.fp-btn',
-            { opacity: 0, scale: 0.9 },
+            { opacity: 0, scale: 0.95 },
             {
                 opacity: 1, scale: 1,
-                duration: 0.5, ease: "back.out(1.4)"
+                duration: 0.25, ease: "back.out(1.2)",
+                clearProps: "transform"
             },
-            "-=0.3"
+            "-=0.15"
         );
 
     }, { scope: containerRef, dependencies: [featuredProducts.length, loading, error] });

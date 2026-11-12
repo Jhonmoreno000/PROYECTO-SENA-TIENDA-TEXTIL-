@@ -261,7 +261,7 @@ function Payment() {
             gsap.fromTo(
                 contentRef.current,
                 { opacity: 0, y: 12 },
-                { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out' }
+                { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out', force3D: true, clearProps: 'transform' }
             );
         }
     }, { scope: contentRef, dependencies: [paymentMethod, submodoPse] });

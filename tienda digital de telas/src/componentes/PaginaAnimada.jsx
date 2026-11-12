@@ -9,11 +9,22 @@ function PaginaAnimada({ children, className = "" }) {
     const navType = useNavigationType();
 
     useGSAP(() => {
-        const dir = navType === 'POP' ? -1 : 1;
+        // Garantizar que la página siempre inicie arriba al montarse o cambiar de ruta
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
 
         gsap.fromTo(containerRef.current,
-            { opacity: 0, x: dir * 40, scale: 0.98 },
-            { opacity: 1, x: 0, scale: 1, duration: DURATIONS.slower, ease: EASES.smoother, force3D: true }
+            { opacity: 0, y: 10, scale: 0.995 },
+            { 
+                opacity: 1, 
+                y: 0, 
+                scale: 1, 
+                duration: DURATIONS.normal, 
+                ease: EASES.smooth, 
+                force3D: true, 
+                clearProps: 'transform' 
+            }
         );
     }, { scope: containerRef });
 

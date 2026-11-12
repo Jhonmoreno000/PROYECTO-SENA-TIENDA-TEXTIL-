@@ -26,7 +26,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import {
-    Home as Inicio, LogOut, Menu, ChevronRight, Search, Pin, MoreVertical, Check,
+    Home as Inicio, LogOut, Menu, ChevronRight, Search, Pin, MoreVertical, Check, LayoutDashboard,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -207,7 +207,7 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
             gsap.to(contentRef.current, {
                 height: "auto",
                 opacity: 1,
-                duration: 0.4,
+                duration: 0.22,
                 ease: "power2.out",
                 display: "block"
             });
@@ -215,7 +215,7 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
             gsap.to(contentRef.current, {
                 height: 0,
                 opacity: 0,
-                duration: 0.3,
+                duration: 0.18,
                 ease: "power2.in",
                 onComplete: () => {
                     if (contentRef.current) contentRef.current.style.display = "none";
@@ -314,6 +314,10 @@ function LayoutPanel({ children, title, links, subtitle }) {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
+    const userRole = String(user?.role || user?.rol || '').toLowerCase();
+    const isCurrentUserAdmin = userRole === 'admin' || userRole === 'administrador';
+    const isAuditingOtherPanel = isCurrentUserAdmin && !location.pathname.startsWith('/admin');
+
 
     // Estado del modo Rail (sidebar colapsado)
     const [isRailMode, setIsRailMode] = useState(false);
@@ -325,6 +329,14 @@ function LayoutPanel({ children, title, links, subtitle }) {
     const sidebarRef = useRef(null);
     const navRef = useRef(null);
     const containerRef = useRef(null);
+    const mainContentRef = useRef(null);
+
+    // Reiniciar scroll del contenedor principal al navegar entre vistas del panel
+    useEffect(() => {
+        if (mainContentRef.current) {
+            mainContentRef.current.scrollTop = 0;
+        }
+    }, [location.pathname]);
 
     // Estado del Command Palette (Ctrl+K)
     const [cmdOpen, setCmdOpen] = useState(false);
@@ -344,11 +356,12 @@ function LayoutPanel({ children, title, links, subtitle }) {
     useGSAP(() => {
         const items = navRef.current.querySelectorAll('.nav-item-anim');
         gsap.from(items, {
-            x: -20,
+            x: -12,
             opacity: 0,
-            stagger: 0.05,
-            duration: 0.6,
-            ease: "back.out(1.7)",
+            stagger: 0.02,
+            duration: 0.28,
+            ease: "back.out(1.2)",
+            force3D: true,
             clearProps: "all"
         });
     }, { dependencies: [], scope: containerRef });
@@ -359,8 +372,8 @@ function LayoutPanel({ children, title, links, subtitle }) {
         
         gsap.to(sidebarRef.current, {
             width: isRailMode ? 80 : 256,
-            duration: 0.4,
-            ease: "power3.inOut"
+            duration: 0.25,
+            ease: "power2.out"
         });
     }, { dependencies: [isRailMode], scope: containerRef });
 
@@ -522,6 +535,18 @@ function LayoutPanel({ children, title, links, subtitle }) {
 
                 {/* ===== FOOTER DEL SIDEBAR ===== */}
                 <div className="p-3 border-t border-gray-200/20 dark:border-slate-800/20 flex flex-col gap-2 bg-white/10 dark:bg-slate-900/10 backdrop-blur-sm">
+                    {/* Botón rápido para volver al panel de Administrador si un admin está auditando vendedor o cliente */}
+                    {isAuditingOtherPanel && (
+                        <Link
+                            to="/admin"
+                            className="mx-1 mb-1 px-3 py-2 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 shadow-md transition-all text-center"
+                            title="Volver a mi Panel de Administrador"
+                        >
+                            <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
+                            {!isRailMode && <span>Panel Administrador</span>}
+                        </Link>
+                    )}
+
                     {/* Perfil del usuario */}
                     <div className={`p-2 flex items-center gap-3 rounded-none border border-white/15 dark:border-slate-700/20 bg-white/20 dark:bg-slate-800/30 shadow-sm backdrop-blur-sm ${isRailMode ? 'justify-center bg-transparent border-transparent shadow-none p-0' : 'mx-1'}`}>
                         <div className="w-10 h-10 rounded-none bg-gray-200 dark:bg-slate-800 flex items-center justify-center text-gray-900 dark:text-gray-100 font-bold shrink-0 border border-gray-300 dark:border-slate-700">
@@ -597,7 +622,7 @@ function LayoutPanel({ children, title, links, subtitle }) {
                 </header>
 
                 {/* Contenido de la página */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                <main ref={mainContentRef} className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     <div className="max-w-7xl mx-auto">
                         {/* Encabezado de escritorio con título */}
                         <div className="hidden lg:flex items-center justify-between mb-8">

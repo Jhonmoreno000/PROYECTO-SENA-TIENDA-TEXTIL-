@@ -49,10 +49,10 @@ export default function CommandPalette({ isOpen, onClose, links = [] }) {
     // GSAP Animation for Open/Close - Optimized
     useGSAP(() => {
         if (isOpen) {
-            gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.25, force3D: true });
+            gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.18, force3D: true });
             gsap.fromTo(modalRef.current, 
-                { opacity: 0, scale: 0.98, y: -10 }, 
-                { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out", force3D: true }
+                { opacity: 0, scale: 0.98, y: -8 }, 
+                { opacity: 1, scale: 1, y: 0, duration: 0.22, ease: "power3.out", force3D: true, clearProps: "transform" }
             );
             setQuery('');
             setSelectedIndex(0);

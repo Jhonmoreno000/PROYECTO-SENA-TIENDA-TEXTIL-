@@ -90,14 +90,14 @@ function ConfirmacionPedido() {
     useGSAP(() => {
         if (!containerRef.current || !orderData) return;
 
-        const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-        tl.fromTo(containerRef.current, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5 });
+        const tl = gsap.timeline({ defaults: { ease: "power3.out", force3D: true } });
+        tl.fromTo(containerRef.current, { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.28, clearProps: "transform" });
 
         const icon = containerRef.current.querySelector('.success-icon');
-        if (icon) tl.fromTo(icon, { scale: 0 }, { scale: 1, duration: 0.5, ease: "back.out(2)" }, "-=0.2");
+        if (icon) tl.fromTo(icon, { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.25)", clearProps: "transform" }, "-=0.15");
 
         const sections = containerRef.current.querySelectorAll('.reveal-section');
-        tl.fromTo(sections, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.1 }, "-=0.2");
+        tl.fromTo(sections, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.025, clearProps: "transform" }, "-=0.15");
     }, { scope: containerRef, dependencies: [orderData] });
 
     if (cargando) {

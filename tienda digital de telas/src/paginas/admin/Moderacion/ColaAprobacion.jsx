@@ -39,14 +39,14 @@ function ColaAprobacion() {
     
     const closePreview = () => {
         gsap.to(previewModalRef.current, { 
-            opacity: 0, scale: 0.9, duration: 0.3, 
+            opacity: 0, scale: 0.96, duration: 0.18, ease: "power2.in", 
             onComplete: () => setSelectedProduct(null) 
         });
     };
 
     const closeReject = () => {
         gsap.to(rejectModalRef.current, { 
-            opacity: 0, scale: 0.9, duration: 0.3, 
+            opacity: 0, scale: 0.96, duration: 0.18, ease: "power2.in", 
             onComplete: () => { setShowRejectModal(null); setRejectReason(''); } 
         });
     };
@@ -61,11 +61,13 @@ function ColaAprobacion() {
     useGSAP(() => {
         if (filteredProducts.length > 0) {
             gsap.fromTo('.approval-card',
-                { opacity: 0, y: 30, scale: 0.95 },
+                { opacity: 0, y: 14, scale: 0.98 },
                 { 
                     opacity: 1, y: 0, scale: 1, 
-                    duration: 0.6, stagger: 0.08, 
-                    ease: "power3.out" 
+                    duration: 0.28, stagger: 0.025, 
+                    ease: "power3.out",
+                    force3D: true,
+                    clearProps: "transform"
                 }
             );
         }
@@ -74,8 +76,8 @@ function ColaAprobacion() {
     useGSAP(() => {
         if (selectedProduct) {
             gsap.fromTo(previewModalRef.current,
-                { opacity: 0, scale: 0.9, y: 20 },
-                { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "back.out(1.2)" }
+                { opacity: 0, scale: 0.98, y: 12 },
+                { opacity: 1, scale: 1, y: 0, duration: 0.24, ease: "power3.out", force3D: true, clearProps: "transform" }
             );
         }
     }, { dependencies: [selectedProduct] });
@@ -83,8 +85,8 @@ function ColaAprobacion() {
     useGSAP(() => {
         if (showRejectModal) {
             gsap.fromTo(rejectModalRef.current,
-                { opacity: 0, scale: 0.9, y: 20 },
-                { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "back.out(1.2)" }
+                { opacity: 0, scale: 0.98, y: 12 },
+                { opacity: 1, scale: 1, y: 0, duration: 0.24, ease: "power3.out", force3D: true, clearProps: "transform" }
             );
         }
     }, { dependencies: [showRejectModal] });

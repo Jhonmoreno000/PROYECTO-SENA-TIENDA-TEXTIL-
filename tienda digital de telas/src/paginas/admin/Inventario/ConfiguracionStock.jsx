@@ -26,16 +26,16 @@ function ConfiguracionStock() {
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.table-panel', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.6, delay: 0.3, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, delay: 0.04, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.alert-card', 
-            { opacity: 0, x: -20 }, 
-            { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, delay: 0.6, ease: "power2.out" }
+            { opacity: 0, x: -12 }, 
+            { opacity: 1, x: 0, duration: 0.25, stagger: 0.025, delay: 0.06, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 

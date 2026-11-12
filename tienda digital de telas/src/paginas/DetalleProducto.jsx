@@ -70,8 +70,8 @@ function DetalleProducto() {
         if (contentRef.current) {
             const left = contentRef.current.querySelector('.pd-left');   // Columna de imágenes
             const right = contentRef.current.querySelector('.pd-right'); // Columna de info
-            if (left) gsap.fromTo(left, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power2.out" });
-            if (right) gsap.fromTo(right, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.6, ease: "power2.out", delay: 0.1 });
+            if (left) gsap.fromTo(left, { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.28, ease: "power3.out", force3D: true, clearProps: "transform" });
+            if (right) gsap.fromTo(right, { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.28, ease: "power3.out", delay: 0.04, force3D: true, clearProps: "transform" });
         }
     }, { scope: contentRef, dependencies: [id] });
 
@@ -79,8 +79,8 @@ function DetalleProducto() {
     useGSAP(() => {
         if (showSuccess && successRef.current) {
             gsap.fromTo(successRef.current,
-                { opacity: 0, y: -10 }, // Empieza invisible y arriba
-                { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" } // Aparece suavemente
+                { opacity: 0, y: -8 },
+                { opacity: 1, y: 0, duration: 0.22, ease: "back.out(1.2)", force3D: true, clearProps: "transform" }
             );
         }
     }, { dependencies: [showSuccess] });
