@@ -82,8 +82,8 @@ function RendimientoVendedores() {
     };
 
     const closeModal = () => {
-        gsap.to(modalRef.current, { scale: 0.95, y: 20, opacity: 0, duration: 0.3, ease: "power2.in" });
-        gsap.to(modalOverlayRef.current, { opacity: 0, duration: 0.3, onComplete: () => {
+        gsap.to(modalRef.current, { scale: 0.98, y: 12, opacity: 0, duration: 0.18, ease: "power2.in" });
+        gsap.to(modalOverlayRef.current, { opacity: 0, duration: 0.18, onComplete: () => {
             setShowSuspendModal(null);
             setSuspensionReason('');
         }});
@@ -91,23 +91,23 @@ function RendimientoVendedores() {
 
     useGSAP(() => {
         if (showSuspendModal) {
-            gsap.fromTo(modalOverlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.3 });
-            gsap.fromTo(modalRef.current, { scale: 0.95, y: 20, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: "back.out(1.4)" });
+            gsap.fromTo(modalOverlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.18 });
+            gsap.fromTo(modalRef.current, { scale: 0.98, y: 12, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.24, ease: "power3.out", force3D: true, clearProps: "transform" });
         }
     }, { dependencies: [showSuspendModal] });
 
     useGSAP(() => {
         gsap.fromTo('.kpi-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.chart-container', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.6, delay: 0.3, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, delay: 0.04, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.table-container', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.6, delay: 0.5, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, delay: 0.06, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 

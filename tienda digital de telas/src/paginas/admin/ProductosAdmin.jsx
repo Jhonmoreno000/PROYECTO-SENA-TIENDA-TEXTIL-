@@ -132,13 +132,13 @@ export default function ProductosAdmin() {
     if (productsLoading || filteredProducts.length === 0) return;
     gsap.fromTo(
       '.kpi-card',
-      { opacity: 0, y: 20, scale: 0.95 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.08, ease: 'back.out(1.4)' }
+      { opacity: 0, y: 14, scale: 0.98 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.28, stagger: 0.025, ease: 'back.out(1.2)', force3D: true, clearProps: 'transform' }
     );
     gsap.fromTo(
       '.product-item',
-      { opacity: 0, x: -15 },
-      { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out', delay: 0.2 }
+      { opacity: 0, x: -10 },
+      { opacity: 1, x: 0, duration: 0.25, stagger: 0.02, ease: 'power3.out', delay: 0.05, force3D: true, clearProps: 'transform' }
     );
   }, { scope: containerRef, dependencies: [productsLoading, filteredProducts.length] });
 
@@ -146,8 +146,8 @@ export default function ProductosAdmin() {
     if (editingProduct && modalRef.current) {
       gsap.fromTo(
         modalRef.current,
-        { opacity: 0, scale: 0.95, y: 20 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: 'back.out(1.2)' }
+        { opacity: 0, scale: 0.98, y: 12 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.24, ease: 'power3.out', force3D: true, clearProps: 'transform' }
       );
     }
   }, { dependencies: [editingProduct] });
@@ -177,7 +177,7 @@ export default function ProductosAdmin() {
   const closeEditModal = () => {
     if (modalRef.current) {
       gsap.to(modalRef.current, {
-        opacity: 0, scale: 0.95, y: 20, duration: 0.25,
+        opacity: 0, scale: 0.98, y: 12, duration: 0.18, ease: 'power2.in',
         onComplete: () => { setEditingProduct(null); setEditForm({}); },
       });
     } else {

@@ -187,10 +187,10 @@ function GestionarCarrusel() {
         if (isAdding) {
             gsap.fromTo(formRef.current,
                 { height: 0, opacity: 0 },
-                { height: 'auto', opacity: 1, duration: 0.4, ease: "power2.out" }
+                { height: 'auto', opacity: 1, duration: 0.22, ease: "power2.out" }
             );
         } else {
-            gsap.to(formRef.current, { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" });
+            gsap.to(formRef.current, { height: 0, opacity: 0, duration: 0.18, ease: "power2.in" });
         }
     }, { scope: containerRef, dependencies: [isAdding] });
 

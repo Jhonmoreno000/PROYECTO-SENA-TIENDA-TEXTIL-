@@ -31,11 +31,11 @@ function Accordion({ id, title, icon: Icon, openSection, setOpenSection, childre
         if (isOpen) {
             gsap.fromTo(contentRef.current, 
                 { height: 0, opacity: 0 }, 
-                { height: 'auto', opacity: 1, duration: 0.4, ease: "power2.out" }
+                { height: 'auto', opacity: 1, duration: 0.22, ease: "power2.out" }
             );
         } else {
             gsap.to(contentRef.current, 
-                { height: 0, opacity: 0, duration: 0.3, ease: "power2.in" }
+                { height: 0, opacity: 0, duration: 0.18, ease: "power2.in" }
             );
         }
     }, { dependencies: [isOpen] });
@@ -96,8 +96,8 @@ function ConfiguracionSistema() {
     useGSAP(() => {
         const hasChanges = JSON.stringify(config) !== JSON.stringify(originalConfig);
         if (hasChanges) {
-            gsap.fromTo(undoBtnRef.current, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.3 });
-            gsap.fromTo(saveBtnRef.current, { y: 100, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "back.out(1.4)" });
+            gsap.fromTo(undoBtnRef.current, { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.22 });
+            gsap.fromTo(saveBtnRef.current, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "back.out(1.2)" });
         }
     }, { dependencies: [config, originalConfig] });
 
@@ -160,9 +160,9 @@ function ConfiguracionSistema() {
 
     useGSAP(() => {
         if (config.globalBanner.enabled) {
-            gsap.fromTo(bannerPreviewRef.current, { height: 0 }, { height: 'auto', duration: 0.3 });
+            gsap.fromTo(bannerPreviewRef.current, { height: 0 }, { height: 'auto', duration: 0.2 });
         } else {
-            gsap.to(bannerPreviewRef.current, { height: 0, duration: 0.3 });
+            gsap.to(bannerPreviewRef.current, { height: 0, duration: 0.18 });
         }
     }, { dependencies: [config.globalBanner.enabled] });
 

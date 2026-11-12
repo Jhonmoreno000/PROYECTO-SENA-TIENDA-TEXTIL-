@@ -39,16 +39,16 @@ function MetricasCliente() {
 
     useGSAP(() => {
         gsap.fromTo('.segment-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.table-container', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, delay: 0.3, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, delay: 0.05, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
         gsap.fromTo('.stats-card', 
-            { opacity: 0, y: 20 }, 
-            { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, delay: 0.5, ease: "power2.out" }
+            { opacity: 0, y: 12 }, 
+            { opacity: 1, y: 0, duration: 0.28, stagger: 0.025, delay: 0.08, ease: "power3.out", force3D: true, clearProps: "transform" }
         );
     }, { scope: containerRef });
 
