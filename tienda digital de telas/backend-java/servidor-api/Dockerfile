@@ -23,7 +23,7 @@ COPY --from=builder --chown=app:app /app/bin ./bin
 COPY --from=builder --chown=app:app /app/lib ./lib
 RUN mkdir -p /app/uploads && chown app:app /app/uploads
 USER app
-EXPOSE 8081
+EXPOSE 8081 8082
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:8081/health/live || exit 1

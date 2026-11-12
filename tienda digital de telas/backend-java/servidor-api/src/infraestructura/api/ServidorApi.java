@@ -148,5 +148,9 @@ public class ServidorApi {
         // Inicia la escucha de conexiones
         servidor.start();
         System.out.println("Servidor API (Alto Rendimiento Concurrente: " + numeroHilos + " hilos) corriendo en puerto: " + puerto);
+
+        // Inicia el servidor WebSocket en tiempo real para eventos de stock, pedidos y notificaciones
+        int puertoWs = infraestructura.configuracion.ConfiguracionEntorno.obtenerEntero("WS_PORT", 8082);
+        infraestructura.api.websocket.ServidorWebSocket.iniciar(puertoWs);
     }
 }

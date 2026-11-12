@@ -201,6 +201,14 @@ public class ManejadorProductos extends ManejadorBase {
             Double stockExplicito = extraerDouble(json, "stock", "existencias");
 
             boolean exito = dao.actualizarProductoSelectivo(idProducto, actualizaciones, destacado, esNueva, esExclusivo, esOferta, stockExplicito);
+            if (exito) {
+                if (stockExplicito != null) {
+                    infraestructura.api.websocket.ServidorWebSocket.transmitirStock(idProducto, stockExplicito);
+                }
+                if (esOferta != null) {
+                    infraestructura.api.websocket.ServidorWebSocket.transmitir("OFERTA_ACTUALIZADA", java.util.Map.of("idProducto", idProducto, "esOferta", esOferta));
+                }
+            }
             if (exito && stockExplicito != null && stockExplicito <= 20.0) {
                 try {
                     String correoAlerta = ConfiguracionEntorno.obtener("SMTP_FROM", "bodega@ddtextil.com");
@@ -249,6 +257,12 @@ public class ManejadorProductos extends ManejadorBase {
 
         boolean exito = dao.agregarProducto(nuevoProducto);
         if (exito) {
+            infraestructura.api.websocket.ServidorWebSocket.transmitir("NUEVO_PRODUCTO", java.util.Map.of(
+                    "id", nuevoProducto.getId(),
+                    "nombre", nuevoProducto.getNombre(),
+                    "precio", nuevoProducto.getPrecio(),
+                    "stock", nuevoProducto.getExistencias()
+            ));
             JsonObject resp = new JsonObject();
             resp.addProperty("success", true);
             resp.addProperty("id", nuevoProducto.getId());

@@ -169,6 +169,11 @@ public class ManejadorPedidos extends ManejadorBase {
             int idPedido = pedidoDAO.crearPedidoConMetadatos(idCliente, total, articulos, metadatos);
 
             if (idPedido > 0) {
+                infraestructura.api.websocket.ServidorWebSocket.transmitir("NUEVO_PEDIDO", java.util.Map.of(
+                        "idPedido", idPedido,
+                        "estado", "pendiente",
+                        "total", total
+                ));
                 String respuesta = "{\"success\":true,\"orderId\":" + idPedido + ",\"idPedido\":" + idPedido + "}";
                 enviarRespuestaJson(intercambio, 201, respuesta);
             } else {
@@ -218,6 +223,7 @@ public class ManejadorPedidos extends ManejadorBase {
             boolean exito = pedidoDAO.actualizarPedido(idPedido, estadoNorm, numeroGuia, notas);
 
             if (exito) {
+                infraestructura.api.websocket.ServidorWebSocket.transmitirPedido(idPedido, estadoNorm);
                 Pedido pedidoActual = pedidoDAO.obtenerPedidoPorId(idPedido);
                 if (pedidoActual != null && pedidoActual.getCorreoCliente() != null && !pedidoActual.getCorreoCliente().isBlank()) {
                     String correo = pedidoActual.getCorreoCliente();
