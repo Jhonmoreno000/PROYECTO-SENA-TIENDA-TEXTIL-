@@ -434,3 +434,19 @@ CREATE INDEX IF NOT EXISTS idx_imagenes_producto_prod_orden ON imagenes_producto
 CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_estado ON pedidos(usuario_id, estado);
 CREATE INDEX IF NOT EXISTS idx_rollos_textil_prod_estado_rem ON rollos_textil(producto_id, estado, metraje_remanente);
 CREATE INDEX IF NOT EXISTS idx_cupones_codigo_activo ON cupones(codigo, activo);
+
+-- 29. TABLA: auditoria_sistema (Registro forense de eventos y seguridad)
+CREATE TABLE IF NOT EXISTS auditoria_sistema (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER,
+    rol VARCHAR(50),
+    accion VARCHAR(100) NOT NULL,
+    recurso VARCHAR(100),
+    ip_origen VARCHAR(45),
+    detalles TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_usuario ON auditoria_sistema(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_accion ON auditoria_sistema(accion);
+CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_fecha ON auditoria_sistema(fecha_creacion);
