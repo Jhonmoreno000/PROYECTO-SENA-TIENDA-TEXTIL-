@@ -20,40 +20,41 @@ export default function Portada() {
     const patternRef = useRef(null);
 
     useGSAP(() => {
-        // 1. Línea de tiempo maestra para la entrada inicial
-        const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+        // 1. Línea de tiempo maestra para la entrada inicial optimizada
+        const tl = gsap.timeline({ defaults: { ease: "power3.out", force3D: true } });
 
-        // Animación de la Imagen (Clip Path Reveal + Zoom interior) - Optimized
+        // Animación de la Imagen (Clip Path Reveal + Zoom interior)
         tl.fromTo(imageRef.current, 
-            { clipPath: "inset(100% 0% 0% 0%)", scale: 1.05 },
-            { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 1.2, force3D: true }
+            { clipPath: "inset(100% 0% 0% 0%)", scale: 1.04 },
+            { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 0.65, ease: "expo.out", force3D: true }
         );
 
         if (textRef.current) {
             const texts = textRef.current.children;
             tl.fromTo(texts,
                 {
-                    y: 30,
+                    y: 18,
                     opacity: 0
                 },
                 {
                     y: 0,
                     opacity: 1,
-                    duration: 0.8,
-                    stagger: 0.12,
+                    duration: 0.38,
+                    stagger: 0.035,
                     ease: "power3.out",
-                    force3D: true
+                    force3D: true,
+                    clearProps: "transform"
                 },
-                "-=0.6"
+                "-=0.45"
             );
         }
 
         // Animación de entrada para el badge flotante
         if (badgeRef.current) {
             tl.fromTo(badgeRef.current,
-                { y: 30, opacity: 0 },
-                { y: 0, opacity: 1, duration: 1 },
-                "-=0.5"
+                { y: 16, opacity: 0, scale: 0.95 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.32, ease: "back.out(1.2)", force3D: true, clearProps: "transform" },
+                "-=0.25"
             );
         }
 

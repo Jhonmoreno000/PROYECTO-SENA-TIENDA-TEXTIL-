@@ -37,14 +37,14 @@ function Carrusel() {
         const title = newSlide.querySelector('.carousel-title');
         const subtitle = newSlide.querySelector('.carousel-subtitle');
         const cta = newSlide.querySelector('.carousel-cta');
-        gsap.set([title, subtitle, cta], { y: 30, opacity: 0 });
+        gsap.set([title, subtitle, cta], { y: 16, opacity: 0 });
 
-        const tl = gsap.timeline();
-        tl.to(oldSlide, { xPercent: -direction * 50, opacity: 0, duration: 0.8, ease: "power2.inOut" }, 0);
-        tl.to(newSlide, { xPercent: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
+        const tl = gsap.timeline({ defaults: { force3D: true } });
+        tl.to(oldSlide, { xPercent: -direction * 35, opacity: 0, duration: 0.42, ease: "power3.out" }, 0);
+        tl.to(newSlide, { xPercent: 0, opacity: 1, duration: 0.42, ease: "power3.out" }, 0);
         tl.to([title, subtitle, cta], {
-            y: 0, opacity: 1, duration: 0.6, stagger: 0.15, ease: "power2.out"
-        }, "-=0.3");
+            y: 0, opacity: 1, duration: 0.32, stagger: 0.04, ease: "power2.out", clearProps: "transform"
+        }, "-=0.25");
 
         setCurrentSlide(newIndex);
         currentRef.current = newIndex;
