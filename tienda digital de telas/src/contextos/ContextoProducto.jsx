@@ -18,6 +18,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { getApiUrl, RUTAS_API } from '../config';
 import { useNotificacion } from './ContextoNotificacion';
+import servicioWebSocket from '../servicios/servicioWebSocket';
 
 const CLAVE_CACHE_CATALOGO = 'ddtextil_catalogo_respaldo_v1';
 
@@ -189,6 +190,42 @@ export function ProductProvider({ children }) {
         return () => {
             window.removeEventListener('online', alRecuperarConexion);
             window.removeEventListener('focus', alRecuperarConexion);
+        };
+    }, [fetchProducts]);
+
+    // Sincronización en tiempo real vía WebSocket
+    useEffect(() => {
+        servicioWebSocket.conectar();
+        const desuscribirStock = servicioWebSocket.suscribir('STOCK_ACTUALIZADO', (datos) => {
+            if (!datos || datos.idProducto === undefined) return;
+            setProducts((prev) =>
+                prev.map((p) =>
+                    String(p.id) === String(datos.idProducto)
+                        ? { ...p, stock: Number(datos.stock), existencias: Number(datos.stock) }
+                        : p
+                )
+            );
+        });
+
+        const desuscribirOferta = servicioWebSocket.suscribir('OFERTA_ACTUALIZADA', (datos) => {
+            if (!datos || datos.idProducto === undefined) return;
+            setProducts((prev) =>
+                prev.map((p) =>
+                    String(p.id) === String(datos.idProducto)
+                        ? { ...p, isOffer: Boolean(datos.esOferta), isSale: Boolean(datos.esOferta), esOferta: Boolean(datos.esOferta) }
+                        : p
+                )
+            );
+        });
+
+        const desuscribirNuevo = servicioWebSocket.suscribir('NUEVO_PRODUCTO', () => {
+            fetchProducts();
+        });
+
+        return () => {
+            desuscribirStock();
+            desuscribirOferta();
+            desuscribirNuevo();
         };
     }, [fetchProducts]);
 

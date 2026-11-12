@@ -20,6 +20,7 @@
 
 import React from 'react';
 import { NotificationProvider } from '../contextos/ContextoNotificacion';
+import { WebSocketProvider }    from '../contextos/ContextoWebSocket';
 import { CartProvider }         from '../contextos/ContextoCarrito';
 import { AuthProvider }         from '../contextos/ContextoAutenticacion';
 import { ProductProvider }      from '../contextos/ContextoProducto';
@@ -33,17 +34,19 @@ import { MetricsProvider }      from '../contextos/ContextoMetricas';
 export function AppProviders({ children }) {
     return (
         <NotificationProvider>
-            <AuthProvider>
-                <ProductProvider>
-                    <MetricsProvider>
-                        <CartProvider>
-                            <UIProvider>
-                                {children}
-                            </UIProvider>
-                        </CartProvider>
-                    </MetricsProvider>
-                </ProductProvider>
-            </AuthProvider>
+            <WebSocketProvider>
+                <AuthProvider>
+                    <ProductProvider>
+                        <MetricsProvider>
+                            <CartProvider>
+                                <UIProvider>
+                                    {children}
+                                </UIProvider>
+                            </CartProvider>
+                        </MetricsProvider>
+                    </ProductProvider>
+                </AuthProvider>
+            </WebSocketProvider>
         </NotificationProvider>
     );
 }
