@@ -198,12 +198,9 @@ public class ManejadorProductos extends ManejadorBase {
             Boolean esOferta = extraerBooleano(json, "isOffer", "esOferta");
 
             // Regla de negocio: Solo el administrador puede activar o desactivar ofertas en los productos
-            if (esOferta != null) {
-                java.util.Optional<infraestructura.seguridad.TokenSesion.Identidad> identidad = obtenerIdentidad(intercambio);
-                if (identidad.isEmpty() || !identidad.get().esAdministrador()) {
-                    enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
-                    return;
-                }
+            if (esOferta != null && !identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
+                return;
             }
             Double stockExplicito = extraerDouble(json, "stock", "existencias");
 
