@@ -41,6 +41,8 @@ import {
   Star,           // Estrella para "más vendidos"
   AlertTriangle,  // Triángulo de advertencia para stock bajo
   Image as ImageIcon, // Ícono de imagen cuando no hay foto
+  ShieldCheck,    // Insignia de autorización
+  Tag,            // Etiqueta de oferta
 } from 'lucide-react';
 
 // GSAP: librería de animaciones profesionales
@@ -54,6 +56,7 @@ import { formatCurrency } from '../../utilidades/formateadores';               /
 import { useProductos } from '../../contextos/ContextoProducto';            // Trae los productos de la API
 import { useNotificacion } from '../../contextos/ContextoNotificacion';   // Muestra notificaciones en pantalla
 import { useMetricas } from '../../contextos/ContextoMetricas';
+import { useAutenticacion } from '../../contextos/ContextoAutenticacion';
 import BackButton from '../../componentes/dashboard/BackButton';         // Botón "← Volver"
 import { getApiUrl } from '../../config';
 
@@ -88,7 +91,8 @@ export default function ProductosAdmin() {
   // - deleteProduct / updateProduct: funciones para guardar cambios en la API
   const { products, loading: productsLoading, deleteProduct, updateProduct, refreshProducts } = useProductos();
   const { productDiscounts, saveProductDiscount } = useMetricas();
-
+  const { user } = useAutenticacion();
+  const esAdmin = user?.rol === 'administrador' || user?.rol === 'admin';
 
   // ── Estado local ──────────────────────────────────────────────────────────
   const [searchTerm,      setSearchTerm]      = useState('');
@@ -632,31 +636,78 @@ export default function ProductosAdmin() {
                   </div>
 
                   <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700/60 pt-4">
-                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
-                      Oferta / Descuento
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div
-                          onClick={() => setEditForm(prev => ({ ...prev, discountActive: !prev.discountActive }))}
-                          className={`relative w-11 h-6 rounded-full transition-all duration-300 ${editForm.discountActive ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-slate-300 dark:bg-slate-600'}`}
-                        >
-                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${editForm.discountActive ? 'left-6' : 'left-1'}`} />
-                        </div>
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Activar oferta</span>
-                      </label>
-                      {editForm.discountActive && (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={editForm.discountPercent || ''}
-                            onChange={e => setEditForm(prev => ({ ...prev, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) }))}
-                            className={`w-20 px-3 py-2 font-black text-sm text-center ${glassInput}`}
-                            min={0}
-                            max={100}
-                            placeholder="20"
-                          />
-                          <span className="text-sm font-bold text-slate-400">% OFF</span>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <Tag className="w-4 h-4 text-orange-500" />
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                          Oferta y Descuento Promocional
+                        </span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                        <ShieldCheck className="w-3 h-3" /> Exclusivo Administrador
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/10 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <label className={`flex items-center gap-2.5 ${esAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                          <div
+                            onClick={() => {
+                              if (!esAdmin) {
+                                showNotification('error', 'Solo el Administrador puede activar o desactivar ofertas.');
+                                return;
+                              }
+                              setEditForm(prev => {
+                                const nextState = !prev.discountActive;
+                                return {
+                                  ...prev,
+                                  discountActive: nextState,
+                                  isOffer: nextState, // Sincroniza automáticamente la bandera de oferta especial
+                                  discountPercent: nextState ? (prev.discountPercent || 15) : 0
+                                };
+                              });
+                            }}
+                            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${editForm.discountActive ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-slate-300 dark:bg-slate-600'}`}
+                          >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${editForm.discountActive ? 'left-6' : 'left-1'}`} />
+                          </div>
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {editForm.discountActive ? 'Oferta Activa' : 'Activar oferta comercial'}
+                          </span>
+                        </label>
+
+                        {editForm.discountActive && (
+                          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-orange-200 dark:border-orange-500/30 shadow-xs">
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Descuento:</span>
+                            <input
+                              type="number"
+                              disabled={!esAdmin}
+                              value={editForm.discountPercent || ''}
+                              onChange={e => setEditForm(prev => ({ ...prev, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                              className="w-16 px-2 py-1 font-black text-sm text-center bg-transparent border-b border-orange-400 outline-none text-orange-600 dark:text-orange-400"
+                              min={1}
+                              max={99}
+                              placeholder="15"
+                            />
+                            <span className="text-xs font-black text-orange-500">% OFF</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Cálculo en vivo de precio con descuento */}
+                      {editForm.discountActive && editForm.price && (
+                        <div className="pt-2 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs">
+                          <span className="text-slate-500 dark:text-slate-400">
+                            Precio de liquidación con descuento:
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="line-through text-slate-400">
+                              {formatCurrency(editForm.price)}
+                            </span>
+                            <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                              {formatCurrency(Number(editForm.price) * (1 - (Number(editForm.discountPercent) || 0) / 100))}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>

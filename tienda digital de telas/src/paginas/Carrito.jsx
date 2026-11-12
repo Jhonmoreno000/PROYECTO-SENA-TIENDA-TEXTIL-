@@ -251,8 +251,12 @@ export default function Carrito() {
                                                 </button>
                                             </div>
                                             <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
-                                                <span>Descuento</span>
+                                                <span>Descuento aplicado</span>
                                                 <span>−{formatCurrency(discount)}</span>
+                                            </div>
+                                            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                                <span>¡Oferta activa! Estás ahorrando {formatCurrency(discount)} en este pedido.</span>
                                             </div>
                                         </div>
                                     ) : (

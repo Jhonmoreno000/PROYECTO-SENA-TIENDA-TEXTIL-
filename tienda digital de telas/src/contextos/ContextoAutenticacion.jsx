@@ -124,9 +124,18 @@ export function AuthProvider({ children }) {
                 delete loggedInUser.password_hash;
                 delete loggedInUser.contrasena_hash;
 
+                try {
+                    window.localStorage.setItem('authUser', JSON.stringify(loggedInUser));
+                    if (datos.token) {
+                        window.localStorage.setItem('token', datos.token);
+                    }
+                } catch (e) {
+                    console.error('Error escribiendo authUser a localStorage:', e);
+                }
+
                 setUser(loggedInUser);
                 showNotification('success', `¡Bienvenido ${loggedInUser.name}!`);
-                return { success: true };
+                return { success: true, user: loggedInUser };
             } else {
                 showNotification('error', datos.error || 'Credenciales inválidas');
                 return { success: false, message: datos.error };

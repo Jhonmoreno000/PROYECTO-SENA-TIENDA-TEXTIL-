@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Percent, Tag, Zap, Clock, X, Check, Copy, Gift } from 'lucide-react';
+import { Plus, Percent, Tag, Zap, Clock, X, Check, Copy, Gift, ShieldCheck, AlertCircle } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
+import { useAutenticacion } from '../../../contextos/ContextoAutenticacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 import enlacesAdmin from '../../../datos/enlacesAdmin';
 
@@ -13,7 +14,9 @@ const glassCard = "bg-white dark:bg-slate-800 border border-slate-200 dark:borde
 const cleanInput = "bg-slate-50 dark:bg-slate-900  border border-slate-200 dark:border-slate-700 focus:border-[#f97316] rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-[#f97316]/20 transition-all placeholder-slate-400";
 
 function CreacionCupones() {
-    const { coupons, createCoupon, deactivateCoupon } = useMetricas();
+    const { coupons, createCoupon, deactivateCoupon, activateCoupon } = useMetricas();
+    const { user } = useAutenticacion();
+    const esAdmin = user?.rol === 'administrador' || user?.rol === 'admin';
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [copiedCode, setCopiedCode] = useState(null);
     const containerRef = useRef(null);
@@ -125,6 +128,24 @@ function CreacionCupones() {
                         >
                             <Plus className="w-5 h-5" /> Crear Cupón
                         </button>
+                    </div>
+
+                    {/* Banner de Autorización Exclusiva del Administrador */}
+                    <div className="mb-8 p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 backdrop-blur-md flex items-center justify-between gap-4 flex-wrap text-amber-800 dark:text-amber-200 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                                <ShieldCheck className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-slate-900 dark:text-white">Gestión Exclusiva de Administración</h4>
+                                <p className="text-xs text-slate-600 dark:text-slate-300">
+                                    Solo el Administrador tiene autoridad para crear, activar y desactivar cupones de descuento y promociones de la tienda.
+                                </p>
+                            </div>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300/50">
+                            Rol: {esAdmin ? 'Administrador Autorizado' : 'Solo Lectura'}
+                        </span>
                     </div>
 
                     {/* KPI Cards */}
@@ -272,14 +293,26 @@ function CreacionCupones() {
                                                 <Clock size={11} /> {expiry.label}
                                             </div>
 
-                                            {isActive && !isExpired && (
-                                                <button
-                                                    onClick={() => deactivateCoupon(coupon.id)}
-                                                    className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 border-2 border-rose-200 rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-[0_0_12px_rgba(244,63,94,0.3)] transition-all"
-                                                >
-                                                    Desactivar
-                                                </button>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {isActive && !isExpired && (
+                                                    <button
+                                                        onClick={() => deactivateCoupon(coupon.id)}
+                                                        disabled={!esAdmin}
+                                                        className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 border-2 border-rose-200 dark:border-rose-900/40 rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Desactivar
+                                                    </button>
+                                                )}
+                                                {!isActive && !isExpired && (
+                                                    <button
+                                                        onClick={() => activateCoupon(coupon.id)}
+                                                        disabled={!esAdmin}
+                                                        className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 border-2 border-emerald-200 dark:border-emerald-900/40 rounded-xl hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Activar Cupón
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 );

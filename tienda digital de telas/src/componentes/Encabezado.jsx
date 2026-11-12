@@ -38,8 +38,9 @@ const bottomNavLinks = [
 function Encabezado() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [bannerDismissed, setBannerDismissed] = useState(false);
     const { getCartItemCount } = useCarrito();
-    const { wishlistItems } = useMetricas();
+    const { wishlistItems, globalBanner } = useMetricas();
     const [darkMode, toggleDarkMode] = useDarkMode();
     const { user, logout } = useAutenticacion();
     const cartCount = getCartItemCount();
@@ -100,6 +101,29 @@ function Encabezado() {
         return (
             <>
                 <header ref={navRef} className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-gray-200/20 dark:border-slate-700/20 shadow-sm select-none">
+                    {globalBanner?.enabled && globalBanner?.message && !bannerDismissed && (
+                        <div className={`px-3 py-1.5 text-xs font-semibold flex items-center justify-between border-b backdrop-blur-md transition-all ${
+                            globalBanner.type === 'success'
+                                ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border-emerald-500/30'
+                                : globalBanner.type === 'warning'
+                                    ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-500/30'
+                                    : 'bg-primary-500/15 text-primary-900 dark:text-primary-200 border-primary-500/30'
+                        }`}>
+                            <div className="flex items-center gap-1.5 flex-1 pr-2 truncate">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-primary-600 text-white shrink-0">
+                                    Oferta
+                                </span>
+                                <span className="truncate">{globalBanner.message}</span>
+                            </div>
+                            <button
+                                onClick={() => setBannerDismissed(true)}
+                                className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-white shrink-0"
+                                aria-label="Cerrar aviso"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
                     <nav className="px-3">
                         <div className="flex justify-between items-center h-14">
 
@@ -133,6 +157,15 @@ function Encabezado() {
                                         <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                                     )}
                                 </button>
+
+                                <Link to="/favoritos" className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100" aria-label="Favoritos" title="Mis telas favoritas">
+                                    <Heart className={`w-5 h-5 ${wishlistCount > 0 ? 'text-red-500 fill-red-500' : 'text-gray-700 dark:text-gray-300'}`} />
+                                    {wishlistCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
+                                            {wishlistCount}
+                                        </span>
+                                    )}
+                                </Link>
 
                                 <Link to="/carrito" className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-gray-100 dark:active:bg-slate-800 active:scale-90 transition-all duration-100">
                                     <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -241,6 +274,29 @@ function Encabezado() {
 
     return (
         <header ref={containerRef} className="sticky top-0 z-50 bg-white/25 dark:bg-slate-900/25 backdrop-blur-2xl border-b border-gray-200/20 dark:border-slate-700/20 shadow-sm">
+            {globalBanner?.enabled && globalBanner?.message && !bannerDismissed && (
+                <div className={`px-4 py-2 text-xs md:text-sm font-semibold flex items-center justify-between border-b backdrop-blur-md transition-all ${
+                    globalBanner.type === 'success'
+                        ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border-emerald-500/30'
+                        : globalBanner.type === 'warning'
+                            ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-500/30'
+                            : 'bg-primary-500/15 text-primary-900 dark:text-primary-200 border-primary-500/30'
+                }`}>
+                    <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 text-center flex-1 pr-6">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary-600 text-white shadow-sm">
+                            Oferta Exclusiva
+                        </span>
+                        <span>{globalBanner.message}</span>
+                    </div>
+                    <button
+                        onClick={() => setBannerDismissed(true)}
+                        className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+                        aria-label="Cerrar aviso de oferta"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16 md:h-20">
 
@@ -304,7 +360,7 @@ function Encabezado() {
                             </button>
 
                             <Link
-                                to={user ? "/cliente/coleccion" : "/catalogo"}
+                                to="/favoritos"
                                 className="relative group"
                                 aria-label="Mis telas favoritas"
                                 title={wishlistCount > 0 ? `${wishlistCount} tela(s) en favoritos` : 'Mis telas favoritas'}

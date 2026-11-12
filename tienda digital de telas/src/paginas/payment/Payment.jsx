@@ -69,15 +69,33 @@ function Payment() {
 
     useEffect(() => {
         const savedOrder = localStorage.getItem('lastOrder');
+        let valido = false;
         if (savedOrder) {
             try {
                 const parsed = JSON.parse(savedOrder);
-                setCustomerInfo(parsed.customerInfo || null);
+                const info = parsed.customerInfo;
+                if (
+                    info &&
+                    typeof info.fullName === 'string' && info.fullName.trim().length >= 3 &&
+                    typeof info.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email.trim()) &&
+                    typeof info.phone === 'string' && info.phone.trim().length >= 7 &&
+                    typeof info.address === 'string' && info.address.trim().length >= 5 &&
+                    typeof info.city === 'string' && info.city.trim().length >= 2
+                ) {
+                    setCustomerInfo(info);
+                    valido = true;
+                }
             } catch (e) {
                 console.error('Error parseando datos de envío guardados:', e);
             }
         }
-    }, []);
+
+        // Si no ha llenado el formulario de contacto y entrega, NO se permite ingresar a los métodos de pago
+        if (!valido) {
+            showNotification('error', 'Debes completar tus datos de contacto y entrega antes de seleccionar el método de pago.');
+            navigate('/checkout');
+        }
+    }, [navigate, showNotification]);
 
     const detectCardType = (number) => {
         const c = (number || '').replace(/\s/g, '');

@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Íconos de lucide-react usados en todo el panel
 import {
@@ -78,11 +79,23 @@ export default function PanelVendedor() {
     getProductsBySeller, getOrdersBySeller, getBugReportsBySeller,
     deleteProduct, refreshData,
   } = useMetricas();
-  const { updateProduct, refreshProducts } = useProductos();
+  const { updateProduct, refreshProducts, addProduct } = useProductos();
 
   // ── Filtros de la barra superior (rango de fechas y categoría) ────────
   // Estos valores controlan qué periodo y qué tipo de producto se muestra.
   const [filters, setFilters] = useState({ dateRange: '7d', category: 'all' });
+
+  // ── Estado para nuevo producto modal ──────────────────────────────────
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: '',
+    stock: '',
+    category: 'algodon',
+    description: '',
+    images: ['https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80']
+  });
 
   // ── Estado para editar un producto directamente en la tabla ───────────
   // editingId guarda el ID del producto que se está editando (null = ninguno)
@@ -90,9 +103,15 @@ export default function PanelVendedor() {
   // editForm es una copia temporal del producto para no perder los datos originales
   const [editForm, setEditForm] = useState({});
 
+  const location = useLocation();
+
   // ── Datos del vendedor actual obtenidos de la base de datos ───────────
-  // sellerId viene del usuario que inició sesión
-  const sellerId = user?.id;
+  // sellerId viene del usuario que inició sesión. Si es administrador inspeccionando
+  // o el vendedor aún no tiene productos asociados, usamos ID 2 (Carlos Pérez) para poblar el demo.
+  const isElevatedRole = user?.role === 'admin' || user?.rol === 'administrador' || user?.role === 'administrador';
+  const directProducts = getProductsBySeller(user?.id);
+  const effectiveSellerId = (directProducts.length > 0 || !isElevatedRole) ? user?.id : 2;
+  const sellerId = effectiveSellerId;
 
   // Filtramos solo los productos que le pertenecen a este vendedor
   const sellerProducts = getProductsBySeller(sellerId);
@@ -103,26 +122,64 @@ export default function PanelVendedor() {
   // Filtramos solo los reportes de problemas relacionados con este vendedor
   const sellerBugReports = getBugReportsBySeller(sellerId);
 
-  // ── Cálculo de métricas (totales, promedios, etc.) ─────────────────────
-  // getSellerMetrics calcula: ventas totales, número de pedidos, ticket promedio,
-  // pedidos completados y pedidos pendientes
-  const metrics = getSellerMetrics(sellerId, orders, bugReports);
+  // ── Auto-scroll al inventario cuando la ruta es /vendedor/productos ──
+  useEffect(() => {
+    if (location.pathname === '/vendedor/productos') {
+      const el = document.getElementById('inventario-vendedor');
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    }
+  }, [location.pathname]);
 
-  // Los 5 productos que más veces aparecen en pedidos de este vendedor
-  const topProducts = getTopProducts(sellerOrders, sellerProducts, 5);
+  // ── FILTRADO REACTIVO REAL ─────────────────────────────────────────────
+  // 1. Filtrado de productos por categoría
+  const filteredProducts = sellerProducts.filter(p => {
+    if (!filters.category || filters.category === 'all') return true;
+    const cat = (p.category || p.categoria || '').toLowerCase();
+    return cat.includes(filters.category.toLowerCase());
+  });
+
+  // 2. Filtrado de pedidos por rango de fecha
+  const filteredOrders = sellerOrders.filter(o => {
+    if (!o.date) return true;
+    const oDate = new Date(o.date);
+    const now = new Date();
+    if (filters.dateRange === '7d') {
+      const past7 = new Date(); past7.setDate(now.getDate() - 7);
+      return oDate >= past7;
+    }
+    if (filters.dateRange === '30d') {
+      const past30 = new Date(); past30.setDate(now.getDate() - 30);
+      return oDate >= past30;
+    }
+    if (filters.dateRange === 'ytd') {
+      const startYear = new Date(now.getFullYear(), 0, 1);
+      return oDate >= startYear;
+    }
+    return true;
+  });
+
+  // Métricas reactivas calculadas según los filtros activos
+  const liveTotalSales = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const liveTotalOrders = filteredOrders.length;
+  const liveAverageTicket = liveTotalOrders > 0 ? Math.round(liveTotalSales / liveTotalOrders) : 0;
+
+  // Los 5 productos estrella según los pedidos filtrados
+  const topProducts = getTopProducts(filteredOrders, filteredProducts, 5);
 
   // Cuántos productos tienen menos de 20 metros en inventario (stock bajo)
-  const lowStockCount = sellerProducts.filter(p => p.stock < 20).length;
+  const lowStockCount = filteredProducts.filter(p => p.stock < 20).length;
 
   // ── Cargar datos frescos cuando el vendedor entra a la pantalla ────────
-  // Esto llama a la API para traer datos actualizados de la base de datos
   useEffect(() => {
     if (sellerId) refreshData();
   }, [sellerId]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    // En un caso real, esto filtraría la datos global
   };
 
   const handleRefresh = () => {
@@ -130,39 +187,67 @@ export default function PanelVendedor() {
     showNotification('success', 'Datos sincronizados exitosamente.');
   };
 
-  // ── Datos para la gráfica de ventas de los últimos 7 días ─────────────
-  // Buscamos la fecha más reciente entre los pedidos del vendedor.
-  // Si no tiene ningún pedido aún, usamos la fecha de hoy como punto de partida.
-  const maxDateStr = sellerOrders.reduce((max, o) => {
+  // ── Datos para la gráfica según el rango seleccionado ────────────────
+  const maxDateStr = filteredOrders.reduce((max, o) => {
     return (!max || (o.date && o.date > max)) ? o.date : max;
   }, null);
 
-  // baseDate es el día desde donde contamos hacia atrás 7 días
   const baseDate = maxDateStr ? new Date(maxDateStr + 'T12:00:00') : new Date();
 
-  // Creamos un arreglo con las últimas 7 fechas en formato YYYY-MM-DD
-  const last7Days = [...Array(7)].map((_, i) => {
-    const date = new Date(baseDate);
-    date.setDate(date.getDate() - (6 - i));
-    return date.toISOString().split('T')[0];
-  });
+  // Generamos puntos de la gráfica según el filtro de tiempo
+  const chartData = (() => {
+    if (filters.dateRange === '30d') {
+      // 6 bloques de 5 días
+      return [25, 20, 15, 10, 5, 0].map(offset => {
+        const dPoint = new Date(baseDate);
+        dPoint.setDate(dPoint.getDate() - offset);
+        const datePrefix = dPoint.toISOString().split('T')[0];
+        const dayOrders = filteredOrders.filter(o => o.date && o.date.startsWith(datePrefix));
+        const daySales = dayOrders.reduce((sum, o) => sum + o.total, 0);
+        return {
+          date: dPoint.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
+          actualSales: daySales,
+          targetSales: daySales > 0 ? Math.round(daySales * 1.2) : 60000,
+        };
+      });
+    }
 
-  // Para cada día buscamos cuánto vendió el vendedor y lo preparamos para la gráfica.
-  // La gráfica ErpAreaChart necesita los campos: date, actualSales, targetSales
-  const chartData = last7Days.map(date => {
-    // Pedidos entregados en ese día exacto
-    const dayOrders = sellerOrders.filter(o => o.date && o.date.startsWith(date));
-    // Suma total de dinero de esos pedidos
-    const daySales = dayOrders.reduce((sum, o) => sum + o.total, 0);
-    return {
-      // Etiqueta del eje X: "Lun", "Mar", "Mié"...
-      date: new Date(date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short' }),
-      // Ventas reales del día
-      actualSales: daySales,
-      // Meta del día: si hay ventas, ponemos un 20% más; si no, una meta base de $50.000
-      targetSales: daySales > 0 ? Math.round(daySales * 1.2) : 50000,
-    };
-  });
+    if (filters.dateRange === 'ytd') {
+      // Meses transcurridos del año
+      const currentMonth = new Date().getMonth();
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return [...Array(currentMonth + 1)].map((_, mIdx) => {
+        const monthOrders = filteredOrders.filter(o => {
+          if (!o.date) return false;
+          const d = new Date(o.date);
+          return d.getFullYear() === new Date().getFullYear() && d.getMonth() === mIdx;
+        });
+        const monthSales = monthOrders.reduce((sum, o) => sum + o.total, 0);
+        return {
+          date: monthNames[mIdx],
+          actualSales: monthSales,
+          targetSales: monthSales > 0 ? Math.round(monthSales * 1.2) : 150000,
+        };
+      });
+    }
+
+    // Por defecto: últimos 7 días
+    const last7Days = [...Array(7)].map((_, i) => {
+      const date = new Date(baseDate);
+      date.setDate(date.getDate() - (6 - i));
+      return date.toISOString().split('T')[0];
+    });
+
+    return last7Days.map(date => {
+      const dayOrders = filteredOrders.filter(o => o.date && o.date.startsWith(date));
+      const daySales = dayOrders.reduce((sum, o) => sum + o.total, 0);
+      return {
+        date: new Date(date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'short' }),
+        actualSales: daySales,
+        targetSales: daySales > 0 ? Math.round(daySales * 1.2) : 50000,
+      };
+    });
+  })();
 
   // Datos de tendencia para las mini-gráficas dentro de las tarjetas de métricas
   const salesTrendData  = chartData.map(d => ({ value: d.actualSales || 1000 }));
@@ -248,6 +333,54 @@ export default function PanelVendedor() {
     }
   };
 
+  /** Maneja cambios en el formulario de creación de producto */
+  const handleNewProductChange = (e) => {
+    const { name, value } = e.target;
+    setNewProduct(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  /** Envía la creación del nuevo producto */
+  const handleCreateProduct = async (e) => {
+    e.preventDefault();
+    if (!newProduct.name || !newProduct.price || !newProduct.stock) {
+      showNotification('error', 'Por favor completa nombre, precio y stock.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const creado = await addProduct({
+        ...newProduct,
+        price: Number(newProduct.price),
+        stock: Number(newProduct.stock),
+        sellerId: user?.id || 2,
+        sellerName: user?.name || user?.nombre || 'Vendedor',
+        status: 'approved'
+      });
+      if (creado) {
+        showNotification('success', 'Producto publicado con éxito.');
+        setShowNewModal(false);
+        setNewProduct({
+          name: '',
+          price: '',
+          stock: '',
+          category: 'algodon',
+          description: '',
+          images: ['https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80']
+        });
+        refreshData();
+        refreshProducts();
+      }
+    } catch (err) {
+      console.error('Error al crear producto:', err);
+      showNotification('error', 'Ocurrió un error al crear el producto.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ── Renderizado ────────────────────────────────────────────────────────
   return (
     <LayoutPanel
@@ -282,6 +415,9 @@ export default function PanelVendedor() {
                     <option value="algodon">Algodón</option>
                     <option value="seda">Seda</option>
                     <option value="lino">Lino</option>
+                    <option value="poliester">Poliéster</option>
+                    <option value="lana">Lana</option>
+                    <option value="viscosa">Viscosa</option>
                 </select>
                 <button 
                   onClick={handleRefresh}
@@ -297,38 +433,38 @@ export default function PanelVendedor() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <ErpMetricCard
                 title="Mis Ventas Totales"
-                value={formatCurrency(metrics.totalSales)}
+                value={formatCurrency(liveTotalSales)}
                 icon={DollarSign}
                 trendData={salesTrendData}
-                trendValue="+5.2%"
+                trendValue={filters.dateRange === '7d' ? '7 días' : filters.dateRange === '30d' ? '30 días' : 'Año'}
                 trendDirection="up"
                 colorKey="green"
             />
             <ErpMetricCard
                 title="Pedidos Procesados"
-                value={metrics.totalOrders}
+                value={liveTotalOrders}
                 icon={ShoppingBag}
                 trendData={ordersTrendData}
-                trendValue="+2.1%"
+                trendValue={`${liveTotalOrders} pedidos`}
                 trendDirection="up"
                 colorKey="blue"
             />
             <ErpMetricCard
                 title="Ticket Promedio"
-                value={formatCurrency(metrics.averageTicket)}
+                value={formatCurrency(liveAverageTicket)}
                 icon={TrendingUp}
-                trendValue={metrics.totalOrders > 0 ? "+1.5%" : "0%"}
+                trendValue={liveTotalOrders > 0 ? "Calculado" : "0%"}
                 trendDirection="neutral"
                 colorKey="purple"
             />
             <ErpMetricCard
                 title="Estado de Inventario"
-                value={`${sellerProducts.length} Items`}
+                value={`${filteredProducts.length} Items`}
                 icon={Package}
                 trendValue={lowStockCount > 0 ? `${lowStockCount} Alertas` : "Saludable"}
                 trendDirection={lowStockCount > 0 ? "down" : "up"}
                 colorKey="orange"
-                subtitle="Productos publicados"
+                subtitle={filters.category !== 'all' ? `Categoría: ${filters.category}` : "Productos publicados"}
             />
         </div>
 
@@ -340,7 +476,7 @@ export default function PanelVendedor() {
                 <ErpAreaChart
                     data={chartData}
                     title="Desempeño de Ventas Diarias"
-                    subtitle="Evolución de ingresos de tus productos (Últimos 7 días)"
+                    subtitle={`Evolución de ingresos de tus productos (${filters.dateRange === '7d' ? 'Últimos 7 días' : filters.dateRange === '30d' ? 'Últimos 30 días' : 'Año en curso'})`}
                 />
             </div>
             
@@ -378,7 +514,7 @@ export default function PanelVendedor() {
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
                             <Star className="w-8 h-8 text-gray-300 dark:text-slate-600 mb-2" />
-                            <p className="text-sm font-medium text-gray-500">Sin ventas registradas</p>
+                            <p className="text-sm font-medium text-gray-500">Sin ventas en este periodo</p>
                         </div>
                     )}
                 </div>
@@ -386,20 +522,30 @@ export default function PanelVendedor() {
         </div>
 
         {/* --- TABLA DE DATOS EMPRESARIALES (INVENTARIO) --- */}
-        <div className="card bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+        <div id="inventario-vendedor" className="card bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex flex-wrap gap-4 justify-between items-center bg-gray-50/30 dark:bg-slate-800/30">
             <div className="flex items-center gap-2">
               <Package className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white leading-tight">
-                  Control de Inventario
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-white leading-tight">
+                    Control de Inventario y Catálogo
+                  </h3>
+                  {filters.category !== 'all' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-100 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300 uppercase tracking-widest">
+                      {filters.category}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500 mt-0.5 font-medium">
-                  Gestión rápida de catálogo y precios
+                  Gestión rápida de catálogo, telas y precios
                 </p>
               </div>
             </div>
-            <button className="flex items-center gap-2 text-xs bg-primary-600 text-white px-4 py-2 hover:bg-primary-700 transition-all rounded-lg font-bold shadow-sm uppercase tracking-wider">
+            <button 
+              onClick={() => setShowNewModal(true)}
+              className="flex items-center gap-2 text-xs bg-primary-600 text-white px-4 py-2 hover:bg-primary-700 transition-all rounded-lg font-bold shadow-sm uppercase tracking-wider"
+            >
               <Plus className="w-4 h-4" /> Nuevo Producto
             </button>
           </div>
@@ -417,7 +563,39 @@ export default function PanelVendedor() {
               </thead>
 
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800/50">
-                {sellerProducts.map((product) => (
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-3 opacity-30 text-primary-500" />
+                      <p className="font-bold text-base text-gray-700 dark:text-gray-300">
+                        {filters.category !== 'all' ? `No hay productos en la categoría "${filters.category}"` : 'No hay productos en inventario'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                        {filters.category !== 'all' 
+                          ? 'Prueba cambiando el filtro de categoría o publica una nueva tela.'
+                          : 'Aún no has registrado telas en tu catálogo. Haz clic en "Nuevo Producto" para publicar tu primera tela.'
+                        }
+                      </p>
+                      <div className="mt-4 flex items-center justify-center gap-3">
+                        {filters.category !== 'all' && (
+                          <button
+                            onClick={() => handleFilterChange('category', 'all')}
+                            className="inline-flex items-center gap-2 text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-bold px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                          >
+                            Ver Todas las Categorías
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowNewModal(true)}
+                          className="inline-flex items-center gap-2 text-xs bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 rounded-lg shadow-sm transition-all uppercase tracking-wider"
+                        >
+                          <Plus className="w-4 h-4" /> Publicar Producto
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
 
                     {/* Columna: Producto */}
@@ -543,11 +721,136 @@ export default function PanelVendedor() {
                       )}
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>
         </div>
+
+        {/* --- MODAL PARA NUEVO PRODUCTO --- */}
+        {showNewModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold">
+                    <Plus size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-base">Publicar Nuevo Textil</h3>
+                    <p className="text-xs text-gray-500">Agrega un nuevo producto a tu inventario de vendedor</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowNewModal(false)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateProduct} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                    Nombre del Producto *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    value={newProduct.name}
+                    onChange={handleNewProductChange}
+                    placeholder="Ej. Seda Italiana Premium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                      Precio (COP) *
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      required
+                      min="1"
+                      value={newProduct.price}
+                      onChange={handleNewProductChange}
+                      placeholder="Ej. 45000"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                      Stock (Metros) *
+                    </label>
+                    <input
+                      type="number"
+                      name="stock"
+                      required
+                      min="1"
+                      value={newProduct.stock}
+                      onChange={handleNewProductChange}
+                      placeholder="Ej. 150"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                    Categoría
+                  </label>
+                  <select
+                    name="category"
+                    value={newProduct.category}
+                    onChange={handleNewProductChange}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                  >
+                    <option value="algodon">Algodón</option>
+                    <option value="seda">Seda</option>
+                    <option value="lino">Lino</option>
+                    <option value="poliester">Poliéster</option>
+                    <option value="lana">Lana</option>
+                    <option value="viscosa">Viscosa</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                    Descripción
+                  </label>
+                  <textarea
+                    name="description"
+                    rows="3"
+                    value={newProduct.description}
+                    onChange={handleNewProductChange}
+                    placeholder="Descripción detallada de la tela, composición y usos recomendados..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewModal(false)}
+                    className="px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors uppercase tracking-wider"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 active:scale-95 rounded-xl shadow-md transition-all uppercase tracking-wider disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Guardando...' : 'Publicar Textil'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </PaginaAnimada>
     </LayoutPanel>

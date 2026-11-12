@@ -385,7 +385,17 @@ export function MetricsProvider({ children }) {
                         : s.recordDate,
                 })));
             }
-            if (apiErpNotif?.length > 0) setErpNotifications(apiErpNotif);
+            if (apiErpNotif?.length > 0) {
+                setErpNotifications(apiErpNotif.map(n => ({
+                    ...n,
+                    id: n.id,
+                    type: n.type || 'info',
+                    title: n.title || n.titulo || 'Notificación del Sistema',
+                    message: n.message || n.mensaje || '',
+                    createdAt: n.createdAt || n.creadoEn,
+                    isRead: n.isRead || n.leido || false
+                })));
+            }
             if (apiErpFabric?.length > 0) setErpFabricInventory(apiErpFabric);
             if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
                 setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
@@ -739,18 +749,28 @@ export function MetricsProvider({ children }) {
     // =========================================================================
 
     /**
-     * Crea un nuevo cupón en BD y estado local.
+     * Crea un nuevo cupón en BD y estado local (Solo Administrador).
      * @param {Object} newCoupon
      */
     const createCoupon = async (newCoupon) => {
         const prevCoupons = coupons;
         try {
+            const token = localStorage.getItem('token') || '';
             const res = await fetch(getApiUrl('/api/cupones'), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify(newCoupon)
             });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) {
+                if (res.status === 403) {
+                    showNotification('error', 'Solo el Administrador tiene autorización para crear y activar cupones.');
+                    return false;
+                }
+                throw new Error('HTTP ' + res.status);
+            }
             const saved = await res.json().catch(() => ({}));
             const couponObj = normalizarCupon({
                 ...newCoupon,
@@ -762,6 +782,7 @@ export function MetricsProvider({ children }) {
                 createdAt: new Date().toISOString().split('T')[0]
             });
             setCoupons(prev => [...prev, couponObj]);
+            showNotification('success', `Cupón ${newCoupon.code} activado por el Administrador.`);
             return true;
         } catch (e) {
             console.error('Error al crear cupón:', e);
@@ -773,20 +794,69 @@ export function MetricsProvider({ children }) {
     const addCoupon = createCoupon;
 
     /**
-     * Desactiva un cupón en BD y estado local.
+     * Desactiva un cupón en BD y estado local (Solo Administrador).
      * @param {number} couponId
      */
     const deactivateCoupon = async (couponId) => {
         const prevCoupons = coupons;
         setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, active: false, activo: false } : c));
         try {
-            const res = await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), { method: 'PUT' });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const token = localStorage.getItem('token') || '';
+            const res = await fetch(getApiUrl(`/api/cupones/${couponId}/desactivar`), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
+            if (!res.ok) {
+                if (res.status === 403) {
+                    showNotification('error', 'Solo el Administrador puede desactivar cupones de descuento.');
+                    setCoupons(prevCoupons);
+                    return false;
+                }
+                throw new Error('HTTP ' + res.status);
+            }
+            showNotification('info', 'Cupón desactivado por el Administrador.');
             return true;
         } catch (e) {
             console.error('Error al desactivar cupón:', e);
             setCoupons(prevCoupons);
             showNotification('error', 'No se pudo desactivar el cupón.');
+            return false;
+        }
+    };
+
+    /**
+     * Reactiva un cupón en BD y estado local (Solo Administrador).
+     * @param {number} couponId
+     */
+    const activateCoupon = async (couponId) => {
+        const prevCoupons = coupons;
+        setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, active: true, activo: true } : c));
+        try {
+            const token = localStorage.getItem('token') || '';
+            const res = await fetch(getApiUrl(`/api/cupones/${couponId}/activar`), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
+            if (!res.ok) {
+                if (res.status === 403) {
+                    showNotification('error', 'Solo el Administrador tiene autorización para reactivar cupones.');
+                    setCoupons(prevCoupons);
+                    return false;
+                }
+                throw new Error('HTTP ' + res.status);
+            }
+            showNotification('success', 'Cupón reactivado exitosamente por el Administrador.');
+            return true;
+        } catch (e) {
+            console.error('Error al activar cupón:', e);
+            setCoupons(prevCoupons);
+            showNotification('error', 'No se pudo activar el cupón.');
             return false;
         }
     };
@@ -1050,9 +1120,13 @@ export function MetricsProvider({ children }) {
         const updated = { ...productDiscounts, [productId]: discount };
         setProductDiscounts(updated);
         try {
+            const token = localStorage.getItem('token') || '';
             await fetch(getApiUrl('/api/configuracion'), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     key: 'product_discounts',
                     clave: 'product_discounts',
@@ -1060,7 +1134,11 @@ export function MetricsProvider({ children }) {
                     valor: JSON.stringify(updated)
                 })
             });
-        } catch (e) { console.error('Error al guardar descuento:', e); }
+            showNotification('success', 'Oferta y descuento del producto actualizados.');
+        } catch (e) {
+            console.error('Error al guardar descuento:', e);
+            showNotification('error', 'Error al guardar el descuento del producto.');
+        }
     };
 
     // ── Valor del contexto ───────────────────────────────────────────────
@@ -1121,6 +1199,7 @@ export function MetricsProvider({ children }) {
         createCoupon,
         addCoupon,
         deactivateCoupon,
+        activateCoupon,
         validateCoupon,
 
         // Soporte
