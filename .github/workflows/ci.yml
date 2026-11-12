@@ -31,6 +31,11 @@ jobs:
           cd "tienda digital de telas"
           npm run lint
 
+      - name: Auditoria de seguridad de dependencias (DevSecOps)
+        run: |
+          cd "tienda digital de telas"
+          npm audit --audit-level=critical || true
+
       - name: Ejecutar Pruebas Automatizadas del Frontend
         run: |
           cd "tienda digital de telas"
