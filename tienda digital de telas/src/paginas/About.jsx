@@ -48,39 +48,39 @@ function About() {
             if (!contentRef.current) return;
 
             gsap.fromTo('.about-hero-text',
-                { opacity: 0, y: 20 },
-                { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }
+                { opacity: 0, y: 14 },
+                { opacity: 1, y: 0, duration: 0.28, ease: "power3.out", force3D: true, clearProps: "transform" }
             );
 
             gsap.fromTo('.about-stat',
-                { opacity: 0, y: 20 },
+                { opacity: 0, y: 14 },
                 {
-                    opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power2.out",
-                    scrollTrigger: { trigger: '.about-stats', start: "top 85%", once: true }
+                    opacity: 1, y: 0, duration: 0.28, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform",
+                    scrollTrigger: { trigger: '.about-stats', start: "top 88%", once: true }
                 }
             );
 
             gsap.fromTo('.about-story-left',
-                { opacity: 0, x: -20 },
+                { opacity: 0, x: -14 },
                 {
-                    opacity: 1, x: 0, duration: 0.6, ease: "power2.out",
-                    scrollTrigger: { trigger: '.about-story', start: "top 85%", once: true }
+                    opacity: 1, x: 0, duration: 0.32, ease: "power3.out", force3D: true, clearProps: "transform",
+                    scrollTrigger: { trigger: '.about-story', start: "top 88%", once: true }
                 }
             );
 
             gsap.fromTo('.about-story-right',
-                { opacity: 0, x: 20 },
+                { opacity: 0, x: 14 },
                 {
-                    opacity: 1, x: 0, duration: 0.6, ease: "power2.out",
-                    scrollTrigger: { trigger: '.about-story', start: "top 85%", once: true }
+                    opacity: 1, x: 0, duration: 0.32, ease: "power3.out", force3D: true, clearProps: "transform",
+                    scrollTrigger: { trigger: '.about-story', start: "top 88%", once: true }
                 }
             );
 
             gsap.fromTo('.about-value',
-                { opacity: 0, y: 30 },
+                { opacity: 0, y: 18 },
                 {
-                    opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out",
-                    scrollTrigger: { trigger: '.about-values', start: "top 85%", once: true }
+                    opacity: 1, y: 0, duration: 0.3, stagger: 0.025, ease: "power3.out", force3D: true, clearProps: "transform",
+                    scrollTrigger: { trigger: '.about-values', start: "top 88%", once: true }
                 }
             );
         } catch (e) {

@@ -45,17 +45,17 @@ function Registro() {
 
     useGSAP(() => {
         if (panelLeftRef.current) {
-            gsap.fromTo(panelLeftRef.current, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.8, ease: "power2.out" });
+            gsap.fromTo(panelLeftRef.current, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.32, ease: "power3.out", force3D: true, clearProps: "transform" });
             const textInner = panelLeftRef.current.querySelector('.panel-text');
             if (textInner) {
-                gsap.fromTo(textInner, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out", delay: 0.4 });
+                gsap.fromTo(textInner, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.28, ease: "power3.out", delay: 0.05, force3D: true, clearProps: "transform" });
             }
         }
         if (formCardRef.current) {
-            gsap.fromTo(formCardRef.current, { opacity: 0, y: -20, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.5)" });
+            gsap.fromTo(formCardRef.current, { opacity: 0, y: -10, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.28, ease: "back.out(1.2)", force3D: true, clearProps: "transform" });
             // Stagger fields
             const fields = formCardRef.current.querySelectorAll('.form-field');
-            gsap.fromTo(fields, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.2 });
+            gsap.fromTo(fields, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, stagger: 0.02, ease: "power2.out", delay: 0.05, force3D: true, clearProps: "transform" });
         }
     });
 
