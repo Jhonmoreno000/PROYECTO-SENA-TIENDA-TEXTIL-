@@ -19,8 +19,54 @@ const loginSchema = z.object({
     password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
 });
 
+/**
+ * Determina de forma estricta la ruta destino post-autenticación según el rol real del usuario
+ * para evitar colisiones entre los paneles de Administrador, Vendedor y Cliente.
+ *
+ * @param {string} rol - Rol del usuario autenticado ('admin', 'vendedor', 'cliente')
+ * @param {string} fromPath - Ruta previa que intentó visitar el usuario
+ * @returns {string} Ruta segura y autorizada a donde navegar
+ */
+export function determinarRutaPorRol(rol, fromPath) {
+    const rawRole = String(rol || 'cliente').toLowerCase();
+    const roleRedirects = {
+        admin: '/admin',
+        administrador: '/admin',
+        vendedor: '/vendedor',
+        cliente: '/cliente',
+    };
+    const defaultDashboard = roleRedirects[rawRole] || '/cliente';
+
+    if (!fromPath || fromPath === '/' || fromPath === '/login') {
+        return defaultDashboard;
+    }
+
+    // Rutas públicas de catálogo, carrito y proceso de compra
+    const shoppingPaths = ['/checkout', '/pago', '/carrito', '/favoritos', '/wishlist', '/catalogo', '/producto'];
+    if (shoppingPaths.some(p => fromPath.startsWith(p))) {
+        return fromPath;
+    }
+
+    // Si viene de una ruta de admin, solo permitirla si el usuario autenticado es admin
+    if (fromPath.startsWith('/admin')) {
+        return (rawRole === 'admin' || rawRole === 'administrador') ? fromPath : defaultDashboard;
+    }
+
+    // Si viene de una ruta de vendedor, solo permitirla si el usuario autenticado es vendedor
+    if (fromPath.startsWith('/vendedor')) {
+        return rawRole === 'vendedor' ? fromPath : defaultDashboard;
+    }
+
+    // Si viene de una ruta de cliente, solo permitirla si el usuario autenticado es cliente
+    if (fromPath.startsWith('/cliente')) {
+        return rawRole === 'cliente' ? fromPath : defaultDashboard;
+    }
+
+    return defaultDashboard;
+}
+
 function IniciarSesion() {
-    const { login, loginConSSO } = useAutenticacion();
+    const { login, loginConSSO, user: currentUser, isAuthenticated } = useAutenticacion();
     const [ssoLoading, setSsoLoading] = useState(null); // 'google' | 'microsoft' | null
     const [modalSSO, setModalSSO] = useState(null); // 'google' | 'microsoft' | null
     const navigate = useNavigate();
@@ -79,6 +125,15 @@ function IniciarSesion() {
         }
     }, [errors.email, errors.password]);
 
+    // Si el usuario ya está autenticado, redirigir inmediatamente a su panel correspondiente
+    useEffect(() => {
+        if (isAuthenticated && currentUser) {
+            const rawRole = String(currentUser.role || currentUser.rol || 'cliente').toLowerCase();
+            const destination = determinarRutaPorRol(rawRole, from);
+            navigate(destination, { replace: true });
+        }
+    }, [isAuthenticated, currentUser, navigate, from]);
+
     // Procesar retorno automático de autenticación oficial desde Google Accounts o Microsoft
     useEffect(() => {
         const verificarRetornoOAuth = async () => {
@@ -90,14 +145,7 @@ function IniciarSesion() {
                     if (authResult.success) {
                         const user = authResult.user || JSON.parse(localStorage.getItem('authUser')) || {};
                         const rawRole = String(user.role || user.rol || 'cliente').toLowerCase();
-                        const roleRedirects = {
-                            admin: '/admin',
-                            administrador: '/admin',
-                            vendedor: '/vendedor',
-                            cliente: '/cliente',
-                        };
-                        const hasCustomFrom = from && from !== '/' && from !== '/login';
-                        const destination = hasCustomFrom ? from : (roleRedirects[rawRole] || '/cliente');
+                        const destination = determinarRutaPorRol(rawRole, from);
                         navigate(destination, { replace: true });
                     } else {
                         setAuthError(authResult.message || 'Error autenticando con cuenta de ' + ssoData.proveedor);
@@ -140,9 +188,7 @@ function IniciarSesion() {
             setModalSSO(null);
             const user = authResult.user || JSON.parse(localStorage.getItem('authUser')) || {};
             const rawRole = String(user.role || user.rol || 'cliente').toLowerCase();
-            const roleRedirects = { admin: '/admin', administrador: '/admin', vendedor: '/vendedor', cliente: '/cliente' };
-            const hasCustomFrom = from && from !== '/' && from !== '/login';
-            const destination = hasCustomFrom ? from : (roleRedirects[rawRole] || '/cliente');
+            const destination = determinarRutaPorRol(rawRole, from);
             navigate(destination, { replace: true });
         } else {
             throw new Error(authResult.message || 'No se pudo completar el acceso.');
@@ -156,14 +202,7 @@ function IniciarSesion() {
         if (result.success) {
             const user = result.user || JSON.parse(localStorage.getItem('authUser')) || {};
             const rawRole = String(user.role || user.rol || 'cliente').toLowerCase();
-            const roleRedirects = {
-                admin: '/admin',
-                administrador: '/admin',
-                vendedor: '/vendedor',
-                cliente: '/cliente',
-            };
-            const hasCustomFrom = from && from !== '/' && from !== '/login';
-            const destination = hasCustomFrom ? from : (roleRedirects[rawRole] || '/cliente');
+            const destination = determinarRutaPorRol(rawRole, from);
             navigate(destination, { replace: true });
         } else {
             setAuthError(result.message || 'Credenciales incorrectas. Intenta de nuevo.');
