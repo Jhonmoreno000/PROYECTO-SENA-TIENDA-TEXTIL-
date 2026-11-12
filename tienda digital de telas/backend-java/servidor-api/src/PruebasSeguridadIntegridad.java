@@ -521,6 +521,41 @@ public class PruebasSeguridadIntegridad {
             }
         });
 
+        ejecutarPrueba("18. Protección contra Ataques de Fuerza Bruta y Account Lockout (5 intentos)", () -> {
+            String correoPrueba = "usuario.ataque.fuerzabruta@ddtextil.com";
+            infraestructura.seguridad.ProtectorFuerzaBruta.reiniciar();
+
+            if (infraestructura.seguridad.ProtectorFuerzaBruta.estaBloqueado(correoPrueba)) {
+                throw new AssertionError("La cuenta no debería estar bloqueada inicialmente.");
+            }
+
+            // Simular 4 intentos fallidos: no debe bloquearse aún
+            for (int i = 1; i <= 4; i++) {
+                infraestructura.seguridad.ProtectorFuerzaBruta.registrarFallo(correoPrueba);
+            }
+            if (infraestructura.seguridad.ProtectorFuerzaBruta.estaBloqueado(correoPrueba)) {
+                throw new AssertionError("La cuenta se bloqueó antes de alcanzar el umbral de 5 intentos.");
+            }
+
+            // 5to intento fallido: debe bloquearse inmediatamente
+            infraestructura.seguridad.ProtectorFuerzaBruta.registrarFallo(correoPrueba);
+            if (!infraestructura.seguridad.ProtectorFuerzaBruta.estaBloqueado(correoPrueba)) {
+                throw new AssertionError("La cuenta debió quedar bloqueada tras 5 intentos fallidos.");
+            }
+
+            long segundosRestantes = infraestructura.seguridad.ProtectorFuerzaBruta.obtenerSegundosRestantesBloqueo(correoPrueba);
+            if (segundosRestantes <= 0) {
+                throw new AssertionError("El tiempo restante de bloqueo debe ser mayor a 0.");
+            }
+
+            // Simular éxito tras desbloqueo: debe resetear el contador
+            infraestructura.seguridad.ProtectorFuerzaBruta.registrarExito(correoPrueba);
+            if (infraestructura.seguridad.ProtectorFuerzaBruta.estaBloqueado(correoPrueba)) {
+                throw new AssertionError("El registro exitoso debió restablecer el bloqueo.");
+            }
+            infraestructura.seguridad.ProtectorFuerzaBruta.reiniciar();
+        });
+
         System.out.println("\n=================================================================");
         System.out.println("                    RESUMEN DE PRUEBAS                          ");
         System.out.println("=================================================================");
