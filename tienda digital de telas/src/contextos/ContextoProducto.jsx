@@ -19,6 +19,81 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { getApiUrl, RUTAS_API } from '../config';
 import { useNotificacion } from './ContextoNotificacion';
 
+const CLAVE_CACHE_CATALOGO = 'ddtextil_catalogo_respaldo_v1';
+
+const CATALOGO_SEMILLA_RESPALDO = [
+    { id: '1', name: 'Algodón Premium', category: 'Algodon', price: 25000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Tela de algodón 100% natural, ideal para camisas y blusas.', material: 'Algodón 100%', width: '1.50m', weight: '150g/m2', care: 'Lavar en frío, no blanquear', stock: 100, featured: true, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_12_1775767112691.jpg', '/images/hero-detail-1.webp'] },
+    { id: '2', name: 'Seda Italiana', category: 'Seda', price: 85000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Seda pura con acabado brillante, perfecta para vestidos de gala.', material: 'Seda pura', width: '1.40m', weight: '80g/m2', care: 'Limpieza en seco únicamente', stock: 50, featured: true, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_16_1775766690228.webp', '/images/hero-detail-2.webp'] },
+    { id: '3', name: 'Lino Orgánico', category: 'Lino', price: 45000, sellerId: 3, sellerName: 'María González', description: 'Lino fresco y transpirable para ropa de verano.', material: 'Lino orgánico', width: '1.50m', weight: '200g/m2', care: 'No usar secadora', stock: 80, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_14_1775766898975.webp', '/images/hero-detail-3.webp'] },
+    { id: '4', name: 'Lana Merino', category: 'Lana', price: 65000, sellerId: 3, sellerName: 'María González', description: 'Lana suave y cálida, ideal para abrigos de invierno.', material: 'Lana merino', width: '1.60m', weight: '300g/m2', care: 'Lavar a mano con agua tibia', stock: 30, featured: true, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_14_1775766898975.webp', '/images/hero-detail-1.webp'] },
+    { id: '5', name: 'Dril Elástico', category: 'Algodon', price: 35000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Dril resistente con toque de elasticidad para pantalones.', material: 'Algodón/Lycra 95/5', width: '1.50m', weight: '250g/m2', care: 'Lavar a máquina en ciclo suave', stock: 120, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_10_1775767265179.jpg', '/images/hero-detail-2.webp'] },
+    { id: '6', name: 'Gasa de Seda', category: 'Seda', price: 72000, sellerId: 3, sellerName: 'María González', description: 'Gasa ligera y transparente para pañuelos y cortinas.', material: 'Seda/Poliéster', width: '1.40m', weight: '45g/m2', care: 'Lavar a mano', stock: 60, featured: true, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_16_1775766690228.webp', '/images/hero-detail-3.webp'] },
+    { id: '7', name: 'Tela Polar', category: 'Poliester', price: 22000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Tela polar suave para cobijas y chaquetas.', material: 'Poliéster 100%', width: '1.50m', weight: '280g/m2', care: 'Lavar a máquina, no planchar', stock: 150, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_15_1775767332095.jpg', '/images/hero-detail-1.webp'] },
+    { id: '8', name: 'Oxford Camisa', category: 'Algodon', price: 38000, sellerId: 3, sellerName: 'María González', description: 'Tela oxford clásica para camisas formales.', material: 'Algodón peinado', width: '1.50m', weight: '130g/m2', care: 'Planchar a temperatura media', stock: 90, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_12_1775767112691.jpg', '/images/hero-detail-2.webp'] },
+    { id: '9', name: 'Retazo Algodón', category: 'Algodon', price: 12000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Retazo de algodón premium, disponible para proyectos pequeños.', material: 'Algodón', width: '1.40m', weight: '150g/m2', care: 'Lavar a máquina', stock: 3, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_9_1775766848979.jpg', '/images/hero-detail-3.webp'] },
+    { id: '10', name: 'Seda Cruda', category: 'Seda', price: 95000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Seda cruda sin teñir, última pieza disponible.', material: 'Seda pura', width: '1.10m', weight: '60g/m2', care: 'Limpieza en seco', stock: 8, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_10_1775766963190.webp', '/images/hero-detail-1.webp'] },
+    { id: '11', name: 'Lino Arrugado', category: 'Lino', price: 38000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Lino con textura arrugada natural.', material: 'Lino', width: '1.50m', weight: '180g/m2', care: 'Planchar en caliente', stock: 25, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_11_1775767027618.jpg', '/images/hero-detail-2.webp'] },
+    { id: '12', name: 'Lana Bebé', category: 'Lana', price: 72000, sellerId: 3, sellerName: 'María González', description: 'Lana ultra suave para ropa de bebé. Quedan pocos metros.', material: 'Lana merino', width: '1.30m', weight: '200g/m2', care: 'Lavar a mano', stock: 5, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_15_1775767332095.jpg', '/images/hero-detail-3.webp'] },
+    { id: '13', name: 'Algodón Estampado', category: 'Algodon', price: 28000, sellerId: 3, sellerName: 'María González', description: 'Algodón con estampado floral, edición limitada.', material: 'Algodón', width: '1.45m', weight: '130g/m2', care: 'Lavar a máquina', stock: 12, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_13_1777056293881.jpg', '/images/hero-detail-1.webp'] }
+];
+
+function normalizarListaProductos(datos) {
+    return (datos || []).map(p => {
+        const nombre = p.name || p.nombre || '';
+        const precio = Number(p.price ?? p.precio ?? 0);
+        const rawStock = p.stock ?? p.existencias;
+        const existencias = rawStock !== undefined && rawStock !== null ? Number(rawStock) : 0;
+        const categoria = p.category || p.categoria || '';
+        const imagenes = p.images || p.imagenes || [];
+        const isSaleVal = p.isSale ?? p.isOffer ?? p.esOferta ?? false;
+        return {
+            ...p,
+            id: String(p.id),
+            name: nombre,
+            nombre,
+            price: precio,
+            precio,
+            stock: existencias,
+            existencias,
+            category: categoria,
+            categoria,
+            images: imagenes,
+            imagenes,
+            description: p.description || p.descripcion || '',
+            descripcion: p.description || p.descripcion || '',
+            sellerName: p.sellerName ?? p.nombreVendedor ?? '',
+            status: p.status ?? p.estadoModeracion ?? 'approved',
+            rejectionReason: p.rejectionReason ?? p.motivoRechazo ?? '',
+            createdAt: p.createdAt ?? p.creadoEn ?? '',
+            active: p.active !== undefined ? p.active : (p.activo !== undefined ? p.activo : true),
+            featured: p.featured ?? p.destacado ?? false,
+            destacado: p.featured ?? p.destacado ?? false,
+            isNewCollection: p.isNewCollection ?? p.esNuevaColeccion ?? false,
+            esNuevaColeccion: p.isNewCollection ?? p.esNuevaColeccion ?? false,
+            isExclusive: p.isExclusive ?? p.esExclusivo ?? false,
+            esExclusivo: p.isExclusive ?? p.esExclusivo ?? false,
+            isSale: isSaleVal,
+            isOffer: isSaleVal,
+            esOferta: isSaleVal,
+        };
+    });
+}
+
+function obtenerCatalogoRespaldo() {
+    try {
+        const guardado = localStorage.getItem(CLAVE_CACHE_CATALOGO);
+        if (guardado) {
+            const parseado = JSON.parse(guardado);
+            if (Array.isArray(parseado) && parseado.length > 0) {
+                return normalizarListaProductos(parseado);
+            }
+        }
+    } catch {
+        // Ignorar errores de almacenamiento restringido
+    }
+    return normalizarListaProductos(CATALOGO_SEMILLA_RESPALDO);
+}
+
 // Creamos el contexto del catálogo de productos
 const ContextoProducto = createContext();
 
@@ -38,91 +113,84 @@ export function useProductos() {
  * Carga los productos al iniciar y los mantiene actualizados.
  */
 export function ProductProvider({ children }) {
-    // Lista de todos los productos disponibles en la tienda
-    const [products, setProducts] = useState([]);
-    // true mientras los productos están cargando (mostramos un esqueleto de carga)
-    const [loading, setLoading] = useState(true);
-    // Mensaje de error si la conexión al backend falla
+    // Lista de todos los productos disponibles en la tienda (inicia con respaldo local instantáneo)
+    const [products, setProducts] = useState(() => obtenerCatalogoRespaldo());
+    // true mientras los productos están cargando por primera vez sin caché previa
+    const [loading, setLoading] = useState(false);
+    // Mensaje de error si la conexión al backend falla y no hay respaldo disponible
     const [error, setError] = useState(null);
     const { showNotification } = useNotificacion();
 
     /**
-     * fetchProducts — Pide la lista de productos al backend Java
-     * Se llama automáticamente cuando la app carga y cuando se llama refreshProducts()
+     * fetchProducts — Pide la lista de productos al backend Java con reintentos automáticos
+     * y respaldo resiliente en caché local para evitar bloqueos visuales.
      */
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const rutaProductos = RUTAS_API?.productos || '/api/productos';
-            const response = await fetch(getApiUrl(rutaProductos));
-            if (!response.ok) {
-                throw new Error('Error al cargar los productos');
+    const fetchProducts = useCallback(async () => {
+        setError(null);
+        const rutaProductos = RUTAS_API?.productos || '/api/productos';
+        const urlPrincipal = getApiUrl(rutaProductos);
+        const urlsCandidatas = urlPrincipal.startsWith('http')
+            ? [urlPrincipal, rutaProductos]
+            : [urlPrincipal, `http://localhost:8081${rutaProductos}`];
+
+        for (let intento = 0; intento < 3; intento++) {
+            for (const url of urlsCandidatas) {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const datos = await response.json();
+                        if (Array.isArray(datos) && datos.length > 0) {
+                            const formattedData = normalizarListaProductos(datos);
+                            setProducts(formattedData);
+                            setError(null);
+                            try {
+                                localStorage.setItem(CLAVE_CACHE_CATALOGO, JSON.stringify(formattedData));
+                            } catch {
+                                // Ignorar cuota de localStorage
+                            }
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                } catch {
+                    // Continuar con siguiente URL candidata o reintento
+                }
             }
-            const datos = await response.json();
-            const formattedData = (datos || []).map(p => {
-                const nombre = p.name || p.nombre || '';
-                const precio = Number(p.price ?? p.precio ?? 0);
-                const rawStock = p.stock ?? p.existencias; const existencias = rawStock !== undefined && rawStock !== null ? Number(rawStock) : 0;
-                const categoria = p.category || p.categoria || '';
-                const imagenes = p.images || p.imagenes || [];
-                const isSaleVal = p.isSale ?? p.isOffer ?? p.esOferta ?? false;
-                return {
-                    ...p,
-                    id: String(p.id),
-                    name: nombre,
-                    nombre,
-                    price: precio,
-                    precio,
-                    stock: existencias,
-                    existencias,
-                    category: categoria,
-                    categoria,
-                    images: imagenes,
-                    imagenes,
-                    description: p.description || p.descripcion || '',
-                    descripcion: p.description || p.descripcion || '',
-                    sellerName: p.sellerName ?? p.nombreVendedor ?? '',
-                    status: p.status ?? p.estadoModeracion ?? 'approved',
-                    rejectionReason: p.rejectionReason ?? p.motivoRechazo ?? '',
-                    createdAt: p.createdAt ?? p.creadoEn ?? '',
-                    active: p.active !== undefined ? p.active : (p.activo !== undefined ? p.activo : true),
-                    featured: p.featured ?? p.destacado ?? false,
-                    destacado: p.featured ?? p.destacado ?? false,
-                    isNewCollection: p.isNewCollection ?? p.esNuevaColeccion ?? false,
-                    esNuevaColeccion: p.isNewCollection ?? p.esNuevaColeccion ?? false,
-                    isExclusive: p.isExclusive ?? p.esExclusivo ?? false,
-                    esExclusivo: p.isExclusive ?? p.esExclusivo ?? false,
-                    isSale: isSaleVal,
-                    isOffer: isSaleVal,
-                    esOferta: isSaleVal,
-                };
-            });
-            setProducts(formattedData);
-        } catch (err) {
-            console.error('Error al obtener productos de la API:', err);
-            // Mensaje específico si el backend no está encendido
-            const errorMsg = err.message?.includes('Failed to fetch')
-                ? 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.'
-                : err.message;
-            setError(errorMsg);
-        } finally {
-            setLoading(false); // Siempre quitamos el estado de carga, haya error o no
+            if (intento < 2) {
+                await new Promise(res => setTimeout(res, 600 * (intento + 1)));
+            }
         }
-    };
+
+        // Si el backend está temporalmente apagado o reiniciando, mantener el catálogo de respaldo activo
+        const respaldo = obtenerCatalogoRespaldo();
+        if (respaldo.length > 0) {
+            setProducts(respaldo);
+            setError(null);
+        } else {
+            setError('No se puede conectar con el servidor. Verifica que el backend esté corriendo.');
+        }
+        setLoading(false);
+    }, []);
 
     /**
      * refreshProducts — Recarga los productos desde la base de datos
      * Se llama después de crear, editar o eliminar un producto para sincronizar la UI.
      */
-    const refreshProducts = () => {
+    const refreshProducts = useCallback(() => {
         fetchProducts();
-    };
+    }, [fetchProducts]);
 
-    // Cargamos los productos automáticamente cuando la app inicia
+    // Cargamos los productos automáticamente cuando la app inicia y al recuperar conexión/foco
     useEffect(() => {
         fetchProducts();
-    }, []); // El array vacío [] significa que se ejecuta solo una vez al montar el componente
+        const alRecuperarConexion = () => fetchProducts();
+        window.addEventListener('online', alRecuperarConexion);
+        window.addEventListener('focus', alRecuperarConexion);
+        return () => {
+            window.removeEventListener('online', alRecuperarConexion);
+            window.removeEventListener('focus', alRecuperarConexion);
+        };
+    }, [fetchProducts]);
 
     /**
      * getProductById — Busca un producto por su ID en la lista local

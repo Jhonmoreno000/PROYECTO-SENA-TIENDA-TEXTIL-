@@ -62,8 +62,17 @@ public class ManejadorUsuarios extends ManejadorBase {
         }
 
         if ("GET".equalsIgnoreCase(metodo)) {
+            var identidad = obtenerIdentidad(intercambio);
             if (ruta.matches("^/api/(users|usuarios)/\\d+/?$")) {
                 int idUsuario = extraerIdRuta(ruta);
+                if (identidad.isEmpty()) {
+                    enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                    return;
+                }
+                if (!identidad.get().esAdministrador() && identidad.get().idUsuario() != idUsuario) {
+                    enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no autorizado para consultar este perfil\"}");
+                    return;
+                }
                 for (Usuario u : repositorioUsuario.obtenerTodosLosUsuarios()) {
                     if (u.getId() == idUsuario) {
                         enviarRespuestaJson(intercambio, 200, gson.toJson(u));
@@ -71,6 +80,15 @@ public class ManejadorUsuarios extends ManejadorBase {
                     }
                 }
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Usuario no encontrado\"}");
+                return;
+            }
+
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+            if (!identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Se requieren permisos de administrador\"}");
                 return;
             }
             List<Usuario> usuarios = repositorioUsuario.obtenerTodosLosUsuarios();
@@ -82,14 +100,18 @@ public class ManejadorUsuarios extends ManejadorBase {
                 enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
                 return;
             }
-            if (!identidad.get().esAdministrador()) {
-                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Se requieren permisos de administrador\"}");
-                return;
-            }
             int idUsuario = extraerIdRuta(ruta);
 
             if (idUsuario <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de usuario inválido en la ruta\"}");
+                return;
+            }
+
+            boolean esAdmin = identidad.get().esAdministrador();
+            boolean esPropioUsuario = (identidad.get().idUsuario() == idUsuario);
+
+            if (!esAdmin && !esPropioUsuario) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no autorizado para modificar este perfil\"}");
                 return;
             }
 
@@ -104,37 +126,50 @@ public class ManejadorUsuarios extends ManejadorBase {
 
             boolean exito = false;
 
-            if (ruta.contains("/rol") || ruta.contains("/role") || objetoJson.has("role") || objetoJson.has("rol")) {
-                String nuevoRol = extraerTexto(objetoJson, "role", extraerTexto(objetoJson, "rol", null));
-                if (nuevoRol == null || !java.util.Set.of("cliente", "vendedor", "administrador").contains(nuevoRol.trim().toLowerCase())) {
-                    enviarRespuestaJson(intercambio, 400, "{\"error\":\"Rol inválido. Valores permitidos: cliente, vendedor, administrador\"}");
+            if (esAdmin) {
+                if (ruta.contains("/rol") || ruta.contains("/role") || objetoJson.has("role") || objetoJson.has("rol")) {
+                    String nuevoRol = extraerTexto(objetoJson, "role", extraerTexto(objetoJson, "rol", null));
+                    if (nuevoRol == null || !java.util.Set.of("cliente", "vendedor", "administrador").contains(nuevoRol.trim().toLowerCase())) {
+                        enviarRespuestaJson(intercambio, 400, "{\"error\":\"Rol inválido. Valores permitidos: cliente, vendedor, administrador\"}");
+                        return;
+                    }
+                    exito = repositorioUsuario.actualizarRolUsuario(idUsuario, nuevoRol.trim().toLowerCase());
+                }
+
+                if (ruta.contains("/estado") || ruta.contains("/status") || objetoJson.has("active") || objetoJson.has("activo")) {
+                    boolean nuevoEstado = objetoJson.has("active") && !objetoJson.get("active").isJsonNull()
+                            ? objetoJson.get("active").getAsBoolean()
+                            : (objetoJson.has("activo") && !objetoJson.get("activo").isJsonNull() ? objetoJson.get("activo").getAsBoolean() : true);
+                    exito = repositorioUsuario.actualizarEstadoUsuario(idUsuario, nuevoEstado) || exito;
+                }
+            } else {
+                if (ruta.contains("/rol") || ruta.contains("/role") || objetoJson.has("role") || objetoJson.has("rol")
+                        || objetoJson.has("suspended") || objetoJson.has("suspendido")
+                        || objetoJson.has("commissionRate") || objetoJson.has("tasaComision")) {
+                    enviarRespuestaJson(intercambio, 403, "{\"error\":\"Permisos insuficientes para modificar roles o estado del sistema\"}");
                     return;
                 }
-                exito = repositorioUsuario.actualizarRolUsuario(idUsuario, nuevoRol.trim().toLowerCase());
-            }
-
-            if (ruta.contains("/estado") || ruta.contains("/status") || objetoJson.has("active") || objetoJson.has("activo")) {
-                boolean nuevoEstado = objetoJson.has("active") && !objetoJson.get("active").isJsonNull()
-                        ? objetoJson.get("active").getAsBoolean()
-                        : (objetoJson.has("activo") && !objetoJson.get("activo").isJsonNull() ? objetoJson.get("activo").getAsBoolean() : true);
-                exito = repositorioUsuario.actualizarEstadoUsuario(idUsuario, nuevoEstado) || exito;
             }
 
             Boolean suspendido = null;
-            if (objetoJson.has("suspended") && !objetoJson.get("suspended").isJsonNull()) {
-                suspendido = objetoJson.get("suspended").getAsBoolean();
-            } else if (objetoJson.has("suspendido") && !objetoJson.get("suspendido").isJsonNull()) {
-                suspendido = objetoJson.get("suspendido").getAsBoolean();
-            }
-            String motivoSuspension = extraerTexto(objetoJson, "suspensionReason", extraerTexto(objetoJson, "motivoSuspension", null));
-
+            String motivoSuspension = null;
             Double comision = null;
-            if (objetoJson.has("commissionRate") && !objetoJson.get("commissionRate").isJsonNull()) {
-                comision = objetoJson.get("commissionRate").getAsDouble();
-            } else if (objetoJson.has("tasaComision") && !objetoJson.get("tasaComision").isJsonNull()) {
-                comision = objetoJson.get("tasaComision").getAsDouble();
-            } else if (objetoJson.has("porcentajeComision") && !objetoJson.get("porcentajeComision").isJsonNull()) {
-                comision = objetoJson.get("porcentajeComision").getAsDouble();
+
+            if (esAdmin) {
+                if (objetoJson.has("suspended") && !objetoJson.get("suspended").isJsonNull()) {
+                    suspendido = objetoJson.get("suspended").getAsBoolean();
+                } else if (objetoJson.has("suspendido") && !objetoJson.get("suspendido").isJsonNull()) {
+                    suspendido = objetoJson.get("suspendido").getAsBoolean();
+                }
+                motivoSuspension = extraerTexto(objetoJson, "suspensionReason", extraerTexto(objetoJson, "motivoSuspension", null));
+
+                if (objetoJson.has("commissionRate") && !objetoJson.get("commissionRate").isJsonNull()) {
+                    comision = objetoJson.get("commissionRate").getAsDouble();
+                } else if (objetoJson.has("tasaComision") && !objetoJson.get("tasaComision").isJsonNull()) {
+                    comision = objetoJson.get("tasaComision").getAsDouble();
+                } else if (objetoJson.has("porcentajeComision") && !objetoJson.get("porcentajeComision").isJsonNull()) {
+                    comision = objetoJson.get("porcentajeComision").getAsDouble();
+                }
             }
 
             String nombre = extraerTexto(objetoJson, "name", extraerTexto(objetoJson, "nombre", null));
@@ -143,7 +178,7 @@ public class ManejadorUsuarios extends ManejadorBase {
             String nuevaContrasena = extraerTexto(objetoJson, "password", extraerTexto(objetoJson, "contrasena", null));
             String hashContrasena = null;
             if (nuevaContrasena != null && !nuevaContrasena.isBlank()) {
-                hashContrasena = ServicioAutenticacion.generarHashContrasena(nuevaContrasena.trim());
+                hashContrasena = ServicioAutenticacion.generarHashPBKDF2(nuevaContrasena.trim());
             }
 
             if (nombre != null || correo != null || telefono != null || suspendido != null
@@ -161,6 +196,15 @@ public class ManejadorUsuarios extends ManejadorBase {
             }
 
         } else if ("DELETE".equalsIgnoreCase(metodo)) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+            if (!identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Se requieren permisos de administrador\"}");
+                return;
+            }
             int idUsuario = extraerIdRuta(ruta);
             if (idUsuario <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de usuario inválido en la ruta\"}");
@@ -189,6 +233,16 @@ public class ManejadorUsuarios extends ManejadorBase {
 
         if (idUsuario <= 0) {
             enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de usuario inválido\"}");
+            return;
+        }
+
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return;
+        }
+        if (!identidad.get().esAdministrador() && identidad.get().idUsuario() != idUsuario) {
+            enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no autorizado para gestionar las direcciones de este usuario\"}");
             return;
         }
 

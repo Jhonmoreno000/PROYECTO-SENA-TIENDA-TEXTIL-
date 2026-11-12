@@ -425,3 +425,12 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_referencia_pago ON pedidos(referencia_pag
 CREATE INDEX IF NOT EXISTS idx_eventos_wompi_referencia ON eventos_pago_wompi(referencia_pago);
 CREATE INDEX IF NOT EXISTS idx_direcciones_usuario_id ON direcciones_usuario(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_rollos_textil_producto_id ON rollos_textil(producto_id);
+
+-- Índices compuestos para optimización de alto rendimiento y eliminación de contención
+CREATE INDEX IF NOT EXISTS idx_productos_activo_id ON productos(activo, id);
+CREATE INDEX IF NOT EXISTS idx_productos_activo_vendedor ON productos(activo, vendedor_id);
+CREATE INDEX IF NOT EXISTS idx_productos_activo_destacado ON productos(activo, destacado);
+CREATE INDEX IF NOT EXISTS idx_imagenes_producto_prod_orden ON imagenes_producto(producto_id, orden_visualizacion);
+CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_estado ON pedidos(usuario_id, estado);
+CREATE INDEX IF NOT EXISTS idx_rollos_textil_prod_estado_rem ON rollos_textil(producto_id, estado, metraje_remanente);
+CREATE INDEX IF NOT EXISTS idx_cupones_codigo_activo ON cupones(codigo, activo);

@@ -12,9 +12,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'       // Componente raíz que contiene toda la app
+import { instalarInterceptorSesion } from './utilidades/interceptorSesion'
 import './index.css'              // Estilos globales (fuentes, colores, utilidades CSS)
 
 // Buscamos el elemento con id="root" en el HTML y arrancamos React dentro de él
+// Adjunta el token de sesión (Bearer) a todas las peticiones /api antes de montar la app (RBAC backend)
+instalarInterceptorSesion()
+
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <App />

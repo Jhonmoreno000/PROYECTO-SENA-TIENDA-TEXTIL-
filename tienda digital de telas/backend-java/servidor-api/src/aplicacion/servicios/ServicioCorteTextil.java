@@ -173,6 +173,88 @@ public class ServicioCorteTextil {
     }
 
     /**
+     * Valida el metraje continuo aplicando el algoritmo de optimización Best-Fit anti-merma.
+     * Selecciona el rollo que minimiza el desperdicio textil y preserva los rollos maestros.
+     *
+     * @param rollos Lista de rollos físicos (`List<RolloTextil>`).
+     * @param metrajeSolicitado Cantidad requerida (`double`).
+     * @param loteTintoreria Lote opcional (`String`).
+     * @return Dictamen de validación de corte continuo óptimo.
+     */
+    public ResultadoValidacionCorte validarMetrajeContinuoBestFit(List<RolloTextil> rollos, double metrajeSolicitado, String loteTintoreria) {
+        if (metrajeSolicitado <= 0) {
+            throw new IllegalArgumentException("El metraje solicitado debe ser mayor a cero.");
+        }
+
+        if (rollos == null || rollos.isEmpty()) {
+            return new ResultadoValidacionCorte(false, "SIN_STOCK", "No existen rollos registrados para la tela solicitada.", null, 0.0);
+        }
+
+        double metrajeTotalLote = 0.0;
+        List<RolloTextil> candidatos = new java.util.ArrayList<>();
+
+        for (RolloTextil rollo : rollos) {
+            if (!"disponible".equalsIgnoreCase(rollo.getEstado())) {
+                continue;
+            }
+            if (loteTintoreria != null && !loteTintoreria.isBlank() && !Objects.equals(rollo.getLoteTintoreria(), loteTintoreria)) {
+                continue;
+            }
+
+            metrajeTotalLote += rollo.getMetrajeRemanente();
+            if (rollo.getMetrajeRemanente() >= metrajeSolicitado) {
+                candidatos.add(rollo);
+            }
+        }
+
+        if (!candidatos.isEmpty()) {
+            // Algoritmo Best-Fit Anti-Merma:
+            // Categoría 0: Coincidencia exacta (sobrante == 0) -> prioridad máxima
+            // Categoría 1: Sin merma (sobrante >= UMBRAL_RETAZO_METROS) -> menor sobrante para proteger rollos maestros
+            // Categoría 2: Con merma inevitable (sobrante < UMBRAL_RETAZO_METROS) -> menor merma
+            candidatos.sort((r1, r2) -> {
+                double s1 = r1.getMetrajeRemanente() - metrajeSolicitado;
+                double s2 = r2.getMetrajeRemanente() - metrajeSolicitado;
+
+                int cat1 = (Math.abs(s1) < 0.001) ? 0 : (s1 >= UMBRAL_RETAZO_METROS ? 1 : 2);
+                int cat2 = (Math.abs(s2) < 0.001) ? 0 : (s2 >= UMBRAL_RETAZO_METROS ? 1 : 2);
+
+                if (cat1 != cat2) {
+                    return Integer.compare(cat1, cat2);
+                }
+                return Double.compare(s1, s2);
+            });
+
+            RolloTextil mejorRollo = candidatos.get(0);
+            return new ResultadoValidacionCorte(
+                true,
+                "CORTE_CONTINUO_OK",
+                "Metraje continuo disponible en rollo " + mejorRollo.getCodigoRollo(),
+                mejorRollo,
+                metrajeTotalLote
+            );
+        }
+
+        if (metrajeTotalLote >= metrajeSolicitado) {
+            return new ResultadoValidacionCorte(
+                false,
+                "FRAGMENTED_STOCK",
+                "El stock total del lote (" + metrajeTotalLote + " m) es suficiente pero está fragmentado en rollos menores. Requiere división o autorización de empates.",
+                null,
+                metrajeTotalLote
+            );
+        }
+
+        return new ResultadoValidacionCorte(
+            false,
+            "INSUFFICIENT_STOCK",
+            "Stock insuficiente en el lote. Solicitados: " + metrajeSolicitado + " m, disponibles: " + metrajeTotalLote + " m.",
+            null,
+            metrajeTotalLote
+        );
+    }
+
+    /**
      * Objeto de valor que contiene el estado resultante tras ejecutar un corte físico sobre un rollo textil.
      */
     public static class ResultadoProcesamientoCorte {

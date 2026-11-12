@@ -18,4 +18,5 @@ export { default as TruckLoader } from './TruckLoader';
 export { default as DesplazarArriba } from './DesplazarArriba';
 export { default as Counter } from './Counter';
 export { SmoothScrollProvider } from './SmoothScrollProvider';
+export { default as ErrorBoundary } from './ErrorBoundary';
 export { Skeleton, ProductCardSkeleton, ProductGridSkeleton, TextBlockSkeleton, CatalogSkeleton } from './Skeleton';

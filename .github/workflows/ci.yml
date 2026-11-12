@@ -83,3 +83,7 @@ jobs:
       - name: Validar archivo docker-compose
         run: |
           docker compose config
+
+      - name: Compilar imagenes Docker de Frontend y Backend
+        run: |
+          docker compose build

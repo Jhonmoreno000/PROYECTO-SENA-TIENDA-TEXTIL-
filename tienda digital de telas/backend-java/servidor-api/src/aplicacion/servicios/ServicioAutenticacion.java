@@ -57,8 +57,7 @@ public class ServicioAutenticacion {
         }
 
         correo = correo.trim().toLowerCase();
-        String hash = generarHashContrasena(contrasena);
-        Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYValidarContrasena(correo, hash);
+        Optional<Usuario> usuarioOpt = repositorioUsuario.buscarPorCorreoYValidarContrasena(correo, contrasena);
 
         if (usuarioOpt.isEmpty()) {
             throw new ExcepcionDominio("Credenciales incorrectas.");
@@ -100,7 +99,7 @@ public class ServicioAutenticacion {
         }
 
         Usuario nuevoUsuario = new Usuario(0, nombre.trim(), correo, "cliente", true, false, null, null, null, null, null);
-        String contrasenaCifrada = generarHashContrasena(contrasena);
+        String contrasenaCifrada = generarHashPBKDF2(contrasena);
 
         boolean guardadoExitoso = repositorioUsuario.guardar(nuevoUsuario, contrasenaCifrada);
         if (!guardadoExitoso) {
@@ -150,7 +149,7 @@ public class ServicioAutenticacion {
 
         String nombreFinal = (nombre != null && !nombre.isBlank()) ? nombre : correo.split("@")[0];
         Usuario nuevoUsuario = new Usuario(0, nombreFinal, correo, "cliente", true, false, null, null, null, null, null);
-        String contrasenaSeguraSSO = generarHashContrasena("oauth-sso-" + UUID.randomUUID());
+        String contrasenaSeguraSSO = generarHashPBKDF2("oauth-sso-" + UUID.randomUUID());
 
         boolean creado = repositorioUsuario.guardar(nuevoUsuario, contrasenaSeguraSSO);
         if (!creado) {
@@ -193,5 +192,94 @@ public class ServicioAutenticacion {
         } catch (NoSuchAlgorithmException excepcion) {
             throw new RuntimeException("SHA-256 no disponible en la plataforma JVM", excepcion);
         }
+    }
+
+    private static final int PBKDF2_ITERACIONES = 10000;
+    private static final int PBKDF2_LONGITUD_LLAVE = 256;
+
+    /**
+     * Genera un hash robusto PBKDF2 con sal criptográfica aleatoria de 16 bytes y HMAC-SHA256.
+     *
+     * @param contrasena Contraseña en texto plano (`String`).
+     * @return Cadena formateada: `pbkdf2$<iteraciones>$<salHex>$<hashHex>`.
+     */
+    public static String generarHashPBKDF2(String contrasena) {
+        byte[] salt = new byte[16];
+        new java.security.SecureRandom().nextBytes(salt);
+        return generarHashPBKDF2(contrasena, salt, PBKDF2_ITERACIONES);
+    }
+
+    /**
+     * Genera un hash PBKDF2 con una sal e iteraciones explícitas.
+     */
+    public static String generarHashPBKDF2(String contrasena, byte[] salt, int iteraciones) {
+        try {
+            javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+                    contrasena.toCharArray(), salt, iteraciones, PBKDF2_LONGITUD_LLAVE
+            );
+            javax.crypto.SecretKeyFactory skf = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] hash = skf.generateSecret(spec).getEncoded();
+            return "pbkdf2$" + iteraciones + "$" + bytesAHex(salt) + "$" + bytesAHex(hash);
+        } catch (Exception e) {
+            throw new RuntimeException("Error derivando clave PBKDF2", e);
+        }
+    }
+
+    /**
+     * Evalúa si un hash almacenado utiliza el esquema moderno PBKDF2.
+     */
+    public static boolean esHashPBKDF2(String hash) {
+        return hash != null && hash.startsWith("pbkdf2$");
+    }
+
+    /**
+     * Valida de manera segura (tiempo constante) una contraseña contra el hash almacenado,
+     * admitiendo tanto PBKDF2 con sal como SHA-256 heredado.
+     */
+    public static boolean verificarContrasena(String contrasenaPlana, String hashAlmacenado) {
+        if (contrasenaPlana == null || hashAlmacenado == null) return false;
+        if (hashAlmacenado.startsWith("pbkdf2$")) {
+            String[] partes = hashAlmacenado.split("\\$");
+            if (partes.length != 4) return false;
+            try {
+                int iteraciones = Integer.parseInt(partes[1]);
+                byte[] salt = hexABytes(partes[2]);
+                byte[] hashEsperado = hexABytes(partes[3]);
+
+                javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+                        contrasenaPlana.toCharArray(), salt, iteraciones, hashEsperado.length * 8
+                );
+                javax.crypto.SecretKeyFactory skf = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+                byte[] hashCalculado = skf.generateSecret(spec).getEncoded();
+                return MessageDigest.isEqual(hashEsperado, hashCalculado);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        // Fallback para hashes SHA-256 existentes
+        String hashSha256 = generarHashContrasena(contrasenaPlana);
+        return MessageDigest.isEqual(
+                hashSha256.getBytes(StandardCharsets.UTF_8),
+                hashAlmacenado.toLowerCase().getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    private static String bytesAHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    private static byte[] hexABytes(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
     }
 }

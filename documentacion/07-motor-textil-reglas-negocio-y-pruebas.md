@@ -303,3 +303,75 @@ java -cp "bin;lib/*" pruebas.PruebasSeguridadYSesiones
 ```
 
 Esta suite ejecuta **18 verificaciones deterministas** sobre emisión, expiración, detección de adulteraciones de firma HMAC-SHA256, revocación de cuentas suspendidas/inactivas y aislamiento de pedidos entre roles.
+
+---
+
+## 7. Manual de Comandos de Terminal para Pruebas y Validacion Integral (ADSO - SENA)
+
+Para facilitar la reproduccion de las pruebas por parte de instructores y evaluadores del SENA, a continuacion se resumen los comandos exactos para terminal PowerShell (Windows) y Bash (Linux/macOS/Docker):
+
+### 7.1. Pruebas Unitarias del Frontend (React + Vitest)
+```bash
+# Ingresar al directorio del frontend
+cd "tienda digital de telas"
+
+# Validacion estatica de codigo y reglas de diseno
+npm run lint
+
+# Ejecucion de pruebas unitarias automatizadas
+npm test
+
+# Verificacion de empaquetado para produccion
+npm run build
+```
+
+### 7.2. Compilacion y Ejecucion de las 4 Suites del Backend (Java 21)
+```bash
+# Ingresar al directorio del servidor Java
+cd "tienda digital de telas/backend-java/servidor-api"
+
+# Compilacion limpia en Linux / macOS:
+mkdir -p bin
+find src -name "*.java" > sources.txt
+javac -d bin -cp "lib/*" @sources.txt
+
+# Compilacion limpia en Windows PowerShell:
+New-Item -ItemType Directory -Force -Path bin
+javac -encoding UTF-8 -d bin -cp "lib/*" (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
+
+# Ejecucion de las 4 suites en Windows (separador ';'):
+java -cp "bin;lib/*" PruebasReglasNegocioTextil
+java -cp "bin;lib/*" PruebasSeguridadIntegridad
+java -cp "bin;lib/*" PruebasConcurrenciaYPagos
+java -cp "bin;lib/*" PruebasContratoApi
+
+# Ejecucion de las 4 suites en Linux / Docker (separador ':'):
+java -cp "bin:lib/*" PruebasReglasNegocioTextil
+java -cp "bin:lib/*" PruebasSeguridadIntegridad
+java -cp "bin:lib/*" PruebasConcurrenciaYPagos
+java -cp "bin:lib/*" PruebasContratoApi
+```
+
+### 7.3. Pruebas de Humo de Seguridad y RBAC con cURL
+```bash
+# Validacion 1: Endpoint de usuarios protegido sin Bearer token (Retorna HTTP 401 Unauthorized)
+curl -i http://localhost:8081/api/usuarios
+
+# Validacion 2: Prevencion de fraude PCI-DSS ante envio de tarjetas de credito al backend (Retorna HTTP 400 Bad Request)
+curl -i -X POST http://localhost:8081/api/pedidos \
+  -H "Content-Type: application/json" \
+  -d '{"pan": "4532012345678910", "cvv": "123"}'
+
+# Validacion 3: Comprobacion de sondas de disponibilidad (Healthchecks Liveness / Readiness)
+curl -i http://localhost:8081/health/live
+curl -i http://localhost:8081/health/ready
+```
+
+### 7.4. Verificacion del Pipeline de Integracion Continua con GitHub CLI
+```bash
+# Listar las ejecuciones del flujo en GitHub Actions
+gh run list
+
+# Inspeccionar el detalle de aprobacion de los 3 jobs
+gh run view
+```

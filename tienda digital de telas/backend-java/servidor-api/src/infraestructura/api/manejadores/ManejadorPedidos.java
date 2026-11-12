@@ -49,20 +49,43 @@ public class ManejadorPedidos extends ManejadorBase {
         String ruta = intercambio.getRequestURI().getPath();
 
         if ("GET".equalsIgnoreCase(metodo)) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+
             if (ruta.matches("^/api/(orders|pedidos)/\\d+/?$")) {
                 int idPedido = extraerIdRuta(ruta);
                 if (idPedido > 0) {
                     Pedido pedido = pedidoDAO.obtenerPedidoPorId(idPedido);
-                    if (pedido != null) {
-                        enviarRespuestaJson(intercambio, 200, gson.toJson(pedido));
-                    } else {
+                    if (pedido == null) {
                         enviarRespuestaJson(intercambio, 404, "{\"error\":\"Pedido no encontrado\"}");
+                        return;
                     }
+
+                    boolean esAdmin = identidad.get().esAdministrador();
+                    boolean esClienteDuenio = (identidad.get().idUsuario() == pedido.getIdCliente());
+                    boolean esVendedorPedido = (identidad.get().esVendedor() && identidad.get().idUsuario() == pedido.getIdVendedor());
+
+                    if (!esAdmin && !esClienteDuenio && !esVendedorPedido) {
+                        enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no autorizado para consultar este pedido\"}");
+                        return;
+                    }
+
+                    enviarRespuestaJson(intercambio, 200, gson.toJson(pedido));
                     return;
                 }
             }
 
-            List<Pedido> pedidos = pedidoDAO.obtenerTodosLosPedidos();
+            List<Pedido> pedidos;
+            if (identidad.get().esAdministrador()) {
+                pedidos = pedidoDAO.obtenerTodosLosPedidos();
+            } else if (identidad.get().esVendedor()) {
+                pedidos = pedidoDAO.obtenerPedidosPorVendedor(identidad.get().idUsuario());
+            } else {
+                pedidos = pedidoDAO.obtenerPedidosPorUsuario(identidad.get().idUsuario());
+            }
             enviarRespuestaJson(intercambio, 200, gson.toJson(pedidos));
 
         } else if ("POST".equalsIgnoreCase(metodo)) {
@@ -153,6 +176,16 @@ public class ManejadorPedidos extends ManejadorBase {
             }
 
         } else if ("PUT".equalsIgnoreCase(metodo)) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+            if (!identidad.get().esAdministrador() && !identidad.get().esVendedor()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: solo personal logístico o administradores pueden modificar pedidos\"}");
+                return;
+            }
+
             int idPedido = extraerIdRuta(ruta);
             if (idPedido <= 0) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Identificador de pedido inválido en la ruta\"}");
