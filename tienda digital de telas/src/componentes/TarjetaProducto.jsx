@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { ShoppingCart, Eye, Heart, Tag, Check, Ruler, Weight, Package } from 'lucide-react';
 import { useCarrito } from '../contextos/ContextoCarrito';
 import { useMetricas } from '../contextos/ContextoMetricas';
+import { useNotificacion } from '../contextos/ContextoNotificacion';
 import { formatCurrency } from '../utilidades/formateadores';
 
 const CATEGORY_STYLES = {
@@ -22,15 +23,18 @@ function TarjetaProducto({ product }) {
     const navigate = useNavigate();
     const { addToCart, isInCart, getProductQuantity } = useCarrito();
     const { isInWishlist, addToWishlist, removeFromWishlist, productDiscounts } = useMetricas();
+    const { showNotification } = useNotificacion();
     const [showAddedMessage, setShowAddedMessage] = useState(false);
     const messageRef = useRef(null);
     const cardRef = useRef(null);
     const tiltFrame = useRef(null);
 
     const discountInfo = productDiscounts?.[product.id];
-    const hasDiscount = discountInfo?.active && discountInfo?.percent > 0;
+    const isSpecialOffer = Boolean(product.isOffer || product.esOferta || discountInfo?.active);
+    const discountPercent = discountInfo?.percent > 0 ? discountInfo.percent : (isSpecialOffer ? 15 : 0);
+    const hasDiscount = discountPercent > 0;
     const basePrice = Number(product.price ?? product.precio ?? 0);
-    const discountedPrice = hasDiscount ? basePrice * (1 - discountInfo.percent / 100) : basePrice;
+    const discountedPrice = hasDiscount ? basePrice * (1 - discountPercent / 100) : basePrice;
     const stockAvailable = Number(product.stock !== undefined ? product.stock : (product.existencias !== undefined ? product.existencias : 50));
     const isOutOfStock = stockAvailable <= 0;
     const lowStock = !isOutOfStock && stockAvailable < 10;
@@ -63,8 +67,14 @@ function TarjetaProducto({ product }) {
         e.stopPropagation();
         if (favorite) {
             removeFromWishlist(product.id);
+            if (showNotification) {
+                showNotification('info', `"${product.name || 'Tela'}" eliminada de tus favoritos`);
+            }
         } else {
             addToWishlist(product);
+            if (showNotification) {
+                showNotification('success', `"${product.name || 'Tela'}" guardada en tus favoritos ❤️`);
+            }
         }
     };
 
@@ -201,13 +211,13 @@ function TarjetaProducto({ product }) {
                 )}
 
                 {hasDiscount && (
-                    <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
-                        <Tag size={10} />
-                        -{discountInfo.percent}%
+                    <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-1.5 z-10 border border-white/20 backdrop-blur-md animate-pulse">
+                        <Tag size={11} />
+                        <span>¡OFERTA -{discountPercent}%!</span>
                     </div>
                 )}
 
-                <div className={`absolute ${hasDiscount ? 'top-12' : 'top-3'} left-3 text-xs font-bold px-3 py-1 rounded-full shadow-md backdrop-blur-sm ${categoryStyle}`}>
+                <div className={`absolute ${hasDiscount ? 'top-11' : 'top-3'} left-3 text-xs font-bold px-3 py-1 rounded-full shadow-md backdrop-blur-md ${categoryStyle}`}>
                     {product.category || product.categoria}
                 </div>
             </div>

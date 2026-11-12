@@ -55,12 +55,12 @@ export default function NotificationFeed({ notifications = [] }) {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1">
                                         <p className={`text-sm font-semibold truncate pr-2 ${notif.isRead ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-                                            {notif.title}
+                                            {notif.title || notif.titulo || 'Notificación'}
                                         </p>
-                                        <span className="text-[10px] text-gray-400 whitespace-nowrap">{notif.time}</span>
+                                        <span className="text-[10px] text-gray-400 whitespace-nowrap">{notif.time || notif.fecha || 'Reciente'}</span>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                                        {notif.message}
+                                        {notif.message || notif.mensaje || ''}
                                     </p>
                                 </div>
                             </div>

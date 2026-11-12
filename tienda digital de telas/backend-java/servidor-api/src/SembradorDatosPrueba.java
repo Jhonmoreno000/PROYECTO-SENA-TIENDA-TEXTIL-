@@ -330,6 +330,37 @@ public class SembradorDatosPrueba {
                     "ON CONFLICT (region) DO NOTHING"
                 );
 
+                // 11. Pedidos Iniciales para Analítica y Top Vendedores
+                System.out.println("[11/11] Insertando pedidos demostrativos con vendedores asignados...");
+                sentencia.executeUpdate(
+                    "INSERT INTO pedidos (usuario_id, vendedor_id, nombre_cliente, correo_cliente, telefono_cliente, direccion_envio, ciudad_envio, departamento_envio, monto_total, subtotal, costo_envio, estado, metodo_pago, estado_pago, referencia_pago, creado_en) VALUES " +
+                    "(4, " + idVendedor1 + ", 'Juan Cliente', 'cliente@gmail.com', '3001234567', 'Cra 43A # 1-50', 'Medellín', 'Antioquia', 425000.00, 425000.00, 0, 'delivered', 'wompi', 'approved', 'PED-101-1794340001', CURRENT_TIMESTAMP - INTERVAL '2 days'), " +
+                    "(5, " + idVendedor1 + ", 'Cliente Demo', 'cliente@ddtextil.com', '3027058951', 'Cra 52 # 48-30', 'Medellín', 'Antioquia', 350000.00, 350000.00, 0, 'shipped', 'card', 'approved', 'PED-102-1794340002', CURRENT_TIMESTAMP - INTERVAL '1 day'), " +
+                    "(4, " + idVendedor2 + ", 'Juan Cliente', 'cliente@gmail.com', '3001234567', 'Cra 43A # 1-50', 'Medellín', 'Antioquia', 450000.00, 450000.00, 0, 'approved', 'nequi', 'approved', 'PED-103-1794340003', CURRENT_TIMESTAMP - INTERVAL '12 hours'), " +
+                    "(5, " + idVendedor2 + ", 'Cliente Demo', 'cliente@ddtextil.com', '3027058951', 'Cra 52 # 48-30', 'Medellín', 'Antioquia', 260000.00, 260000.00, 0, 'delivered', 'pse', 'approved', 'PED-104-1794340004', CURRENT_TIMESTAMP - INTERVAL '3 hours') " +
+                    "ON CONFLICT (referencia_pago) DO NOTHING"
+                );
+                sentencia.executeUpdate(
+                    "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) " +
+                    "SELECT p.id, 2, 5.0, 85000.00, 425000.00 FROM pedidos p WHERE p.referencia_pago = 'PED-101-1794340001' " +
+                    "ON CONFLICT DO NOTHING"
+                );
+                sentencia.executeUpdate(
+                    "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) " +
+                    "SELECT p.id, 5, 10.0, 35000.00, 350000.00 FROM pedidos p WHERE p.referencia_pago = 'PED-102-1794340002' " +
+                    "ON CONFLICT DO NOTHING"
+                );
+                sentencia.executeUpdate(
+                    "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) " +
+                    "SELECT p.id, 3, 10.0, 45000.00, 450000.00 FROM pedidos p WHERE p.referencia_pago = 'PED-103-1794340003' " +
+                    "ON CONFLICT DO NOTHING"
+                );
+                sentencia.executeUpdate(
+                    "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) " +
+                    "SELECT p.id, 4, 4.0, 65000.00, 260000.00 FROM pedidos p WHERE p.referencia_pago = 'PED-104-1794340004' " +
+                    "ON CONFLICT DO NOTHING"
+                );
+
                 conexion.commit();
                 System.out.println("\n=== BASE DE DATOS POSTGRESQL POBLADA EXITOSAMENTE ===");
                 System.out.println("Cuentas preparadas para verificación:");

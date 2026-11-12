@@ -105,13 +105,13 @@ export default function ResumenAdmin() {
         if (erpNotifications?.length > 0) {
             return erpNotifications.map(n => ({
                 id: n.id,
-                type: n.type,
-                title: n.title,
-                message: n.message,
-                time: n.createdAt
-                    ? new Date(n.createdAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                type: n.type || 'info',
+                title: n.title || n.titulo || 'Notificación del Sistema',
+                message: n.message || n.mensaje || '',
+                time: (n.createdAt || n.creadoEn)
+                    ? new Date(n.createdAt || n.creadoEn).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
                     : 'Reciente',
-                isRead: n.isRead || false
+                isRead: n.isRead || n.leido || false
             }));
         }
         // Fallback: bugs + tickets del sistema
@@ -140,23 +140,50 @@ export default function ResumenAdmin() {
     [erpFabricInventory]);
 
 
-    /** Top vendedores calculados desde pedidos reales */
+    /** Top vendedores calculados desde usuarios con rol vendedor y pedidos reales */
     const topSellers = useMemo(() => {
         const sellerMap = {};
-        orders.forEach(o => {
-            const id = o.sellerId;
+        // 1. Inicializar vendedores dados de alta en el sistema
+        const vendedores = (users || []).filter(u =>
+            u.role === 'vendedor' || u.rol === 'vendedor' || u.role === 'seller'
+        );
+        vendedores.forEach(v => {
+            const id = v.id;
+            sellerMap[id] = {
+                id,
+                name: v.name || v.nombre || `Vendedor #${id}`,
+                orders: 0,
+                sales: 0
+            };
+        });
+
+        // 2. Acumular pedidos reales
+        (orders || []).forEach(o => {
+            const id = o.sellerId || o.idVendedor;
             if (!id) return;
             const vendedor = users.find(u => u.id === id || String(u.id) === String(id));
             if (!sellerMap[id]) {
-                sellerMap[id] = { id, name: vendedor?.name || `Vendedor #${id}`, orders: 0, sales: 0 };
+                sellerMap[id] = {
+                    id,
+                    name: vendedor?.name || vendedor?.nombre || `Vendedor #${id}`,
+                    orders: 0,
+                    sales: 0
+                };
             }
             sellerMap[id].orders += 1;
-            sellerMap[id].sales += o.total || 0;
+            sellerMap[id].sales += Number(o.total || o.montoTotal || 0);
         });
-        return Object.values(sellerMap)
-            .sort((a, b) => b.sales - a.sales)
+
+        const list = Object.values(sellerMap);
+        if (list.length === 0) return [];
+
+        return list
+            .sort((a, b) => b.sales - a.sales || b.orders - a.orders)
             .slice(0, 5)
-            .map(s => ({ ...s, trend: s.sales > 100000 ? '+12%' : '+5%' }));
+            .map(s => ({
+                ...s,
+                trend: s.sales > 100000 ? '+12%' : (s.sales > 0 ? '+5%' : '0%')
+            }));
     }, [orders, users]);
 
     // ── Manejadores ──────────────────────────────────────────────────────
@@ -311,31 +338,49 @@ export default function ResumenAdmin() {
                         </div>
                         {recentActivity.length > 0 ? (
                             <div className="space-y-3">
-                                {recentActivity.slice(0, 6).map((item) => (
-                                    <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                            item.type === 'sale' ? 'bg-green-100 dark:bg-green-900/30' :
-                                            item.type === 'user' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                                            item.type === 'waste' ? 'bg-red-100 dark:bg-red-900/30' :
-                                            'bg-gray-100 dark:bg-slate-800'
-                                        }`}>
-                                            {item.type === 'sale'   && <DollarSign size={14} className="text-green-600 dark:text-green-400" />}
-                                            {item.type === 'user'   && <Users size={14} className="text-blue-600 dark:text-blue-400" />}
-                                            {item.type === 'waste'  && <AlertTriangle size={14} className="text-red-600 dark:text-red-400" />}
-                                            {item.type === 'order'  && <Package size={14} className="text-gray-600 dark:text-gray-400" />}
-                                            {item.type === 'system' && <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />}
+                                {recentActivity.slice(0, 6).map((item) => {
+                                    const tipo = String(item.type || item.tipo || '').toLowerCase();
+                                    const esVenta = ['sale', 'venta'].includes(tipo);
+                                    const esUsuario = ['user', 'usuario', 'registro'].includes(tipo);
+                                    const esMerma = ['waste', 'merma'].includes(tipo);
+                                    const esPedido = ['order', 'pedido'].includes(tipo);
+                                    const esSistema = ['system', 'sistema', 'alerta'].includes(tipo);
+
+                                    return (
+                                        <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                                esVenta ? 'bg-green-100 dark:bg-green-900/30' :
+                                                esUsuario ? 'bg-blue-100 dark:bg-blue-900/30' :
+                                                esMerma ? 'bg-red-100 dark:bg-red-900/30' :
+                                                esSistema ? 'bg-amber-100 dark:bg-amber-900/30' :
+                                                esPedido ? 'bg-indigo-100 dark:bg-indigo-900/30' :
+                                                'bg-primary-100 dark:bg-primary-900/30'
+                                            }`}>
+                                                {esVenta && <DollarSign size={14} className="text-green-600 dark:text-green-400" />}
+                                                {esUsuario && <Users size={14} className="text-blue-600 dark:text-blue-400" />}
+                                                {esMerma && <AlertTriangle size={14} className="text-red-600 dark:text-red-400" />}
+                                                {esPedido && <Package size={14} className="text-indigo-600 dark:text-indigo-400" />}
+                                                {esSistema && <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />}
+                                                {!esVenta && !esUsuario && !esMerma && !esPedido && !esSistema && (
+                                                    <Activity size={14} className="text-primary-600 dark:text-primary-400" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    {item.action || item.accion}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {item.userName || item.nombreUsuario || 'Usuario'}
+                                                </p>
+                                            </div>
+                                            {(item.amount || item.monto) && (
+                                                <span className="text-sm font-bold text-green-600 dark:text-green-400 flex-shrink-0">
+                                                    {formatCurrency(item.amount || item.monto)}
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.action}</p>
-                                            <p className="text-xs text-gray-500">{item.userName}</p>
-                                        </div>
-                                        {item.amount && (
-                                            <span className="text-sm font-bold text-green-600 dark:text-green-400 flex-shrink-0">
-                                                {formatCurrency(item.amount)}
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <p className="text-sm text-gray-400 text-center py-8">Sin actividad registrada</p>
@@ -380,7 +425,7 @@ export default function ResumenAdmin() {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-400 text-center py-8">Sin pedidos registrados aún</p>
+                            <p className="text-sm text-gray-400 text-center py-8">Sin vendedores registrados aún</p>
                         )}
                     </div>
                 </div>

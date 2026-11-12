@@ -82,6 +82,9 @@ function AppRoutes() {
                 <Route path="/catalogo" element={<Catalogo />} />
                 <Route path="/producto/:id" element={<DetalleProducto />} />
                 <Route path="/carrito" element={<Carrito />} />
+                <Route path="/favoritos" element={<Wishlist />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/cliente/favoritos" element={<Wishlist />} />
                 <Route path="/nosotros" element={<About />} />
                 <Route path="/contacto" element={<Contact />} />
                 <Route path="/login" element={<IniciarSesion />} />
@@ -119,23 +122,19 @@ function AppRoutes() {
                 <Route
                     path="/cliente/pedidos/rastreo"
                     element={
-                        <ProtectedRoute roles="cliente">
+                        <ProtectedRoute roles={['cliente', 'vendedor', 'admin']}>
                             <SeguimientoPedido />
                         </ProtectedRoute>
                     }
                 />
                 <Route
                     path="/cliente/coleccion"
-                    element={
-                        <ProtectedRoute roles="cliente">
-                            <Wishlist />
-                        </ProtectedRoute>
-                    }
+                    element={<Wishlist />}
                 />
                 <Route
                     path="/cliente/coleccion/calculadora"
                     element={
-                        <ProtectedRoute roles="cliente">
+                        <ProtectedRoute roles={['cliente', 'vendedor', 'admin']}>
                             <ProjectCalculator />
                         </ProtectedRoute>
                     }
@@ -143,7 +142,7 @@ function AppRoutes() {
                 <Route
                     path="/cliente/soporte/nuevo"
                     element={
-                        <ProtectedRoute roles="cliente">
+                        <ProtectedRoute roles={['cliente', 'vendedor', 'admin']}>
                             <NewReport />
                         </ProtectedRoute>
                     }
@@ -151,7 +150,7 @@ function AppRoutes() {
                 <Route
                     path="/cliente/soporte/tickets"
                     element={
-                        <ProtectedRoute roles="cliente">
+                        <ProtectedRoute roles={['cliente', 'vendedor', 'admin']}>
                             <MyTickets />
                         </ProtectedRoute>
                     }

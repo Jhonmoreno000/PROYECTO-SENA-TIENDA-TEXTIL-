@@ -22,65 +22,80 @@ function Beneficios() {
             icon: Truck,
             title: 'Envío Gratis',
             description: `En compras superiores a ${formatCurrency(100000)}`,
-            color: 'from-blue-500 to-cyan-500',
+            iconColor: 'text-white',
+            badgeBg: 'bg-sky-500 shadow-md shadow-sky-500/30',
+            glow: 'rgba(14, 165, 233, 0.15)',
         },
         {
             icon: ShieldCheck,
             title: 'Garantía de Calidad',
             description: '100% telas auténticas y certificadas',
-            color: 'from-green-500 to-emerald-500',
+            iconColor: 'text-white',
+            badgeBg: 'bg-emerald-500 shadow-md shadow-emerald-500/30',
+            glow: 'rgba(16, 185, 129, 0.15)',
         },
         {
             icon: CreditCard,
             title: 'Pago Seguro',
             description: 'Múltiples métodos de pago disponibles',
-            color: 'from-purple-500 to-pink-500',
+            iconColor: 'text-white',
+            badgeBg: 'bg-purple-600 shadow-md shadow-purple-600/30',
+            glow: 'rgba(168, 85, 247, 0.15)',
         },
         {
             icon: Headphones,
             title: 'Soporte 24/7',
             description: 'Atención personalizada cuando la necesites',
-            color: 'from-orange-500 to-red-500',
+            iconColor: 'text-white',
+            badgeBg: 'bg-orange-500 shadow-md shadow-orange-500/30',
+            glow: 'rgba(249, 115, 22, 0.15)',
         },
     ];
 
     useGSAP(() => {
         const cards = gsap.utils.toArray('.benefit-card');
         gsap.fromTo(cards, 
-            { opacity: 0, y: 50, filter: 'blur(10px)' },
+            { opacity: 0, y: 35, filter: 'blur(8px)' },
             { 
                 opacity: 1, 
                 y: 0, 
                 filter: 'blur(0px)',
-                duration: 1, 
-                stagger: 0.15, 
-                ease: "power3.out",
+                duration: 0.8, 
+                stagger: 0.12, 
+                ease: "power2.out",
                 scrollTrigger: {
                     trigger: containerRef.current,
-                    start: "top 85%", // Comienza la animación cuando el 85% superior del contenedor entra al viewport
-                    once: true        // Solo se anima una vez
+                    start: "top 85%",
+                    once: true
                 }
             }
         );
     }, { scope: containerRef });
 
     return (
-        <section ref={containerRef} className="section-container">
+        <section ref={containerRef} className="section-container my-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                 {benefits.map((benefit, index) => {
                     const Icon = benefit.icon;
                     return (
                         <div
                             key={index}
-                            className="benefit-card card p-6 text-center group cursor-pointer hover:-translate-y-2 hover:scale-105 transition-all duration-300"
+                            className="benefit-card relative p-7 text-center rounded-3xl bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/90 dark:border-white/10 shadow-lg shadow-slate-900/5 hover:shadow-2xl hover:border-primary-500/40 hover:-translate-y-1.5 transition-all duration-300 group cursor-pointer overflow-hidden"
+                            style={{
+                                background: `radial-gradient(circle at 50% 15%, ${benefit.glow}, transparent 75%)`,
+                            }}
                         >
-                            <div className="mb-4 flex justify-center">
-                                <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${benefit.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-lg`}>
+                            <div className="mb-5 flex justify-center">
+                                <div className={`w-16 h-16 rounded-full ${benefit.badgeBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                                     <Icon className="w-8 h-8 text-white" />
                                 </div>
                             </div>
-                            <h3 className="text-xl font-bold mb-2 dark:text-white">{benefit.title}</h3>
-                            <p className="text-gray-600 dark:text-gray-400">{benefit.description}</p>
+                            <h3 className="text-lg font-bold mb-2 text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                {benefit.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                                {benefit.description}
+                            </p>
                         </div>
                     );
                 })}

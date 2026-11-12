@@ -1,5 +1,5 @@
 @tailwind base;
-@tailwind componentes;
+@tailwind components;
 @tailwind utilities;
 
 @layer base {
@@ -34,7 +34,7 @@
   }
 }
 
-@layer componentes {
+@layer components {
   .btn-primary {
     @apply px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 border-none;
   }

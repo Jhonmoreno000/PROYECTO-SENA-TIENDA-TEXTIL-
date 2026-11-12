@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Zap, Truck, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Zap, Truck, ShieldCheck, ArrowRight, Lock } from 'lucide-react';
 import Encabezado from '../componentes/Encabezado';
 import PieDePagina from '../componentes/PieDePagina';
 import CheckoutForm from '../componentes/CheckoutForm';
@@ -10,6 +10,7 @@ import ResumenPedido from '../componentes/ResumenPedido';
 import { useCarrito } from '../contextos/ContextoCarrito';
 import { useAutenticacion } from '../contextos/ContextoAutenticacion';
 import { useMetricas } from '../contextos/ContextoMetricas';
+import { useNotificacion } from '../contextos/ContextoNotificacion';
 
 gsap.registerPlugin(useGSAP);
 
@@ -18,18 +19,22 @@ function Pago() {
     const { cartItems, getCartTotal, appliedCoupon } = useCarrito();
     const { user } = useAutenticacion();
     const { systemConfig } = useMetricas();
+    const { showNotification } = useNotificacion();
     const headerRef = useRef(null);
 
+    // Los datos iniciales provienen del usuario si está autenticado; de lo contrario inician vacíos para obligar a diligenciar
     const [formData, setFormData] = useState({
-        fullName: user?.nombre || user?.name || 'Cliente Demo',
-        email: user?.email || user?.correo || 'cliente@ddtextil.com',
-        phone: user?.telefono || '3027058951',
-        address: 'Cra. 52 (Carabobo) # 48-30',
-        city: 'Medellín',
-        state: 'Antioquia',
-        zipCode: '050012',
+        fullName: user?.nombre || user?.name || '',
+        email: user?.email || user?.correo || '',
+        phone: user?.telefono || '',
+        address: user?.direccion || user?.address || '',
+        city: user?.ciudad || user?.city || '',
+        state: user?.departamento || user?.state || '',
+        zipCode: user?.codigoPostal || user?.zipCode || '',
         notes: '',
     });
+
+    const [formErrors, setFormErrors] = useState({});
 
     useEffect(() => {
         if (cartItems.length === 0) {
@@ -46,7 +51,68 @@ function Pago() {
         }
     }, { scope: headerRef });
 
+    // Validación rigurosa de datos de contacto y entrega
+    const validarFormularioCompleto = () => {
+        const errores = {};
+        const fn = String(formData.fullName || '').trim();
+        if (!fn) {
+            errores.fullName = 'El nombre completo es requerido';
+        } else if (fn.length < 3) {
+            errores.fullName = 'El nombre debe tener al menos 3 caracteres';
+        }
+
+        const em = String(formData.email || '').trim();
+        if (!em) {
+            errores.email = 'El correo electrónico es requerido';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+            errores.email = 'Correo electrónico inválido';
+        }
+
+        const ph = String(formData.phone || '').trim().replace(/\s/g, '');
+        if (!ph) {
+            errores.phone = 'El teléfono móvil es requerido';
+        } else if (!/^\d{10}$/.test(ph)) {
+            errores.phone = 'Teléfono inválido (debe tener 10 dígitos)';
+        }
+
+        const addr = String(formData.address || '').trim();
+        if (!addr) {
+            errores.address = 'La dirección de entrega es requerida';
+        } else if (addr.length < 5) {
+            errores.address = 'Ingresa una dirección completa (mínimo 5 caracteres)';
+        }
+
+        const city = String(formData.city || '').trim();
+        if (!city) {
+            errores.city = 'La ciudad o municipio es requerida';
+        }
+
+        const state = String(formData.state || '').trim();
+        if (!state) {
+            errores.state = 'El departamento es requerido';
+        }
+
+        const zip = String(formData.zipCode || '').trim();
+        if (!zip) {
+            errores.zipCode = 'El código postal es requerido';
+        }
+
+        setFormErrors(errores);
+        return Object.keys(errores).length === 0;
+    };
+
     const guardarOrdenYContinuar = () => {
+        const esValido = validarFormularioCompleto();
+        if (!esValido) {
+            showNotification(
+                'error',
+                'Debes completar todos los campos obligatorios de envío antes de seleccionar el método de pago.'
+            );
+            const el = document.getElementById('checkout-shipping-form');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
         const orderNumber = `DD${Date.now().toString().slice(-8)}`;
         const subtotal = getCartTotal();
         let discountAmount = 0;
@@ -84,6 +150,13 @@ function Pago() {
 
     if (cartItems.length === 0) return null;
 
+    const formularioIncompleto =
+        !formData.fullName ||
+        !formData.email ||
+        !formData.phone ||
+        !formData.address ||
+        !formData.city;
+
     return (
         <div className="min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
             <Encabezado />
@@ -103,9 +176,22 @@ function Pago() {
                     <button
                         type="button"
                         onClick={guardarOrdenYContinuar}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm hover:bg-white dark:hover:bg-slate-800 hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-primary-400 transition-all shadow-xs cursor-pointer group"
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border backdrop-blur-md font-semibold text-xs sm:text-sm transition-all shadow-xs cursor-pointer group ${
+                            formularioIncompleto
+                                ? 'bg-slate-100/70 dark:bg-slate-900/40 border-slate-200/80 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:border-slate-300'
+                                : 'bg-white/80 dark:bg-slate-900/60 border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-primary-400'
+                        }`}
+                        title={
+                            formularioIncompleto
+                                ? 'Completa el formulario para habilitar el paso 2'
+                                : 'Ir a selección de pasarela'
+                        }
                     >
-                        <Zap className="w-4 h-4 text-slate-400 group-hover:text-primary-500 transition-colors" />
+                        {formularioIncompleto ? (
+                            <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                        ) : (
+                            <Zap className="w-4 h-4 text-primary-500 group-hover:scale-110 transition-transform shrink-0" />
+                        )}
                         <span>2. Pasarela de Pago (Wompi / Nequi / PSE) →</span>
                     </button>
                 </div>
@@ -120,7 +206,7 @@ function Pago() {
                         Datos de Envío y Facturación
                     </h1>
                     <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-2xl">
-                        Verifica la dirección de entrega de tu tela en Medellín o cualquier municipio de Colombia para continuar al pago.
+                        Diligencia la dirección de entrega de tu tela en Medellín o cualquier municipio de Colombia para continuar al pago.
                     </p>
                 </div>
 
@@ -132,6 +218,8 @@ function Pago() {
                                 onSubmit={guardarOrdenYContinuar}
                                 formData={formData}
                                 setFormData={setFormData}
+                                errors={formErrors}
+                                setErrors={setFormErrors}
                             />
                         </div>
                     </div>

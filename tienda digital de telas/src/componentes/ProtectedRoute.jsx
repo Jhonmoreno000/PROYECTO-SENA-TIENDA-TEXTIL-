@@ -36,9 +36,24 @@ function ProtectedRoute({ children, roles }) {
     // Normalizamos roles siempre a un array para que la comparación sea consistente
     // Ejemplo: "admin" → ["admin"], ["vendedor","admin"] → ["vendedor","admin"]
     if (roles) {
-        const rolesArray = Array.isArray(roles) ? roles : [roles];
-        const userRole = user?.role;
-        if (!rolesArray.includes(userRole)) {
+        const rolesArray = (Array.isArray(roles) ? roles : [roles]).map(r => String(r).toLowerCase());
+        const rawRole = String(user?.role || user?.rol || '').toLowerCase();
+        
+        const roleAliases = {
+            administrador: 'admin',
+            admin: 'admin',
+            vendedor: 'vendedor',
+            cliente: 'cliente',
+        };
+
+        const canonicalUserRole = roleAliases[rawRole] || rawRole;
+        const canonicalAllowedRoles = rolesArray.map(r => roleAliases[r] || r);
+
+        // Si el usuario es admin, tiene permiso de auditoría en vistas de vendedor y cliente
+        const hasPermission = canonicalAllowedRoles.includes(canonicalUserRole) ||
+            (canonicalUserRole === 'admin' && (canonicalAllowedRoles.includes('vendedor') || canonicalAllowedRoles.includes('cliente')));
+
+        if (!hasPermission) {
             // El usuario está autenticado pero no tiene el rol necesario → lo mandamos al inicio
             return <Navigate to="/" replace />;
         }

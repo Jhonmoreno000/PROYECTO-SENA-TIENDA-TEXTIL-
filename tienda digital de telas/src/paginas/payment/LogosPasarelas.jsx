@@ -1,17 +1,57 @@
 import React from 'react';
 
 /**
- * Logos vectoriales (SVG) de alta nitidez para las pasarelas de pago en Colombia.
- * Garantizan carga instantánea sin depender de imágenes externas y se adaptan a las tarjetas 3D.
+ * Logos vectoriales (SVG) de ultra-alta nitidez para pasarelas de pago colombianas y franquicias internacionales.
+ * Incorpora los vectores oficiales de Mastercard (Uiverse.io), Visa, Wompi, Mercado Pago, Nequi, ePayco y PSE.
  */
+
+export function LogoMastercard({ className = 'h-7', darkBg = false }) {
+    return (
+        <div className={`inline-flex items-center gap-1.5 select-none shrink-0 ${className}`}>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 48 48"
+                className="h-full w-auto shrink-0 drop-shadow-xs"
+            >
+                <path fill="#ff9800" d="M32 10A14 14 0 1 0 32 38A14 14 0 1 0 32 10Z" />
+                <path fill="#d50000" d="M16 10A14 14 0 1 0 16 38A14 14 0 1 0 16 10Z" />
+                <path
+                    fill="#ff3d00"
+                    d="M18,24c0,4.755,2.376,8.95,6,11.48c3.624-2.53,6-6.725,6-11.48s-2.376-8.95-6-11.48 C20.376,15.05,18,19.245,18,24z"
+                />
+            </svg>
+            <span
+                className={`text-[10px] font-black uppercase tracking-wider shrink-0 whitespace-nowrap ${
+                    darkBg ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+                }`}
+            >
+                Mastercard
+            </span>
+        </div>
+    );
+}
+
+export function LogoVisa({ className = 'h-7', darkBg = false }) {
+    return (
+        <div className={`inline-flex items-center select-none shrink-0 ${className}`}>
+            <div className="px-2 py-0.5 rounded-md bg-[#1A1F71] text-white flex items-center shadow-xs">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 64 22"
+                    className="h-4 w-auto fill-current"
+                >
+                    <path d="M24.8 2.5L18.4 19H14.1L8.7 5.8c-.3-.7-.6-1-1.2-1.3-1.1-.6-2.9-1.1-4.5-1.4L3.2 2.5h7.3c.9 0 1.8.7 2 1.7l1.8 9.8 4.4-11.5h6.1zm18.4 11.1c0-4.3-6-4.5-6-6.5 0-.6.6-1.1 1.8-1.3.9-.1 3.4-.2 5.2.7l.9-4.4c-1.3-.5-3-.8-5.1-.8-5.4 0-9.1 2.8-9.1 7 0 3 2.7 4.7 4.7 5.7 2.1 1 2.8 1.7 2.8 2.5 0 1.4-1.7 2-3.2 2-2.7 0-4.2-.4-6.5-1.4l-.9 4.4c1.2.6 3.5 1 5.8 1 5.8 0 9.6-2.8 9.6-7.4zM54.4 19h4l-3.7-16.5h-3.7c-.8 0-1.5.5-1.8 1.2l-6.4 15.3h4.6l.9-2.5h5.7l.4 2.5zm-4.9-6.1l2.3-6.2 1.3 6.2h-3.6zM32 2.5h-4.3L24.3 19h4.3l3.4-16.5z" />
+                </svg>
+            </div>
+        </div>
+    );
+}
 
 export function LogoWompi({ className = 'h-6', darkBg = false }) {
     return (
         <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
-            {/* Isotipo Bancolombia / Wompi */}
-            <svg viewBox="0 0 40 36" className="h-6 w-auto shrink-0" fill="none">
-                <rect width="40" height="36" rx="9" fill={darkBg ? '#00C389' : '#0b192c'} />
-                {/* Franjas Bancolombia estilizadas */}
+            <svg viewBox="0 0 40 36" className="h-6 w-auto shrink-0 drop-shadow-xs" fill="none">
+                <rect width="40" height="36" rx="9" fill={darkBg ? '#071626' : '#0b192c'} />
                 <path d="M6 10.5C14 8.5 26 8.5 34 10.5" stroke="#FDDA24" strokeWidth="3.2" strokeLinecap="round" />
                 <path d="M8 17.5C15 16 25 16 32 17.5" stroke="#0055B8" strokeWidth="3.2" strokeLinecap="round" />
                 <path d="M10 24.5C16 23.2 24 23.2 30 24.5" stroke="#E31837" strokeWidth="3.2" strokeLinecap="round" />
@@ -31,8 +71,7 @@ export function LogoWompi({ className = 'h-6', darkBg = false }) {
 export function LogoMercadoPago({ className = 'h-6', darkBg = false }) {
     return (
         <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
-            {/* Óvalo oficial de Mercado Pago con apretón de manos estilizado */}
-            <svg viewBox="0 0 44 34" className="h-6 w-auto shrink-0" fill="none">
+            <svg viewBox="0 0 44 34" className="h-6 w-auto shrink-0 drop-shadow-xs" fill="none">
                 <ellipse cx="22" cy="17" rx="21" ry="15" fill="#009EE3" stroke={darkBg ? '#7dd3fc' : 'none'} strokeWidth="1.2" />
                 <path
                     d="M11 18.5c2.5-3 5.2-3.5 8-1.2l3 2.3 3-2.3c2.8-2.3 5.5-1.8 8 1.2"
@@ -65,12 +104,9 @@ export function LogoMercadoPago({ className = 'h-6', darkBg = false }) {
 export function LogoNequi({ className = 'h-6', darkBg = false }) {
     return (
         <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
-            {/* Isotipo Nequi (Punto rosa + N geométrica sobre ciruela oscuro) */}
-            <svg viewBox="0 0 38 36" className="h-6 w-auto shrink-0" fill="none">
+            <svg viewBox="0 0 38 36" className="h-6 w-auto shrink-0 drop-shadow-xs" fill="none">
                 <rect width="38" height="36" rx="9" fill="#20002C" stroke={darkBg ? '#f472b6' : 'none'} strokeWidth="1.2" />
-                {/* Punto fucsia característico de Nequi a la izquierda */}
                 <rect x="6.5" y="10" width="4.5" height="4.5" rx="1.2" fill="#FF0080" />
-                {/* Letra N de Nequi */}
                 <path
                     d="M15 25V11l9.5 14V11"
                     stroke="#FFFFFF"
@@ -94,8 +130,7 @@ export function LogoNequi({ className = 'h-6', darkBg = false }) {
 export function LogoEpayco({ className = 'h-6', darkBg = false }) {
     return (
         <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
-            {/* Isotipo ePayco / Efecty */}
-            <svg viewBox="0 0 38 36" className="h-6 w-auto shrink-0" fill="none">
+            <svg viewBox="0 0 38 36" className="h-6 w-auto shrink-0 drop-shadow-xs" fill="none">
                 <rect width="38" height="36" rx="9" fill="#FF5A00" />
                 <path
                     d="M11 18h16M11 18c0-4.5 3.5-7.5 8-7.5 3.8 0 6.8 2 7.6 5M11 18c0 4.5 3.5 7.5 8 7.5 3.5 0 6.2-1.5 7.4-4"
@@ -120,8 +155,7 @@ export function LogoEpayco({ className = 'h-6', darkBg = false }) {
 export function LogoPSE({ className = 'h-6', darkBg = false }) {
     return (
         <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
-            {/* Isotipo PSE (Globo interbancario azul/dorado ACH Colombia) */}
-            <svg viewBox="0 0 38 36" className="h-6 w-auto shrink-0" fill="none">
+            <svg viewBox="0 0 38 36" className="h-6 w-auto shrink-0 drop-shadow-xs" fill="none">
                 <rect width="38" height="36" rx="9" fill="#003876" stroke={darkBg ? '#38bdf8' : 'none'} strokeWidth="1.2" />
                 <circle cx="19" cy="18" r="10" stroke="#FDB913" strokeWidth="2.2" />
                 <ellipse cx="19" cy="18" rx="5" ry="10" stroke="#38BDF8" strokeWidth="1.6" />
@@ -141,33 +175,29 @@ export function LogoPSE({ className = 'h-6', darkBg = false }) {
 
 export function LogoTarjetas({ cardType = 'unknown', className = 'h-6', darkBg = false }) {
     if (cardType === 'visa') {
-        return (
-            <div className={`inline-flex items-center px-2 py-0.5 rounded bg-[#1A1F71] text-white font-black italic text-xs tracking-wider shadow-xs shrink-0 select-none ${className}`}>
-                VISA
-            </div>
-        );
+        return <LogoVisa className={className} darkBg={darkBg} />;
     }
     if (cardType === 'mastercard') {
-        return (
-            <div className={`inline-flex items-center gap-1.5 select-none shrink-0 ${className}`}>
-                <div className="flex items-center shrink-0">
-                    <div className="w-5 h-5 rounded-full bg-[#EB001B]" />
-                    <div className="w-5 h-5 rounded-full bg-[#F79E1B] -ml-2 mix-blend-screen" />
-                </div>
-                <span className={`text-[10px] font-bold shrink-0 whitespace-nowrap ${darkBg ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
-                    Mastercard
-                </span>
-            </div>
-        );
+        return <LogoMastercard className={className} darkBg={darkBg} />;
     }
     return (
-        <div className={`inline-flex items-center gap-1.5 select-none shrink-0 ${className}`}>
-            <span className="px-1.5 py-0.5 rounded bg-[#1A1F71] text-white font-black italic text-[10px] tracking-wider shrink-0">
+        <div className={`inline-flex items-center gap-2 select-none shrink-0 ${className}`}>
+            <div className="px-1.5 py-0.5 rounded bg-[#1A1F71] text-white font-black italic text-[9px] tracking-wider shadow-2xs shrink-0">
                 VISA
-            </span>
+            </div>
             <div className="flex items-center shrink-0">
-                <div className="w-4 h-4 rounded-full bg-[#EB001B]" />
-                <div className="w-4 h-4 rounded-full bg-[#F79E1B] -ml-1.5 opacity-90" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 48 48"
+                    className="h-5 w-auto shrink-0"
+                >
+                    <path fill="#ff9800" d="M32 10A14 14 0 1 0 32 38A14 14 0 1 0 32 10Z" />
+                    <path fill="#d50000" d="M16 10A14 14 0 1 0 16 38A14 14 0 1 0 16 10Z" />
+                    <path
+                        fill="#ff3d00"
+                        d="M18,24c0,4.755,2.376,8.95,6,11.48c3.624-2.53,6-6.725,6-11.48s-2.376-8.95-6-11.48 C20.376,15.05,18,19.245,18,24z"
+                    />
+                </svg>
             </div>
         </div>
     );

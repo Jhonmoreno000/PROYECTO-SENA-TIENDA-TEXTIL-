@@ -89,14 +89,15 @@ function IniciarSesion() {
                     const authResult = await loginConSSO(ssoData);
                     if (authResult.success) {
                         const user = authResult.user || JSON.parse(localStorage.getItem('authUser')) || {};
-                        const userRole = user.role || user.rol || 'cliente';
+                        const rawRole = String(user.role || user.rol || 'cliente').toLowerCase();
                         const roleRedirects = {
                             admin: '/admin',
                             administrador: '/admin',
                             vendedor: '/vendedor',
                             cliente: '/cliente',
                         };
-                        const destination = (from && from !== '/') ? from : (roleRedirects[userRole] || '/cliente');
+                        const hasCustomFrom = from && from !== '/' && from !== '/login';
+                        const destination = hasCustomFrom ? from : (roleRedirects[rawRole] || '/cliente');
                         navigate(destination, { replace: true });
                     } else {
                         setAuthError(authResult.message || 'Error autenticando con cuenta de ' + ssoData.proveedor);
@@ -138,9 +139,10 @@ function IniciarSesion() {
         if (authResult.success) {
             setModalSSO(null);
             const user = authResult.user || JSON.parse(localStorage.getItem('authUser')) || {};
-            const userRole = user.role || user.rol || 'cliente';
+            const rawRole = String(user.role || user.rol || 'cliente').toLowerCase();
             const roleRedirects = { admin: '/admin', administrador: '/admin', vendedor: '/vendedor', cliente: '/cliente' };
-            const destination = (from && from !== '/') ? from : (roleRedirects[userRole] || '/cliente');
+            const hasCustomFrom = from && from !== '/' && from !== '/login';
+            const destination = hasCustomFrom ? from : (roleRedirects[rawRole] || '/cliente');
             navigate(destination, { replace: true });
         } else {
             throw new Error(authResult.message || 'No se pudo completar el acceso.');
@@ -152,14 +154,16 @@ function IniciarSesion() {
         const result = await login(datos.email, datos.password);
 
         if (result.success) {
-            const user = JSON.parse(localStorage.getItem('authUser'));
+            const user = result.user || JSON.parse(localStorage.getItem('authUser')) || {};
+            const rawRole = String(user.role || user.rol || 'cliente').toLowerCase();
             const roleRedirects = {
                 admin: '/admin',
                 administrador: '/admin',
                 vendedor: '/vendedor',
                 cliente: '/cliente',
             };
-            const destination = (from && from !== '/') ? from : (roleRedirects[user?.role] || '/');
+            const hasCustomFrom = from && from !== '/' && from !== '/login';
+            const destination = hasCustomFrom ? from : (roleRedirects[rawRole] || '/cliente');
             navigate(destination, { replace: true });
         } else {
             setAuthError(result.message || 'Credenciales incorrectas. Intenta de nuevo.');

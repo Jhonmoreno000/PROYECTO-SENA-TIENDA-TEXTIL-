@@ -1,54 +1,58 @@
 import React from 'react';
 
-// Mapa de variantes de color predefinidas para la paleta premium
+// Mapa de variantes de color predefinidas para la paleta premium con excelente contraste en modo oscuro
 const colorVariants = {
     emerald: {
-        iconBg:     'bg-emerald-100 dark:bg-emerald-900/40',
-        iconText:   'text-emerald-600 dark:text-emerald-400',
+        iconBg:     'bg-emerald-100 dark:bg-emerald-500/20 dark:border dark:border-emerald-500/30',
+        iconText:   'text-emerald-600 dark:text-emerald-300',
     },
     blue: {
-        iconBg:     'bg-blue-100 dark:bg-blue-900/40',
-        iconText:   'text-blue-600 dark:text-blue-400',
+        iconBg:     'bg-blue-100 dark:bg-blue-500/20 dark:border dark:border-blue-500/30',
+        iconText:   'text-blue-600 dark:text-blue-300',
+    },
+    violet: {
+        iconBg:     'bg-violet-100 dark:bg-violet-500/20 dark:border dark:border-violet-500/30',
+        iconText:   'text-violet-600 dark:text-violet-300',
     },
     purple: {
-        iconBg:     'bg-purple-100 dark:bg-purple-900/40',
-        iconText:   'text-purple-600 dark:text-purple-400',
+        iconBg:     'bg-purple-100 dark:bg-purple-500/20 dark:border dark:border-purple-500/30',
+        iconText:   'text-purple-600 dark:text-purple-300',
     },
     orange: {
-        iconBg:     'bg-orange-100 dark:bg-orange-900/40',
-        iconText:   'text-orange-600 dark:text-orange-400',
+        iconBg:     'bg-orange-100 dark:bg-orange-500/20 dark:border dark:border-orange-500/30',
+        iconText:   'text-orange-600 dark:text-orange-300',
     },
     rose: {
-        iconBg:     'bg-rose-100 dark:bg-rose-900/40',
-        iconText:   'text-rose-600 dark:text-rose-400',
+        iconBg:     'bg-rose-100 dark:bg-rose-500/20 dark:border dark:border-rose-500/30',
+        iconText:   'text-rose-600 dark:text-rose-300',
     },
     indigo: {
-        iconBg:     'bg-indigo-100 dark:bg-indigo-900/40',
-        iconText:   'text-indigo-600 dark:text-indigo-400',
+        iconBg:     'bg-indigo-100 dark:bg-indigo-500/20 dark:border dark:border-indigo-500/30',
+        iconText:   'text-indigo-600 dark:text-indigo-300',
     },
     amber: {
-        iconBg:     'bg-amber-100 dark:bg-amber-900/40',
-        iconText:   'text-amber-600 dark:text-amber-400',
+        iconBg:     'bg-amber-100 dark:bg-amber-500/20 dark:border dark:border-amber-500/30',
+        iconText:   'text-amber-600 dark:text-amber-300',
     },
     primary: {
-        iconBg:     'bg-primary-100 dark:bg-primary-900/40',
-        iconText:   'text-primary-600 dark:text-primary-400',
+        iconBg:     'bg-primary-100 dark:bg-primary-500/20 dark:border dark:border-primary-500/30',
+        iconText:   'text-primary-600 dark:text-primary-300',
     },
     green: {
-        iconBg:     'bg-green-100 dark:bg-green-900/40',
-        iconText:   'text-green-600 dark:text-green-400',
+        iconBg:     'bg-emerald-100 dark:bg-emerald-500/20 dark:border dark:border-emerald-500/30',
+        iconText:   'text-emerald-600 dark:text-emerald-300',
     },
     red: {
-        iconBg:     'bg-red-100 dark:bg-red-900/40',
-        iconText:   'text-red-600 dark:text-red-400',
+        iconBg:     'bg-red-100 dark:bg-red-500/20 dark:border dark:border-red-500/30',
+        iconText:   'text-red-600 dark:text-red-300',
     },
     yellow: {
-        iconBg:     'bg-yellow-100 dark:bg-yellow-900/40',
-        iconText:   'text-yellow-600 dark:text-yellow-400',
+        iconBg:     'bg-yellow-100 dark:bg-yellow-500/20 dark:border dark:border-yellow-500/30',
+        iconText:   'text-yellow-600 dark:text-yellow-300',
     },
     gray: {
-        iconBg:     'bg-gray-100 dark:bg-slate-800',
-        iconText:   'text-gray-600 dark:text-gray-400',
+        iconBg:     'bg-gray-100 dark:bg-slate-800 dark:border dark:border-slate-700',
+        iconText:   'text-gray-600 dark:text-gray-300',
     },
 };
 
@@ -56,8 +60,8 @@ function MetricCard({ label, title, value, icon: Icon, color = 'primary', trend,
     const displayLabel = label || title;
 
     // Si color es una clave del mapa, usar el mapa; si no, intentar parsear (legado)
-    let iconBgClasses  = 'bg-primary-100 dark:bg-primary-900/40';
-    let iconTextClasses = 'text-primary-600 dark:text-primary-400';
+    let iconBgClasses  = 'bg-primary-100 dark:bg-primary-500/20 dark:border dark:border-primary-500/30';
+    let iconTextClasses = 'text-primary-600 dark:text-primary-300';
 
     if (colorVariants[color]) {
         iconBgClasses   = colorVariants[color].iconBg;
@@ -74,7 +78,7 @@ function MetricCard({ label, title, value, icon: Icon, color = 'primary', trend,
     }
 
     // Determinar color del trendValue
-    let trendColor = 'text-gray-500';
+    let trendColor = 'text-gray-500 dark:text-gray-400';
     let trendBg = 'bg-gray-100 dark:bg-gray-800';
     if (trendValue) {
         if (trend === 'up') {

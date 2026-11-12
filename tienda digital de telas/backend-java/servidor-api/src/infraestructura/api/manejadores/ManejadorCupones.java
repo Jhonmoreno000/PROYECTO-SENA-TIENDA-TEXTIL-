@@ -32,6 +32,13 @@ public class ManejadorCupones extends ManejadorBase {
             enviarRespuestaJson(intercambio, 200, gson.toJson(cupones));
 
         } else if ("POST".equalsIgnoreCase(metodo)) {
+            // Verificación de autorización: Solo el administrador puede crear cupones de descuento
+            java.util.Optional<infraestructura.seguridad.TokenSesion.Identidad> identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty() || !identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede crear cupones de descuento\"}");
+                return;
+            }
+
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             Cupon nuevoCupon = gson.fromJson(cuerpo, Cupon.class);
             if (nuevoCupon == null || nuevoCupon.getCodigo() == null || nuevoCupon.getCodigo().isBlank()) {
@@ -57,6 +64,13 @@ public class ManejadorCupones extends ManejadorBase {
             }
 
         } else if ("PUT".equalsIgnoreCase(metodo) || "DELETE".equalsIgnoreCase(metodo)) {
+            // Verificación de autorización: Solo el administrador puede activar o desactivar cupones
+            java.util.Optional<infraestructura.seguridad.TokenSesion.Identidad> identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty() || !identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede modificar el estado de cupones de descuento\"}");
+                return;
+            }
+
             String ruta = intercambio.getRequestURI().getPath();
             int idCupon = extraerIdRuta(ruta);
             if (idCupon <= 0) {
@@ -68,9 +82,16 @@ public class ManejadorCupones extends ManejadorBase {
                     || (ruta.startsWith("/api/coupons/") && ruta.endsWith("/deactivate"))
                     || (ruta.startsWith("/api/cupones/") && ruta.endsWith("/desactivar"))) {
                 if (cuponDAO.desactivarCupon(idCupon)) {
-                    enviarRespuestaJson(intercambio, 200, "{\"success\":true}");
+                    enviarRespuestaJson(intercambio, 200, "{\"success\":true,\"activo\":false}");
                 } else {
                     enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error actualizando estado del cupón\"}");
+                }
+            } else if ((ruta.startsWith("/api/coupons/") && ruta.endsWith("/activate"))
+                    || (ruta.startsWith("/api/cupones/") && ruta.endsWith("/activar"))) {
+                if (cuponDAO.activarCupon(idCupon)) {
+                    enviarRespuestaJson(intercambio, 200, "{\"success\":true,\"activo\":true}");
+                } else {
+                    enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error activando cupón\"}");
                 }
             } else {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Petición inválida\"}");
