@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpExchange;
 import dominio.excepciones.ExcepcionDominio;
 import dominio.modelos.Usuario;
 import infraestructura.seguridad.TokenSesion;
+import infraestructura.seguridad.ProtectorFuerzaBruta;
 
 import java.nio.charset.StandardCharsets;
 
@@ -62,11 +63,33 @@ public class ManejadorAutenticacion extends ManejadorBase {
         if (ruta.endsWith("/login") || ruta.endsWith("/iniciar-sesion")) {
             String correo = extraerTexto(jsonObjeto, "email", extraerTexto(jsonObjeto, "correo", null));
             String contrasena = extraerTexto(jsonObjeto, "password", extraerTexto(jsonObjeto, "contrasena", null));
+            String ipCliente = obtenerIpCliente(intercambio);
 
-            Usuario usuario = servicioAutenticacion.iniciarSesion(correo, contrasena);
-            String jsonUsuario = gson.toJson(usuario);
-            String tokenSesion = TokenSesion.emitir(usuario.getId(), usuario.getRol());
-            enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"token\": " + gson.toJson(tokenSesion) + ", \"user\": " + jsonUsuario + "}");
+            // Verificación de bloqueo preventivo por fuerza bruta (Account Lockout Policy)
+            if (ProtectorFuerzaBruta.estaBloqueado(correo) || ProtectorFuerzaBruta.estaBloqueado(ipCliente)) {
+                long segundosRestantes = Math.max(
+                    ProtectorFuerzaBruta.obtenerSegundosRestantesBloqueo(correo),
+                    ProtectorFuerzaBruta.obtenerSegundosRestantesBloqueo(ipCliente)
+                );
+                long minutosRestantes = Math.max(1, (segundosRestantes + 59) / 60);
+                enviarRespuestaJson(intercambio, 429,
+                    "{\"error\": \"Demasiados intentos fallidos. Por motivos de seguridad, la cuenta o IP ha sido bloqueada temporalmente. Intente de nuevo en " + minutosRestantes + " minutos.\", \"bloqueado\": true, \"segundosRestantes\": " + segundosRestantes + "}");
+                return;
+            }
+
+            try {
+                Usuario usuario = servicioAutenticacion.iniciarSesion(correo, contrasena);
+                ProtectorFuerzaBruta.registrarExito(correo);
+                ProtectorFuerzaBruta.registrarExito(ipCliente);
+
+                String jsonUsuario = gson.toJson(usuario);
+                String tokenSesion = TokenSesion.emitir(usuario.getId(), usuario.getRol());
+                enviarRespuestaJson(intercambio, 200, "{\"success\": true, \"token\": " + gson.toJson(tokenSesion) + ", \"user\": " + jsonUsuario + "}");
+            } catch (ExcepcionDominio e) {
+                ProtectorFuerzaBruta.registrarFallo(correo);
+                ProtectorFuerzaBruta.registrarFallo(ipCliente);
+                throw e;
+            }
 
         } else if (ruta.endsWith("/register") || ruta.endsWith("/registro")) {
             String nombre = extraerTexto(jsonObjeto, "name", extraerTexto(jsonObjeto, "nombre", null));
