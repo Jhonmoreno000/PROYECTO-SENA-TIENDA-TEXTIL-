@@ -73,6 +73,7 @@ jobs:
           java -cp "bin:lib/*" PruebasSeguridadIntegridad
           java -cp "bin:lib/*" PruebasConcurrenciaYPagos
           java -cp "bin:lib/*" PruebasContratoApi
+          java -cp "bin:lib/*" PruebasWebSocket
 
   docker-compose-test:
     name: Prueba de Docker Compose
