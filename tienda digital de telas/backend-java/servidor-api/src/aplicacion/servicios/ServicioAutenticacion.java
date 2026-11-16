@@ -7,8 +7,11 @@ import dominio.excepciones.ExcepcionDominio;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Optional;
 import java.util.UUID;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 /**
  * Servicio de autenticación y seguridad de cuentas de la capa de aplicación.
@@ -214,13 +217,13 @@ public class ServicioAutenticacion {
      */
     public static String generarHashPBKDF2(String contrasena, byte[] salt, int iteraciones) {
         try {
-            javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+            PBEKeySpec spec = new PBEKeySpec(
                     contrasena.toCharArray(), salt, iteraciones, PBKDF2_LONGITUD_LLAVE
             );
-            javax.crypto.SecretKeyFactory skf = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             byte[] hash = skf.generateSecret(spec).getEncoded();
             return "pbkdf2$" + iteraciones + "$" + bytesAHex(salt) + "$" + bytesAHex(hash);
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException("Error derivando clave PBKDF2", e);
         }
     }
@@ -246,13 +249,13 @@ public class ServicioAutenticacion {
                 byte[] salt = hexABytes(partes[2]);
                 byte[] hashEsperado = hexABytes(partes[3]);
 
-                javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+                PBEKeySpec spec = new PBEKeySpec(
                         contrasenaPlana.toCharArray(), salt, iteraciones, hashEsperado.length * 8
                 );
-                javax.crypto.SecretKeyFactory skf = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+                SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
                 byte[] hashCalculado = skf.generateSecret(spec).getEncoded();
                 return MessageDigest.isEqual(hashEsperado, hashCalculado);
-            } catch (Exception e) {
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException | IllegalArgumentException e) {
                 return false;
             }
         }

@@ -1,5 +1,7 @@
 package infraestructura.api.manejadores;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import infraestructura.configuracion.Conexion;
 import java.lang.management.ManagementFactory;
@@ -32,12 +34,12 @@ public class ManejadorSalud extends ManejadorBase {
         long memoriaUsadaMb = memoriaTotalMb - memoriaLibreMb;
 
         if (ruta.endsWith("/live")) {
-            com.google.gson.JsonObject memObj = new com.google.gson.JsonObject();
+            JsonObject memObj = new JsonObject();
             memObj.addProperty("used_mb", memoriaUsadaMb);
             memObj.addProperty("free_mb", memoriaLibreMb);
             memObj.addProperty("total_mb", memoriaTotalMb);
 
-            com.google.gson.JsonObject liveObj = new com.google.gson.JsonObject();
+            JsonObject liveObj = new JsonObject();
             liveObj.addProperty("status", "UP");
             liveObj.addProperty("timestamp", Instant.now().toString());
             liveObj.addProperty("service", "ddtextil-backend");
@@ -63,23 +65,23 @@ public class ManejadorSalud extends ManejadorBase {
         int codigoHttp = baseDatosOperativa ? 200 : 503;
         String estadoGlobal = baseDatosOperativa ? "UP" : "DOWN";
 
-        com.google.gson.JsonObject checkJvm = new com.google.gson.JsonObject();
+        JsonObject checkJvm = new JsonObject();
         checkJvm.addProperty("name", "jvm_process");
         checkJvm.addProperty("status", "UP");
         checkJvm.addProperty("uptime_ms", tiempoUptimeMs);
 
-        com.google.gson.JsonObject checkDb = new com.google.gson.JsonObject();
+        JsonObject checkDb = new JsonObject();
         checkDb.addProperty("name", "postgresql_database");
         checkDb.addProperty("status", baseDatosOperativa ? "UP" : "DOWN");
         if (detalleErrorBd != null) {
             checkDb.addProperty("error", detalleErrorBd);
         }
 
-        com.google.gson.JsonArray checks = new com.google.gson.JsonArray();
+        JsonArray checks = new JsonArray();
         checks.add(checkJvm);
         checks.add(checkDb);
 
-        com.google.gson.JsonObject respObj = new com.google.gson.JsonObject();
+        JsonObject respObj = new JsonObject();
         respObj.addProperty("status", estadoGlobal);
         respObj.addProperty("timestamp", Instant.now().toString());
         respObj.addProperty("service", "ddtextil-backend");

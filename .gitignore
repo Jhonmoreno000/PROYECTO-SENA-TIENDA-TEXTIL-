@@ -13,3 +13,5 @@ BASE DE DATOS/respaldos/*.sha256
 BASE DE DATOS/respaldos/*.sql
 testsprite/
 .gradle/
+
+/lib/
