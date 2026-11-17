@@ -1,64 +1,66 @@
 @startuml sec_corte
 !include estilo.iuml
 autonumber "<b>0."
-title D&D Textil — Secuencia: motor de corte textil
+title D&D Textil — Secuencia: corte de un rollo textil
 
-participant "PruebasReglasNegocioTextil" as T
-participant "ServicioCorteTextil" as S
-participant "RolloTextil" as R
-participant "EventoMerma" as M
+actor "Cliente HTTP\n(sin pantalla aún)" as C
+box "Backend (Java)" #FBF7FA
+  participant "ManejadorInventario" as MI
+  participant "InventarioDAO" as DAO
+  participant "ServicioCorteTextil" as S
+  participant "RolloTextil" as R
+end box
+database "PostgreSQL" as DB
 
-== 1. Validar metraje continuo ==
-T -> S : validarMetrajeContinuo(rollos, metros, loteTintoreria)
-activate S
-loop rollos con estado "disponible" del mismo lote
-  S -> R : getMetrajeRemanente()
-  S -> S : suma el metraje del lote y busca\nel primer rollo con remanente ≥ metros
-end
-alt hay un rollo que alcanza solo
-  S --> T : CORTE_CONTINUO_OK + rollo asignado
-else el lote alcanza, pero repartido
-  S --> T : FRAGMENTED_STOCK (requiere empates)
-else no alcanza
-  S --> T : INSUFFICIENT_STOCK
-end
-deactivate S
-
-== 2. Procesar el corte ==
-T -> S : procesarCorteYRemanente(rollo, metros, precioBase)
-activate S
-alt metros > remanente
-  S --> T : IllegalStateException (sobrecorte)
+C -> MI : POST /api/inventario/corte\n{rollCode, meters, basePrice}
+MI -> DAO : obtenerRolloPorCodigoOId(rollCode)
+DAO -> DB : SELECT … FROM rollos_textil
+DB --> DAO : rollo
+DAO --> MI : RolloTextil
+alt rollo no existe
+  MI --> C : 404 {error}
 else
-  S -> R : setMetrajeRemanente(remanente − metros)
-  alt remanente = 0
-    S -> R : setEstado("agotado")
-  else 0 < remanente < 1,0 m
-    S -> R : setEstado("retazo_liquidado")
-    S -> M ** : new EventoMerma(remanente, "remanente_sub_metro")
-    S -> S : precio retazo = precioBase × 0,60
-  else remanente ≥ 1,0 m
-    S -> R : setEstado("disponible")
+  opt basePrice ≤ 0
+    MI -> DB : SELECT precio FROM productos WHERE id = ?
+    DB --> MI : precio (si no hay, 25 000)
   end
-  S --> T : ResultadoProcesamientoCorte
-end
-deactivate S
 
-== 3. Liquidar precio por volumen ==
-T -> S : calcularPrecioEscalonado(precioBase, metros)
-activate S
-alt metros ≥ 50
-  S -> S : ROLLO_CERRADO, 25 % de descuento
-else metros ≥ 15
-  S -> S : MAYORISTA, 15 % de descuento
-else
-  S -> S : DETAL, sin descuento
-end
-S --> T : TarifaCalculada
-deactivate S
+  == 1. Validar metraje continuo ==
+  MI -> S : validarMetrajeContinuo([rollo], metros, lote)
+  S -> R : getMetrajeRemanente()
+  alt el rollo no alcanza
+    S --> MI : FRAGMENTED_STOCK / INSUFFICIENT_STOCK
+    MI --> C : 400 {error, code}
+  else alcanza
+    S --> MI : CORTE_CONTINUO_OK
 
-note over T, M
-  Ningún endpoint de la API usa este servicio ni existe tabla de rollos:
-  hoy el motor solo se ejecuta dentro de la suite de pruebas automatizadas.
+    == 2. Procesar el corte ==
+    MI -> S : procesarCorteYRemanente(rollo, metros, precio)
+    S -> R : setMetrajeRemanente(remanente − metros)
+    alt remanente = 0
+      S -> R : setEstado("agotado")
+    else 0 < remanente < 1,0 m
+      S -> R : setEstado("retazo_liquidado")
+      S -> S : new EventoMerma(remanente,\n"remanente_sub_metro")
+    else remanente ≥ 1,0 m
+      S -> R : setEstado("disponible")
+    end
+    S --> MI : ResultadoProcesamientoCorte
+
+    == 3. Liquidar precio por volumen ==
+    MI -> S : calcularPrecioEscalonado(precio, metros)
+    S -> S : ≥ 50 m: ROLLO_CERRADO (−25 %)\n≥ 15 m: MAYORISTA (−15 %)\nresto: DETAL
+    S --> MI : TarifaCalculada (totalNeto)
+
+    MI -> DAO : actualizarRolloDespuesDeCorte(rollo, merma)
+    DAO -> DB : transacción: UPDATE rollos_textil,\nINSERT eventos_merma (si hay retazo),\nUPDATE productos.stock
+    DB --> DAO : ok
+    MI --> C : 200 {rollId, remainingMeters,\nstatus, totalPrice}
+  end
+end
+
+note over C, S
+  El endpoint existe y usa el motor, pero ninguna pantalla del frontend lo llama todavía.
+  El mismo servicio se prueba en PruebasReglasNegocioTextil.
 end note
 @enduml

@@ -6,58 +6,64 @@ title D&D Textil — Secuencia: realizar compra (CU-06)
 actor "Cliente" as U
 box "Frontend (React)" #F3F6FC
   participant "Carrito.jsx" as CAR
-  participant "Pago.jsx\n(/checkout)" as CHK
+  participant "CheckoutForm\n(/checkout)" as CHK
   participant "Payment.jsx\n(/pago)" as PAY
-  participant "localStorage" as LS
 end box
 box "Backend (Java)" #FBF7FA
-  participant "ManejadorPedidos" as MP
-  participant "PedidoDAO" as DAO
+  participant "ManejadorPagosWompi" as MP
+  participant "PagoWompiDAO" as DAO
 end box
 database "PostgreSQL" as DB
 
-U -> CAR : "Proceder al pago"
-CAR -> CHK : navega a /checkout\n(si no hay sesión, ProtectedRoute envía a /login)
-U -> CHK : datos de envío y cupón
-CHK -> CHK : subtotal − descuento\n+ envío ($15.000 si < $100.000) + IVA 19 %
-CHK -> LS : guarda lastOrder
-CHK -> PAY : "Confirmar pedido" → /pago
-U -> PAY : datos de tarjeta o banco PSE
-note right of PAY
-  No hay pasarela de pago: el formulario
-  solo se valida en el navegador y pasa
-  directo a crear el pedido.
-end note
-PAY -> MP : POST /api/pedidos\n{clientId, total, items[productId, quantity, unitPrice]}
+U -> CAR : "Continuar a Envío y Pago"
+CAR -> CHK : navega a /checkout\n(no exige sesión)
+U -> CHK : datos de quien recibe y dirección
+CHK -> CHK : valida campos obligatorios
+CHK -> PAY : continúa a /pago
+U -> PAY : elige tarjeta, PSE,\nNequi / Bre-B o contraentrega
+PAY -> MP : POST /api/pagos/intencion\n{items[idProducto, metros], cupón, envío}
 activate MP
-MP -> DAO : crearPedido(idCliente, total, articulos)
+MP -> DAO : crearIntencionPago(...)
 activate DAO
 DAO -> DB : BEGIN
-DAO -> DB : INSERT INTO pedidos (…, 'Cliente', 'cliente@tienda.com', 'N/A', 'pending')
-DB --> DAO : id del pedido
 loop por cada artículo
-  DAO -> DB : SELECT stock FROM productos\nWHERE id = ? FOR UPDATE
-  alt producto inexistente o stock < cantidad
+  DAO -> DB : SELECT precio, stock FROM productos\nWHERE id = ? FOR SHARE (no descuenta)
+  alt stock insuficiente
     DAO -> DB : ROLLBACK
-    DAO --> MP : -1
-    MP --> PAY : 500 {error: "Error al crear el pedido"}
-    PAY --> U : (no se muestra ningún mensaje)
-  else hay stock
-    DAO -> DB : UPDATE productos SET stock = stock − cantidad
-    DAO -> DAO : agrega INSERT items_pedido al lote
+    DAO --> MP : ExcepcionDominio
+    MP --> PAY : 400 {error}
+    PAY --> U : aviso de stock insuficiente
   end
 end
-DAO -> DB : INSERT INTO items_pedido (lote)
+DAO -> DAO : valida el cupón y calcula\ndescuento, envío, IVA 19 % y total
+DAO -> DB : INSERT pedidos (estado 'pending', referencia_pago)\nINSERT items_pedido (precio congelado)
 DAO -> DB : COMMIT
-DAO --> MP : idPedido
+DAO --> MP : referencia y total
 deactivate DAO
-MP --> PAY : 201 {success, orderId}
+MP --> PAY : 200 {reference, amount}
 deactivate MP
-PAY -> LS : vacía el carrito
-PAY --> U : /confirmacion?orderId=…
+PAY -> PAY : procesarPagoDirecto()\naprueba el pago tras 0,8 s (simulado)
+PAY -> MP : POST /api/pagos/confirmar\n{referencia DD-<13 dígitos>-XXXX, transaccionId, estado}
+MP -> MP : contieneDatosTarjetaSensibles(cuerpo)
+alt la referencia coincide con el patrón de tarjeta (comportamiento actual)
+  MP --> PAY : 400 "Rechazado por seguridad PCI-DSS"
+  note right of MP : el pedido queda en 'pending'
+else diseño previsto
+  MP -> DAO : confirmarPagoPorReferencia(...)
+  DAO -> DB : SELECT … FROM pedidos WHERE referencia_pago = ?\nFOR UPDATE (idempotencia)
+  DAO -> DB : UPDATE pedidos SET estado = 'paid',\npagado_en = NOW()
+  DAO -> DB : UPDATE productos SET stock =\nGREATEST(0, stock − metros)
+  MP --> PAY : 200
+end
+PAY -> PAY : vacía el carrito (no revisa la respuesta)
+PAY --> U : /confirmacion?referencia=…\n"¡Pago Aprobado y Pedido Confirmado!"
 
-note over DAO, DB
-  El total lo calcula el navegador y el backend lo guarda tal cual.
-  Los datos de envío del formulario no llegan a la base de datos.
+note over PAY, DAO
+  El pago es simulado: ningún medio se conecta a una pasarela real
+  y la confirmación acepta el estado que envía el navegador.
+  Hoy la confirmación falla siempre (defecto del filtro PCI, revisado el 17/11/2026),
+  por eso el stock no se descuenta en las compras.
+  El total sí lo recalcula el backend con los precios de la base de datos.
+  Sin sesión, Payment.jsx envía userId = 4: el pedido queda a nombre de ese usuario.
 end note
 @enduml

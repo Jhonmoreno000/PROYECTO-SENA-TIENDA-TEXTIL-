@@ -1,7 +1,7 @@
 # Manual de Identidad Visual — D&D Textil
 
 > **Guía de Marca Oficial**  
-> **Versión:** 1.0 (Noviembre 2026)  
+> **Versión:** 1.0 (Noviembre 2026), con anexo del 17/11/2026 sobre el estado de la tienda  
 > **Proyecto:** D&D Textil — Tienda digital de telas  
 > **Programa de formación:** Tecnología en Análisis y Desarrollo de Software (ADSO) — SENA · Medellín, Colombia  
 > **Archivo PDF Oficial:** [Manual_de_identidad_visual_DD_Textil.pdf](./Manual_de_identidad_visual_DD_Textil.pdf)
@@ -21,6 +21,7 @@ El logo, los colores y la tipografía de la tienda digital de telas, y la razón
    - [Escalas completas](#escalas-completas)
 4. [Tipografía](#04--tipografía)
 5. [Aplicación en la tienda](#05--aplicación)
+6. [Estado en la versión actual](#06--estado-en-la-versión-actual)
 
 ---
 
@@ -64,7 +65,7 @@ Se trata al cliente de «tú», con frases cortas y verbos de acción.
 
 El logo es tipográfico: el nombre escrito con carácter propio. Tiene dos partes que siempre van juntas, y un isotipo para los espacios pequeños.
 
-1. **«D&D» en degradado (Símbolo de marca):** Letras gruesas y muy juntas (`Inter Black`) que dan solidez y se leen bien incluso en un celular. El «&» une las dos D en un solo bloque: la marca se ve como una pieza continua, igual que la tela que se vende sin empates.
+1. **«D&D» en degradado (Símbolo de marca):** Letras gruesas y muy juntas (`Inter Black`, peso 900) que dan solidez y se leen bien incluso en un celular. El «&» une las dos D en un solo bloque: la marca se ve como una pieza continua, igual que la tela que se vende sin empates.
 2. **«Textil» en gris (Descriptor):** Dice a qué se dedica la marca. Va pequeño y en gris para no competir con el símbolo: primero se reconoce «D&D» y después se entiende el oficio.
 
 #### Por qué el degradado naranja
@@ -83,7 +84,9 @@ Pasa por tres tonos de la misma familia (`#F97316` → `#EA580C` → `#FB923C`) 
 
 #### El isotipo
 
-Es el ícono de la pestaña del navegador y de la app.
+Es el ícono propuesto para la pestaña del navegador y la app.
+
+> **Estado actual:** esta «D» sobre pizarra todavía no está en el repositorio. La tienda usa `public/icono/dd-textil-icon.svg` («D&D» naranja sobre blanco con borde crema) en la pestaña y en `manifest.json`, y la app Android conserva el ícono por defecto de Capacitor. Ver la sección 06.
 
 * **La «D» en línea naranja**, de trazo continuo y esquinas suaves, como un hilo o una costura.
 * **El punto central** evoca el eje de un rollo de tela visto de frente.
@@ -214,7 +217,7 @@ El mínimo recomendado para texto normal es **4,5 : 1**.
 
 * **Página de inicio:** Fondo claro, título en `Outfit` con la frase clave en naranja, botón principal en pizarra y fotos de telas en tonos cálidos.
 * **Botones:** La acción principal va en pizarra (`EXPLORAR COLECCIÓN →`) y la secundaria en contorno (`CONOCER MÁS`). Una sola acción principal por pantalla.
-* **Etiquetas:** Pastillas redondeadas para estados comerciales (`Envío gratis +100K` en crema naranja, `Nuevo` en pizarra, `-40 % retazo` en naranja).
+* **Etiquetas:** Pastillas redondeadas para estados comerciales (`Envío gratis +200.000` en crema naranja, `Nuevo` en pizarra y ofertas en naranja). La página 8 del PDF muestra «+100K» y «−40 % retazo»: son ejemplos anteriores; ver la sección 06.
 
 ### Formas y movimiento
 
@@ -230,3 +233,18 @@ El mínimo recomendado para texto normal es **4,5 : 1**.
 | **Logo** | «D&D» en Inter Black con degradado naranja y «Textil» en gris. |
 | **Color** | Naranja `#F97316`, pizarra `#0F172A` y blanco, en proporción 10 / 30 / 60. |
 | **Tipografía** | Outfit para los títulos e Inter para el texto y los números. |
+
+---
+
+## 06 · Estado en la Versión Actual
+
+Revisión del 17/11/2026 con la aplicación en ejecución. Esta sección es también la página 9 del PDF.
+
+| Tema | Qué pasa hoy | Cómo ajustarlo |
+| :--- | :--- | :--- |
+| **Colores** | La configuración inicial (`system_config`) guarda primario `#8B5CF6` (violeta), secundario `#EC4899` (rosa) y acento `#F59E0B` (ámbar). Al cargar, `ContextoMetricas` reemplaza la escala naranja de `tailwind.config.js` por esos colores, así que botones, precios, degradados y el logo salen en violeta (se ve en todas las capturas del manual de usuario). | Cambiar los tres valores a `#F97316`, `#0F172A` y `#EA580C` en `BASE DE DATOS/01_esquema_espanol.sql` (inserción de `system_config`) y en `SembradorDatosPrueba.java`, o entrar como administrador a **Configuración**, pulsar **Restaurar Valores de Fábrica** y **Guardar Configuración**. |
+| **Isotipo** | La «D» sobre pizarra de las páginas 4 y 8 es la propuesta de esta guía. El repositorio usa `dd-textil-icon.svg` («D&D» naranja sobre blanco) y la app Android tiene el ícono por defecto de Capacitor. | Exportar el isotipo a `public/icono` y a `android/app/src/main/res/mipmap-*`, y actualizar `manifest.json`. |
+| **Inter Black** | El logo usa `font-black` (900), pero `index.html` pide Inter de 300 a 800 a Google Fonts, así que se ve en 800. | Agregar `900` a la URL de la fuente. |
+| **Etiquetas** | La franja y la portada dicen envío gratis desde $200.000. La etiqueta «−40 % retazo» no aparece en la tienda: la regla del retazo solo existe en el backend (`ServicioCorteTextil`). | Usar «Envío gratis +200.000» en los ejemplos. |
+| **Ya se cumple** | Outfit en títulos, Inter en texto, escalas de `tailwind.config.js` (las de las tablas de la sección 03 coinciden), modo oscuro sobre pizarra `#0F172A` y `theme-color` `#0F172A` en `index.html` y `manifest.json`. | — |
+

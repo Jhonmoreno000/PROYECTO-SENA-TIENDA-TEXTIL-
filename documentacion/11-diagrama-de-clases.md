@@ -6,7 +6,7 @@
 
 ![Modelo de dominio](diagramas/clases_dominio.png)
 
-El paquete `dominio.modelos` tiene 19 clases. Son clases de datos: atributos privados, constructor vacío, getters y setters. La única con comportamiento propio es `Pedido.agregarIdProducto(int)`. Las relaciones no se modelan con referencias entre objetos sino con atributos `id`, igual que las llaves foráneas de la base de datos (ver `08-modelo-entidad-relacion.md`).
+El paquete `dominio.modelos` tiene 19 clases (18 clases de datos y el record `TransaccionWompi`). Son clases de datos: atributos privados, constructor vacío, getters y setters. La única con comportamiento propio es `Pedido.agregarIdProducto(int)`. Las relaciones no se modelan con referencias entre objetos sino con atributos `id`, igual que las llaves foráneas de la base de datos (ver `08-modelo-entidad-relacion.md`).
 
 ```mermaid
 classDiagram
@@ -15,6 +15,7 @@ classDiagram
         -int id
         -String nombre
         -String correo
+        -String telefono
         -String rol
         -boolean activo
         -boolean suspendido
@@ -30,16 +31,21 @@ classDiagram
         -String categoria
         -double precio
         -int idVendedor
+        -String nombreVendedor
         -String descripcion
         -String material
         -String ancho
         -String peso
         -String cuidado
-        -int existencias
+        -double existencias
         -boolean destacado
+        -boolean activo
+        -String estadoModeracion
+        -String motivoRechazo
         -boolean esNuevaColeccion
         -boolean esExclusivo
         -boolean esOferta
+        -String fechaCreacion
         -List~String~ imagenes
     }
     class Resena {
@@ -55,7 +61,7 @@ classDiagram
         -int id
         -int idUsuario
         -int idProducto
-        -int cantidad
+        -double cantidad
         -String fechaAgregado
         -String fechaModificacion
         -String nombreProducto
@@ -66,12 +72,29 @@ classDiagram
         -int id
         -int idCliente
         -int idVendedor
+        -String nombreCliente
+        -String correoCliente
+        -String telefonoCliente
         -double total
+        -double subtotal
+        -double costoEnvio
+        -double impuestos
+        -double descuento
+        -String codigoCupon
         -String estado
+        -String metodoPago
+        -String estadoPago
+        -String direccionEnvio
+        -String ciudadEnvio
+        -String departamentoEnvio
+        -String numeroGuia
+        -String notas
         -String fecha
         -int cantidadArticulos
+        -double totalMeters
         -List~Integer~ idsProductos
-        +agregarIdProducto(int) void
+        -List~String~ productNames
+        -List~Map~String, Object~~ lineItems
     }
     class Cupon {
         -int id
@@ -81,24 +104,30 @@ classDiagram
         -String fechaExpiracion
         -boolean activo
         -int conteoUso
-        -CuponReglas reglas
+        -Reglas reglas
     }
     class LoteInventario {
         -String id
+        -Integer idProducto
+        -String numeroLote
         -String tipoTela
         -String proveedor
         -double metrosIniciales
         -double metrosActuales
+        -Double costoPorMetro
         -String estado
+        -String notas
         -String fechaCreacion
         -String ultimaActualizacion
     }
     class EventoMerma {
         -int id
+        -Integer idProducto
         -String idLote
         -double metros
         -String motivo
         -String descripcion
+        -Double impactoCosto
         -String responsable
         -String fechaEvento
         -String fechaCreacion
@@ -111,9 +140,9 @@ classDiagram
         -boolean alertaHabilitada
     }
     class RolloTextil {
-        <<soloPruebas>>
         -int id
         -int productoId
+        -String nombreProducto
         -String codigoRollo
         -double metrajeInicial
         -double metrajeRemanente
@@ -129,6 +158,7 @@ classDiagram
         -Integer idPedido
         -String asunto
         -String descripcion
+        -String mensaje
         -String prioridad
         -String estado
         -String categoria
@@ -141,6 +171,10 @@ classDiagram
         -int id
         -Integer idVendedor
         -String nombreVendedor
+        -String usuario
+        -String correo
+        -Integer idProducto
+        -String nombreProducto
         -String area
         -String titulo
         -String descripcion
@@ -150,6 +184,8 @@ classDiagram
         -String severidad
         -Integer asignadoA
         -String fechaReporte
+        -String fecha
+        -String createdAt
         -String fechaResolucion
     }
     class ActividadReciente {
@@ -198,7 +234,17 @@ classDiagram
         -String departamento
         -double ventas
         -int pedidos
+        -double porcentaje
         -String capital
+    }
+    class TransaccionWompi {
+        <<record>>
+        -String id
+        -String referencia
+        -String estado
+        -long montoCentavos
+        -String moneda
+        -String metodoPago
     }
     class CuponReglas {
         -Double compraMinima
@@ -213,7 +259,10 @@ classDiagram
     ItemCarrito "0..*" --> "1" Producto : producto
     Pedido "0..*" --> "0..1" Usuario : cliente
     Pedido "0..*" --> "1..*" Producto : productos
-    LoteInventario "0..*" ..> Producto : tipoTela
+    LoteInventario "0..*" --> "0..1" Producto : producto
+    EventoMerma "0..*" --> "0..1" Producto : producto
+    ReporteError "0..*" --> "0..1" Producto : producto
+    TransaccionWompi "0..*" ..> "1" Pedido : referencia
     EventoMerma "0..*" --> "0..1" LoteInventario : lote
     RolloTextil "0..*" --> "1" Producto : producto
     TicketSoporte "0..*" --> "0..1" Usuario : cliente
@@ -229,7 +278,7 @@ classDiagram
 
 | Capa (paquete) | Responsabilidad | Clases |
 | :--- | :--- | :--- |
-| `infraestructura.api` | Recibe las peticiones HTTP, aplica CORS, límite de 120 peticiones/min por IP y registro en JSON (`ManejadorBase`), y delega en el manejador de cada ruta. | `ServidorApi`, `ManejadorBase` y 15 manejadores |
+| `infraestructura.api` | Recibe las peticiones HTTP, aplica CORS, límite de 1200 peticiones/min por IP y registro en JSON (`ManejadorBase`), y delega en el manejador de cada ruta. | `ServidorApi`, `ManejadorBase` y 16 manejadores |
 | `aplicacion.servicios` | Reglas de negocio que no son simple lectura/escritura. | `ServicioAutenticacion`, `ServicioFactura`, `ServicioCorteTextil` |
 | `dominio` | Modelos, la interfaz `RepositorioUsuario` y `ExcepcionDominio`. | 19 modelos, 1 interfaz, 1 excepción |
 | `infraestructura.persistencia.jdbc` | Acceso a PostgreSQL con JDBC y SQL escrito a mano. | 11 DAO y `JdbcRepositorioUsuarioImpl` |
@@ -245,7 +294,7 @@ classDiagram
 | `ManejadorCarrusel` | `/api/carrusel` | `CarruselDAO` | `diapositivas_carrusel` |
 | `ManejadorConfiguracion` | `/api/configuracion` | `ConfiguracionDAO` | `configuracion_sistema` |
 | `ManejadorCupones` | `/api/cupones` | `CuponDAO` | `cupones` |
-| `ManejadorFactura` | `/api/facturas` | `PedidoDAO`, `ServicioFactura` | `items_pedido`, `order_items`, `orders`, `pedidos`, `productos`, `products`, `users` |
+| `ManejadorFactura` | `/api/facturas` | `PedidoDAO`, `ServicioFactura` | `pedidos`, `items_pedido`, `productos` |
 | `ManejadorInventario` | `/api/inventario`, `/api/metricas`, `/api/actividad`, `/api/banner` | `InventarioDAO` | `actividad_reciente`, `banner_global`, `eventos_merma`, `inventario_telas_erp`, `lotes_inventario`, `metricas_ventas_erp`, `notificaciones_sistema_erp`, `productos`, `umbrales_stock`, `ventas_diarias`, `ventas_region` |
 | `ManejadorPedidos` | `/api/pedidos` | `PedidoDAO` | `items_pedido`, `pedidos`, `productos` |
 | `ManejadorProductos` | `/api/productos` | `ProductoDAO` | `categorias`, `imagenes_producto`, `productos` |
@@ -253,7 +302,7 @@ classDiagram
 | `ManejadorSalud` | `/health/live`, `/health/ready`, `/api/salud` | — | — |
 | `ManejadorSeccionesInicio` | `/api/secciones-inicio` | `SeccionesInicioDAO` | `secciones_inicio` |
 | `ManejadorSoporte` | `/api/soporte` | `SoporteDAO` | `reportes_errores`, `tickets_soporte` |
-| `ManejadorUsuarios` | `/api/usuarios` | `UsuarioDAO` | `usuarios` |
+| `ManejadorUsuarios` | `/api/usuarios` | `JdbcRepositorioUsuarioImpl` | `usuarios` |
 
 ```mermaid
 classDiagram
@@ -319,7 +368,7 @@ classDiagram
     ManejadorResenas --> ResenasDAO
     ManejadorSeccionesInicio --> SeccionesInicioDAO
     ManejadorSoporte --> SoporteDAO
-    ManejadorUsuarios --> UsuarioDAO
+    ManejadorUsuarios --> JdbcRepositorioUsuarioImpl
     CarritoDAO ..> Conexion
     CarruselDAO ..> Conexion
     ConfiguracionDAO ..> Conexion
@@ -331,15 +380,30 @@ classDiagram
     ResenasDAO ..> Conexion
     SeccionesInicioDAO ..> Conexion
     SoporteDAO ..> Conexion
-    UsuarioDAO ..> Conexion
+    class TokenSesion
+    class ProtectorFuerzaBruta
+    class VerificadorIdentidadSSOHttp
+    class ServidorWebSocket
+    class ManejadorPagosWompi
+    class PagoWompiDAO
+    ManejadorBase <|-- ManejadorPagosWompi
+    ManejadorPagosWompi --> PagoWompiDAO
+    PagoWompiDAO ..> Conexion
+    ManejadorBase ..> TokenSesion : verifica
+    ManejadorAutenticacion ..> TokenSesion : emite
+    ManejadorAutenticacion ..> ProtectorFuerzaBruta
+    ServicioAutenticacion ..> VerificadorIdentidadSSOHttp
+    ManejadorPedidos ..> ServidorWebSocket : eventos
+    ManejadorProductos ..> ServidorWebSocket : eventos
+    ManejadorInventario --> ServicioCorteTextil
 ```
 
 ## 3. Observaciones de diseño
 
 1. **Inversión de dependencias solo en autenticación.** `ServicioAutenticacion` depende de la interfaz `RepositorioUsuario` y recibe la implementación desde `ServidorApi`. El resto de manejadores crea sus DAO con `new` y no hay interfaces para ellos.
 2. **Servicios casi vacíos.** La mayoría de manejadores habla directo con su DAO; la lógica de negocio (cupones, totales, IVA) vive en el frontend.
-3. **`ManejadorFactura` salta la capa de persistencia.** Además de `PedidoDAO`, abre conexiones y consulta las tablas en inglés `orders`, `users`, `order_items` y `products` por su cuenta.
-4. **`ServicioCorteTextil` y `RolloTextil` están desconectados.** Solo los usa `PruebasReglasNegocioTextil`; ningún manejador los llama y no existe tabla de rollos.
+3. **`ManejadorFactura` ya usa la capa de persistencia (corregido).** Lee las facturas desde `pedidos` mediante `PedidoDAO`; ya no consulta las tablas en inglés.
+4. **`ServicioCorteTextil` y `RolloTextil` están conectados a medias.** Existe la tabla `rollos_textil` y `ManejadorInventario` expone el corte en `/api/inventario/corte`, pero la compra del cliente todavía no los usa (ver la hoja «Alcance futuro» de la matriz v3).
 5. **Métodos y rutas duplicados en dos idiomas.** Cada DAO repite sus métodos en inglés (`getAllCoupons` junto a `obtenerTodosLosCupones`) y cada ruta existe en español e inglés. Si se elimina el frontend antiguo, basta con un solo idioma.
 6. **`InventarioDAO` concentra seis temas** (lotes, merma, umbrales, banner, ventas y actividad). Separarlo haría más fácil probar cada parte.
 

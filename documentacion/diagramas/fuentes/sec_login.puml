@@ -9,54 +9,53 @@ box "Frontend (React)" #F3F6FC
   participant "ContextoAutenticacion" as CTX
 end box
 box "Backend (Java)" #FBF7FA
-  participant "ManejadorBase\n(handle)" as BASE
   participant "ManejadorAutenticacion" as MA
+  participant "ProtectorFuerzaBruta" as PFB
   participant "ServicioAutenticacion" as SA
   participant "JdbcRepositorioUsuarioImpl" as REPO
+  participant "TokenSesion" as TK
 end box
 database "PostgreSQL" as DB
 
 U -> UI : escribe correo y contraseña
 UI -> CTX : login(email, password)
-CTX -> BASE : POST /api/iniciar-sesion\n{email, password}
-activate BASE
-BASE -> BASE : límite de 120 peticiones/min por IP
-alt límite superado
-  BASE --> CTX : 429 Demasiadas peticiones
-end
-BASE -> MA : procesarPeticion()
+CTX -> MA : POST /api/iniciar-sesion\n{email, password}
 activate MA
+MA -> PFB : estaBloqueado(correo, IP)
+alt 5 intentos fallidos previos
+  MA --> CTX : 429 {error, segundos restantes}
+  CTX --> UI : success = false
+  UI --> U : "Cuenta bloqueada temporalmente"
+end
 MA -> SA : iniciarSesion(correo, contrasena)
 activate SA
-SA -> SA : generarHashContrasena()\nSHA-256
-SA -> REPO : buscarPorCorreoYValidarContrasena(correo, hash)
-REPO -> DB : SELECT … FROM usuarios\nWHERE correo = ? AND contrasena_hash = ?\nAND activo = true
+SA -> REPO : buscar usuario por correo
+REPO -> DB : SELECT … FROM usuarios WHERE correo = ?
 DB --> REPO : fila o vacío
-REPO --> SA : Optional<Usuario>
-alt credenciales incorrectas, cuenta inactiva o suspendida
+SA -> SA : verifica la contraseña con PBKDF2\n(SHA-256 solo en cuentas antiguas)
+alt credenciales incorrectas o cuenta suspendida
   SA --> MA : ExcepcionDominio
-  MA --> BASE : (excepción)
-  BASE --> CTX : 400 {error}
+  MA -> PFB : registrarFallo(correo, IP)
+  MA --> CTX : 400 {error}
   CTX --> UI : success = false
   UI --> U : "Credenciales incorrectas"
 else credenciales válidas
   SA -> REPO : actualizarUltimoAcceso(id)
-  REPO -> DB : UPDATE usuarios SET ultimo_acceso = NOW()
   SA --> MA : Usuario
   deactivate SA
-  MA --> BASE : 200 {success, user}
+  MA -> TK : emitir(idUsuario, rol)
+  TK --> MA : token firmado HMAC-SHA256 (12 h)
+  MA --> CTX : 200 {success, user, token}
   deactivate MA
-  BASE -> BASE : registrarLogJson(INFO)
-  BASE --> CTX : 200 {success, user}
-  deactivate BASE
-  CTX -> CTX : normaliza el rol y guarda\nauthUser en localStorage
+  CTX -> CTX : guarda authUser y token\nen localStorage
   CTX --> UI : success = true
   UI -> UI : navega según rol\ncliente → /cliente · vendedor → /vendedor · admin → /admin
   UI --> U : panel de su rol
 end
 
-note over CTX, BASE
-  El backend no emite token ni sesión: el frontend guarda el usuario
-  en localStorage y las demás rutas de la API no verifican el rol.
+note over CTX, TK
+  Las peticiones siguientes llevan Authorization: Bearer <token>.
+  ManejadorBase verifica la firma y relee el rol en la base de datos.
+  Con Google o Microsoft el flujo usa POST /api/autenticacion/sso.
 end note
 @enduml

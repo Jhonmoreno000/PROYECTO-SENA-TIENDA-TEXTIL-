@@ -3,285 +3,160 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor Gráfico: Modelo Relacional y Arquitectura MVC - D&amp;D Textil</title>
-  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <title>Visor: modelo relacional y arquitectura MVC — D&amp;D Textil</title>
+  <!-- Página autocontenida (sin CDN). Revisada contra el código de main el 17/11/2026. -->
   <style>
-    .tab-active {
-      border-color: #38bdf8 !important;
-      color: #38bdf8 !important;
-      background: rgba(56, 189, 248, 0.1);
-    }
+    :root { --fondo:#0f172a; --panel:#1e293b; --borde:#334155; --texto:#e2e8f0; --suave:#94a3b8; --naranja:#f97316; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--fondo); color:var(--texto); }
+    .contenedor { max-width:1200px; margin:0 auto; padding:28px 20px 40px; }
+    header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; align-items:flex-end; border-bottom:1px solid var(--borde); padding-bottom:18px; }
+    .chips span { display:inline-block; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; border:1px solid var(--borde); color:var(--suave); margin-right:6px; }
+    h1 { margin:10px 0 4px; font-size:26px; }
+    header p { margin:0; color:var(--suave); }
+    nav button { background:none; border:1px solid var(--borde); color:var(--suave); padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; margin-left:6px; }
+    nav button.activo { border-color:var(--naranja); color:var(--naranja); background:rgba(249,115,22,.1); }
+    section { display:none; margin-top:22px; }
+    section.visible { display:block; }
+    .tarjeta { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:18px; }
+    .cabecera { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+    h2 { margin:0 0 4px; font-size:18px; }
+    .cabecera p, .nota { margin:0; color:var(--suave); font-size:13px; }
+    a.boton { color:#fff; background:var(--naranja); padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; text-decoration:none; white-space:nowrap; }
+    .lienzo { background:#fff; border-radius:8px; overflow:auto; max-height:640px; }
+    .lienzo img { display:block; min-width:1100px; width:100%; }
+    .rejilla { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:16px; }
+    .rejilla h3 { margin:0 0 6px; font-size:15px; color:var(--naranja); }
+    .rejilla .num { font-size:22px; font-weight:800; margin:0 0 6px; }
+    .rejilla p, .rejilla li { font-size:13px; color:var(--texto); line-height:1.5; }
+    .rejilla ul { padding-left:18px; margin:6px 0 0; }
+    .pasos { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin:16px 0; }
+    .paso b { display:inline-block; width:24px; height:24px; border-radius:50%; background:var(--naranja); color:#fff; text-align:center; line-height:24px; font-size:13px; margin-bottom:6px; }
+    .paso h4 { margin:0 0 4px; }
+    .paso p { margin:0; font-size:13px; color:var(--suave); line-height:1.5; }
+    .aviso { border-left:4px solid #f59e0b; background:rgba(245,158,11,.1); padding:10px 14px; border-radius:6px; font-size:13px; margin-top:14px; line-height:1.5; }
+    pre { background:#020617; border:1px solid var(--borde); border-radius:8px; padding:14px; overflow:auto; font-size:12.5px; line-height:1.55; color:#cbd5e1; }
+    code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+    footer { margin-top:30px; text-align:center; color:var(--suave); font-size:12px; }
   </style>
 </head>
-<body class="bg-[#0b1120] text-slate-100 min-h-screen p-4 md:p-6 font-sans">
-  <div class="max-w-7xl mx-auto space-y-6">
+<body>
+<div class="contenedor">
+  <header>
+    <div>
+      <div class="chips"><span>SENA ADSO</span><span>PostgreSQL 17</span><span>Java 21</span><span>React 18</span></div>
+      <h1>Modelo relacional y arquitectura MVC</h1>
+      <p>D&amp;D Textil — tienda digital de telas por metro</p>
+    </div>
+    <nav>
+      <button id="b-relacional" class="activo" onclick="mostrar('relacional')">Modelo relacional</button>
+      <button id="b-mvc" onclick="mostrar('mvc')">Arquitectura MVC</button>
+      <button id="b-flujo" onclick="mostrar('flujo')">Flujo de compra</button>
+    </nav>
+  </header>
 
-    <!-- Header Principal -->
-    <header class="bg-[#1e293b] border border-slate-700/80 rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-sky-950 text-sky-400 border border-sky-800">SENA ADSO</span>
-          <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800">PostgreSQL 17</span>
-          <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-purple-950 text-purple-400 border border-purple-800">Patrón MVC</span>
-        </div>
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-          <span></span> Modelo Relacional &amp; Arquitectura MVC Gráfica
-        </h1>
-        <p class="text-slate-400 text-sm mt-1">
-          Plataforma de Comercialización e Inventario Continuo de Telas (D&amp;D Textil)
-        </p>
-      </div>
-
-      <!-- Selector de Pestañas -->
-      <nav class="flex items-center bg-[#0f172a] p-1.5 rounded-xl border border-slate-700/80">
-        <button id="tab-btn-relacional" onclick="switchTab('relacional')" class="px-4 py-2 text-sm font-semibold rounded-lg transition-all tab-active">
-          ️ Modelo Relacional
-        </button>
-        <button id="tab-btn-mvc" onclick="switchTab('mvc')" class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
-          ️ Arquitectura MVC
-        </button>
-        <button id="tab-btn-flujo" onclick="switchTab('flujo')" class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
-           Ciclo Transaccional
-        </button>
-      </nav>
-    </header>
-
-    <!-- PESTAÑA 1: MODELO RELACIONAL -->
-    <section id="pane-relacional" class="space-y-6">
-      <!-- Visor de Imagen Vectorial -->
-      <div class="bg-[#1e293b] border border-slate-700/80 rounded-2xl p-5 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <span>️</span> Diagrama Relacional de Entidades (25 Tablas Normalizadas en 3FN)
-            </h2>
-            <p class="text-xs text-slate-400">Esquema gráfico visual con llaves primarias (PK), foráneas (FK), tipos de datos y relaciones 1:N.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <a href="modelo_relacional_actualizado.svg" target="_blank" class="px-3 py-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors flex items-center gap-1.5">
-              <span></span> Abrir SVG Completo
-            </a>
-          </div>
-        </div>
-
-        <!-- Contenedor del SVG -->
-        <div class="bg-[#0f172a] rounded-xl border border-slate-800 p-2 overflow-x-auto shadow-inner">
-          <img src="modelo_relacional_actualizado.svg" alt="Diagrama del Modelo Relacional D&D Textil" class="w-full min-w-[1100px] h-auto rounded-lg" />
-        </div>
-      </div>
-
-      <!-- Métricas y Clústeres de Tablas -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-[#1e293b]/70 border border-sky-500/30 rounded-xl p-4">
-          <div class="flex items-center gap-2 text-sky-400 font-bold text-sm mb-1">
-            <span></span> Catálogo &amp; Inventario
-          </div>
-          <p class="text-2xl font-black text-white">8 Tablas</p>
-          <p class="text-xs text-slate-400 mt-1">productos, categorias, lotes_inventario, rollos_textil, eventos_merma, umbrales_stock, etc.</p>
-        </div>
-
-        <div class="bg-[#1e293b]/70 border border-purple-500/30 rounded-xl p-4">
-          <div class="flex items-center gap-2 text-purple-400 font-bold text-sm mb-1">
-            <span></span> Usuarios &amp; Soporte
-          </div>
-          <p class="text-2xl font-black text-white">4 Tablas</p>
-          <p class="text-xs text-slate-400 mt-1">usuarios, tickets_soporte, reportes_errores, actividad_reciente (RBAC y auditoría).</p>
-        </div>
-
-        <div class="bg-[#1e293b]/70 border border-emerald-500/30 rounded-xl p-4">
-          <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-1">
-            <span></span> Ventas &amp; Transacciones
-          </div>
-          <p class="text-2xl font-black text-white">4 Tablas</p>
-          <p class="text-xs text-slate-400 mt-1">pedidos, items_pedido, items_carrito, resenas (bloqueo transaccional FOR UPDATE).</p>
-        </div>
-
-        <div class="bg-[#1e293b]/70 border border-orange-500/30 rounded-xl p-4">
-          <div class="flex items-center gap-2 text-orange-400 font-bold text-sm mb-1">
-            <span></span> Cupones, CMS &amp; ERP
-          </div>
-          <p class="text-2xl font-black text-white">9 Tablas</p>
-          <p class="text-xs text-slate-400 mt-1">cupones, categorias_cupon, metricas_ventas_erp, ventas_region, configuracion_sistema, etc.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- PESTAÑA 2: ARQUITECTURA MVC -->
-    <section id="pane-mvc" class="space-y-6 hidden">
-      <!-- Visor del Diagrama MVC -->
-      <div class="bg-[#1e293b] border border-slate-700/80 rounded-2xl p-5 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <span>️</span> Arquitectura de 3 Capas: Modelo, Vista y Controlador
-            </h2>
-            <p class="text-xs text-slate-400">Separación estricta de responsabilidades entre cliente React, API Java nativa y PostgreSQL 17.</p>
-          </div>
-          <a href="arquitectura_mvc.svg" target="_blank" class="px-3 py-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors flex items-center gap-1.5">
-            <span></span> Abrir SVG Completo
-          </a>
-        </div>
-
-        <!-- Contenedor del SVG -->
-        <div class="bg-[#0f172a] rounded-xl border border-slate-800 p-2 overflow-x-auto shadow-inner">
-          <img src="arquitectura_mvc.svg" alt="Diagrama de Arquitectura MVC D&D Textil" class="w-full min-w-[1000px] h-auto rounded-lg" />
-        </div>
-      </div>
-
-      <!-- Desglose de las 3 Capas -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- CAPA VISTA -->
-        <div class="bg-[#1e293b] border-t-4 border-t-emerald-500 border border-slate-700/80 rounded-xl p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded">FRONTEND</span>
-            <span class="text-xs text-slate-400">Puerto 3001</span>
-          </div>
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>1️⃣</span> VISTA (View)
-          </h3>
-          <p class="text-xs text-slate-300">
-            Interfaz reactiva en <strong>React 18</strong>, Vite y Tailwind CSS. Renderiza catálogos, carritos y paneles administrativos sin acoplamiento a base de datos.
-          </p>
-          <ul class="text-xs text-slate-400 space-y-1.5 border-t border-slate-700/50 pt-3">
-            <li>• <strong class="text-slate-200">Catalogo.jsx:</strong> Filtros en tiempo real por tela y precio.</li>
-            <li>• <strong class="text-slate-200">CarritoDrawer.jsx:</strong> Liquidación de metraje continuo y cupones.</li>
-            <li>• <strong class="text-slate-200">ResumenAdmin.jsx:</strong> Gráficos Recharts de ventas y stock.</li>
-            <li>• <strong class="text-slate-200">App Android:</strong> Wrapper nativo Kotlin con WebView.</li>
-          </ul>
-        </div>
-
-        <!-- CAPA CONTROLADOR -->
-        <div class="bg-[#1e293b] border-t-4 border-t-blue-500 border border-slate-700/80 rounded-xl p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded">BACKEND</span>
-            <span class="text-xs text-slate-400">Puerto 8081</span>
-          </div>
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>2️⃣</span> CONTROLADOR (Controller)
-          </h3>
-          <p class="text-xs text-slate-300">
-            Servidor HTTP nativo en <strong>Vanilla Java 17</strong> con pool de 32 hilos concurrentes. Aplica validaciones, seguridad DevSecOps y orquestación.
-          </p>
-          <ul class="text-xs text-slate-400 space-y-1.5 border-t border-slate-700/50 pt-3">
-            <li>• <strong class="text-slate-200">ManejadorBase:</strong> CORS, Rate Limit (120 req/min) y X-Correlation-ID.</li>
-            <li>• <strong class="text-slate-200">ManejadorProductos:</strong> Endpoints /api/productos (GET, POST, PUT, DELETE).</li>
-            <li>• <strong class="text-slate-200">ManejadorPedidos:</strong> Transaccionalidad de compras e inventario.</li>
-            <li>• <strong class="text-slate-200">ManejadorSalud:</strong> Probes /health/live y /health/ready.</li>
-          </ul>
-        </div>
-
-        <!-- CAPA MODELO -->
-        <div class="bg-[#1e293b] border-t-4 border-t-purple-500 border border-slate-700/80 rounded-xl p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-purple-400 bg-purple-950/80 px-2 py-0.5 rounded">PERSISTENCIA &amp; DOMINIO</span>
-            <span class="text-xs text-slate-400">Puerto 5432</span>
-          </div>
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>3️⃣</span> MODELO (Model)
-          </h3>
-          <p class="text-xs text-slate-300">
-            Entidades de dominio Java + DAOs JDBC con pool <strong>HikariCP</strong> + motor relacional <strong>PostgreSQL 17</strong> con bloqueo a nivel de fila.
-          </p>
-          <ul class="text-xs text-slate-400 space-y-1.5 border-t border-slate-700/50 pt-3">
-            <li>• <strong class="text-slate-200">Entidades:</strong> Producto, Pedido, Usuario, LoteInventario.</li>
-            <li>• <strong class="text-slate-200">DAOs:</strong> ProductoDAO, PedidoDAO, InventarioDAO (SQL parametrizado).</li>
-            <li>• <strong class="text-slate-200">PostgreSQL 17:</strong> 25 Tablas 3FN, Vistas SQL y Transacciones ACID.</li>
-            <li>• <strong class="text-slate-200">SELECT ... FOR UPDATE:</strong> Previene sobreventa simultánea de telas.</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- PESTAÑA 3: CICLO TRANSACCIONAL -->
-    <section id="pane-flujo" class="space-y-6 hidden">
-      <div class="bg-[#1e293b] border border-slate-700/80 rounded-2xl p-6 shadow-2xl space-y-6">
+  <section id="relacional" class="visible">
+    <div class="tarjeta">
+      <div class="cabecera">
         <div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <span></span> Ciclo de Vida Transaccional MVC: Compra de Tela y Descuento de Stock
-          </h2>
-          <p class="text-sm text-slate-400 mt-1">
-            Demostración del flujo coordinado entre la Vista, el Controlador, el Modelo y el motor PostgreSQL ante una orden de compra:
-          </p>
+          <h2>Diagrama entidad-relación (29 tablas, 25 llaves foráneas, 20 índices)</h2>
+          <p>Generado desde <code>01_esquema_espanol.sql</code> con <code>documentacion/diagramas/fuentes/generar_der.py</code>. El esquema no tiene vistas.</p>
         </div>
-
-        <!-- Paso a Paso Visual -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 text-center space-y-2">
-            <span class="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-600 text-emerald-400 font-bold flex items-center justify-center mx-auto text-xs">1</span>
-            <h4 class="text-xs font-bold text-white">Vista (React)</h4>
-            <p class="text-[11px] text-slate-400">Cliente pulsa "Confirmar Pedido". Se genera JSON con carrito y dirección.</p>
-          </div>
-
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 text-center space-y-2">
-            <span class="w-8 h-8 rounded-full bg-sky-950 border border-sky-600 text-sky-400 font-bold flex items-center justify-center mx-auto text-xs">2</span>
-            <h4 class="text-xs font-bold text-white">Controlador (Java)</h4>
-            <p class="text-[11px] text-slate-400">ManejadorBase valida CORS, Rate Limit y genera X-Correlation-ID.</p>
-          </div>
-
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 text-center space-y-2">
-            <span class="w-8 h-8 rounded-full bg-purple-950 border border-purple-600 text-purple-400 font-bold flex items-center justify-center mx-auto text-xs">3</span>
-            <h4 class="text-xs font-bold text-white">Modelo (DAOs)</h4>
-            <p class="text-[11px] text-slate-400">PedidoDAO inicia transacción: BEGIN TRANSACTION con HikariCP.</p>
-          </div>
-
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 text-center space-y-2">
-            <span class="w-8 h-8 rounded-full bg-amber-950 border border-amber-600 text-amber-400 font-bold flex items-center justify-center mx-auto text-xs">4</span>
-            <h4 class="text-xs font-bold text-white">PostgreSQL 17</h4>
-            <p class="text-[11px] text-slate-400">SELECT ... FOR UPDATE bloquea la fila de la tela y descuenta stock.</p>
-          </div>
-
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 text-center space-y-2">
-            <span class="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-600 text-emerald-400 font-bold flex items-center justify-center mx-auto text-xs">5</span>
-            <h4 class="text-xs font-bold text-white">Respuesta 201</h4>
-            <p class="text-[11px] text-slate-400">COMMIT, retorno de ID de orden y renderizado reactivo en la Vista.</p>
-          </div>
-        </div>
-
-        <!-- Bloque SQL Demostrativo -->
-        <div class="bg-[#0f172a] rounded-xl p-4 border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>Operación SQL Transaccional en Modelo (PostgreSQL)</span>
-            <span class="text-emerald-400">Nivel de Aislamiento: READ COMMITTED</span>
-          </div>
-          <pre class="text-xs text-sky-300 font-mono overflow-x-auto p-2 bg-[#090d16] rounded border border-slate-900 leading-relaxed">
-BEGIN TRANSACTION;
-  -- Bloqueo pesimista para evitar carreras en ventas simultáneas
-  SELECT id, stock FROM productos WHERE id = 1 FOR UPDATE;
-  
-  -- Inserción de la orden comercial y sus ítems
-  INSERT INTO pedidos (usuario_id, monto_total, estado, estado_pago) VALUES (5, 85000.00, 'pending', 'paid');
-  INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) VALUES (12, 1, 3.4, 25000.00, 85000.00);
-  
-  -- Descuento exacto de metros del stock
-  UPDATE productos SET stock = stock - 3.4 WHERE id = 1;
-COMMIT TRANSACTION;</pre>
-        </div>
+        <a class="boton" href="../../documentacion/diagramas/der_completo.svg" target="_blank">Abrir SVG completo</a>
       </div>
-    </section>
+      <div class="lienzo"><img src="../../documentacion/diagramas/der_completo.svg" alt="Diagrama entidad-relación de D&amp;D Textil"></div>
+    </div>
+    <div class="rejilla">
+      <div class="tarjeta"><h3>Usuarios y soporte</h3><p class="num">5 tablas</p><p>usuarios, direcciones_usuario, tickets_soporte, reportes_errores, auditoria_sistema.</p></div>
+      <div class="tarjeta"><h3>Catálogo e inventario</h3><p class="num">8 tablas</p><p>categorias, productos, imagenes_producto, lotes_inventario, rollos_textil, eventos_merma, umbrales_stock, inventario_telas_erp.</p></div>
+      <div class="tarjeta"><h3>Ventas y pagos</h3><p class="num">7 tablas</p><p>pedidos, items_pedido, items_carrito, resenas, cupones, categorias_cupon, eventos_pago_wompi.</p></div>
+      <div class="tarjeta"><h3>Contenido y métricas</h3><p class="num">9 tablas</p><p>configuracion_sistema, secciones_inicio, diapositivas_carrusel, banner_global, metricas_ventas_erp, ventas_diarias, ventas_region, actividad_reciente, notificaciones_sistema_erp.</p></div>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer class="text-center text-xs text-slate-500 py-4 border-t border-slate-800/80">
-      Plataforma D&amp;D Textil · Tecnólogo en Análisis y Desarrollo de Software (ADSO) - SENA · Calidad ISO/IEC 25010 &amp; DevSecOps
-    </footer>
-  </div>
+  <section id="mvc">
+    <div class="tarjeta">
+      <div class="cabecera">
+        <div>
+          <h2>Arquitectura en tres capas</h2>
+          <p>Cliente React, API Java con <code>HttpServer</code> y PostgreSQL 17.</p>
+        </div>
+        <a class="boton" href="arquitectura_mvc.svg" target="_blank">Abrir SVG completo</a>
+      </div>
+      <div class="lienzo"><img src="arquitectura_mvc.svg" alt="Arquitectura MVC de D&amp;D Textil"></div>
+    </div>
+    <div class="rejilla">
+      <div class="tarjeta">
+        <h3>Vista — frontend (puerto 3001)</h3>
+        <p>React 18, Vite 5 y Tailwind CSS. En desarrollo Vite redirige <code>/api</code> y <code>/uploads</code> al puerto 8081.</p>
+        <ul>
+          <li><b>Catalogo.jsx</b>, <b>DetalleProducto.jsx</b>, <b>Carrito.jsx</b></li>
+          <li><b>Pago.jsx</b> (checkout) y <b>payment/Payment.jsx</b> (medios de pago)</li>
+          <li><b>admin/ResumenAdmin.jsx</b> con gráficas de Recharts</li>
+          <li>App Android con Capacitor (carpeta <code>android/</code>)</li>
+        </ul>
+      </div>
+      <div class="tarjeta">
+        <h3>Controlador — backend (8081 y 8082)</h3>
+        <p>Java 21 con <code>HttpServer</code>, pool de al menos 32 hilos, <code>ManejadorBase</code> y 16 manejadores. WebSocket en el puerto 8082.</p>
+        <ul>
+          <li><b>ManejadorBase</b>: CORS, 1.200 peticiones por minuto por IP, cuerpo máximo de 5 MB, X-Correlation-ID e identidad desde el token firmado</li>
+          <li><b>ManejadorPagosWompi</b>: intención y confirmación del pago</li>
+          <li><b>ManejadorPedidos</b>, <b>ManejadorProductos</b>, <b>ManejadorFactura</b></li>
+          <li><b>ManejadorSalud</b>: <code>/health/live</code> y <code>/health/ready</code></li>
+        </ul>
+      </div>
+      <div class="tarjeta">
+        <h3>Modelo — dominio y persistencia (5432)</h3>
+        <p>Entidades Java, 11 DAO con JDBC y <code>PreparedStatement</code>, y un pool de conexiones propio (<code>Conexion.java</code>, 24 por defecto; no usa HikariCP).</p>
+        <ul>
+          <li><b>Entidades</b>: Producto, Pedido, Usuario, RolloTextil, TransaccionWompi…</li>
+          <li><b>DAO</b>: ProductoDAO, PedidoDAO, PagoWompiDAO, InventarioDAO…</li>
+          <li><b>PostgreSQL 17</b>: 29 tablas, transacciones con <code>setAutoCommit(false)</code></li>
+        </ul>
+      </div>
+    </div>
+  </section>
 
-  <script>
-    function switchTab(tabId) {
-      const tabs = ['relacional', 'mvc', 'flujo'];
-      tabs.forEach(t => {
-        const btn = document.getElementById('tab-btn-' + t);
-        const pane = document.getElementById('pane-' + t);
-        if (t === tabId) {
-          btn.classList.add('tab-active');
-          btn.classList.remove('text-slate-400');
-          pane.classList.remove('hidden');
-        } else {
-          btn.classList.remove('tab-active');
-          btn.classList.add('text-slate-400');
-          pane.classList.add('hidden');
-        }
-      });
-    }
-  </script>
+  <section id="flujo">
+    <div class="tarjeta">
+      <h2>Flujo de compra en la tienda</h2>
+      <p class="nota">Lo que hace hoy el checkout (<code>servicioWompi.js</code> → <code>ManejadorPagosWompi</code> → <code>PagoWompiDAO</code>).</p>
+      <div class="pasos">
+        <div class="paso"><b>1</b><h4>Vista</h4><p><code>Payment.jsx</code> envía <code>POST /api/pagos/intencion</code> con los artículos, el cupón y los datos de envío.</p></div>
+        <div class="paso"><b>2</b><h4>Controlador</h4><p><code>ManejadorBase</code> aplica CORS, límite de peticiones y tamaño; el manejador revisa que no lleguen datos de tarjeta.</p></div>
+        <div class="paso"><b>3</b><h4>Modelo</h4><p><code>crearIntencionPago</code> abre la transacción, lee cada producto con <code>FOR SHARE</code> y recalcula el total.</p></div>
+        <div class="paso"><b>4</b><h4>PostgreSQL</h4><p>Inserta el pedido <code>pending</code> y sus líneas con el precio congelado, y hace <code>COMMIT</code>.</p></div>
+        <div class="paso"><b>5</b><h4>Confirmación</h4><p><code>POST /api/pagos/confirmar</code> debería marcar el pedido <code>paid</code> y descontar el stock.</p></div>
+      </div>
+      <pre><code>-- Intención de pago (simplificado de PagoWompiDAO.crearIntencionPago)
+BEGIN;
+  SELECT id, nombre, precio, stock, vendedor_id, activo FROM productos WHERE id = 1 FOR SHARE;
+  INSERT INTO pedidos (usuario_id, ..., monto_total, estado, metodo_pago, estado_pago, referencia_pago, ...)
+       VALUES (4, ..., 44750, 'pending', 'wompi', 'pending', 'DD-1794937755678-A74203FD', ...);
+  INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal)
+       VALUES (1, 1, 1.0, 25000, 25000);
+COMMIT;
+
+-- Aprobación (PagoWompiDAO.procesarTransaccionWompi)
+BEGIN;
+  SELECT id, estado, estado_pago, ... FROM pedidos WHERE referencia_pago = ? FOR UPDATE;
+  UPDATE pedidos SET estado = 'paid', ... WHERE id = ?;
+  UPDATE productos SET stock = GREATEST(0, stock - ?), actualizado_en = NOW() WHERE id = ?;
+COMMIT;</code></pre>
+      <div class="aviso"><b>Estado al 17/11/2026:</b> la confirmación responde <code>400</code> porque el filtro PCI confunde la referencia <code>DD-&lt;13 dígitos&gt;-XXXX</code> con un número de tarjeta. El pedido queda <code>pending</code> y el stock no se descuenta. El endpoint <code>POST /api/pedidos</code> (<code>PedidoDAO</code>, con <code>FOR UPDATE</code> por producto) sí descuenta el stock, pero el checkout no lo usa. Detalle en <code>documentacion/02-arquitectura-software-c4-y-backend.md</code>, «Flujo de Pago Vigente».</div>
+    </div>
+  </section>
+
+  <footer>D&amp;D Textil · Tecnólogo en Análisis y Desarrollo de Software (ADSO) — SENA</footer>
+</div>
+<script>
+  function mostrar(id) {
+    ['relacional', 'mvc', 'flujo'].forEach(function (t) {
+      document.getElementById(t).classList.toggle('visible', t === id);
+      document.getElementById('b-' + t).classList.toggle('activo', t === id);
+    });
+  }
+</script>
 </body>
 </html>

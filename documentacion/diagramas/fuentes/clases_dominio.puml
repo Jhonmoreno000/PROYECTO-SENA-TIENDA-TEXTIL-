@@ -10,6 +10,7 @@ package "Usuarios" #E8EEF9 {
     - id : int
     - nombre : String
     - correo : String
+    - telefono : String
     - rol : String
     - activo : boolean
     - suspendido : boolean
@@ -37,16 +38,21 @@ package "Catálogo y ventas" #F6EAF3 {
     - categoria : String
     - precio : double
     - idVendedor : int
+    - nombreVendedor : String
     - descripcion : String
     - material : String
     - ancho : String
     - peso : String
     - cuidado : String
-    - existencias : int
+    - existencias : double
     - destacado : boolean
+    - activo : boolean
+    - estadoModeracion : String
+    - motivoRechazo : String
     - esNuevaColeccion : boolean
     - esExclusivo : boolean
     - esOferta : boolean
+    - fechaCreacion : String
     - imagenes : List<String>
   }
   class Resena {
@@ -62,23 +68,48 @@ package "Catálogo y ventas" #F6EAF3 {
     - id : int
     - idUsuario : int
     - idProducto : int
-    - cantidad : int
+    - cantidad : double
     - fechaAgregado : String
     - fechaModificacion : String
     - nombreProducto : String
     - precioProducto : double
     - imagenProducto : String
   }
+  class TransaccionWompi <<record>> {
+    - id : String
+    - referencia : String
+    - estado : String
+    - montoCentavos : long
+    - moneda : String
+    - metodoPago : String
+  }
   class Pedido {
     - id : int
     - idCliente : int
     - idVendedor : int
+    - nombreCliente : String
+    - correoCliente : String
+    - telefonoCliente : String
     - total : double
+    - subtotal : double
+    - costoEnvio : double
+    - impuestos : double
+    - descuento : double
+    - codigoCupon : String
     - estado : String
+    - metodoPago : String
+    - estadoPago : String
+    - direccionEnvio : String
+    - ciudadEnvio : String
+    - departamentoEnvio : String
+    - numeroGuia : String
+    - notas : String
     - fecha : String
     - cantidadArticulos : int
+    - totalMeters : double
     - idsProductos : List<Integer>
-    + agregarIdProducto(int) : void
+    - productNames : List<String>
+    - lineItems : List<Map<String, Object>>
   }
   class Cupon {
     - id : int
@@ -88,7 +119,7 @@ package "Catálogo y ventas" #F6EAF3 {
     - fechaExpiracion : String
     - activo : boolean
     - conteoUso : int
-    - reglas : Cupon.Reglas
+    - reglas : Reglas
   }
   class "Cupon.Reglas" as Reglas {
     - compraMinima : Double
@@ -99,20 +130,26 @@ package "Catálogo y ventas" #F6EAF3 {
 package "Inventario" #FBF1E3 {
   class LoteInventario {
     - id : String
+    - idProducto : Integer
+    - numeroLote : String
     - tipoTela : String
     - proveedor : String
     - metrosIniciales : double
     - metrosActuales : double
+    - costoPorMetro : Double
     - estado : String
+    - notas : String
     - fechaCreacion : String
     - ultimaActualizacion : String
   }
   class EventoMerma {
     - id : int
+    - idProducto : Integer
     - idLote : String
     - metros : double
     - motivo : String
     - descripcion : String
+    - impactoCosto : Double
     - responsable : String
     - fechaEvento : String
     - fechaCreacion : String
@@ -124,9 +161,10 @@ package "Inventario" #FBF1E3 {
     - metrosMinimos : double
     - alertaHabilitada : boolean
   }
-  class RolloTextil <<solo pruebas>> {
+  class RolloTextil {
     - id : int
     - productoId : int
+    - nombreProducto : String
     - codigoRollo : String
     - metrajeInicial : double
     - metrajeRemanente : double
@@ -144,6 +182,7 @@ package "Soporte" #EFEFEF {
     - idPedido : Integer
     - asunto : String
     - descripcion : String
+    - mensaje : String
     - prioridad : String
     - estado : String
     - categoria : String
@@ -156,6 +195,10 @@ package "Soporte" #EFEFEF {
     - id : int
     - idVendedor : Integer
     - nombreVendedor : String
+    - usuario : String
+    - correo : String
+    - idProducto : Integer
+    - nombreProducto : String
     - area : String
     - titulo : String
     - descripcion : String
@@ -165,6 +208,8 @@ package "Soporte" #EFEFEF {
     - severidad : String
     - asignadoA : Integer
     - fechaReporte : String
+    - fecha : String
+    - createdAt : String
     - fechaResolucion : String
   }
 }
@@ -193,10 +238,6 @@ package "Contenido y configuración" #E6F4F5 {
     - tipoBanner : String
     - fechaActualizacion : String
   }
-  class ItemConfiguracion {
-    - clave : String
-    - valor : String
-  }
 }
 package "Analítica" #F3EFE6 {
   class VentaDiaria {
@@ -211,6 +252,7 @@ package "Analítica" #F3EFE6 {
     - departamento : String
     - ventas : double
     - pedidos : int
+    - porcentaje : double
     - capital : String
   }
 }
@@ -222,7 +264,10 @@ ItemCarrito "0..*" --> "1" Usuario : dueño
 ItemCarrito "0..*" --> "1" Producto : producto
 Pedido "0..*" --> "0..1" Usuario : cliente
 Pedido "0..*" --> "1..*" Producto : productos
-LoteInventario "0..*" ..> Producto : tipoTela
+LoteInventario "0..*" --> "0..1" Producto : producto
+EventoMerma "0..*" --> "0..1" Producto : producto
+ReporteError "0..*" --> "0..1" Producto : producto
+TransaccionWompi "0..*" ..> "1" Pedido : referencia
 EventoMerma "0..*" --> "0..1" LoteInventario : lote
 RolloTextil "0..*" --> "1" Producto : producto
 TicketSoporte "0..*" --> "0..1" Usuario : cliente
@@ -236,7 +281,8 @@ legend right
   Todas las clases tienen constructor vacío, getters y setters (se omiten).
   Varias repiten getters en inglés (getTitle, getCode…) para el JSON del frontend.
   Las relaciones se guardan como atributos id, igual que en la base de datos.
-  Línea punteada: relación por texto (tipoTela), sin id.
-  RolloTextil solo lo usan ServicioCorteTextil y las pruebas; no tiene tabla.
+  Línea punteada: relación por texto (referencia de pago), sin id.
+  RolloTextil se guarda en la tabla rollos_textil y lo usa ServicioCorteTextil.
+  TransaccionWompi es un record inmutable con los datos de un evento de pago.
 endlegend
 @enduml
