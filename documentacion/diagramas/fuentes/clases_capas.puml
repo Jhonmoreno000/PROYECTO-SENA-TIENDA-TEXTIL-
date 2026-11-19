@@ -10,7 +10,7 @@ package "infraestructura.api" #E8EEF9 {
     + {static} iniciarServidor(int) : void
   }
   abstract class ManejadorBase {
-    - MAX_PETICIONES_POR_VENTANA = 120
+    - MAX_PETICIONES_POR_VENTANA = 1200
     + handle(HttpExchange) : void
     # registrarLogJson(String, String, String, HttpExchange, int) : void
     # procesarPeticion(HttpExchange) : void
@@ -101,6 +101,11 @@ package "infraestructura.api" #E8EEF9 {
     /api/usuarios
   }
   ManejadorBase <|-- ManejadorUsuarios
+  class ManejadorPagosWompi {
+    .. rutas ..
+    /api/pagos
+  }
+  ManejadorBase <|-- ManejadorPagosWompi
   ServidorApi ..> ManejadorBase : registra rutas
 }
 package "aplicacion.servicios" #F6EAF3 {
@@ -111,7 +116,7 @@ package "aplicacion.servicios" #F6EAF3 {
     + contieneDatosTarjetaSensibles(String) : boolean
     + generarHashContrasena(String) : String
   }
-  class ServicioCorteTextil <<solo pruebas>> {
+  class ServicioCorteTextil {
     + validarMetrajeContinuo(List<RolloTextil>, double, String) : ServicioCorteTextil.ResultadoValidacionCorte
     + procesarCorteYRemanente(RolloTextil, double, double) : ServicioCorteTextil.ResultadoProcesamientoCorte
     + calcularPrecioEscalonado(double, double) : ServicioCorteTextil.TarifaCalculada
@@ -177,6 +182,12 @@ package "infraestructura.persistencia.jdbc" #FBF1E3 {
     + guardar(Usuario, String) : boolean
     + actualizarUltimoAcceso(int) : void
   }
+  class PagoWompiDAO {
+    + crearIntencionPago(...) : ResultadoIntencionPago
+    + confirmarPagoPorReferencia(String, String, String, String) : boolean
+  }
+  class MigradorEsquemaPagos {
+  }
   class PedidoDAO {
     + obtenerTodosLosPedidos() : List<Pedido>
     + crearPedido(int, double, List<Map<String, Object>>) : int
@@ -213,10 +224,28 @@ package "infraestructura.persistencia.jdbc" #FBF1E3 {
     + agregarReporteError(ReporteError) : boolean
     + actualizarEstadoReporteError(int, String) : boolean
   }
-  class UsuarioDAO {
-    + obtenerTodosLosUsuarios() : List<Usuario>
-    + actualizarEstadoUsuario(int, boolean) : boolean
-    + actualizarRolUsuario(int, String) : boolean
+}
+package "infraestructura.seguridad" #FDECEC {
+  class TokenSesion {
+    + {static} emitir(int, String) : String
+    + {static} verificar(String) : Optional<Identidad>
+  }
+  class ProtectorFuerzaBruta {
+    + {static} estaBloqueado(String) : boolean
+    + {static} registrarFallo(String) : void
+  }
+  class VerificadorIdentidadSSOHttp {
+    + verificar(String, String) : IdentidadSSO
+  }
+}
+package "infraestructura.api.websocket" #E6F4F1 {
+  class ServidorWebSocket {
+    + {static} iniciar(int) : void
+    + {static} transmitir(String, Object) : void
+  }
+  class ClienteWebSocket {
+  }
+  class MensajeWebSocket {
   }
 }
 package "infraestructura.configuracion" #EFEFEF {
@@ -227,6 +256,17 @@ package "infraestructura.configuracion" #EFEFEF {
 RepositorioUsuario <|.. JdbcRepositorioUsuarioImpl
 ServicioAutenticacion --> RepositorioUsuario
 ManejadorAutenticacion --> ServicioAutenticacion
+ManejadorAutenticacion ..> ProtectorFuerzaBruta
+ManejadorAutenticacion ..> TokenSesion : emite
+ManejadorBase ..> TokenSesion : verifica
+ServicioAutenticacion ..> VerificadorIdentidadSSOHttp
+ManejadorPagosWompi --> PagoWompiDAO
+ManejadorInventario --> ServicioCorteTextil
+ManejadorPedidos ..> ServidorWebSocket : eventos
+ManejadorProductos ..> ServidorWebSocket : eventos
+ServidorWebSocket o-- ClienteWebSocket
+ServidorWebSocket ..> MensajeWebSocket
+PagoWompiDAO ..> Conexion
 ManejadorCarrito --> CarritoDAO
 ManejadorCarrusel --> CarruselDAO
 ManejadorConfiguracion --> ConfiguracionDAO
@@ -239,7 +279,7 @@ ManejadorProductos --> ProductoDAO
 ManejadorResenas --> ResenasDAO
 ManejadorSeccionesInicio --> SeccionesInicioDAO
 ManejadorSoporte --> SoporteDAO
-ManejadorUsuarios --> UsuarioDAO
+ManejadorUsuarios --> JdbcRepositorioUsuarioImpl
 CarritoDAO ..> Conexion
 CarruselDAO ..> Conexion
 ConfiguracionDAO ..> Conexion
@@ -251,12 +291,9 @@ ProductoDAO ..> Conexion
 ResenasDAO ..> Conexion
 SeccionesInicioDAO ..> Conexion
 SoporteDAO ..> Conexion
-UsuarioDAO ..> Conexion
 legend right
   Cada DAO repite sus métodos con nombre en inglés (getAllCoupons, addCoupon…); se omiten.
   Todas las rutas existen también en inglés (/api/products, /api/orders…).
-  ManejadorFactura además consulta directamente las tablas en inglés orders, users,
-  order_items y products con Conexion, sin pasar por un DAO.
-  ServicioCorteTextil no lo usa ningún manejador: solo PruebasReglasNegocioTextil.
+  ServicioCorteTextil se usa desde ManejadorInventario (/api/inventario/corte); la compra aún no lo usa.
 endlegend
 @enduml

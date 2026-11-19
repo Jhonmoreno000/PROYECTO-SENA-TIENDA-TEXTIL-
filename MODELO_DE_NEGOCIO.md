@@ -77,8 +77,8 @@ flowchart LR
 
 | Fuente de Ingreso | Mecanismo de Cobro y Regla de Negocio | Margen Bruto Estimado | Participación Proyectada en Ingresos |
 | :--- | :--- | :---: | :---: |
-| **1. Venta Minorista al Detal (B2C)** | Venta de tela por metro lineal ($1\text{ m}$ a $24.9\text{ m}$) a precio de lista estándar ($P_{\text{lista}}$). | **35 % – 45 %** | **30 %** |
-| **2. Venta Mayorista por Volumen (B2B)** | Compras entre $25\text{ m}$ y $49.9\text{ m}$ con descuento automático del **12 %**, incentivando el incremento del ticket promedio (*upselling*). | **25 % – 32 %** | **35 %** |
+| **1. Venta Minorista al Detal (B2C)** | Venta de tela por metro lineal (menos de $15\text{ m}$) a precio de lista estándar ($P_{\text{lista}}$). | **35 % – 45 %** | **30 %** |
+| **2. Venta Mayorista por Volumen (B2B)** | Compras entre $15\text{ m}$ y $49.99\text{ m}$ con descuento automático del **15 %**, incentivando el incremento del ticket promedio (*upselling*). | **25 % – 32 %** | **35 %** |
 | **3. Venta de Rollo Cerrado (B2B Industrial)** | Compras $\ge 50\text{ m}$ o pieza sellada de fábrica con descuento automático del **25 %**; cero costo operativo de corte en mesa y máxima velocidad de despacho. | **18 % – 22 %** | **20 %** |
 | **4. Liquidación Inteligente de Retazos** | Monetización de remanentes $< 1.0\text{ m}$ (`RETAZO_LIQUIDADO`) con descuento del **40 %**, transformando una pérdida contable histórica en flujo de caja positivo. | **Recuperación de costo (5 % – 10 %)** | **5 %** |
 | **5. Comisión por Vendedores Terceros (*Take Rate*)** | Cobro de comisión del **6 % al 10 %** por transacción procesada a distribuidores externos que publican su catálogo en el módulo multi-vendedor. | **85 % – 90 %** (Ingreso neto digital) | **10 %** |
@@ -90,7 +90,7 @@ flowchart LR
 
 ## 5. Estructura de Costos
 
-Gracias a una decisión arquitectónica deliberada —**Backend en Java 21 nativo (`HttpServer` + HikariCP + JDBC) sin frameworks pesados y despliegue en contenedores ligeros Alpine Linux**—, la huella de memoria RAM y CPU se reduce en más de un 60 % frente a pilas empresariales tradicionales, optimizando el **Costo Total de Propiedad (TCO)**.
+Gracias a una decisión arquitectónica deliberada —**Backend en Java 21 nativo (`HttpServer` + JDBC con pool de conexiones propio) sin frameworks pesados y despliegue en contenedores ligeros Alpine Linux**—, la huella de memoria RAM y CPU se reduce en más de un 60 % frente a pilas empresariales tradicionales, optimizando el **Costo Total de Propiedad (TCO)**.
 
 ### 5.1. Costos Tecnológicos e Infraestructura Cloud (OPEX Mensual Estimado)
 
@@ -107,7 +107,7 @@ Gracias a una decisión arquitectónica deliberada —**Backend en Java 21 nativ
 
 * **Comisiones de Pasarela de Pagos (Wompi):** Costo variable por transacción aprobada (~ **2.65 % + \$700 COP + IVA** para tarjetas/PSE/Nequi), absorbido dentro del margen bruto comercial.
 * **Operación Logística de Bodega:** Insumos de empaque impermeable para rollos textiles, etiquetas térmicas adhesivas para impresoras QR y transporte de última milla.
-* **Mantenimiento Evolutivo y QA (CAPEX/OPEX):** Horas de ingeniería para evolución continua, pruebas automatizadas (44 pruebas de backend + suite frontend + pruebas de estrés k6) y soporte técnico nivel 2/3.
+* **Mantenimiento Evolutivo y QA (CAPEX/OPEX):** Horas de ingeniería para evolución continua, pruebas automatizadas (59 pruebas de backend + suite frontend + pruebas de estrés k6) y soporte técnico nivel 2/3.
 
 ---
 
@@ -138,7 +138,7 @@ Frente a competidores tradicionales (almacenes físicos de telas con atención m
 | **Control de continuidad por rollo físico** | Manual / Propenso a error | No soportado nativamente | **Automático (Algoritmo *Best-Fit*)** |
 | **Trazabilidad por lote de tintorería** | Inexistente o en papel | No soportado | **Nativo en BD y orden de corte** |
 | **Liquidación automática de retazos ($< 1\text{ m}$)** | Pérdida en bodega | Manual | **Automatizado (-40 % en tiempo real)** |
-| **Cálculo automático de escalas mayoristas** | Negociación manual | Requiere plugins de pago | **Nativo (12 % mayorista / 25 % rollo)** |
+| **Cálculo automático de escalas mayoristas** | Negociación manual | Requiere plugins de pago | ***Nativo (15 % mayorista / 25 % rollo)** |
 | **Etiquetado térmico QR para bodega** | No disponible | Costoso (Apps externas) | **Integrado en el Backend Java** |
 | **Protección contra sobreventa concurrente** | N/A | Eventual (riesgo de sobreventa) | **Bloqueo Pesimista ACID + Saga Wompi** |
 | **Costo mensual de licencias SaaS / Plugins** | N/A | \$80 – \$350 USD / mes | **\$0 USD (Tecnología Propia)** |
@@ -151,7 +151,7 @@ Para evaluar objetivamente la salud comercial, operativa y tecnológica del nego
 
 ### 8.1. KPIs Comerciales y Financieros
 * **GMV (*Gross Merchandise Value*):** Valor total bruto de los metros y rollos transaccionados a través de la plataforma mensualmente (Meta año 1: crecimiento intermensual $\ge 12\text{ \%}$).
-* **AOV (*Average Order Value* / Ticket Promedio):** Valor promedio por pedido, desglosado entre órdenes B2C y órdenes mayoristas B2B (Meta: superar \$280.000 COP combinados mediante los incentivos de 25 m y 50 m).
+* **AOV (*Average Order Value* / Ticket Promedio):** Valor promedio por pedido, desglosado entre órdenes B2C y órdenes mayoristas B2B (Meta: superar \$280.000 COP combinados mediante los incentivos de 15 m y 50 m).
 * **Tasa de Conversión de Carrito a Pago Aprobado:** Porcentaje de usuarios que completan el flujo de checkout con Wompi (Meta: $\ge 3.5\text{ \%}$ en tráfico general y $\ge 18\text{ \%}$ en clientes B2B recurrentes).
 * **LTV / CAC (*Lifetime Value vs. Customer Acquisition Cost*):** Relación entre el valor de vida de un taller confeccionista recurrente y su costo de adquisición (Meta saludable: $\text{LTV/CAC} \ge 4.0$).
 
@@ -163,7 +163,7 @@ Para evaluar objetivamente la salud comercial, operativa y tecnológica del nego
 
 ### 8.3. KPIs Técnicos y de Calidad de Software (ISO/IEC 25010)
 * **Latencia de API en Percentil 95 ($P_{95}$):** Tiempo de respuesta en consultas de catálogo y cálculo de corte bajo carga concurrente (Meta validada con k6: $P_{95} \le 200\text{ ms}$).
-* **Tasa de Errores Transaccionales y Sobreventa:** Cantidad de inconsistencias de stock en concurrencia alta (Meta: **0.0 %** garantizado por bloqueo `FOR UPDATE` y suite de 44 pruebas automatizadas).
+* **Tasa de Errores Transaccionales y Sobreventa:** Cantidad de inconsistencias de stock en concurrencia alta (Meta: **0.0 %** garantizado por bloqueo `FOR UPDATE` y suite de 59 pruebas automatizadas).
 * **Disponibilidad del Servicio (*Uptime SLA*) y Resiliencia DRP:** Disponibilidad operativa del contenedor API/Frontend (Meta: $\ge 99.5\text{ \%}$ con **RPO $\le 24\text{h}$** y **RTO $\le 15\text{ min}$**).
 
 
@@ -175,4 +175,4 @@ Para evaluar objetivamente la salud comercial, operativa y tecnológica del nego
 Para reducir el costo de soporte al cliente (*Customer Acquisition & Support Cost*) y acelerar la curva de aprendizaje de nuevos vendedores y operarios de bodega, el ecosistema **D&D Textil** incorpora el [**Manual de Usuario Oficial**](./documentacion/13-manual-de-usuario.md) ([versión PDF](./documentacion/Manual_de_usuario_DD_Textil.pdf)):
 
 - **Autoservicio B2C / B2B:** guía el uso autónomo de la **Calculadora de Metraje por Proyecto**, el seguimiento de guías logísticas y la descarga de facturas con CUFE, disminuyendo las consultas operativas de primer nivel.
-- **Capacitación Rápida de Vendedores y Administradores:** documenta el flujo completo de creación de productos, cola de moderación, control de lotes de tintorería y calculadora de mermas, permitiendo incorporar nuevos distribuidores textiles al marketplace en menos de una jornada.
+- **Capacitación Rápida de Vendedores y Administradores:** documenta el flujo completo de creación de productos, cola de moderación, control de lotes y registro de mermas, permitiendo incorporar nuevos distribuidores textiles al marketplace en menos de una jornada.

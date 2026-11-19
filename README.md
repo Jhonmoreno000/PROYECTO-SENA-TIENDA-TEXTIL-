@@ -42,7 +42,7 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 
 **Lo esencial en pocas líneas**
 
-- Tienda pública con catálogo filtrable, fichas de tela, reseñas reales guardadas en base de datos, carrito con cupones y ecosistema multi-pasarela con tarjeta 3D interactiva (**Wompi Bancolombia**, **Mercado Pago Checkout Pro**, **Nequi / Daviplata / Llave Bre-B**, **ePayco / PayU Efecty-Baloto-Gana**, **Tarjeta Crédito/Débito** y **PSE ACH / Contraentrega**).
+- Tienda pública con catálogo filtrable, fichas de tela, reseñas reales guardadas en base de datos, carrito con cupones y ecosistema multi-pasarela con tarjeta 3D interactiva (**Wompi Bancolombia**, **Mercado Pago Checkout Pro**, **Nequi / Daviplata / Llave Bre-B**, **ePayco / PayU Efecty-Baloto-Gana**, **Tarjeta Crédito/Débito** y **PSE ACH / Contraentrega**). Los medios de pago funcionan en modo simulado: el backend registra la intención y la confirmación del pago, sin conexión real con las pasarelas.
 - Inicio de sesión con correo y contraseña o con cuentas de **Google** y **Microsoft**.
 - Paneles para tres roles: cliente (pedidos, soporte, calculadora de metraje), vendedor (sus telas, pedidos y alertas de stock) y administrador (usuarios, moderación, inventario, contenido, cupones, facturación y analítica).
 - Despliegue completo con Docker Compose: tres contenedores listos en un solo comando.
@@ -51,8 +51,8 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 
 ```
 ┌──────────────────────────┐     ┌──────────────────────────┐
-│  Frontend  React + Vite  │     │  Frontend  App Android   │
-│  http://localhost:3001   │     │  WebView + Kotlin        │
+│  Frontend  React + Vite  │     │  App Android (Capacitor) │
+│  http://localhost:3001   │     │  WebView con la misma SPA│
 └────────────┬─────────────┘     └────────────┬─────────────┘
              │  REST / JSON                    │  REST / JSON
              ▼                                ▼
@@ -69,16 +69,16 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 
 | Capa | En cifras |
 | :--- | :--- |
-| Frontend | 50 rutas en `App.jsx` repartidas entre sitio público, proceso de compra y tres paneles por rol |
+| Frontend | 54 rutas en `App.jsx` repartidas entre sitio público, proceso de compra y tres paneles por rol |
 | Backend | Manejadores HTTP sobre `ManejadorBase` (CORS, límite de 1200 peticiones/min por IP y logs JSON), servicios de aplicación y DAO sobre JDBC, en capas `dominio`, `aplicacion` e `infraestructura` |
-| Base de datos | 25 tablas y 20 llaves foráneas en `BASE DE DATOS/01_esquema_espanol.sql`, más la tabla `eventos_pago_wompi` y las columnas de pago de `pedidos`, que el backend agrega al iniciar |
+| Base de datos | 29 tablas y 25 llaves foráneas en `BASE DE DATOS/01_esquema_espanol.sql`. Al iniciar, el backend comprueba que existan las tablas de pagos, direcciones y auditoría |
 
 ## Características
 
 | Área | Detalle |
 | :--- | :--- |
 | Tienda | Catálogo con filtros por apartado, proyecto, precio y orden; fichas de tela; reseñas de 1 a 5 estrellas; carrito con cupones. |
-| Pagos | Checkout multi-pasarela con tarjeta holográfica 3D: Wompi (firma SHA-256), Mercado Pago Checkout Pro, Nequi / Daviplata / Llave Bre-B (`302 705 8951` + QR), ePayco Efecty/Baloto/Gana, Tarjeta 3D-Secure y PSE ACH. |
+| Pagos | Checkout multi-pasarela con tarjeta holográfica 3D: Wompi (firma SHA-256), Mercado Pago Checkout Pro, Nequi / Daviplata / Llave Bre-B (`302 705 8951` + QR), ePayco Efecty/Baloto/Gana, Tarjeta 3D-Secure y PSE ACH. Todos en modo simulado (sin cobro real). |
 | Acceso | Registro con autorización de datos personales (Ley 1581 de 2012), inicio de sesión con correo o SSO de Google y Microsoft. El backend valida cada token directamente con el proveedor y usa el correo que este certifica; la cuenta SSO se crea sola la primera vez. |
 | Home dinámico | Carrusel, banner global y apartados del inicio (nuevas colecciones, exclusivas, ofertas) editables desde el panel admin. |
 | Cliente | Historial y rastreo de pedidos, factura en PDF, tickets de soporte, lista de deseos y calculadora de metraje por proyecto. |
@@ -112,13 +112,14 @@ docker compose up -d
 
 | Servicio | Acceso |
 | :--- | :--- |
-| Frontend de la aplicacion | http://localhost:3001 (Docker) / http://localhost:5173 (Dev) |
+| Frontend de la aplicacion | http://localhost:3001 (Docker y `npm run dev`) |
 | Backend API (REST) | http://localhost:8081 |
+| WebSocket (tiempo real) | ws://localhost:8082 |
 | Base de Datos PostgreSQL | localhost:5432 |
 
 ### Variables de pagos y SSO
 
-Se definen en el archivo `.env`. Sin ellas la tienda funciona, pero no se puede pagar con Wompi ni entrar con Google o Microsoft.
+Se definen en el archivo `.env`. Sin ellas la tienda funciona (el pago es simulado en todos los medios), pero no se puede entrar con Google o Microsoft. Las llaves de Wompi se usan para firmar la intención de pago y verificar el webhook.
 
 | Variable | Uso |
 | :--- | :--- |
@@ -154,11 +155,11 @@ Usuarios sembrados en la base de datos para validar los niveles de acceso del so
 
 ## Calidad de Software y Suite de Pruebas Automatizadas
 
-El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con pruebas unitarias de frontend, cuatro suites integrales en Java nativo (reglas de negocio textiles, seguridad e integridad con PBKDF2 y Best-Fit, concurrencia y pagos Wompi, y contratos OpenAPI v3), ademas de un framework completo de pruebas de carga y desempeno.
+El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con pruebas unitarias de frontend, cinco suites integrales en Java nativo (reglas de negocio textiles, seguridad e integridad con PBKDF2 y Best-Fit, concurrencia y pagos Wompi, contratos OpenAPI v3 y tiempo real con WebSocket), con 59 pruebas de backend y 46 de frontend aprobadas en la ejecucion del 16/11/2026, ademas de un framework completo de pruebas de carga y desempeno.
 
 ### 🧪 Guia de Comandos de Terminal para Pruebas y Validaciones (CLI)
 
-#### 1. Pruebas y Compilacion del Frontend (React + Vite + Vitest + ESLint)
+#### 1. Pruebas y Compilacion del Frontend (React + Vite + ESLint)
 Ejecutar desde el directorio del frontend:
 ```bash
 # Navegar al directorio de la aplicacion React
@@ -170,7 +171,7 @@ npm ci
 # 1.2. Validar reglas de estilo y sintaxis (ESLint)
 npm run lint
 
-# 1.3. Ejecutar pruebas unitarias automatizadas (Vitest)
+# 1.3. Ejecutar las 46 pruebas automatizadas del frontend (node ejecutar-pruebas-frontend.mjs)
 npm test
 
 # 1.4. Validar compilacion de produccion
@@ -178,7 +179,7 @@ npm run build
 ```
 
 #### 2. Compilacion y Ejecucion de Pruebas del Backend (Java 21)
-El backend dispone de 4 suites de pruebas automatizadas:
+El backend dispone de 5 suites de pruebas automatizadas:
 ```bash
 # Navegar al directorio del servidor backend
 cd "tienda digital de telas/backend-java/servidor-api"
@@ -192,18 +193,20 @@ javac -d bin -cp "lib/*" @sources.txt
 New-Item -ItemType Directory -Force -Path bin
 javac -encoding UTF-8 -d bin -cp "lib/*" (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
 
-# 2.2. Ejecutar las 4 suites de pruebas:
+# 2.2. Ejecutar las 5 suites de pruebas:
 # En Windows (PowerShell / CMD - separador punto y coma ';'):
 java -cp "bin;lib/*" PruebasReglasNegocioTextil
 java -cp "bin;lib/*" PruebasSeguridadIntegridad
 java -cp "bin;lib/*" PruebasConcurrenciaYPagos
 java -cp "bin;lib/*" PruebasContratoApi
+java -cp "bin;lib/*" PruebasWebSocket
 
 # En Linux / macOS / Docker (separador dos puntos ':'):
 java -cp "bin:lib/*" PruebasReglasNegocioTextil
 java -cp "bin:lib/*" PruebasSeguridadIntegridad
 java -cp "bin:lib/*" PruebasConcurrenciaYPagos
 java -cp "bin:lib/*" PruebasContratoApi
+java -cp "bin:lib/*" PruebasWebSocket
 ```
 
 #### 3. Validacion de Infraestructura y Contenedores (Docker)
@@ -274,7 +277,7 @@ El cuerpo documental oficial del sistema esta estructurado de forma modular en l
 * 05. **[Politicas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)**
 * 06. **[Manual Tecnico de Instalacion, Configuracion y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)**
 * 07. **[Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)**
-* 08. **[Modelo Entidad-Relacion (DER completo de las 25 tablas)](documentacion/08-modelo-entidad-relacion.md)**
+* 08. **[Modelo Entidad-Relacion (DER completo de las 29 tablas)](documentacion/08-modelo-entidad-relacion.md)**
 * 09. **[Mapa de Navegacion por Rol](documentacion/09-mapa-de-navegacion.md)**
 * 10. **[Casos de Uso](documentacion/10-casos-de-uso.md)**
 * 11. **[Diagrama de Clases del Backend](documentacion/11-diagrama-de-clases.md)**
@@ -285,7 +288,7 @@ El cuerpo documental oficial del sistema esta estructurado de forma modular en l
 * 16. **[Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)**
 * 17. **[Manual de Identidad Visual (Web Markdown)](documentacion/17-manual-de-identidad-visual.md)** | **[Manual de Identidad Visual (PDF Oficial)](documentacion/Manual_de_identidad_visual_DD_Textil.pdf)**
 * 18. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
-* 19. **[Matriz de Requerimientos (RF, RNF y Trazabilidad)](documentacion/Matriz_de_requerimientos_v2.xlsx)**
+* 19. **[Matriz de Requerimientos (RF, RNF y Trazabilidad)](documentacion/Matriz_de_requerimientos_v3.xlsx)**
 * 20. **[Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)**
 
 ---

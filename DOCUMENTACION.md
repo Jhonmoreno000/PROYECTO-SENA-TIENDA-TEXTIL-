@@ -26,7 +26,7 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Matriz de Trazabilidad de Requerimientos:** Cruce bidireccional entre requerimientos de negocio, casos de uso tecnicos y componentes de software.
 
 ### 2. [02. Arquitectura de Software, Modelo C4 y Backend Java](documentacion/02-arquitectura-software-c4-y-backend.md)
-*   **Vision General del Backend:** Diseno en Vanilla Java 17 de alto desempeno, servidor HTTP nativo con pool de 32 hilos concurrentes, conexion JDBC directa con PostgreSQL y Google Gson.
+*   **Vision General del Backend:** Diseno en Vanilla Java 21 de alto desempeno, servidor HTTP nativo con pool de 32 hilos concurrentes, conexion JDBC directa con PostgreSQL y Google Gson.
 *   **Estructura Exhaustiva de Capas y Paquetes:** Distribucion Clean Architecture en capas `dominio`, `aplicacion` e `infraestructura` con correspondencia exacta de clases en idioma espanol.
 *   **Principios SOLID con Ejemplos de Codigo:** Demostracion de SRP, OCP, LSP, ISP y DIP en el contexto textil.
 *   **Diagramas de Arquitectura bajo el Modelo C4 y Despliegue:**
@@ -48,10 +48,10 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 
 ### 4. [04. Diseno, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md) y [README de Base de Datos](BASE%20DE%20DATOS/README.md)
 *   **Diseno Arquitectonico:** PostgreSQL 17 en codificacion UTF-8, normalizacion en Tercera Forma Normal (3FN), precision decimal en moneda (`NUMERIC(12,2)`) y metrajes (`NUMERIC(10,2)`).
-*   **Modelo Relacional Formal:** Notacion relacional estricta para las 25 tablas con claves primarias (`PK`), claves foraneas (`FK`), restricciones de unicidad (`UK`) y de integridad referencial.
+*   **Modelo Relacional Formal:** Notacion relacional estricta para las 29 tablas con claves primarias (`PK`), claves foraneas (`FK`), restricciones de unicidad (`UK`) y de integridad referencial.
 *   **Diagrama Entidad-Relacion (DER):** Modelado conceptual completo en sintaxis Mermaid integrando auditoría Wompi.
-*   **Arquitectura Modelo-Vista-Controlador (MVC):** Desacoplamiento y mapeo integral del Modelo (PostgreSQL 17 + DAOs JDBC + Clases de Dominio Java), Vista (SPA React 18 + Tailwind CSS) y Controlador (Handlers HTTP nativos de Java 17).
-*   **Vistas de Base de Datos (SQL Views):** Definicion de vistas para catalogo consolidado, alertas de stock critico y resumen de comisiones de vendedores.
+*   **Arquitectura Modelo-Vista-Controlador (MVC):** Desacoplamiento y mapeo integral del Modelo (PostgreSQL 17 + DAOs JDBC + Clases de Dominio Java), Vista (SPA React 18 + Tailwind CSS) y Controlador (Handlers HTTP nativos de Java 21).
+**   **Diccionario de datos:** Las 29 tablas con tipo, nulos, restricciones, valores por defecto y descripcion de cada columna, generado desde el esquema SQL, y los 20 indices B-Tree.
 *   **Ciclo de Vida Transaccional MVC:** Diagrama de secuencia Mermaid para el flujo de compra y descuento de inventario con bloqueo pesimista (`SELECT ... FOR UPDATE`).
 *   **Diccionario de Datos Exhaustivo:** Especificacion columna por columna de las tablas de la base de datos (tipos de datos, restricciones PK, FK, UK, nulabilidad y descripcion del proposito comercial).
 *   **Estrategia de Indexacion B-Tree:** Indices para busqueda de catalogo, ordenamiento de inventario por menor remanente y trazabilidad de ordenes de corte.
@@ -59,7 +59,7 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 
 ### 5. [05. Politicas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)
 *   **Evaluacion ISO/IEC 25010:** Tabla de cumplimiento y criterios de medicion (Adecuacion Funcional, Fiabilidad, Eficiencia, Mantenibilidad, Seguridad, Usabilidad y Portabilidad).
-*   **Gestion de Identidad y Acceso (IAM):** Autenticacion mediante tokens efimeros (15 minutos), cookies seguras (`HttpOnly; Secure; SameSite=Strict`) y hashing SHA-256 en UTF-8.
+*   **Gestion de Identidad y Acceso (IAM):** Autenticacion mediante tokens de sesion firmados con HMAC-SHA256 (vigencia de 12 horas), contrasenas con PBKDF2 con sal y bloqueo temporal tras 5 intentos fallidos.
 *   **Politica Financiera PCI-DSS v4.0:** Cumplimiento del Requisito 3 mediante politica de cero almacenamiento de datos de tarjeta (PAN y CVV).
 *   **Proteccion de Datos Personales (Ley 1581 de 2012):** Politica de Habeas Data, consentimiento previo y procedimiento de anonimizacion/derecho al olvido.
 *   **Plan de Recuperacion ante Desastres (DRP):** Objetivos RTO <= 2 horas y RPO <= 15 minutos, respaldos fisicos diarios `pg_dump` y procedimiento de contingencia.
@@ -67,7 +67,7 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Observabilidad y Auditoria:** Formato de logs estructurados en JSON, correlacion mediante UUID y trazabilidad inmutable.
 
 ### 6. [06. Manual Tecnico de Instalacion, Configuracion y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)
-*   **Requisitos de Infraestructura:** Parametros minimos y recomendados de hardware (CPU, RAM, SSD) y software (Java 17, Node.js 18+, PostgreSQL 17, Docker Engine 24+).
+*   **Requisitos de Infraestructura:** Parametros minimos y recomendados de hardware (CPU, RAM, SSD) y software (Java 21, Node.js 18+, PostgreSQL 17, Docker Engine 24+).
 *   **Topologia de Redes Docker Compose:** Diagrama Mermaid de arquitectura de redes y aislamiento entre red publica `frontend-net` y red interna aislada `backend-net`.
 *   **Especificacion de Variables de Entorno (`.env`):** Configuracion completa de conexiones, secretos y puertos.
 *   **Despliegue Automatizado con Docker Compose:** Procedimiento paso a paso para construccion, inicio, verificacion de estado y bitacoras.
@@ -77,21 +77,22 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 
 ### 7. [07. Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)
 *   **Fundamentacion de Dominio:** Peculiaridades del corte de telas (continuidad de pieza, consistencia cromatica por lote, reclasificacion de mermas y tarifas por volumen).
-*   **Entidad RolloTextil:** Estados del ciclo de vida (`DISPONIBLE`, `RESERVADO`, `RETAZO_LIQUIDADO`, `AGOTADO`) y metodos de corte.
-*   **Servicio de Corte Textil:** Algoritmo Best Fit para seleccion de rollo con menor desperdicio y formula de liquidacion con descuentos (12% mayorista, 25% rollo cerrado, 40% retazos).
+**   **Entidad RolloTextil:** Atributos y estados (`disponible`, `retazo_liquidado`, `agotado`) con sus transiciones tras un corte.
+*   **Servicio de Corte Textil:** Algoritmo Best Fit para seleccion de rollo con menor desperdicio y formula de liquidacion con descuentos (15% mayorista desde 15 m, 25% rollo cerrado desde 50 m, 40% retazos).
 *   **Suite 1 (Reglas de Negocio Textiles):** Detalle de los 14 casos de prueba unitarios ejecutados en `PruebasReglasNegocioTextil.java` (100% aprobados).
-*   **Suite 2 (Seguridad e Integridad):** Detalle de los 17 casos de prueba ejecutados en `PruebasSeguridadIntegridad.java` (hashing PBKDF2 con sal, algoritmo Best-Fit anti-merma, RBAC estricto, 100% aprobados).
+*   **Suite 2 (Seguridad e Integridad):** Detalle de los 21 casos de prueba ejecutados en `PruebasSeguridadIntegridad.java` (hashing PBKDF2 con sal, algoritmo Best-Fit anti-merma, RBAC estricto, 100% aprobados).
 *   **Suite 3 (Concurrencia, Pagos Wompi y Dominio Financiero):** Detalle de los 11 casos de prueba ejecutados en `PruebasConcurrenciaYPagos.java` (100% aprobados).
-*   **Suite 4 (Contratos OpenAPI v3 y Arquitectura API):** Detalle de los 7 casos de prueba ejecutados en `PruebasContratoApi.java` (100% aprobados).
+**   **Suite 4 (Contratos OpenAPI v3 y Arquitectura API):** Detalle de los 9 casos de prueba ejecutados en `PruebasContratoApi.java` (100% aprobados).
+*   **Suite 5 (Tiempo real):** Detalle de los 4 casos de prueba de `PruebasWebSocket.java` (100% aprobados).
 *   **Guia de Comandos de Terminal:** Instrucciones paso a paso para compilacion y ejecucion en terminal nativa (PowerShell y Bash), pruebas de seguridad con cURL y validacion de CI/CD con GitHub CLI (`gh`).
 *   **Framework de Rendimiento:** Pruebas de carga concurrentes multi-herramienta en `pruebas-carga/` (k6, PowerShell y Bash).
-*   **Certificacion de Resultados:** Registro oficial de ejecucion de las pruebas automatizadas en Java y Frontend (100% aprobadas).
+**   **Certificacion de Resultados:** Resultado de la ejecucion del 16/11/2026: 59 de 59 pruebas de backend y 46 de 46 de frontend.
 
 ### 8. [08. Modelo Entidad-Relacion](documentacion/08-modelo-entidad-relacion.md)
-*   **DER completo y simplificado:** Las 25 tablas del esquema `01_esquema_espanol.sql` con sus 20 llaves foraneas, cardinalidades y diccionario resumido.
+*   **DER completo y simplificado:** Las 29 tablas del esquema `01_esquema_espanol.sql` con sus 25 llaves foraneas, cardinalidades y diccionario resumido.
 
 ### 9. [09. Mapa de Navegacion](documentacion/09-mapa-de-navegacion.md)
-*   **Rutas por rol:** Las 50 rutas de `App.jsx` agrupadas en sitio publico, proceso de compra y paneles de cliente, vendedor y administrador, con su proteccion por `ProtectedRoute`.
+*   **Rutas por rol:** Las 54 rutas de `App.jsx` agrupadas en sitio publico, proceso de compra y paneles de cliente, vendedor y administrador, con su proteccion por `ProtectedRoute`.
 
 ### 10. [10. Casos de Uso](documentacion/10-casos-de-uso.md)
 *   **Diagramas y especificaciones:** Actores, diagramas de casos de uso de la tienda y de la gestion, y fichas con flujo principal, alternos y postcondiciones.
@@ -118,9 +119,9 @@ El cuerpo documental oficial del proyecto se encuentra centralizado en el direct
 *   **Guia de marca oficial:** Pilares de marca, tono de voz, construccion del logo tipografico e isotipo, paleta cromatica (`#F97316`, `#0F172A`, `#FFFFFF`), escalas completas de `tailwind.config.js`, contraste WCAG, jerarquia tipografica (`Outfit` e `Inter`) y aplicacion en la interfaz. Disponible tambien en **[PDF Oficial Descargable](documentacion/Manual_de_identidad_visual_DD_Textil.pdf)**.
 
 ### 18. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
-*   Especificacion Swagger / OpenAPI v3.0 completa y estandarizada de todos los endpoints de la API REST, con esquemas de peticion, esquemas de respuesta y codigos de error HTTP.
+**   Especificacion OpenAPI 3.0.3 de las 40 rutas principales de la API REST (en español, con sus alias en ingles), con esquemas generados desde los modelos Java, codigos de respuesta y el control de acceso de cada ruta.
 
-### 19. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx)
+### 19. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v3.xlsx)
 *   Requerimientos funcionales y no funcionales (ISO/IEC 25010) y matriz de trazabilidad hacia casos de uso y clases de diseno.
 
 ### 20. [Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)

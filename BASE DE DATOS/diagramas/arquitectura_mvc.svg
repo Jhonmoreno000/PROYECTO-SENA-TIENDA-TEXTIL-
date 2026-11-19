@@ -51,7 +51,7 @@
         <rect x="0" y="0" width="130" height="30" rx="6" fill="#047857"/>
         <text x="65" y="20" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">SENA ADSO 2026</text>
         <rect x="145" y="0" width="140" height="30" rx="6" fill="#2563eb"/>
-        <text x="215" y="20" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Vanilla Java 17 + React</text>
+        <text x="215" y="20" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Vanilla Java 21 + React</text>
       </g>
     </g>
     
@@ -70,7 +70,7 @@
         <rect width="300" height="110" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#34d399">Tienda Pública (Catálogo)</text>
         <text x="16" y="48" font-size="12" fill="#cbd5e1">• Catalogo.jsx (Filtros, Telas)</text>
-        <text x="16" y="68" font-size="12" fill="#cbd5e1">• CarritoDrawer.jsx (Subtotales)</text>
+        <text x="16" y="68" font-size="12" fill="#cbd5e1">• Carrito.jsx (Subtotales)</text>
         <text x="16" y="88" font-size="12" fill="#cbd5e1">• Pago.jsx (Checkout Seguro)</text>
       </g>
 
@@ -80,15 +80,15 @@
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#34d399">Paneles de Gestión (RBAC)</text>
         <text x="16" y="48" font-size="12" fill="#cbd5e1">• ResumenAdmin.jsx (Métricas Recharts)</text>
         <text x="16" y="68" font-size="12" fill="#cbd5e1">• ConfiguracionStock.jsx (Umbrales)</text>
-        <text x="16" y="88" font-size="12" fill="#cbd5e1">• SoporteTickets.jsx (Atención Clientes)</text>
+        <text x="16" y="88" font-size="12" fill="#cbd5e1">• GestionTickets.jsx (Atención Clientes)</text>
       </g>
 
       <!-- Componente 3: Capa de Contexto y Peticiones -->
       <g transform="translate(710, 60)">
         <rect width="320" height="110" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#34d399">Estado Global &amp; Peticiones</text>
-        <text x="16" y="48" font-size="12" fill="#cbd5e1">• AuthContext.jsx (Tokens JWT/Roles)</text>
-        <text x="16" y="68" font-size="12" fill="#cbd5e1">• CartContext.jsx (Persistencia Carrito)</text>
+        <text x="16" y="48" font-size="12" fill="#cbd5e1">• ContextoAutenticacion.jsx (Token/Roles)</text>
+        <text x="16" y="68" font-size="12" fill="#cbd5e1">• ContextoCarrito.jsx (Carrito)</text>
         <text x="16" y="88" font-size="12" fill="#cbd5e1">• fetch() Asíncrono / JSON Parser</text>
       </g>
 
@@ -96,8 +96,8 @@
       <g transform="translate(1060, 60)">
         <rect width="290" height="110" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#34d399">Cliente Móvil Android</text>
-        <text x="16" y="48" font-size="12" fill="#cbd5e1">• WebViewAssetLoader (Kotlin)</text>
-        <text x="16" y="68" font-size="12" fill="#cbd5e1">• Caché Local de Telas</text>
+        <text x="16" y="48" font-size="12" fill="#cbd5e1">• Capacitor (WebView Android)</text>
+        <text x="16" y="68" font-size="12" fill="#cbd5e1">• Misma interfaz React empaquetada</text>
         <text x="16" y="88" font-size="12" fill="#cbd5e1">• Interfaz Táctil Optimizada</text>
       </g>
     </g>
@@ -122,7 +122,7 @@
       <rect width="1380" height="210" rx="12" fill="#0f172a" stroke="#3b82f6" stroke-width="1.8"/>
       <!-- Header de la capa -->
       <path d="M 0 12 Q 0 0 12 0 L 1368 0 Q 1380 0 1380 12 L 1380 40 L 0 40 Z" fill="url(#grad-layer-controlador)"/>
-      <text x="24" y="26" font-size="16" font-weight="bold" fill="#ffffff">2. CAPA CONTROLADOR (CONTROLLER) - API REST Java 17 (Vanilla HttpServer)</text>
+      <text x="24" y="26" font-size="16" font-weight="bold" fill="#ffffff">2. CAPA CONTROLADOR (CONTROLLER) - API REST Java 21 (Vanilla HttpServer)</text>
       <text x="1350" y="26" font-size="13" font-weight="bold" fill="#bfdbfe" text-anchor="end">Servidor Embebido · Pool 32 Hilos · Puerto 8081</text>
 
       <!-- Componente 1: ManejadorBase & DevSecOps -->
@@ -130,7 +130,7 @@
         <rect width="320" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#60a5fa">ManejadorBase.java (Filtros)</text>
         <text x="16" y="48" font-size="12" fill="#cbd5e1">• CORS Dinámico (Cross-Origin)</text>
-        <text x="16" y="68" font-size="12" fill="#cbd5e1">• Rate Limiting (120 req/min por IP)</text>
+        <text x="16" y="68" font-size="12" fill="#cbd5e1">• Rate Limiting (1200 req/min por IP)</text>
         <text x="16" y="88" font-size="12" fill="#cbd5e1">• Trazabilidad: X-Correlation-ID</text>
         <text x="16" y="108" font-size="12" fill="#cbd5e1">• Manejo Centralizado de Excepciones</text>
       </g>
@@ -139,19 +139,19 @@
       <g transform="translate(380, 60)">
         <rect width="460" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#60a5fa">Manejadores de Recursos Textil &amp; Ventas</text>
-        <text x="16" y="48" font-size="12" fill="#cbd5e1">• ManejadorProductos (/api/productos) &rarr; CRUD &amp; Filtros</text>
-        <text x="16" y="68" font-size="12" fill="#cbd5e1">• ManejadorPedidos (/api/pedidos) &rarr; Checkout Transaccional</text>
-        <text x="16" y="88" font-size="12" fill="#cbd5e1">• ManejadorInventario (/api/inventory/*) &rarr; Alertas &amp; Stock</text>
-        <text x="16" y="108" font-size="12" fill="#cbd5e1">• ManejadorCarrito (/api/cart/*) &rarr; Ítems &amp; Cupones</text>
+        <text x="16" y="48" font-size="12" fill="#cbd5e1">• ManejadorProductos (/api/productos) → CRUD &amp; Filtros</text>
+        <text x="16" y="68" font-size="12" fill="#cbd5e1">• ManejadorPedidos (/api/pedidos) → Checkout Transaccional</text>
+        <text x="16" y="88" font-size="12" fill="#cbd5e1">• ManejadorInventario (/api/inventario/*) → Alertas &amp; Stock</text>
+        <text x="16" y="108" font-size="12" fill="#cbd5e1">• ManejadorCarrito (/api/carrito) → Ítems</text>
       </g>
 
       <!-- Componente 3: Autenticación & Observabilidad -->
       <g transform="translate(870, 60)">
         <rect width="480" height="130" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#60a5fa">Seguridad, Configuración &amp; Salud</text>
-        <text x="16" y="48" font-size="12" fill="#cbd5e1">• ManejadorAutenticacion (/api/auth/login) &rarr; Hash SHA-256</text>
-        <text x="16" y="68" font-size="12" fill="#cbd5e1">• ManejadorConfiguracion (/api/configuration) &rarr; Banner / CMS</text>
-        <text x="16" y="88" font-size="12" fill="#cbd5e1">• ManejadorSalud (/health/live, /health/ready) &rarr; Docker Health</text>
+        <text x="16" y="48" font-size="12" fill="#cbd5e1">• ManejadorAutenticacion (/api/iniciar-sesion) → PBKDF2</text>
+        <text x="16" y="68" font-size="12" fill="#cbd5e1">• ManejadorConfiguracion (/api/configuracion) → Banner / CMS</text>
+        <text x="16" y="88" font-size="12" fill="#cbd5e1">• ManejadorSalud (/health/live, /health/ready) → Docker Health</text>
         <text x="16" y="108" font-size="12" fill="#cbd5e1">• Serialización Google Gson con campos en español</text>
       </g>
     </g>
@@ -177,7 +177,7 @@
       <!-- Header de la capa -->
       <path d="M 0 12 Q 0 0 12 0 L 1368 0 Q 1380 0 1380 12 L 1380 40 L 0 40 Z" fill="url(#grad-layer-modelo)"/>
       <text x="24" y="26" font-size="16" font-weight="bold" fill="#ffffff">3. CAPA MODELO (MODEL) - Lógica de Negocio, Persistencia JDBC y PostgreSQL 17</text>
-      <text x="1350" y="26" font-size="13" font-weight="bold" fill="#e9d5ff" text-anchor="end">ACID · Transacciones · HikariCP · 25 Tablas Relacionales</text>
+      <text x="1350" y="26" font-size="13" font-weight="bold" fill="#e9d5ff" text-anchor="end">ACID · Transacciones · Pool JDBC propio · 29 Tablas Relacionales</text>
 
       <!-- Sub-bloque 1: Entidades de Dominio POJO -->
       <g transform="translate(30, 60)">
@@ -194,21 +194,21 @@
       <g transform="translate(420, 60)">
         <rect width="450" height="160" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#c084fc">Acceso a Datos (infraestructura.persistencia.jdbc.*)</text>
-        <text x="16" y="50" font-size="12" fill="#cbd5e1">• ProductoDAO &rarr; Consultas preparadas contra inyección SQL</text>
-        <text x="16" y="70" font-size="12" fill="#cbd5e1">• PedidoDAO &rarr; Transacción atómica (BEGIN/COMMIT/ROLLBACK)</text>
-        <text x="16" y="90" font-size="12" fill="#cbd5e1">• InventarioDAO &rarr; Bloqueo pesimista: SELECT ... FOR UPDATE</text>
+        <text x="16" y="50" font-size="12" fill="#cbd5e1">• ProductoDAO → Consultas preparadas contra inyección SQL</text>
+        <text x="16" y="70" font-size="12" fill="#cbd5e1">• Transacciones atómicas (BEGIN/COMMIT/ROLLBACK)</text>
+        <text x="16" y="90" font-size="12" fill="#cbd5e1">• PedidoDAO / PagoWompiDAO → SELECT ... FOR UPDATE</text>
         <text x="16" y="110" font-size="12" fill="#cbd5e1">• CarritoDAO, CuponDAO, ResenasDAO &amp; SoporteDAO</text>
-        <text x="16" y="130" font-size="12" fill="#cbd5e1">• Pool de Conexiones HikariCP (20 conexiones concurrentes)</text>
+        <text x="16" y="130" font-size="12" fill="#cbd5e1">• Pool de conexiones propio (Conexion.java, 24 por defecto)</text>
       </g>
 
       <!-- Sub-bloque 3: Base de Datos Relacional PostgreSQL 17 -->
       <g transform="translate(900, 60)">
         <rect width="450" height="160" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
         <text x="16" y="26" font-size="14" font-weight="bold" fill="#c084fc">Motor PostgreSQL 17 (Docker Volume)</text>
-        <text x="16" y="50" font-size="12" fill="#cbd5e1">• 25 Tablas Relacionales normalizadas en 3FN</text>
-        <text x="16" y="70" font-size="12" fill="#cbd5e1">• Índices B-Tree optimizados (p95 &lt;= 200ms)</text>
-        <text x="16" y="90" font-size="12" fill="#cbd5e1">• Vistas: vista_catalogo_telas, vista_alertas_stock</text>
-        <text x="16" y="110" font-size="12" fill="#cbd5e1">• Vistas: vista_ventas_vendedores</text>
+        <text x="16" y="50" font-size="12" fill="#cbd5e1">• 29 Tablas Relacionales normalizadas en 3FN</text>
+        <text x="16" y="70" font-size="12" fill="#cbd5e1">• Índices B-Tree sobre columnas de búsqueda</text>
+        <text x="16" y="90" font-size="12" fill="#cbd5e1">• 25 llaves foráneas entre 17 tablas</text>
+        <text x="16" y="110" font-size="12" fill="#cbd5e1">• Restricciones UNIQUE y CHECK</text>
         <text x="16" y="130" font-size="12" fill="#cbd5e1">• Persistencia física garantizada en volumen montado</text>
       </g>
     </g>
@@ -217,10 +217,10 @@
     <g transform="translate(60, 935)">
       <text x="0" y="18" font-size="12" fill="#94a3b8">Leyenda del Flujo:</text>
       <line x1="120" y1="14" x2="160" y2="14" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow-down)"/>
-      <text x="170" y="18" font-size="12" fill="#38bdf8">1. Petición del Cliente &rarr; 2. Enrutamiento del Controlador &rarr; 3. Consulta Transaccional al Modelo</text>
+      <text x="170" y="18" font-size="12" fill="#38bdf8">1. Petición del Cliente → 2. Enrutamiento del Controlador → 3. Consulta Transaccional al Modelo</text>
       
       <line x1="820" y1="14" x2="860" y2="14" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow-up)"/>
-      <text x="870" y="18" font-size="12" fill="#34d399">4. Retorno de Datos del Modelo &rarr; 5. Serialización JSON del Controlador &rarr; 6. Renderizado en Vista</text>
+      <text x="870" y="18" font-size="12" fill="#34d399">4. Retorno de Datos del Modelo → 5. Serialización JSON del Controlador → 6. Renderizado en Vista</text>
     </g>
     
 </svg>

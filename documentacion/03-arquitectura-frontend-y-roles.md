@@ -14,7 +14,7 @@ El frontend de **D&D Textil** esta estructurado como una aplicacion de pagina un
 - **React 18.3.1:** Biblioteca base que implementa el paradigma funcional y de componentes declarativos. Aprovecha tecnicas de actualizacion granular del arbol de componentes (*reconciliation*) para actualizar unicamente los nodos que sufren cambios de estado.
 - **Vite 5.4.11:** Empaquetador modular que utiliza modulos ECMAScript nativos (ESM) en desarrollo, acelerando el arranque en caliente (*Hot Module Replacement - HMR*) en menos de 100 milisegundos.
 - **TailwindCSS 3.4.1:** Motor de estilos atomicos basado en utilidades de generacion Just-In-Time (JIT). Facilita el diseno consistente de interfaces bajo la estetica *Glassmorphism* (fondos translucidos, bordes tenues y desenfoques `backdrop-blur`).
-- **Context API de React:** Sistema nativo de propagacion de estado global para sesiones de usuario (`AuthContext`) y persistencia de articulos de compra (`CartContext`).
+- **Context API de React:** Sistema nativo de propagacion de estado global para sesiones de usuario (`ContextoAutenticacion`), carrito (`ContextoCarrito`), catalogo (`ContextoProducto`), paneles (`ContextoMetricas`) y tiempo real (`ContextoWebSocket`).
 - **React Router DOM 6.22.0:** Sistema de enrutamiento del lado del cliente con proteccion condicional de rutas segun el rol del usuario autenticado.
 
 ### 1.2. Vista Previa de la Interfaz Principal (Landing Page)
@@ -30,55 +30,43 @@ El codigo fuente del frontend se organiza de forma modular para garantizar alta 
 ```text
 tienda digital de telas/src/
  |
- +-- assets/                  # Iconos SVG, logotipos e imagenes estaticas
- +-- components/              # Componentes visuales reutilizables
- |    +-- Navbar.jsx          # Barra de navegacion principal con detector de sesion
- |    +-- Footer.jsx          # Pie de pagina institucional y enlaces legales
- |    +-- GlobalBanner.jsx    # Cintillo de anuncios promocionales configurables
- |    +-- ProductCard.jsx     # Tarjeta de tela con precio por metro y vista rapida
- |    +-- ProtectedRoute.jsx  # Componente de orden superior para restriccion RBAC
- |    +-- Toast.jsx           # Notificaciones flotantes de exito y error
+ +-- App.jsx                  # Las 54 rutas de la aplicacion y su proteccion por rol
+ +-- main.jsx                 # Punto de entrada; monta AppProviders y el enrutador
+ +-- config.js                # URL de la API (VITE_API_URL) y mapa RUTAS_API
  |
- +-- context/                 # Proveedores de estado global
- |    +-- AuthContext.jsx     # Gestion de token, perfil de usuario, login y logout
- |    +-- CartContext.jsx     # Sincronizacion de metros, subtotales y cupones
+ +-- componentes/             # Componentes reutilizables
+ |    +-- Encabezado.jsx, PieDePagina.jsx, Portada.jsx, Carrusel.jsx
+ |    +-- TarjetaProducto.jsx, ProductGrid.jsx, SmartFilter.jsx, ReviewsSection.jsx
+ |    +-- CheckoutForm.jsx, ResumenPedido.jsx, Toast.jsx, ErrorBoundary.jsx
+ |    +-- ProtectedRoute.jsx   # Restringe rutas segun sesion y rol
+ |    +-- AppProviders.jsx     # Anida los proveedores de contexto (incluye WebSocketProvider)
+ |    +-- common/              # BotonWhatsAppFlotante, LogoutLoader, ModalSSOCorreo
+ |    +-- dashboard/           # Tarjetas de metricas, graficas y CommandPalette
+ |    +-- layouts/LayoutPanel.jsx  # Estructura comun de los tres paneles
  |
- +-- pages/                   # Vistas principales de la aplicacion
- |    +-- Home.jsx            # Pantalla de inicio con carrusel y secciones destacadas
- |    +-- Catalog.jsx         # Catalogo completo con filtros por categoria y precio
- |    +-- ProductDetail.jsx   # Ficha tecnica, selector de metraje y galeria Base64
- |    +-- Cart.jsx            # Carrito de compra y aplicacion de cupones
- |    +-- Checkout.jsx        # Captura de datos de envio y liquidacion de flete
- |    +-- CheckoutSuccess.jsx # Confirmacion de pedido con numero de guia y QR
- |    +-- About.jsx           # Informacion corporativa de D&D Textil
- |    +-- Contact.jsx         # Formulario de contacto y ubicacion
- |    +-- Login.jsx           # Formulario reactivo de autenticacion
- |    +-- Register.jsx        # Formulario reactivo de registro de clientes
+ +-- contextos/               # Estado global (Context API)
+ |    +-- ContextoAutenticacion.jsx  # Login, registro, SSO, token y cierre de sesion
+ |    +-- ContextoCarrito.jsx        # Carrito y cupones
+ |    +-- ContextoProducto.jsx       # Catalogo y eventos de stock en tiempo real
+ |    +-- ContextoMetricas.jsx       # Datos de paneles, inventario, cupones y lista de deseos
+ |    +-- ContextoNotificacion.jsx   # Avisos en pantalla
+ |    +-- ContextoWebSocket.jsx      # Conexion con el servidor WebSocket (puerto 8082)
+ |    +-- UIContext.jsx              # Estado visual (tema, menus)
  |
- +-- panels/                  # Tableros de control segun rol
- |    +-- customer/           # Panel del Cliente
- |    |    +-- CustomerDashboard.jsx  # Resumen de pedidos recientes y estado
- |    |    +-- CustomerOrders.jsx     # Historial de compras y factura simulada
- |    |    +-- OrderTracking.jsx      # Linea de tiempo de corte y despacho
- |    |    +-- MeterCalculator.jsx    # Calculadora inteligente de metrajes
- |    |    +-- SupportTickets.jsx     # Radicacion de reclamos de garantia
- |    |    +-- Wishlist.jsx           # Telas guardadas como favoritas
- |    |
- |    +-- seller/             # Panel del Vendedor
- |    |    +-- SellerDashboard.jsx    # Analitica comercial e ingresos
- |    |    +-- ProductManagement.jsx  # Publicacion y edicion de stock textil
- |    |    +-- LowStockAlerts.jsx     # Notificaciones de telas por agotarse (< 5m)
- |    |
- |    +-- admin/              # Panel del Administrador
- |         +-- AdminDashboard.jsx     # Metricas financieras globales
- |         +-- UserManagement.jsx     # Suspension y activacion de cuentas
- |         +-- InventoryBatches.jsx   # Entrada de lotes de tejeduria
- |         +-- WasteManagement.jsx    # Registro de mermas y retazos liquidados
- |         +-- CouponManagement.jsx   # Creacion de reglas de cupones
+ +-- paginas/                 # Vistas
+ |    +-- Inicio, Catalogo, DetalleProducto, Carrito, Pago (checkout), ConfirmacionPedido
+ |    +-- IniciarSesion, Registro, About, Contact, BugReport, NoEncontrado
+ |    +-- payment/             # Payment.jsx (pasarelas simuladas), PSEForm, CodigoQRTextil...
+ |    +-- cliente/             # PanelCliente; Orders/, Collection/, Soporte/, Settings/
+ |    +-- vendedor/            # PanelVendedor, PedidosVendedor, StockAlerts
+ |    +-- admin/               # ResumenAdmin, GestionUsuarios, ProductosAdmin, FacturasAdmin...
+ |         +-- Inventario/, Moderacion/, Soporte/, Analiticas/
  |
- +-- utils/                   # Funciones auxiliares y formateadores
-      +-- api.js              # Cliente HTTP centralizado con manejo de cabeceras
-      +-- formatters.js       # Formateador de moneda colombiana (COP) y metros
+ +-- datos/                   # Menus de cada panel (enlacesAdmin, enlacesCliente, enlacesVendedor)
+ +-- hooks/                   # useDarkMode, useLocalStorage
+ +-- servicios/               # servicioOAuth (Google/Microsoft), servicioWebSocket, servicioWompi
+ +-- utilidades/              # formateadores, interceptorSesion (cabecera Authorization), sesion,
+                              # analyticsUtils, inventoryUtils, metricsUtils, animations
 ```
 
 ---
@@ -89,7 +77,7 @@ La plataforma cuenta con cuatro roles de usuario claramente diferenciados, con p
 
 | Rol de Usuario | Prefijo de Ruta | Vistas y Capacidades Autorizadas | Restricciones de Seguridad |
 | :--- | :--- | :--- | :--- |
-| **Cliente** | `/cliente/*` | Consulta de pedidos propios, seguimiento de envio (`/cliente/rastreo`), uso de la calculadora de metraje, lista de deseos y radicacion de tickets de garantia. | Bloqueado para ver pedidos ajenos, catalogar productos o acceder a paneles de gestion. |
+| **Cliente** | `/cliente/*` | Consulta de pedidos propios, seguimiento de envio (`/cliente/pedidos/rastreo`), uso de la calculadora de metraje, lista de deseos y radicacion de tickets de garantia. | Bloqueado para ver pedidos ajenos, catalogar productos o acceder a paneles de gestion. |
 | **Vendedor** | `/vendedor/*` | Publicacion de telas, actualizacion de stock, visualizacion de sus propias ventas y recepcion de alertas de stock critico (< 5 metros). | Solo puede editar productos vinculados a su identificador de usuario (`vendedor_id`). |
 | **Operario de Corte** | `/bodega/*` | Escaneo de ordenes de corte con codigo QR, validacion de rollos fisicos y registro de metros cortados y mermas. | No tiene acceso a informacion de precios de venta, utilidades ni facturacion. |
 | **Administrador** | `/admin/*` | Moderacion de productos, suspension o reactivacion de usuarios, configuracion de umbrales criticos, creacion de cupones y metricas globales. | Acceso total con registro de auditoria inmutable en cada accion. |
@@ -117,7 +105,7 @@ flowchart TD
         Carrito["Carrito (/carrito)<br/>Cupones y subtotales"]:::publicStyle
         Checkout["Checkout (/checkout)<br/>Datos de envío y Pasarela Wompi"]:::publicStyle
         Login["Autenticación (/login, /registro)<br/>OAuth y credenciales directas"]:::publicStyle
-        Institucional["ℹInstitucional (/nosotros, /contactos)"]:::publicStyle
+        Institucional["ℹInstitucional (/nosotros, /contacto)"]:::publicStyle
 
         Home --> Catalogo --> Detalle --> Carrito --> Checkout
         Home --> Institucional
@@ -125,7 +113,7 @@ flowchart TD
     end
 
     subgraph GuardiaSeguridad ["Middleware de Seguridad"]
-        ProtectedRoute["ProtectedRoute (React Router DOM)<br/>• Valida Token JWT en AuthContext<br/>• Verifica Rol RBAC"]:::authStyle
+        ProtectedRoute["ProtectedRoute (React Router DOM)<br/>• Exige sesion con token firmado (TokenSesion)<br/>• Verifica Rol RBAC"]:::authStyle
     end
 
     subgraph ZonaProtegida ["Zona Protegida (Paneles por Rol)"]
@@ -172,8 +160,8 @@ flowchart TD
 - **Catalogo de Telas (`/catalogo`):** Tarjetas interactivas con busqueda en tiempo real por texto y filtrado por categorias (Algodon, Seda, Lino, Dril, Terciopelo, etc.).
 - **Detalle de Producto (`/producto/:id`):** Visualizacion de fotografia en alta resolucion, ancho util, peso, cuidados textiles y selector dinamico de metros con validacion de disponibilidad.
 - **Carrito de Compras (`/carrito`):** Administracion de items seleccionados, calculo de subtotales y aplicacion de cupones de descuento.
-- **Proceso de Pago (`/checkout` y `/checkout/success`):** Formulario de datos de despacho, confirmacion de pasarela de pago y generacion del comprobante con numero de orden.
-- **Sobre Nosotros (`/nosotros`) y Contacto (`/contactos`):** Paginas institucionales y formulario de contacto interactivo con mapa de ubicación.
+- **Proceso de Pago (`/checkout`, `/pago` y `/confirmacion`):** Formulario de datos de despacho, confirmacion de pasarela de pago y generacion del comprobante con numero de orden.
+- **Sobre Nosotros (`/nosotros`) y Contacto (`/contacto`):** Paginas institucionales y formulario de contacto interactivo con mapa de ubicación.
 - **Acceso (`/login` y `/registro`):** Formularios con validacion de campos y soporte OAuth con Google/Microsoft.
 
 ### 4.2. Vistas Protegidas por Rol (Requieren Sesión Activa)
@@ -186,7 +174,7 @@ flowchart TD
 
 ## 5. Motor y Formulas de la Calculadora de Metraje Inteligente
 
-Ubicada en `/cliente/calculadora`, la **Calculadora de Metraje** asiste al confeccionista calculando la cantidad exacta de tela necesaria para un proyecto, incorporando un **margen de seguridad tecnico del diez por ciento (+10%)** para compensar encogimientos por lavado y desperdicios de corte de patron:
+Ubicada en `/cliente/coleccion/calculadora`, la **Calculadora de Metraje** asiste al confeccionista calculando la cantidad exacta de tela necesaria para un proyecto, incorporando un **margen de seguridad tecnico del diez por ciento (+10%)** para compensar encogimientos por lavado y desperdicios de corte de patron:
 
 ### Formulas Matematicas Implementadas:
 
@@ -228,7 +216,7 @@ En la capa cliente (`tienda digital de telas/src`), la seguridad y privacidad en
 1. **Utilidad de Vigencia de Token (`src/utilidades/sesion.js`):**
    - Decodifica de forma segura la sección de carga Base64URL del token firmado para extraer la marca de expiración (`exp`) en milisegundos (`expiracionDeToken`, `tokenVigente`, `sesionVigente`).
 2. **Cierre Automático por Expiración (`ContextoAutenticacion.jsx`):**
-   - Al hidratar el usuario desde `localStorage` y durante la sesión activa, un temporizador reactivo (`setTimeout`) programa el cierre automático de sesión exactamente en el instante en que vence el token o cuando el backend responde con código `401` (evento global `ddtextil:sesion-expirada` emitido desde `clienteApi.js`).
+   - Al hidratar el usuario desde `localStorage` y durante la sesión activa, un temporizador reactivo (`setTimeout`) programa el cierre automático de sesión exactamente en el instante en que vence el token o cuando el backend responde con código `401` a una consulta de `ContextoMetricas` (función `apiFetchDetallado`, que invoca el cierre de sesión).
 3. **Limpieza de Métricas entre Sesiones (`ContextoMetricas.jsx`):**
    - Cuando el usuario cierra sesión o cambia de cuenta, el contexto limpia de inmediato los arreglos de pedidos en memoria para evitar que datos de una sesión previa sean visibles por otro usuario en el mismo equipo.
 
@@ -239,3 +227,19 @@ En la capa cliente (`tienda digital de telas/src`), la seguridad y privacidad en
 | `GET` | `/api/configuracion/notificaciones?usuarioId={id}` | Sesión activa | Lista las últimas notificaciones del usuario y avisos globales ordenados por fecha descendente. |
 | `POST` | `/api/configuracion/notificaciones` | Sesión activa | Registra una nueva notificación operativa o marca todas como leídas (`accion: "marcar_todas_leidas"`). |
 | `PUT` | `/api/configuracion/notificaciones/{id}` | Sesión activa | Marca una notificación específica como leída (`leida = true`). |
+
+### Sincronizacion en Tiempo Real (`ContextoWebSocket`)
+
+`WebSocketProvider` (en `AppProviders.jsx`) abre una conexion con el servidor WebSocket del backend (puerto 8082, o la URL de `VITE_WS_URL`) mediante `servicios/servicioWebSocket.js`. `ContextoProducto` escucha `STOCK_ACTUALIZADO`, `OFERTA_ACTUALIZADA` y `NUEVO_PRODUCTO`; `ContextoWebSocket` escucha `NUEVO_PEDIDO` y `NOTIFICACION`. Asi el catalogo y los paneles se actualizan sin recargar la pagina. El backend tambien emite `PEDIDO_ACTUALIZADO`, pero el frontend todavia no lo escucha.
+
+### Piezas Agregadas en Noviembre de 2026
+
+| Pieza | Archivo | Funcion |
+| :--- | :--- | :--- |
+| Interceptor de sesion | `utilidades/interceptorSesion.js` | Agrega `Authorization: Bearer <token>` a cada peticion |
+| Limite de errores | `componentes/ErrorBoundary.jsx` | Evita que un fallo de una vista tumbe toda la aplicacion |
+| Codigo QR de pago | `paginas/payment/CodigoQRTextil.jsx` | QR para Nequi y Bre-B |
+| Boton de WhatsApp | `componentes/common/BotonWhatsAppFlotante.jsx` | Contacto directo con la tienda |
+| Favoritos por usuario | `contextos/ContextoMetricas.jsx` | Lista de deseos guardada en el navegador por usuario |
+
+El frontend define 54 rutas en `App.jsx`.
