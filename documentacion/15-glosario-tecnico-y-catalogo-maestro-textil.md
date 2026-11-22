@@ -41,7 +41,7 @@ La siguiente matriz documenta las propiedades físico-químicas y comerciales de
 
 ## 3. Fórmulas Matemáticas de la Calculadora de Metraje por Proyecto
 
-El módulo **Calculadora de Metraje** (`/cliente/calculadora` y `formateadores.js`) implementa ecuaciones paramétricas que consideran el ancho del rollo ($A_{\text{rollo}}$), las dimensiones de la prenda/hogar y un **margen de seguridad técnica del 10 %** ($M = 1,10$) para absorber el encogimiento por primer lavado y los márgenes de costura:
+El módulo **Calculadora de Metraje** (`/cliente/coleccion/calculadora` y `formateadores.js`) implementa ecuaciones paramétricas que consideran el ancho del rollo ($A_{\text{rollo}}$), las dimensiones de la prenda/hogar y un **margen de seguridad técnica del 10 %** ($M = 1,10$) para absorber el encogimiento por primer lavado y los márgenes de costura:
 
 ### 3.1. Cortinas Estándar con Fruncido y Dobladillos
 Para una ventana de ancho $W\text{ (m)}$ y alto $H\text{ (m)}$, con factor de fruncido $F$ (por defecto $2,0$), dobladillo superior/inferior de $0,30\text{ m}$ ($15\text{ cm}$ arriba + $15\text{ cm}$ bota) y rollo de ancho estándar $A_{\text{rollo}} = 1,50\text{ m}$:

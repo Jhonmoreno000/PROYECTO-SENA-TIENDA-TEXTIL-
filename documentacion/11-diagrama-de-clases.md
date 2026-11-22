@@ -253,7 +253,7 @@ classDiagram
 | `ManejadorSalud` | `/health/live`, `/health/ready`, `/api/salud` | — | — |
 | `ManejadorSeccionesInicio` | `/api/secciones-inicio` | `SeccionesInicioDAO` | `secciones_inicio` |
 | `ManejadorSoporte` | `/api/soporte` | `SoporteDAO` | `reportes_errores`, `tickets_soporte` |
-| `ManejadorUsuarios` | `/api/usuarios` | `UsuarioDAO` | `usuarios` |
+| `ManejadorUsuarios` | `/api/usuarios` | `JdbcRepositorioUsuarioImpl` | `usuarios` |
 
 ```mermaid
 classDiagram
@@ -319,7 +319,7 @@ classDiagram
     ManejadorResenas --> ResenasDAO
     ManejadorSeccionesInicio --> SeccionesInicioDAO
     ManejadorSoporte --> SoporteDAO
-    ManejadorUsuarios --> UsuarioDAO
+    ManejadorUsuarios --> JdbcRepositorioUsuarioImpl
     CarritoDAO ..> Conexion
     CarruselDAO ..> Conexion
     ConfiguracionDAO ..> Conexion
@@ -331,7 +331,7 @@ classDiagram
     ResenasDAO ..> Conexion
     SeccionesInicioDAO ..> Conexion
     SoporteDAO ..> Conexion
-    UsuarioDAO ..> Conexion
+    JdbcRepositorioUsuarioImpl ..> Conexion
 ```
 
 ## 3. Observaciones de diseño

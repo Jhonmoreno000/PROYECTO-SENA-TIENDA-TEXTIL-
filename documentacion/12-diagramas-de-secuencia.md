@@ -332,7 +332,7 @@ sequenceDiagram
     participant SPA as Frontend React (clienteApi.js)
     participant MB as ManejadorBase / ManejadorAutenticacion
     participant TS as TokenSesion (HMAC-SHA256)
-    participant DB as PostgreSQL (UsuarioDAO / PedidoDAO)
+    participant DB as PostgreSQL (JdbcRepositorioUsuarioImpl / PedidoDAO)
 
     U->>SPA: Ingresa credenciales en /login
     SPA->>MB: POST /api/login {email, password}
