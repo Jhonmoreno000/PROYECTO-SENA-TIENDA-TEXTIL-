@@ -10,7 +10,7 @@
 
 La plataforma **D&D Textil** es un ecosistema **Marketplace Multi-Vendedor B2B/B2C** y sistema de control logístico diseñado para la industria textil. Conecta múltiples casas proveedoras textiles externas verificadas con clientes minoristas y talleres de confección, resolviendo problemas históricos del sector (cortes fragmentados, desviaciones de lote de tintorería, mermas sin control, opacidad de precios entre distribuidores y fraude operativo sobre precios o inventarios).
 
-El cuerpo documental oficial está centralizado en `documentacion/` y sincronizado con la arquitectura actual: **React 18 + Vite 5 (58 rutas)**, **Backend Java 21 (18 manejadores HTTP, 8 servicios, 15 DAOs/migradores, 22 modelos)** y **PostgreSQL 17 (31 tablas, 31 llaves foráneas)**.
+El cuerpo documental oficial está centralizado en `documentacion/` y sincronizado con la arquitectura actual: **React 18 + Vite 5 (58 rutas)**, **Backend Java 21 (18 manejadores HTTP + WebSockets puerto 8082, `ProtectorFuerzaBruta`, 8 servicios, 15 DAOs/migradores, 22 modelos)** y **PostgreSQL 17 (32 tablas, 31 llaves foráneas)**.
 
 ---
 
@@ -34,7 +34,7 @@ El cuerpo documental oficial está centralizado en `documentacion/` y sincroniza
 *   **Matriz RBAC Real:** Visitante (navegación sin compra), Cliente (checkout exclusivo y VIP), Vendedor (gestión autónoma de tienda, precios, stock y alertas) y Administrador (auditoría de solo lectura y notificaciones).
 
 ### 4. [04. Diseño, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md) y [README de Base de Datos](BASE%20DE%20DATOS/README.md)
-*   **PostgreSQL 17 (3FN):** **31 tablas y 31 llaves foráneas** definidas en `BASE DE DATOS/01_esquema_espanol.sql` + migrador idempotente `MigradorEsquemaMarketplace`, incorporando `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor`, `rollos_textil`, `eventos_pago_wompi` y `direcciones_usuario`.
+*   **PostgreSQL 17 (3FN):** **32 tablas y 31 llaves foráneas** definidas en `BASE DE DATOS/01_esquema_espanol.sql` + migrador idempotente `MigradorEsquemaMarketplace`, incorporando `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor`, `auditoria_sistema`, `rollos_textil`, `eventos_pago_wompi` y `direcciones_usuario`.
 *   **Semillas Reales (`02_datos_iniciales.sql`):** 4 tiendas proveedoras reales, lotes con costos reales, eventos de merma reales y reseñas verificadas.
 
 ### 5. [05. Políticas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)
@@ -44,10 +44,10 @@ El cuerpo documental oficial está centralizado en `documentacion/` y sincroniza
 *   **Infraestructura Docker Compose:** Topología `db` (`postgres:17`), `backend` (`eclipse-temurin:21-jre`) y `frontend` (`nginx:alpine`), variables `.env`, compilación manual Java 21 / Node 20 y healthchecks.
 
 ### 7. [07. Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)
-*   **Dominio Textil y 5 Suites Java 21 (62 pruebas):** `PruebasReglasNegocioTextil` (14), `PruebasSeguridadIntegridad` (20), `PruebasConcurrenciaYPagos` (11), `PruebasContratoApi` (9) y `PruebasMarketplace` (8), junto a `ejecutar-pruebas-frontend.mjs` (**46 pruebas**).
+*   **Dominio Textil y 6 Suites Java 21 (67 pruebas):** `PruebasReglasNegocioTextil` (14), `PruebasSeguridadIntegridad` (21), `PruebasConcurrenciaYPagos` (11), `PruebasContratoApi` (9), `PruebasMarketplace` (8) y `PruebasWebSocket` (4), junto a `ejecutar-pruebas-frontend.mjs` (**46 pruebas**).
 
-### 8. [08. Modelo Entidad-Relación (31 tablas)](documentacion/08-modelo-entidad-relacion.md)
-*   **DER actualizado:** Esquema completo de las 31 tablas y 31 llaves foráneas incluyendo todo el ecosistema marketplace, comisiones y pagos Wompi.
+### 8. [08. Modelo Entidad-Relación (32 tablas)](documentacion/08-modelo-entidad-relacion.md)
+*   **DER actualizado:** Esquema completo de las 32 tablas y 31 llaves foráneas incluyendo todo el ecosistema marketplace, comisiones, auditoría y pagos Wompi.
 
 ### 9. [09. Mapa de Navegación por Rol (58 rutas)](documentacion/09-mapa-de-navegacion.md)
 *   **Navegación completa:** Flujos de tienda pública, directorio `/tiendas`, `/tienda/:id`, checkout exclusivo para cliente y vistas protegidas de Cliente, Vendedor (`/vendedor/mi-tienda`, `/vendedor/alertas`) y Administrador.
@@ -65,13 +65,13 @@ El cuerpo documental oficial está centralizado en `documentacion/` y sincroniza
 *   Guía operativa por rol (**Visitante**, **Cliente**, **Vendedor** y **Administrador**), cubriendo registro obligatorio para comprar, exploración de tiendas tipo Facebook, comparador de vendedores, alertas VIP/auditoría/mermas y auditoría de lotes/stock en solo lectura. Disponible en **[PDF Oficial](documentacion/Manual_de_usuario_DD_Textil.pdf)**.
 
 ### 14. [14. Plan Maestro y Reporte de Pruebas ISO/IEC 25010](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)
-*   Dictamen QA oficial con **108 pruebas automatizadas (62 backend en 5 suites + 46 frontend, 100 % aprobadas)** y verificación E2E antifraude.
+*   Dictamen QA oficial con **113 pruebas automatizadas (67 backend en 6 suites + 46 frontend, 100 % aprobadas)** y verificación E2E antifraude.
 
 ### 15. [15. Glosario Técnico y Catálogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)
 *   Terminología industrial textil, propiedades de las telas sembradas y fórmulas de confección.
 
 ### 16. [16. Guion de Demostración para Sustentación SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)
-*   Guion práctico de sustentación de la plataforma multi-vendedor, comisiones, VIP, auditoría con alerta al vendedor y ejecución de las 108 pruebas automatizadas.
+*   Guion práctico de sustentación de la plataforma multi-vendedor, comisiones, VIP, auditoría con alerta al vendedor y ejecución de las 113 pruebas automatizadas.
 
 ### 17. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
 *   Especificación OpenAPI 3.0.3 de endpoints y esquemas incluyendo `/api/tiendas`, `/api/vendedor/alertas`, `/api/clientes/elegibilidad-vip`, `/api/productos/{id}/competencia`, `/api/productos/{id}/moderar`, `/api/inventario/notificar-stock` y `/api/inventario/enviar-reporte-mermas`.
@@ -83,4 +83,4 @@ El cuerpo documental oficial está centralizado en `documentacion/` y sincroniza
 
 ## Certificación de Conformidad Técnica
 
-Esta documentación refleja exactamente la arquitectura, base de datos, reglas de negocio y controles de seguridad implementados en el código fuente del proyecto **D&D Textil** (**108 casos de prueba automatizados: 62 backend + 46 frontend**).
+Esta documentación refleja exactamente la arquitectura, base de datos, reglas de negocio y controles de seguridad implementados en el código fuente del proyecto **D&D Textil** (**113 casos de prueba automatizados: 67 backend + 46 frontend**).

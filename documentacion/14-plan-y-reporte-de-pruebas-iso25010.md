@@ -2,7 +2,7 @@
 
 > **Estándar de Referencia:** ISO/IEC 25010:2011 (SQuaRE) / IEEE 829  
 > **Estado del Dictamen QA:** **100 % APROBADO (0 Fallos Críticos / 0 Regresiones)**  
-> **Cobertura Funcional y No Funcional:** Backend Java 21 (5 suites nativas · 62 aserciones) + Frontend React/ESM (46 aserciones) = **108 pruebas automatizadas** + Pruebas de Carga k6
+> **Cobertura Funcional y No Funcional:** Backend Java 21 (6 suites nativas · 67 aserciones) + Frontend React/ESM (46 aserciones) = **113 pruebas automatizadas** + Pruebas de Carga k6
 
 ---
 
@@ -24,11 +24,12 @@ El aseguramiento de calidad de **D&D Textil** se diseñó bajo un enfoque de **V
 
 ```mermaid
 flowchart TD
-    QA["Arnés de Pruebas Automatizadas D&D Textil (108 Pruebas)"] --> B1["Suite Backend 1: PruebasReglasNegocioTextil (14 pruebas)"]
-    QA --> B2["Suite Backend 2: PruebasSeguridadIntegridad (20 pruebas)"]
+    QA["Arnés de Pruebas Automatizadas D&D Textil (113 Pruebas)"] --> B1["Suite Backend 1: PruebasReglasNegocioTextil (14 pruebas)"]
+    QA --> B2["Suite Backend 2: PruebasSeguridadIntegridad (21 pruebas · Lockout Fuerza Bruta)"]
     QA --> B3["Suite Backend 3: PruebasConcurrenciaYPagos (11 pruebas)"]
     QA --> B4["Suite Backend 4: PruebasContratoApi (9 pruebas · Contrato v3.0.3)"]
     QA --> B5["Suite Backend 5: PruebasMarketplace (8 pruebas · VIP, Comisiones, Antifraude)"]
+    QA --> B6["Suite Backend 6: PruebasWebSocket (4 pruebas · Tiempo Real RFC 6455 puerto 8082)"]
     QA --> F1["Suite Frontend: ejecutar-pruebas-frontend.mjs (46 pruebas)"]
 ```
 
@@ -57,7 +58,7 @@ Esta suite verifica el núcleo de dominio textil (`ServicioCorteTextil`, `RolloT
 
 ---
 
-## 3. Suite Backend 2: Seguridad de Sesiones HMAC-SHA256, Integridad y Autorización RBAC (`PruebasSeguridadIntegridad.java` — 20 Pruebas)
+## 3. Suite Backend 2: Seguridad de Sesiones HMAC-SHA256, Integridad y Autorización RBAC (`PruebasSeguridadIntegridad.java` — 21 Pruebas)
 
 Suite introducida para certificar el blindaje criptográfico de sesiones (`TokenSesion`), la revalidación de estado en base de datos (`ManejadorBase.identidadVigente`) y el aislamiento estricto de datos entre clientes y vendedores (`ManejadorPedidos.puedeVerPedido`):
 
@@ -76,7 +77,8 @@ Suite introducida para certificar el blindaje criptográfico de sesiones (`Token
 | **SEC-11** | Visibilidad global exclusiva para Administrador | El rol `administrador` / `admin` tiene autorización para auditar cualquier pedido del sistema. | **APROBADO** |
 | **SEC-12** | Protección de `PUT /api/usuarios/{id}` | Solo un administrador autenticado puede cambiar roles o estados de cuentas de usuario. | **APROBADO** |
 | **SEC-13..18** | Integridad Hash, SQLi, Path Traversal, Habeas Data, PCI-DSS, SSO, Logs JSON y Best-Fit | Validación PBKDF2 con sal + compatibilidad SHA-256 legado, bloqueo `../`, neutralización SQLi, Ley 1581, ausencia PAN/CVV, extracción Google/Microsoft SSO y algoritmo Best-Fit sobre rollos. | **APROBADO** |
-| **SEC-19..20** | Reglas financieras Wompi y concurrencia de metraje `SELECT FOR UPDATE` | Consistencia de subtotales/descuentos en centavos y serialización pesimista sin saldo negativo (**20/20 verificaciones superadas**). | **APROBADO** |
+| **SEC-19..20** | Reglas financieras Wompi y concurrencia de metraje `SELECT FOR UPDATE` | Consistencia de subtotales/descuentos en centavos y serialización pesimista sin saldo negativo. | **APROBADO** |
+| **SEC-21** | Bloqueo ante fuerza bruta (`ProtectorFuerzaBruta`) | Bloquea cuenta tras 5 intentos fallidos y reinicia el contador al autenticarse correctamente (**21/21 verificaciones superadas**). | **APROBADO** |
 
 ---
 
@@ -117,7 +119,16 @@ Esta suite somete el motor transaccional a condiciones de carrera extremas y vec
 | **MKT-07** | Moderación localizada sin códigos crudos | Mapeo bidireccional limpio en español (*Aprobado*, *Pendiente*, *Cambios solicitados*, *Suspendido*). | **APROBADO** |
 | **MKT-08** | Trazabilidad real de vendedor en `LoteInventario` y `EventoMerma` | Inclusión obligatoria de `sellerId`, `storeName` y `sellerEmail` reales desde PostgreSQL sin datos ficticios. | **APROBADO** |
 
-### 5.3. Suite Automatizada del Frontend (`tienda digital de telas/ejecutar-pruebas-frontend.mjs` — 46 Pruebas)
+### 5.3. Suite Backend 6: WebSockets en Tiempo Real (`PruebasWebSocket.java` — 4 Pruebas)
+
+| ID Caso | Caso de Prueba | Protocolo / Flujo Verificado | Resultado |
+| :--- | :--- | :--- | :---: |
+| **WS-01** | Handshake RFC 6455 | Cálculo matemático exacto de cabecera `Sec-WebSocket-Accept`. | **APROBADO** |
+| **WS-02** | Serialización `MensajeWebSocket` | Formato JSON estándar para difusión en tiempo real. | **APROBADO** |
+| **WS-03** | Evento `NUEVO_PEDIDO` | Estructura de carga útil tras creación de pedido. | **APROBADO** |
+| **WS-04** | Ciclo de vida `ServidorWebSocket` | Inicio en puerto dedicado (`8082`), transmisión y cierre limpio (**4/4 verificaciones superadas**). | **APROBADO** |
+
+### 5.4. Suite Automatizada del Frontend (`tienda digital de telas/ejecutar-pruebas-frontend.mjs` — 46 Pruebas)
 
 Ejecutable directamente con `node "tienda digital de telas/ejecutar-pruebas-frontend.mjs"`:
 
@@ -143,4 +154,4 @@ Durante la auditoría integral de calidad, seguridad Marketplace e integración 
 | **BUG-UX-02** | Media | El filtro de proyecto **"Tapicería"** no coincidía con categorías sin tilde (`"Tapiceria"`) y **"Verano"** omitía telas con tilde en `material` (`"Algodón"`). | Normalización NFD sin diacríticos tanto en `category` como en `material` dentro de `ProductGrid.jsx`, más scroll paginado incremental sin lag y contraste cromático 60-30-10. | **CERRADO** |
 | **BUG-OPS-01** | Media | En `docker-compose.yml`, `DB_URL` del archivo `.env` (`localhost`) sobrescribía el hostname interno `db` de la red Docker. | Fijación explícita de `DB_URL: jdbc:postgresql://db:5432/...` y `PORT: 8081` en el servicio `backend` de `docker-compose.yml`. | **CERRADO** |
 
-> **Consolidado Final Verificado:** **62 / 62 pruebas Backend Java** (14 Reglas Textiles + 20 Seguridad/Integridad + 11 Concurrencia/Pagos + 9 Contratos API + 8 Marketplace/Antifraude) + **46 / 46 pruebas Frontend** = **108 / 108 pruebas superadas (100 %)**.
+> **Consolidado Final Verificado:** **67 / 67 pruebas Backend Java** (14 Reglas Textiles + 21 Seguridad/Integridad + 11 Concurrencia/Pagos + 9 Contratos API + 8 Marketplace/Antifraude + 4 WebSocket RFC 6455) + **46 / 46 pruebas Frontend** = **113 / 113 pruebas superadas (100 %)**.

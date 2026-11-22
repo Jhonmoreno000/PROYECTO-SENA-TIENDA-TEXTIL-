@@ -69,8 +69,8 @@ Plataforma marketplace multi-vendedor para la comercialización, comparación de
 | Capa | En cifras verificadas |
 | :--- | :--- |
 | Frontend | **58 rutas** en `App.jsx` entre tienda pública, directorio/perfiles de tiendas, checkout estricto para cliente y paneles Cliente, Vendedor y Administrador, **sin datos hardcodeados** |
-| Backend | **Java 21**: **18 manejadores HTTP** sobre `ManejadorBase` (CORS, tokens `HmacSHA256`, tasa 1200 req/min por IP, logs JSON), **8 servicios** de aplicación, **15 DAOs/migradores** JDBC y **22 modelos** en `dominio` |
-| Base de datos | **31 tablas** y **31 llaves foráneas** en `BASE DE DATOS/01_esquema_espanol.sql` (incluye `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor`, `rollos_textil`, `eventos_pago_wompi`, `direcciones_usuario`) |
+| Backend | **Java 21**: **18 manejadores HTTP** + **ServidorWebSocket** (`RFC 6455`, puerto **8082**) sobre `ManejadorBase` (CORS, tokens `HmacSHA256`, tasa 1200 req/min por IP, `ProtectorFuerzaBruta`, logs JSON), **8 servicios** de aplicación, **15 DAOs/migradores** JDBC y **22 modelos** en `dominio` |
+| Base de datos | **32 tablas** y **31 llaves foráneas** en `BASE DE DATOS/01_esquema_espanol.sql` (incluye `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor`, `auditoria_sistema`, `rollos_textil`, `eventos_pago_wompi`, `direcciones_usuario`) |
 
 ## Características
 
@@ -154,7 +154,7 @@ Usuarios reales poblados automáticamente en PostgreSQL para validar los tres ro
 
 ## Calidad de Software y Suite de Pruebas Automatizadas
 
-El proyecto implementa los estándares **ISO/IEC 25010** y **OWASP ASVS** con **108 pruebas automatizadas (100 % aprobadas)**: **62 pruebas Backend Java 21 (5 suites)** + **46 pruebas Frontend (Node/ESM)**.
+El proyecto implementa los estándares **ISO/IEC 25010** y **OWASP ASVS** con **113 pruebas automatizadas (100 % aprobadas)**: **67 pruebas Backend Java 21 (6 suites)** + **46 pruebas Frontend (Node/ESM)**.
 
 ### Guía de Comandos de Terminal para Pruebas y Validaciones (CLI)
 
@@ -167,7 +167,7 @@ npm test        # 46/46 pruebas aprobadas
 npm run build   # Build de producción limpio
 ```
 
-#### 2. Compilación y Ejecución de las 5 Suites del Backend (Java 21)
+#### 2. Compilación y Ejecución de las 6 Suites del Backend (Java 21)
 ```bash
 cd "tienda digital de telas/backend-java/servidor-api"
 
@@ -175,12 +175,13 @@ cd "tienda digital de telas/backend-java/servidor-api"
 mkdir -p bin && find src -name "*.java" > sources.txt
 javac --release 21 -encoding UTF-8 -cp "lib/*" -d bin @sources.txt
 
-# Ejecutar las 5 suites (62 pruebas en total):
+# Ejecutar las 6 suites (67 pruebas en total):
 java -cp "bin:lib/*" PruebasReglasNegocioTextil    # 14/14
-java -cp "bin:lib/*" PruebasSeguridadIntegridad   # 20/20
+java -cp "bin:lib/*" PruebasSeguridadIntegridad   # 21/21
 java -cp "bin:lib/*" PruebasConcurrenciaYPagos    # 11/11
 java -cp "bin:lib/*" PruebasContratoApi           #  9/9
 java -cp "bin:lib/*" PruebasMarketplace           #  8/8
+java -cp "bin:lib/*" PruebasWebSocket             #  4/4
 ```
 > En PowerShell nativo de Windows utiliza `;` en lugar de `:` para `-cp "bin;lib/*"`.
 
@@ -227,17 +228,17 @@ El cuerpo documental oficial está estructurado en `documentacion/` y sincroniza
 * 01. **[Especificación de Requerimientos de Software (IEEE 830 y BDD)](documentacion/01-especificacion-requerimientos-ieee830.md)**
 * 02. **[Arquitectura de Software, Modelo C4 y Backend Java 21](documentacion/02-arquitectura-software-c4-y-backend.md)**
 * 03. **[Arquitectura del Frontend y Gestión de Roles de Usuario](documentacion/03-arquitectura-frontend-y-roles.md)**
-* 04. **[Diseño, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md)** | **[Esquema Relacional (31 tablas)](BASE%20DE%20DATOS/README.md)**
+* 04. **[Diseño, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md)** | **[Esquema Relacional (32 tablas)](BASE%20DE%20DATOS/README.md)**
 * 05. **[Políticas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)**
 * 06. **[Manual Técnico de Instalación, Configuración y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)**
 * 07. **[Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)**
-* 08. **[Modelo Entidad-Relación (DER completo de 31 tablas)](documentacion/08-modelo-entidad-relacion.md)**
+* 08. **[Modelo Entidad-Relación (DER completo de 32 tablas)](documentacion/08-modelo-entidad-relacion.md)**
 * 09. **[Mapa de Navegación por Rol (58 rutas)](documentacion/09-mapa-de-navegacion.md)**
 * 10. **[Casos de Uso](documentacion/10-casos-de-uso.md)**
 * 11. **[Diagrama de Clases del Backend](documentacion/11-diagrama-de-clases.md)**
 * 12. **[Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)**
 * 13. **[Manual de Usuario Oficial (Markdown)](documentacion/13-manual-de-usuario.md)** | **[Manual de Usuario (PDF Oficial)](documentacion/Manual_de_usuario_DD_Textil.pdf)**
-* 14. **[Plan Maestro y Reporte de Pruebas (ISO/IEC 25010 — 108 pruebas)](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)**
+* 14. **[Plan Maestro y Reporte de Pruebas (ISO/IEC 25010 — 113 pruebas)](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)**
 * 15. **[Glosario Técnico y Catálogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)**
 * 16. **[Guion de Demostración para Sustentación SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)**
 * 17. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
@@ -248,6 +249,6 @@ El cuerpo documental oficial está estructurado en `documentacion/` y sincroniza
 
 <div align="center">
 
-<sub>Proyecto formativo SENA · D&D Textil Marketplace · Calidad ISO/IEC 25010 & DevSecOps · 108 pruebas automatizadas (62 backend + 46 frontend)</sub>
+<sub>Proyecto formativo SENA · D&D Textil Marketplace · Calidad ISO/IEC 25010 & DevSecOps · 113 pruebas automatizadas (67 backend + 46 frontend)</sub>
 
 </div>
