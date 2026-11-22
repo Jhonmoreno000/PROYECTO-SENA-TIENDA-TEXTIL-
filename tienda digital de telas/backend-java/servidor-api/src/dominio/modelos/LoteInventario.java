@@ -56,6 +56,26 @@ public class LoteInventario {
     @SerializedName(value = "lastUpdate", alternate = {"ultimaActualizacion"})
     private String ultimaActualizacion;
 
+    /** Identificador del vendedor propietario del lote (`Integer`). */
+    @SerializedName(value = "sellerId", alternate = {"idVendedor", "vendedorId"})
+    private Integer idVendedor;
+
+    /** Nombre completo del vendedor propietario (`String`). */
+    @SerializedName(value = "sellerName", alternate = {"nombreVendedor"})
+    private String nombreVendedor;
+
+    /** Nombre comercial de la tienda del vendedor (`String`). */
+    @SerializedName(value = "storeName", alternate = {"nombreTienda"})
+    private String nombreTienda;
+
+    /** Correo electrónico real del vendedor (`String`). */
+    @SerializedName(value = "sellerEmail", alternate = {"correoVendedor"})
+    private String correoVendedor;
+
+    /** Nombre del producto textil asociado al lote (`String`). */
+    @SerializedName(value = "productName", alternate = {"nombreProducto"})
+    private String nombreProducto;
+
     /**
      * Constructor vacío requerido para serialización JSON y mapeo JDBC.
      */
@@ -228,4 +248,19 @@ public class LoteInventario {
      * @param ultimaActualizacion Fecha de actualización (`String`).
      */
     public void setUltimaActualizacion(String ultimaActualizacion) { this.ultimaActualizacion = ultimaActualizacion; }
+
+    public Integer getIdVendedor() { return idVendedor; }
+    public void setIdVendedor(Integer idVendedor) { this.idVendedor = idVendedor; }
+
+    public String getNombreVendedor() { return nombreVendedor; }
+    public void setNombreVendedor(String nombreVendedor) { this.nombreVendedor = nombreVendedor; }
+
+    public String getNombreTienda() { return nombreTienda; }
+    public void setNombreTienda(String nombreTienda) { this.nombreTienda = nombreTienda; }
+
+    public String getCorreoVendedor() { return correoVendedor; }
+    public void setCorreoVendedor(String correoVendedor) { this.correoVendedor = correoVendedor; }
+
+    public String getNombreProducto() { return nombreProducto; }
+    public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
 }

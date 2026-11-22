@@ -52,6 +52,26 @@ public class EventoMerma {
     @SerializedName(value = "userId", alternate = {"idUsuario"})
     private int idUsuario;
 
+    /** Identificador del vendedor propietario del producto afectado (`Integer`). */
+    @SerializedName(value = "sellerId", alternate = {"idVendedor", "vendedorId"})
+    private Integer idVendedor;
+
+    /** Nombre del vendedor propietario (`String`). */
+    @SerializedName(value = "sellerName", alternate = {"nombreVendedor"})
+    private String nombreVendedor;
+
+    /** Nombre comercial de la tienda del vendedor (`String`). */
+    @SerializedName(value = "storeName", alternate = {"nombreTienda"})
+    private String nombreTienda;
+
+    /** Correo electrónico real del vendedor (`String`). */
+    @SerializedName(value = "sellerEmail", alternate = {"correoVendedor"})
+    private String correoVendedor;
+
+    /** Nombre del producto textil afectado (`String`). */
+    @SerializedName(value = "productName", alternate = {"nombreProducto"})
+    private String nombreProducto;
+
     /**
      * Constructor vacío requerido para serialización JSON y mapeo JDBC.
      */
@@ -224,4 +244,19 @@ public class EventoMerma {
      * @param idUsuario Identificador de usuario (`int`).
      */
     public void setIdUsuario(int idUsuario) { this.idUsuario = idUsuario; }
+
+    public Integer getIdVendedor() { return idVendedor; }
+    public void setIdVendedor(Integer idVendedor) { this.idVendedor = idVendedor; }
+
+    public String getNombreVendedor() { return nombreVendedor; }
+    public void setNombreVendedor(String nombreVendedor) { this.nombreVendedor = nombreVendedor; }
+
+    public String getNombreTienda() { return nombreTienda; }
+    public void setNombreTienda(String nombreTienda) { this.nombreTienda = nombreTienda; }
+
+    public String getCorreoVendedor() { return correoVendedor; }
+    public void setCorreoVendedor(String correoVendedor) { this.correoVendedor = correoVendedor; }
+
+    public String getNombreProducto() { return nombreProducto; }
+    public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
 }
