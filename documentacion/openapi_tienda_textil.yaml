@@ -154,7 +154,7 @@ paths:
   /api/orders:
     get:
       summary: Listar pedidos del sistema
-      description: Clientes ven sus pedidos; administradores y operarios de corte ven el consolidado.
+      description: Clientes ven sus pedidos propios; vendedores ven los sub-pedidos de sus telas; administradores ven el consolidado global con desglose de comisión (10 %) y ganancia neta del vendedor.
       tags: [Pedidos y Corte]
       responses:
         '200':
@@ -275,7 +275,238 @@ paths:
           description: Merma registrada.
 
   # =========================================================================
-  # 5. MONITOREO Y SALUD (DEVSECOPS)
+  # 5. MARKETPLACE MULTI-VENDEDOR, VIP Y AUDITORÍA ANTIFRAUDE
+  # =========================================================================
+  /api/tiendas:
+    get:
+      summary: Listar tiendas proveedoras activas del marketplace
+      description: Retorna los perfiles públicos de las tiendas reales registradas en PostgreSQL (alias `/api/stores`).
+      tags: [Marketplace y Tiendas]
+      security: []
+      responses:
+        '200':
+          description: Lista de tiendas proveedoras.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerfilVendedor'
+
+  /api/tiendas/{id}:
+    get:
+      summary: Obtener perfil público tipo red social, telas activas y reseñas de una tienda
+      description: Oculta telas exclusivas VIP salvo que el solicitante sea cliente VIP recurrente, vendedor dueño o administrador (alias `/api/stores/{id}`).
+      tags: [Marketplace y Tiendas]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Perfil completo, productos y reseñas de la tienda.
+        '404':
+          description: Tienda no encontrada.
+
+  /api/tiendas/mi-perfil:
+    get:
+      summary: Consultar perfil comercial editable del vendedor autenticado
+      tags: [Marketplace y Tiendas]
+      responses:
+        '200':
+          description: Perfil del vendedor autenticado.
+        '403':
+          description: Solo disponible para vendedores autenticados.
+    put:
+      summary: Actualizar perfil visual tipo Facebook del vendedor (portada, avatar, biografía, ciudad, políticas)
+      tags: [Marketplace y Tiendas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerfilVendedor'
+      responses:
+        '200':
+          description: Perfil de tienda actualizado.
+        '403':
+          description: Acceso denegado.
+
+  /api/tiendas/{id}/resenas:
+    get:
+      summary: Listar reseñas verificadas de clientes hacia una tienda
+      tags: [Marketplace y Tiendas]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de reseñas del vendedor.
+    post:
+      summary: Publicar calificación y reseña hacia una tienda (solo rol cliente)
+      tags: [Marketplace y Tiendas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResenaVendedor'
+      responses:
+        '201':
+          description: Reseña publicada.
+        '403':
+          description: Solo usuarios autenticados con rol cliente pueden calificar tiendas.
+
+  /api/vendedor/alertas:
+    get:
+      summary: Consultar alertas reales del vendedor (VIP, auditoría admin, stock bajo, reporte mermas)
+      tags: [Marketplace y Tiendas]
+      responses:
+        '200':
+          description: Lista de alertas de `alertas_vendedor`.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertaVendedor'
+        '403':
+          description: Solo disponible para vendedores.
+
+  /api/vendedor/alertas/{id}:
+    put:
+      summary: Marcar una alerta real del vendedor como leída o aplicada
+      tags: [Marketplace y Tiendas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Estado de alerta actualizado.
+        '403':
+          description: No autorizado sobre esta alerta.
+
+  /api/clientes/elegibilidad-vip:
+    get:
+      summary: Evaluar elegibilidad de cliente recurrente para desbloquear telas exclusivas VIP
+      tags: [Marketplace y Tiendas]
+      responses:
+        '200':
+          description: Resultado del algoritmo `ServicioExclusividadVIP`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElegibilidadVIP'
+
+  /api/products/{id}/competencia:
+    get:
+      summary: Comparar ofertas y precios entre vendedores competidores del marketplace
+      tags: [Catálogo Textil]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista ordenada de telas competidoras.
+        '404':
+          description: Producto no encontrado.
+
+  /api/products/{id}/moderar:
+    put:
+      summary: Auditar tela en modo solo lectura administrativa y emitir alerta real al vendedor
+      description: Impide modificar precios, descuentos o stock (control antifraude). Al usar `changes_requested` exige observación real y crea alerta en `alertas_vendedor`.
+      tags: [Marketplace y Tiendas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estadoModeracion]
+              properties:
+                estadoModeracion:
+                  type: string
+                  enum: [pending, approved, changes_requested, rejected]
+                motivo:
+                  type: string
+      responses:
+        '200':
+          description: Moderación registrada y alerta enviada al vendedor si aplica.
+        '400':
+          description: Falta observación obligatoria de auditoría.
+        '403':
+          description: Exclusivo para administrador.
+
+  /api/inventory/notificar-stock:
+    post:
+      summary: Emitir alerta real de stock bajo desde auditoría administrativa al vendedor propietario
+      tags: [Inventario y Mermas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productoId]
+              properties:
+                productoId:
+                  type: integer
+                mensaje:
+                  type: string
+      responses:
+        '200':
+          description: Alerta `stock_bajo` insertada en `alertas_vendedor`.
+        '403':
+          description: Exclusivo para administrador.
+
+  /api/inventory/enviar-reporte-mermas:
+    post:
+      summary: Calcular métricas reales de mermas en PostgreSQL y enviarlas como alerta al vendedor
+      tags: [Inventario y Mermas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vendedorId]
+              properties:
+                vendedorId:
+                  type: integer
+      responses:
+        '200':
+          description: Alerta `reporte_mermas` despachada desde PostgreSQL.
+        '403':
+          description: Exclusivo para administrador.
+
+  # =========================================================================
+  # 6. MONITOREO Y SALUD (DEVSECOPS)
   # =========================================================================
   /health/live:
     get:
@@ -369,6 +600,18 @@ components:
         moderationStatus:
           type: string
           example: approved
+        discountPercentage:
+          type: number
+          example: 15.0
+        soldMeters:
+          type: number
+          example: 320.5
+        averageRating:
+          type: number
+          example: 4.85
+        totalReviews:
+          type: integer
+          example: 18
 
     ProductoCreacion:
       type: object
@@ -412,6 +655,18 @@ components:
         guideNumber:
           type: string
           example: DND-ORDER-1042-QR
+        checkoutGroup:
+          type: string
+          example: CHK-20261122-001
+        commissionPercentage:
+          type: number
+          example: 10.0
+        adminCommissionAmount:
+          type: number
+          example: 18000.0
+        vendorNetEarnings:
+          type: number
+          example: 162000.0
 
     PedidoCreacion:
       type: object
@@ -442,3 +697,95 @@ components:
                 description: Metros lineales solicitados
               unitPrice:
                 type: number
+
+    PerfilVendedor:
+      type: object
+      properties:
+        vendedorId:
+          type: integer
+          example: 2
+        nombreTienda:
+          type: string
+          example: Textiles Pérez & Cía
+        slugTienda:
+          type: string
+          example: textiles-perez-cia
+        descripcionBio:
+          type: string
+        urlAvatar:
+          type: string
+        urlPortada:
+          type: string
+        ciudad:
+          type: string
+          example: Medellín
+        pais:
+          type: string
+          example: Colombia
+        especialidad:
+          type: string
+        politicaEnvio:
+          type: string
+        calificacionPromedio:
+          type: number
+          example: 4.9
+        totalResenas:
+          type: integer
+          example: 14
+        totalVentasMetros:
+          type: number
+          example: 480.0
+
+    ResenaVendedor:
+      type: object
+      required: [calificacion, comentario]
+      properties:
+        id:
+          type: integer
+        vendedorId:
+          type: integer
+        usuarioId:
+          type: integer
+        calificacion:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comentario:
+          type: string
+
+    AlertaVendedor:
+      type: object
+      properties:
+        id:
+          type: integer
+        vendedorId:
+          type: integer
+        productoId:
+          type: integer
+        tipoAlerta:
+          type: string
+          enum: [vip_recomendado, auditoria_admin, stock_bajo, reporte_mermas]
+        titulo:
+          type: string
+        mensaje:
+          type: string
+        sugerenciaAccion:
+          type: string
+        descuentoSugerido:
+          type: number
+        leida:
+          type: boolean
+        aplicada:
+          type: boolean
+
+    ElegibilidadVIP:
+      type: object
+      properties:
+        esVip:
+          type: boolean
+        totalPedidosPagados:
+          type: integer
+        gastoAcumulado:
+          type: number
+        pedidosRestantes:
+          type: integer
