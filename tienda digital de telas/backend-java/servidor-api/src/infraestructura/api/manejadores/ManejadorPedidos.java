@@ -1,6 +1,7 @@
 package infraestructura.api.manejadores;
 
 import aplicacion.servicios.ServicioAutenticacion;
+import aplicacion.servicios.ServicioExclusividadVIP;
 import aplicacion.servicios.ServicioNotificacionesEmail;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -8,8 +9,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.sun.net.httpserver.HttpExchange;
 import dominio.modelos.Pedido;
+import dominio.modelos.Producto;
 import infraestructura.seguridad.TokenSesion;
 import infraestructura.persistencia.jdbc.PedidoDAO;
+import infraestructura.persistencia.jdbc.ProductoDAO;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -89,6 +92,16 @@ public class ManejadorPedidos extends ManejadorBase {
             enviarRespuestaJson(intercambio, 200, gson.toJson(pedidos));
 
         } else if ("POST".equalsIgnoreCase(metodo)) {
+            var identidadCompra = obtenerIdentidad(intercambio);
+            if (identidadCompra.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Debes registrarte o iniciar sesión como cliente para realizar una compra.\"}");
+                return;
+            }
+            if (!identidadCompra.get().esCliente()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Solo las cuentas con rol Cliente pueden realizar compras en D&D Textil.\"}");
+                return;
+            }
+
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
             if (ServicioAutenticacion.contieneDatosTarjetaSensibles(cuerpo)) {
@@ -104,20 +117,7 @@ public class ManejadorPedidos extends ManejadorBase {
                 return;
             }
 
-            int idCliente = -1;
-            if (json.has("clientId") && !json.get("clientId").isJsonNull()) {
-                idCliente = json.get("clientId").getAsInt();
-            } else if (json.has("userId") && !json.get("userId").isJsonNull()) {
-                idCliente = json.get("userId").getAsInt();
-            } else if (json.has("idCliente") && !json.get("idCliente").isJsonNull()) {
-                idCliente = json.get("idCliente").getAsInt();
-            } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
-                idCliente = json.get("idUsuario").getAsInt();
-            }
-            if (idCliente <= 0) {
-                enviarRespuestaJson(intercambio, 400, "{\"error\":\"El identificador del cliente es obligatorio\"}");
-                return;
-            }
+            int idCliente = identidadCompra.get().idUsuario();
 
             double total = 0.0;
             if (json.has("total") && !json.get("total").isJsonNull()) {
@@ -166,11 +166,36 @@ public class ManejadorPedidos extends ManejadorBase {
                 metadatos.put("descuento", json.get("descuento").getAsDouble());
             }
 
-            int idPedido = pedidoDAO.crearPedidoConMetadatos(idCliente, total, articulos, metadatos);
+            if (articulos != null && !articulos.isEmpty()) {
+                ProductoDAO productoDAO = new ProductoDAO();
+                ServicioExclusividadVIP servicioVIP = new ServicioExclusividadVIP();
+                boolean esVip = servicioVIP.esClienteFrecuente(idCliente);
+                for (Map<String, Object> art : articulos) {
+                    Object objProd = art.getOrDefault("productId", art.getOrDefault("idProducto", art.get("id")));
+                    if (objProd != null) {
+                        try {
+                            int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
+                            Producto prod = productoDAO.obtenerProductoPorId(idProd);
+                            if (prod != null && prod.isEsExclusivo() && !esVip) {
+                                enviarRespuestaJson(intercambio, 403,
+                                        "{\"error\":\"La tela '" + prod.getNombre() + "' es exclusiva para clientes frecuentes VIP.\"}");
+                                return;
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+
+            List<Integer> idsPedidos = pedidoDAO.crearPedidosMultiVendedor(idCliente, total, articulos, metadatos);
+            int idPedido = idsPedidos.isEmpty() ? -1 : idsPedidos.get(0);
 
             if (idPedido > 0) {
-                String respuesta = "{\"success\":true,\"orderId\":" + idPedido + ",\"idPedido\":" + idPedido + "}";
-                enviarRespuestaJson(intercambio, 201, respuesta);
+                JsonObject respObj = new JsonObject();
+                respObj.addProperty("success", true);
+                respObj.addProperty("orderId", idPedido);
+                respObj.addProperty("idPedido", idPedido);
+                respObj.add("orderIds", gson.toJsonTree(idsPedidos));
+                enviarRespuestaJson(intercambio, 201, gson.toJson(respObj));
             } else {
                 enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error al crear el pedido\"}");
             }
