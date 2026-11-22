@@ -14,7 +14,7 @@ La arquitectura del sistema ha sido evaluada y verificada segun las caracteristi
 | :--- | :--- | :--- |
 | **Adecuacion Funcional** | Venta de metraje continuo, fraccionamiento en centimetros, calculo de retazos y asignacion por lote de tintoreria. | 100% de los casos de uso completados sin discrepancia de inventario ni saldos negativos. |
 | **Fiabilidad / Resiliencia** | Tolerancia a fallos en servicios externos (notificaciones o pasarelas) y recuperacion de reservas fallidas. | Implementacion de transacciones compensatorias Saga y probes `/health/live` y `/health/ready`. |
-| **Eficiencia de Desempeno** | Busqueda de telas por categoria o composicion bajo concurrencia de compradores. | Tiempos de respuesta p95 <= 200 ms mediante indices B-Tree en PostgreSQL y pool de 32 hilos. |
+| **Eficiencia de Desempeno** | Busqueda de telas por categoria o composicion bajo concurrencia de compradores. | Tiempos de respuesta p95 <= 200 ms mediante indices B-Tree en PostgreSQL y pool concurrente escalable (min. 32 hilos). |
 | **Mantenibilidad** | Separacion de dominios (Domain-Driven Design) para actualizar modulos sin impacto cruzado. | Clean Architecture dividida en capas `dominio`, `aplicacion`, `infraestructura` con bajo acoplamiento. |
 | **Seguridad** | Proteccion de contrasenas, aislamiento de roles RBAC y no almacenamiento de datos de pago. | Hashing SHA-256 en UTF-8, politicas PCI-DSS v4.0 y cumplimiento de la Ley 1581 de 2012. |
 | **Usabilidad** | Calculadora de metraje inteligente con margen del 10% y linea de tiempo de rastreo de pedidos. | Interfaz intuitiva y reactiva desarrollada en React 18 con diseno Glassmorphism. |
@@ -27,10 +27,9 @@ La arquitectura del sistema ha sido evaluada y verificada segun las caracteristi
 ### 2.1. Control de Acceso Basado en Roles (RBAC)
 Todo acceso a los recursos y endpoints de la plataforma esta condicionado a la asignacion de un rol verificado. No se permiten accesos anonimos a operaciones de escritura, corte o administracion:
 
-- **Rol `cliente`:** Consulta de catalogo, calculo de metrajes, creacion de pedidos propios, tickets de soporte y consulta de facturas personales. Bloqueado para ver pedidos de terceros o modificar stock.
-- **Rol `vendedor`:** Publicacion de telas, actualizacion de stock de sus propios articulos y visualizacion de sus ingresos mensuales. Solo opera sobre productos con su `vendedor_id`.
-- **Rol `operario_corte`:** Escaneo de ordenes de corte con codigo QR, descuento de metros en rollos fisicos y registro de mermas en bodega. No tiene acceso a datos de facturacion ni precios.
-- **Rol `administrador`:** Moderacion de productos, auditoria de seguridad, gestion de usuarios, creacion de cupones y configuracion del sistema. Acceso total con registro de auditoria inmutable.
+- **Rol `cliente`:** Consulta de catalogo y perfiles de tiendas, calculo de metrajes, unico rol autorizado para ejecutar pagos/checkout y publicar resenas verificadas, tickets de soporte y consulta de facturas personales. Bloqueado para ver pedidos de terceros o modificar stock (`HTTP 403`).
+- **Rol `vendedor`:** Publicacion de telas, edicion de precios y perfil publico de tienda (`/vendedor/mi-tienda`), gestion de stock, rollos fisicos, lotes y mermas de su propiedad (`vendedor_id`), atencion de alertas reales (`/vendedor/alertas`) y activacion de productos VIP. Solo opera sobre recursos con su `vendedor_id`.
+- **Rol `administrador`:** Moderacion de productos (`changes_requested`), auditoria antifraude en modo solo lectura sobre precios e inventario (cualquier mutacion retorna `HTTP 403`), envio de alertas reales de stock bajo y reporte de mermas hacia vendedores, gestion de usuarios, cupones y configuracion del sistema. Acceso con registro de auditoria inmutable.
 
 ### 2.2. Ciclo de Vida y Rotacion de Tokens
 - **Access Token:** Tiempo de vida efimero de **15 minutos**. Contiene unicamente los claims no sensibles (`sub`, `rol`, `email`, `exp`, `jti`).

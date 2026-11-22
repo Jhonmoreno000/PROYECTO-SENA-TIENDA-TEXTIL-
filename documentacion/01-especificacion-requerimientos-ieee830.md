@@ -16,7 +16,7 @@ En el sector textil tradicional de Colombia, concentrado en zonas de alta distri
 2. **Generacion descontrolada de mermas y retazos no comerciales:** Cuando un cliente adquiere una cantidad fraccionada de tela (por ejemplo, 4.20 metros de un rollo cuya existencia remanente es de 4.90 metros), queda un sobrante de 0.70 metros. En el modelo tradicional, estos segmentos inferiores a un metro lineal quedan dispersos en bodega sin clasificacion, sin etiquetado de lote y sin una politica de precio diferencial, acumulandose como perdidas directas de capital o merma pasiva.
 3. **Inconsistencia de tonalidad por variacion de lotes de tintoreria (Color Shading o Lot Drift):** Los procesos industriales de tintoreria textil presentan variaciones termicas, quimicas y de absorcion de agua entre partidas de fabricacion diferentes. Si un confeccionista solicita 10 metros continuos de tela y el despachador une 6 metros del lote A con 4 metros del lote B, las prendas confeccionadas presentaran tonalidades desiguales en sus piezas. Esto ocasiona devoluciones obligadas, reprocesos en fabrica y deterioro de la confianza comercial.
 4. **Falta de verificacion de continuidad del metraje:** Los sistemas de inventario convencionales manejan el stock como una cifra numerica agregada (por ejemplo, 50 metros disponibles), sin distinguir si dichos metros pertenecen a un solo rollo integro o a diez retazos de 5 metros. Al procesar una orden de compra que exige metraje continuo para patronaje industrial, el sistema permite la venta y el problema solo se detecta fisicamente en la mesa de corte, retrasando los tiempos de despacho.
-5. **Demoras operativas en el alistamiento de bodega:** La ausencia de identificadores unicos por codigo de barras o codigo QR en cada rollo fisico obliga a los operarios a realizar busquedas manuales que pueden tardar entre 30 y 50 minutos por orden de trabajo, reduciendo la capacidad operativa del negocio.
+5. **Demoras operativas en el alistamiento de bodega:** La ausencia de identificadores unicos por codigo de barras o codigo QR en cada rollo fisico obliga a los vendedores y personal de bodega a realizar busquedas manuales que pueden tardar entre 30 y 50 minutos por orden de trabajo, reduciendo la capacidad operativa de las tiendas.
 
 ### 1.2. Justificacion
 La implementacion de una plataforma tecnologica orientada a servicios desacoplados bajo principios de Domain-Driven Design (DDD) permite abordar estas problematicas desde la raiz operativa del negocio textil:
@@ -60,13 +60,18 @@ A continuacion se presenta la matriz formal de requerimientos funcionales, codif
 
 | Codigo | Nombre del Requerimiento | Descripcion Tecnica Detallada | Rol Autorizado | Prioridad |
 | :---: | :--- | :--- | :---: | :---: |
-| **RF-01** | Registro y autenticacion bajo modelo RBAC | El sistema debe permitir el registro y autenticacion de usuarios asignando roles estrictos: `cliente`, `vendedor`, `operario_corte` y `administrador`. Las contrasenas deben procesarse mediante funciones hash criptograficas SHA-256 en codificacion UTF-8. El sistema debe emitir tokens de sesion con expiracion controlada. | Todos los usuarios | Alta |
-| **RF-02** | Ficha tecnica y catalogo textil granular | El sistema debe permitir registrar, actualizar y consultar las propiedades tecnicas de cada tela: nombre comercial, categoria, precio por metro lineal, composicion porcentual de fibras, gramaje (g/m2), ancho util, elasticidad, instrucciones de lavado y fotografia en alta definicion codificada en Base64 o URL segura. | Vendedor, Administrador | Alta |
-| **RF-03** | Trazabilidad de inventario por rollo fisico | El sistema debe gestionar el inventario asociando cada producto a rollos fisicos independientes con codigo unico (`codigo_rollo`), metraje inicial, metraje remanente en metros lineales, codigo de lote de tintoreria (`lote_tintoreria`), ubicacion en bodega y estado operativo. | Operario, Administrador | Alta |
+| **RF-01** | Registro y autenticacion bajo modelo RBAC | El sistema debe permitir el registro y autenticacion de usuarios asignando roles estrictos: `cliente`, `vendedor` y `administrador` (ademas de navegacion publica como visitante sin permiso de compra). Las contrasenas deben procesarse mediante funciones hash criptograficas SHA-256 en codificacion UTF-8. El sistema debe emitir tokens de sesion con expiracion controlada. | Todos los usuarios | Alta |
+| **RF-02** | Ficha tecnica y catalogo textil granular | El sistema debe permitir a cada vendedor registrar y actualizar las propiedades tecnicas de sus telas: nombre comercial, categoria, precio por metro lineal, composicion porcentual de fibras, gramaje (g/m2), ancho util, elasticidad, instrucciones de lavado y fotografia codificada en Base64 o URL segura. Por control antifraude, el administrador solo consulta y modera estado de publicacion sin editar precios. | Vendedor (edicion), Admin (auditoria) | Alta |
+| **RF-03** | Trazabilidad de inventario por rollo fisico | El sistema debe gestionar el inventario asociando cada producto a rollos fisicos independientes con codigo unico (`codigo_rollo`), metraje inicial, metraje remanente en metros lineales, codigo de lote de tintoreria (`lote_tintoreria`), ubicacion en bodega y estado operativo. Solo el vendedor propietario registra y ajusta sus lotes, mientras el administrador realiza auditoria en modo solo lectura. | Vendedor (gestion), Admin (auditoria) | Alta |
 | **RF-04** | Validacion de metraje continuo para corte | Antes de autorizar una reserva de inventario, el sistema debe verificar que la cantidad solicitada quepa de forma integra y sin empates de costura en un unico rollo del lote de tintoreria especificado. Si la suma total de metros del lote es suficiente pero ningun rollo individual posee la longitud completa solicitada, el sistema debe rechazar la orden automatica con el codigo `FRAGMENTED_STOCK`. | Sistema, Cliente | Critica |
-| **RF-05** | Reclasificacion automatica de mermas y retazos | Cuando despues de ejecutar un corte el remanente de un rollo resulte menor a un metro lineal (< 1.0 m) y mayor a cero, el sistema debe cambiar automaticamente el estado del rollo a `retazo_liquidado`, generar un registro en la tabla `eventos_merma` con motivo `remanente_sub_metro` y aplicar un descuento comercial de liquidacion del cuarenta por ciento (40%). | Sistema, Operario | Media |
+| **RF-05** | Reclasificacion automatica de mermas y retazos | Cuando despues de ejecutar un corte el remanente de un rollo resulte menor a un metro lineal (< 1.0 m) y mayor a cero, el sistema debe cambiar automaticamente el estado del rollo a `retazo_liquidado`, generar un registro en la tabla `eventos_merma` con motivo `remanente_sub_metro` y aplicar un descuento comercial de liquidacion del cuarenta por ciento (40%). | Sistema, Vendedor | Media |
 | **RF-06** | Transaccionalidad de pedidos y compensacion Saga | La creacion de un pedido debe realizarse dentro de una transaccion atomica con bloqueo pesimista en base de datos (`SELECT ... FOR UPDATE`). Si la pasarela de pagos rechaza la transaccion o expira el tiempo de espera (timeout), el sistema debe ejecutar una accion compensatoria reintegrando los metros reservados al rollo original en menos de 60 segundos. | Sistema, Cliente | Critica |
-| **RF-07** | Generacion de orden de corte con codigo QR | Tras la confirmacion exitosa del pago, el sistema debe generar una orden de corte que contenga el identificador del pedido, el codigo del rollo asignado, el lote de tintoreria, los metros exactos a cortar y un identificador escaneable en formato codigo QR para lectura en mesa de preparacion. | Operario, Bodeguero | Alta |
+| **RF-07** | Generacion de orden de corte con codigo QR | Tras la confirmacion exitosa del pago, el sistema debe generar una orden de corte que contenga el identificador del pedido, el codigo del rollo asignado, el lote de tintoreria, los metros exactos a cortar y un identificador escaneable en formato codigo QR para despacho por parte del vendedor. | Vendedor | Alta |
+| **RF-08** | Marketplace multi-vendedor y perfil social de tienda | El sistema debe conectar multiples proveedores textiles externos reales con directorio publico (`/tiendas`) y perfil publico tipo red social (`/tienda/:id`) con portada, avatar, biografia, ciudad, politicas, telas activas, calificacion promedio y resenas reales verificadas. Cada vendedor edita en vivo su perfil en `/vendedor/mi-tienda`. | Visitante, Cliente, Vendedor | Alta |
+| **RF-09** | Modelo de comision y division de carrito multi-vendedor | Cuando un cliente compra telas de multiples vendedores en una misma transaccion, el sistema debe dividir el checkout en sub-pedidos independientes vinculados por `grupo_checkout`, aplicando la tasa de comision configurada (10 % por defecto) y registrando `monto_comision_admin` y `ganancia_neta_vendedor`. | Cliente, Vendedor, Administrador | Alta |
+| **RF-10** | Algoritmo de exclusividad VIP y alertas de oportunidad | El sistema debe evaluar periodicamente la recurrencia de compra y gasto acumulado de cada cliente para desbloquear acceso exclusivo a telas VIP (`ServicioExclusividadVIP`) y generar alertas de oportunidad en la bandeja del vendedor (`/vendedor/alertas`) para activar promociones y lanzamientos exclusivos. | Cliente (acceso), Vendedor (activacion) | Alta |
+| **RF-11** | Restriccion estricta de compras y resenas a clientes | Solo los usuarios autenticados con rol `cliente` pueden ejecutar el checkout (`/checkout`, `/pago`), confirmar pedidos y publicar resenas verificadas sobre productos o tiendas. Visitantes, vendedores y administradores deben ser bloqueados en frontend y backend (`HTTP 401`/`403`). | Cliente | Alta |
+| **RF-12** | Control antifraude de precios e inventario y notificaciones reales | El administrador tiene prohibido editar precios, stock, rollos fisicos, lotes o mermas de los vendedores (`HTTP 403` en endpoints de mutacion). En su lugar, puede auditar/moderar estado (`changes_requested`), revisar metricas reales y enviar notificaciones reales de stock bajo y reportes de mermas a la tabla `alertas_vendedor` del proveedor. | Administrador (auditoria y alertas), Vendedor (recepcion y ajuste) | Alta |
 
 ---
 
@@ -127,15 +132,15 @@ Caracteristica: Reserva de metraje continuo para compra de tela
 ---
 
 ### 4.2. Historia de Usuario 2: Reclasificacion Automatica de Retazos y Mermas
-**Como** operario de mesa de corte en bodega  
-**Quiero** que el sistema reclasifique automaticamente cualquier rollo cuyo remanente final sea menor a 1.0 metro  
+**Como** vendedor propietario en el marketplace  
+**Quiero** que el sistema reclasifique automaticamente cualquier rollo propio cuyo remanente final sea menor a 1.0 metro  
 **Para** no mantener saldos no comerciales en el inventario regular y publicarlos con descuento como retazos liquidados.
 
 ```gherkin
 Caracteristica: Reclasificacion automatica de retazos tras el corte
-  Como operario de corte
+  Como vendedor de telas
   Quiero que los remanentes menores a un metro se clasifiquen como retazos
-  Para optimizar el inventario y prevenir reclamos por retazos residuales
+  Para optimizar mi inventario y prevenir reclamos por retazos residuales
 
   Escenario: Corte que deja un remanente menor al umbral critico
     Dado que el rollo "ROL-88" tiene un metraje remanente de 4.5 metros
@@ -199,10 +204,15 @@ Caracteristica: Calculo de precios escalonados por volumen textil
 
 | Requerimiento Funcional | Caso de Uso / Servicio de Dominio | Componente de Infraestructura HTTP | Componente de Persistencia JDBC | Tabla en PostgreSQL |
 | :---: | :--- | :--- | :--- | :--- |
-| **RF-01** | `ServicioAutenticacion.java` | `ManejadorAutenticacion.java` | `JdbcRepositorioUsuarioImpl.java`, `UsuarioDAO.java` | `usuarios` |
+| **RF-01** | `ServicioAutenticacion.java` | `ManejadorAutenticacion.java` | `JdbcRepositorioUsuarioImpl.java` | `usuarios` |
 | **RF-02** | `ManejadorProductos.java` | `ManejadorProductos.java` | `ProductoDAO.java` | `productos`, `categorias`, `imagenes_producto` |
 | **RF-03** | `ServicioCorteTextil.java` | `ManejadorInventario.java` | `InventarioDAO.java` | `lotes_inventario`, `rollos_textil` |
 | **RF-04** | `ServicioCorteTextil.validarMetrajeContinuo()` | `ManejadorPedidos.java` | `PedidoDAO.java` (bloqueo FOR UPDATE) | `rollos_textil`, `lotes_inventario` |
 | **RF-05** | `ServicioCorteTextil.procesarCorteYRemanente()` | `ManejadorInventario.java` | `InventarioDAO.java` | `eventos_merma`, `umbrales_stock` |
 | **RF-06** | `ManejadorPedidos.java` (flujo transaccional) | `ManejadorPedidos.java` | `PedidoDAO.java` | `pedidos`, `items_pedido` |
 | **RF-07** | `ServicioFactura.java` | `ManejadorFactura.java` | `PedidoDAO.java` | `pedidos` (campo `numero_guia`) |
+| **RF-08** | `ManejadorTiendas.java` | `ManejadorTiendas.java` (`/api/tiendas*`) | `TiendaVendedorDAO.java` | `perfiles_vendedor`, `resenas_vendedor` |
+| **RF-09** | `ServicioCriptoWompi.java` | `ManejadorPedidos.java`, `ManejadorPagosWompi.java` | `PedidoDAO.java` | `pedidos` (`grupo_checkout`, `monto_comision_admin`, `ganancia_neta_vendedor`) |
+| **RF-10** | `ServicioExclusividadVIP.java` | `ManejadorTiendas.java` (`/api/clientes/elegibilidad-vip`, `/api/vendedor/alertas*`) | `TiendaVendedorDAO.java` | `alertas_vendedor`, `pedidos` |
+| **RF-11** | `ServicioAutenticacion.java` | `ManejadorPedidos.java`, `ManejadorPagosWompi.java`, `ManejadorTiendas.java` | `JdbcRepositorioUsuarioImpl.java`, `PedidoDAO.java` | `usuarios`, `pedidos`, `resenas_vendedor` |
+| **RF-12** | `ManejadorProductos.java` / `ManejadorInventario.java` | `ManejadorInventario.java` (`/api/inventario/notificar-stock`, `/api/inventario/enviar-reporte-mermas`), `ManejadorProductos.java` (`/moderar`) | `InventarioDAO.java`, `TiendaVendedorDAO.java` | `alertas_vendedor`, `lotes_inventario`, `eventos_merma` |
