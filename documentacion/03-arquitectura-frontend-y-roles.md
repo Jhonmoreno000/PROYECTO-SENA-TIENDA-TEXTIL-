@@ -14,7 +14,7 @@ El frontend de **D&D Textil** esta estructurado como una aplicacion de pagina un
 - **React 18.3.1:** Biblioteca base que implementa el paradigma funcional y de componentes declarativos. Aprovecha tecnicas de actualizacion granular del arbol de componentes (*reconciliation*) para actualizar unicamente los nodos que sufren cambios de estado.
 - **Vite 5.4.11:** Empaquetador modular que utiliza modulos ECMAScript nativos (ESM) en desarrollo, acelerando el arranque en caliente (*Hot Module Replacement - HMR*) en menos de 100 milisegundos.
 - **TailwindCSS 3.4.1:** Motor de estilos atomicos basado en utilidades de generacion Just-In-Time (JIT). Facilita el diseno consistente de interfaces bajo la estetica *Glassmorphism* (fondos translucidos, bordes tenues y desenfoques `backdrop-blur`).
-- **Context API de React:** Sistema nativo de propagacion de estado global para sesiones de usuario (`AuthContext`) y persistencia de articulos de compra (`CartContext`).
+- **Context API de React:** Sistema nativo de propagacion de estado global para sesiones de usuario (`ContextoAutenticacion`), compras multi-vendedor (`ContextoCarrito`), catalogo (`ContextoProducto`) y KPIs reales (`ContextoMetricas`).
 - **React Router DOM 6.22.0:** Sistema de enrutamiento del lado del cliente con proteccion condicional de rutas segun el rol del usuario autenticado.
 
 ### 1.2. Vista Previa de la Interfaz Principal (Landing Page)
@@ -30,55 +30,41 @@ El codigo fuente del frontend se organiza de forma modular para garantizar alta 
 ```text
 tienda digital de telas/src/
  |
- +-- assets/                  # Iconos SVG, logotipos e imagenes estaticas
- +-- components/              # Componentes visuales reutilizables
- |    +-- Navbar.jsx          # Barra de navegacion principal con detector de sesion
- |    +-- Footer.jsx          # Pie de pagina institucional y enlaces legales
- |    +-- GlobalBanner.jsx    # Cintillo de anuncios promocionales configurables
- |    +-- ProductCard.jsx     # Tarjeta de tela con precio por metro y vista rapida
- |    +-- ProtectedRoute.jsx  # Componente de orden superior para restriccion RBAC
- |    +-- Toast.jsx           # Notificaciones flotantes de exito y error
+ +-- componentes/             # Componentes visuales y layouts reutilizables (Glassmorphism 60-30-10)
+ |    +-- common/             # BotonWhatsAppFlotante, LogoutLoader, ModalSSOCorreo
+ |    +-- dashboard/          # BarChart, ErpAreaChart, ErpMetricCard, MetricCard, NotificationFeed, CommandPalette
+ |    +-- layouts/            # LayoutPanel (sidebar y cabecera unificada de paneles)
+ |    +-- Encabezado.jsx      # Barra de navegación con detector de sesión, tiendas y carrito
+ |    +-- PieDePagina.jsx     # Pie de página institucional y enlaces legales
+ |    +-- TarjetaProducto.jsx # Tarjeta optimizada con distintivos VIP, Más Vendido, Descuento y Tienda
+ |    +-- PerfilTiendaFacebook.jsx # Vista social reutilizable de tienda (portada, avatar, bio, reseñas)
+ |    +-- ProtectedRoute.jsx  # Guardia RBAC con modo estricto (`strict={true}`) para rol cliente
+ |    +-- ProductGrid.jsx     # Grilla paginada e incremental sin lag con filtros normalizados NFD
+ |    +-- Toast.jsx           # Notificaciones flotantes de éxito y error
  |
- +-- context/                 # Proveedores de estado global
- |    +-- AuthContext.jsx     # Gestion de token, perfil de usuario, login y logout
- |    +-- CartContext.jsx     # Sincronizacion de metros, subtotales y cupones
+ +-- contextos/               # Proveedores de estado global reactivo
+ |    +-- ContextoAutenticacion.jsx # Token HMAC-SHA256, perfil y vigencia en sesión
+ |    +-- ContextoCarrito.jsx       # Sincronización multi-vendedor, subtotales y cupones
+ |    +-- ContextoProducto.jsx      # Catálogo, tiendas reales, caché y filtros
+ |    +-- ContextoMetricas.jsx      # KPIs reales de ventas, comisiones, rotación y mermas
+ |    +-- ContextoNotificacion.jsx  # Alertas y notificaciones del navegador
  |
- +-- pages/                   # Vistas principales de la aplicacion
- |    +-- Home.jsx            # Pantalla de inicio con carrusel y secciones destacadas
- |    +-- Catalog.jsx         # Catalogo completo con filtros por categoria y precio
- |    +-- ProductDetail.jsx   # Ficha tecnica, selector de metraje y galeria Base64
- |    +-- Cart.jsx            # Carrito de compra y aplicacion de cupones
- |    +-- Checkout.jsx        # Captura de datos de envio y liquidacion de flete
- |    +-- CheckoutSuccess.jsx # Confirmacion de pedido con numero de guia y QR
- |    +-- About.jsx           # Informacion corporativa de D&D Textil
- |    +-- Contact.jsx         # Formulario de contacto y ubicacion
- |    +-- Login.jsx           # Formulario reactivo de autenticacion
- |    +-- Register.jsx        # Formulario reactivo de registro de clientes
+ +-- datos/                   # Definición de enlaces laterales por rol
+ |    +-- enlacesCliente.js   # Navegación de panel cliente
+ |    +-- enlacesVendedor.js  # Navegación de vendedor (/vendedor/mi-tienda, /vendedor/alertas, etc.)
+ |    +-- enlacesAdmin.js     # Navegación admin (Auditoría Lotes/Mermas, Notificar Stock Bajo, etc.)
  |
- +-- panels/                  # Tableros de control segun rol
- |    +-- customer/           # Panel del Cliente
- |    |    +-- CustomerDashboard.jsx  # Resumen de pedidos recientes y estado
- |    |    +-- CustomerOrders.jsx     # Historial de compras y factura simulada
- |    |    +-- OrderTracking.jsx      # Linea de tiempo de corte y despacho
- |    |    +-- MeterCalculator.jsx    # Calculadora inteligente de metrajes
- |    |    +-- SupportTickets.jsx     # Radicacion de reclamos de garantia
- |    |    +-- Wishlist.jsx           # Telas guardadas como favoritas
- |    |
- |    +-- seller/             # Panel del Vendedor
- |    |    +-- SellerDashboard.jsx    # Analitica comercial e ingresos
- |    |    +-- ProductManagement.jsx  # Publicacion y edicion de stock textil
- |    |    +-- LowStockAlerts.jsx     # Notificaciones de telas por agotarse (< 5m)
- |    |
- |    +-- admin/              # Panel del Administrador
- |         +-- AdminDashboard.jsx     # Metricas financieras globales
- |         +-- UserManagement.jsx     # Suspension y activacion de cuentas
- |         +-- InventoryBatches.jsx   # Entrada de lotes de tejeduria
- |         +-- WasteManagement.jsx    # Registro de mermas y retazos liquidados
- |         +-- CouponManagement.jsx   # Creacion de reglas de cupones
+ +-- paginas/                 # 58 rutas organizadas por rol y módulo (`App.jsx`)
+ |    +-- Inicio.jsx, Catalogo.jsx, DetalleProducto.jsx, Carrito.jsx, Pago.jsx, ConfirmacionPedido.jsx
+ |    +-- DirectorioTiendas.jsx, PerfilTiendaPublico.jsx # Vitrina multi-vendedor `/tiendas` y `/tienda/:id`
+ |    +-- About.jsx, Contact.jsx, IniciarSesion.jsx, Registro.jsx, BugReport.jsx
+ |    +-- payment/            # Pasarela multi-método Wompi, PSE, Nequi, Tarjeta 3D, QR Textil
+ |    +-- cliente/            # PanelCliente, HistorialPedidos, SeguimientoPedido, ProjectCalculator, Wishlist, Perfil, AddressBook, Soporte
+ |    +-- vendedor/           # PanelVendedor, MiTiendaVendedor, AlertasOportunidad, PedidosVendedor, StockAlerts
+ |    +-- admin/              # ResumenAdmin, ProductosAdmin, MetricasVendedor, ControlLotes, CalculadoraMerma, ConfiguracionStock, ColaAprobacion, Analiticas/*
  |
- +-- utils/                   # Funciones auxiliares y formateadores
-      +-- api.js              # Cliente HTTP centralizado con manejo de cabeceras
-      +-- formatters.js       # Formateador de moneda colombiana (COP) y metros
+ +-- servicios/               # Integraciones externas (servicioWompi.js, servicioOAuth.js)
+ +-- utilidades/              # Interceptor JWT, animaciones, inventario, métricas, sesiones y formateadores COP/metros
 ```
 
 ---
@@ -91,7 +77,8 @@ La plataforma cuenta con cuatro roles de usuario claramente diferenciados, con p
 | :--- | :--- | :--- | :--- |
 | **Cliente** | `/cliente/*` | Consulta de pedidos propios, seguimiento de envio (`/cliente/rastreo`), uso de la calculadora de metraje, lista de deseos y radicacion de tickets de garantia. | Bloqueado para ver pedidos ajenos, catalogar productos o acceder a paneles de gestion. |
 | **Vendedor** | `/vendedor/*` | Publicacion de telas, actualizacion de stock, visualizacion de sus propias ventas y recepcion de alertas de stock critico (< 5 metros). | Solo puede editar productos vinculados a su identificador de usuario (`vendedor_id`). |
-| **Operario de Corte** | `/bodega/*` | Escaneo de ordenes de corte con codigo QR, validacion de rollos fisicos y registro de metros cortados y mermas. | No tiene acceso a informacion de precios de venta, utilidades ni facturacion. |
+| **Vendedor (Marketplace)** | `/vendedor/*` | Edición en vivo de perfil de tienda tipo red social (`/vendedor/mi-tienda`), publicación de telas, precios y stock propios, alertas VIP/auditoría (`/vendedor/alertas`) y órdenes de corte. | Aislado a sus propios productos y sub-pedidos (`vendedor_id`). No puede comprar ni moderar otras tiendas. |
+| **Administrador (Gobierno)** | `/admin/*` | Auditoría antifraude en modo solo lectura de precios/lotes/mermas, moderación (`changes_requested`), envío real de alertas de stock y mermas, métricas, comisiones (10 %) y cupones. | Bloqueado para editar precios, stock, rollos, lotes o mermas de vendedores (`HTTP 403`) y bloqueado en checkout. |
 | **Administrador** | `/admin/*` | Moderacion de productos, suspension o reactivacion de usuarios, configuracion de umbrales criticos, creacion de cupones y metricas globales. | Acceso total con registro de auditoria inmutable en cada accion. |
 
 ---
@@ -117,7 +104,7 @@ flowchart TD
         Carrito["Carrito (/carrito)<br/>Cupones y subtotales"]:::publicStyle
         Checkout["Checkout (/checkout)<br/>Datos de envío y Pasarela Wompi"]:::publicStyle
         Login["Autenticación (/login, /registro)<br/>OAuth y credenciales directas"]:::publicStyle
-        Institucional["ℹInstitucional (/nosotros, /contactos)"]:::publicStyle
+        Institucional["Institucional (/nosotros, /contacto, /tiendas)"]:::publicStyle
 
         Home --> Catalogo --> Detalle --> Carrito --> Checkout
         Home --> Institucional
@@ -125,7 +112,7 @@ flowchart TD
     end
 
     subgraph GuardiaSeguridad ["Middleware de Seguridad"]
-        ProtectedRoute["ProtectedRoute (React Router DOM)<br/>• Valida Token JWT en AuthContext<br/>• Verifica Rol RBAC"]:::authStyle
+        ProtectedRoute["ProtectedRoute (React Router DOM)<br/>• Valida Token HMAC-SHA256 en ContextoAutenticacion<br/>• Verifica Rol RBAC y modo strict cliente"]:::authStyle
     end
 
     subgraph ZonaProtegida ["Zona Protegida (Paneles por Rol)"]
@@ -144,49 +131,52 @@ flowchart TD
             Ven3["Alertas Stock Crítico (< 5m)"]:::sellerStyle
         end
 
-        subgraph PanelOperario ["Rol: Operario de Corte (/bodega/*)"]
-            Op1["Lector QR de Rollos"]:::operStyle
-            Op2["Registro de Metros Cortados"]:::operStyle
-            Op3["Liquidación de Mermas"]:::operStyle
+        subgraph PanelTiendaMarketplace ["Vistas Públicas Marketplace (/tiendas, /tienda/:id)"]
+            TiendaDir["/tiendas (DirectorioTiendas)<br/>/tienda/:id (PerfilTiendaPublico)"]:::clientStyle
         end
 
         subgraph PanelAdmin ["Rol: Administrador (/admin/*)"]
-            Adm1["Tablero ERP Financiero"]:::adminStyle
+            Adm1["Tablero ERP Comisiones (10 %)"]:::adminStyle
             Adm2["Gestión y Suspensión Usuarios"]:::adminStyle
-            Adm3["Recepción de Lotes Textil"]:::adminStyle
-            Adm4["Administración de Cupones"]:::adminStyle
+            Adm3["Auditoría Lotes y Mermas (Solo Lectura)"]:::adminStyle
+            Adm4["Alertas Reales y Cupones"]:::adminStyle
         end
     end
 
     Login -->|Sesión Iniciada| ProtectedRoute
-    ProtectedRoute -->|rol == 'cliente'| PanelCliente
-    ProtectedRoute -->|rol == 'vendedor'| PanelVendedor
-    ProtectedRoute -->|rol == 'operario'| PanelOperario
-    ProtectedRoute -->|rol == 'admin'| PanelAdmin
+    ProtectedRoute -->|"rol === 'cliente'"| PanelCliente
+    ProtectedRoute -->|"rol === 'vendedor'"| PanelVendedor
+    Publico -->|"Explora vitrinas y perfiles"| PanelTiendaMarketplace
+    ProtectedRoute -->|"rol === 'admin'"| PanelAdmin
 ```
 
 ---
 
-### 4.1. Vistas Publicas (Sin Autenticacion Requerida)
-- **Inicio (`/`):** Exposicion del catalogo destacado, colecciones de temporada y banner de anuncios superior.
-- **Catalogo de Telas (`/catalogo`):** Tarjetas interactivas con busqueda en tiempo real por texto y filtrado por categorias (Algodon, Seda, Lino, Dril, Terciopelo, etc.).
-- **Detalle de Producto (`/producto/:id`):** Visualizacion de fotografia en alta resolucion, ancho util, peso, cuidados textiles y selector dinamico de metros con validacion de disponibilidad.
-- **Carrito de Compras (`/carrito`):** Administracion de items seleccionados, calculo de subtotales y aplicacion de cupones de descuento.
-- **Proceso de Pago (`/checkout` y `/checkout/success`):** Formulario de datos de despacho, confirmacion de pasarela de pago y generacion del comprobante con numero de orden.
-- **Sobre Nosotros (`/nosotros`) y Contacto (`/contactos`):** Paginas institucionales y formulario de contacto interactivo con mapa de ubicación.
-- **Acceso (`/login` y `/registro`):** Formularios con validacion de campos y soporte OAuth con Google/Microsoft.
+### 4.1. Vistas Publicas y Compra Segura (RBAC Estricto)
+- **Inicio (`/`):** Exposicion del catalogo destacado, colecciones de temporada, slider y banner global configurable.
+- **Tiendas Proveedoras (`/tiendas`) y Perfil Público (`/tienda/:id`):** Directorio real de los 4 proveedores textiles y vitrina tipo red social con portada, avatar, biografía, ciudad, políticas y reseñas verificadas (`perfiles_vendedor`, `resenas_vendedor`).
+- **Catalogo de Telas (`/catalogo`):** Scroll paginado optimizado sin lag, exclusividad VIP desbloqueada para clientes recurrentes, filtros por categoría/precio y distintivos de teoría del color 60-30-10.
+- **Detalle de Producto (`/producto/:id`):** Fotografía de alta resolución, ancho util, gramaje, cuidados textiles, calificación del vendedor, comparativa competitiva multi-vendedor (`GET /api/productos/{id}/competencia`) y selector de metraje.
+- **Carrito Multi-Vendedor (`/carrito`):** Agrupación de telas de distintas tiendas proveedoras, subtotales y aplicación de cupones.
+- **Proceso de Pago (`/checkout`, `/pago`, `/confirmacion`):** Protegido estrictamente con `<ProtectedRoute roles="cliente" strict={true}>`; divide automáticamente el carrito en sub-pedidos independientes (`grupo_checkout`) liquidando comisión admin (10 %) y ganancia neta por vendedor.
+- **Sobre Nosotros (`/nosotros`) y Contacto (`/contacto`):** Páginas institucionales y formulario de soporte/contacto conectado al backend.
+- **Acceso (`/login` y `/registro`):** Formularios validados con cuentas reales y soporte OAuth con Google/Microsoft.
 
-### 4.2. Vistas Protegidas por Rol (Requieren Sesión Activa)
-- **Cliente (`/cliente/*`):** Panel de gestión de compras, descarga de facturas simuladas, seguimiento en tiempo real y calculadora textil.
-- **Vendedor (`/vendedor/*`):** Publicación de telas, catálogo personal, liquidación de comisiones y control de inventario local.
-- **Operario de Corte (`/bodega/*`):** Estación de corte móvil con lector de códigos QR para rollos físicos y registro de mermas.
+### 4.2. Vistas Protegidas por Rol (58 Rutas Totales en `App.jsx`)
+- **Cliente (`/cliente/*`):** Panel personal con historial por sub-pedidos, descarga de facturas electrónicas en PDF (`/cliente/pedidos`), rastreo (`/cliente/pedidos/rastreo`), libreta de direcciones y calculadora textil (`/cliente/coleccion/calculadora`).
+- **Vendedor (`/vendedor/*`):** Publicación de telas, precios propios, editor visual tipo red social (`/vendedor/mi-tienda`), bandeja real de alertas VIP/auditoría/mermas (`/vendedor/alertas`), gestión de stock (`/vendedor/stock`) y pedidos propios (`/vendedor/pedidos`).
+- **Administrador (`/admin/*`):** Moderación (`changes_requested` hacia `/vendedor/alertas`), auditoría antifraude en modo solo lectura sobre precios/lotes/mermas (`HTTP 403` ante mutación), envío de notificaciones reales de stock/mermas y analítica financiera alimentada 100 % desde PostgreSQL.
+
+### 4.3. Teoría del Color (60-30-10), Glassmorphism y Política Cero Hardcoding
+1. **Psicología del Color 60-30-10:** 60 % fondos neutros suaves (`slate-50` / `slate-950` con glassmorphism constante), 30 % textos y superficies estructurales (`slate-800` / blanco translúcido con alto contraste WCAG AA) y 10 % acentos funcionales psicológicos (naranja cálido en CTAs de conversión, esmeralda en verificaciones y disponibilidad, ámbar en exclusividad VIP y alertas preventivas, rojo reservado para críticos).
+2. **Eliminación Total de Datos Hardcodeados:** Todas las analíticas administrativas, comisiones, inventarios, calificaciones y alertas del frontend consumen directamente los endpoints REST respaldados por PostgreSQL.
 - **Administrador (`/admin/*`):** Panel integral de supervisión, auditoría de usuarios, aprobación de lotes textiles y configuración global.
 
 ---
 
 ## 5. Motor y Formulas de la Calculadora de Metraje Inteligente
 
-Ubicada en `/cliente/calculadora`, la **Calculadora de Metraje** asiste al confeccionista calculando la cantidad exacta de tela necesaria para un proyecto, incorporando un **margen de seguridad tecnico del diez por ciento (+10%)** para compensar encogimientos por lavado y desperdicios de corte de patron:
+Ubicada en `/cliente/coleccion/calculadora`, la **Calculadora de Metraje** asiste al confeccionista calculando la cantidad exacta de tela necesaria para un proyecto, incorporando un **margen de seguridad tecnico del diez por ciento (+10%)** para compensar encogimientos por lavado y desperdicios de corte de patron:
 
 ### Formulas Matematicas Implementadas:
 
@@ -209,7 +199,7 @@ Ubicada en `/cliente/calculadora`, la **Calculadora de Metraje** asiste al confe
 
 ## 6. Arquitectura del Cliente Movil (Android Wrapper)
 
-Ubicada en el modulo `TiendaTextilApp/`, la aplicacion movil ofrece una experiencia optimizada para dispositivos Android (telefonos y tabletas de operarios de corte y clientes):
+Ubicada en el modulo `TiendaTextilApp/`, la aplicacion movil ofrece una experiencia optimizada para dispositivos Android (telefonos y tabletas para clientes y vendedores en despacho):
 
 ### 6.1. Componentes del Contenedor Nativo
 - **Lenguaje:** Kotlin 1.9+ sobre Android SDK 34 (Android 14) con compatibilidad hacia atras hasta Android 7.0 (API 24).

@@ -56,15 +56,15 @@ flowchart TD
         end
 
         subgraph RedFrontend ["RED BRIDGE: frontend-net (Red Pública Expuesta)"]
-            ContFrontend["Contenedor: frontend<br/>• Imagen: node:18-alpine<br/>• SPA React 18 / Vite<br/>• Puerto Mapeado: 5173:5173"]:::frontStyle
+            ContFrontend["Contenedor: frontend<br/>• Imagen: node:20-alpine / Nginx<br/>• SPA React 18 / Vite (58 Rutas)<br/>• Puerto Mapeado: 3001:80"]:::frontStyle
         end
 
         subgraph RedesCompartidas ["Enlace Inter-Red (Puertos Internos)"]
-            ContBackend["Contenedor: backend-java<br/>• Imagen: openjdk:17-slim<br/>• Vanilla Java 17 HttpServer (Pool 32 Hilos)<br/>• Puerto Mapeado: 8081:8081"]:::backStyle
+            ContBackend["Contenedor: backend-java<br/>• Imagen: eclipse-temurin:21-jre / jdk<br/>• Vanilla Java 21 HttpServer (Pool mín. 32 Hilos)<br/>• Puerto Mapeado: 8081:8081"]:::backStyle
         end
 
         subgraph RedBackend ["RED BRIDGE: backend-net (Red Aislada No Expuesta)"]
-            ContPostgres[("Contenedor: postgres<br/>• Imagen: postgres:17-alpine<br/>• PostgreSQL 17 (UTF-8)<br/>• Puerto Interno: 5432 (Sin mapeo al host)")]:::dbStyle
+            ContPostgres[("Contenedor: postgres<br/>• Imagen: postgres:17-alpine<br/>• PostgreSQL 17 (31 Tablas, UTF-8)<br/>• Puerto Interno: 5432 (Sin mapeo al host)")]:::dbStyle
         end
 
         subgraph VolumenesDocker ["Almacenamiento Persistente"]
@@ -428,7 +428,7 @@ Al desplegar **D&D Textil** en entornos de pruebas o producción, tenga en cuent
 
 ### Verificación Rápida de Compilación sobre OpenJDK 21 LTS
 
-Para validar localmente la compilación del backend y las 4 suites de pruebas sin requerir demonios externos:
+Para validar localmente la compilación del backend y las 5 suites de pruebas (62 casos Java) sin requerir demonios externos:
 
 ```bash
 cd "tienda digital de telas/backend-java/servidor-api"
@@ -438,4 +438,5 @@ java -ea -cp "bin:lib/*" PruebasReglasNegocioTextil
 java -ea -cp "bin:lib/*" PruebasSeguridadIntegridad
 java -ea -cp "bin:lib/*" PruebasConcurrenciaYPagos
 java -ea -cp "bin:lib/*" PruebasContratoApi
+java -ea -cp "bin:lib/*" PruebasMarketplace
 ```

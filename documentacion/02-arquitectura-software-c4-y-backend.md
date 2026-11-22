@@ -8,7 +8,7 @@
 
 ## 1. Vision General del Backend
 
-El backend de **D&D Textil** es un servicio corporativo desarrollado en **Java 17 (Vanilla Java)** de alto rendimiento, disenado especificamente para eliminar la sobrecarga de memoria y dependencias de marcos de trabajo pesados como Spring Boot o Jakarta EE. 
+El backend de **D&D Textil** es un servicio corporativo desarrollado en **Java 21 (Vanilla Java)** de alto rendimiento, disenado especificamente para eliminar la sobrecarga de memoria y dependencias de marcos de trabajo pesados como Spring Boot o Jakarta EE. Su arquitectura soporta un Marketplace Multi-Vendedor (Comision + Venta), algoritmo de exclusividad VIP y aislamiento antifraude RBAC sobre `22` modelos de dominio, `8` servicios de aplicacion, `15` componentes DAO/migradores JDBC y `18` manejadores HTTP. 
 
 ### Caracteristicas Fundamentales del Diseno:
 1. **Servidor HTTP Embebido de Alto Rendimiento:** Utiliza `com.sun.net.httpserver.HttpServer` configurado con un **Pool de Hilos Concurrente** (`Executors.newFixedThreadPool`) con un minimo de 32 hilos y escalable segun los nucleos de procesamiento (`Runtime.getRuntime().availableProcessors() * 8`). Esto garantiza la atencion simultanea de cientos de peticiones sin congelamiento de sockets.
@@ -26,18 +26,22 @@ La distribucion fisica del codigo fuente en `tienda digital de telas/backend-jav
 src/
  |
  +-- dominio/
- |    +-- modelos/                    # Entidades puras y objetos de valor
- |    |    +-- RolloTextil.java       # Entidad de trazabilidad por rollo fisico y tintoreria
- |    |    +-- Producto.java          # Ficha tecnica textil (precio, gramaje, ancho, stock)
- |    |    +-- Usuario.java           # Cuenta de usuario con rol RBAC, estado y comisiones
- |    |    +-- Pedido.java            # Encabezado de pedido comercial y estados de pago
+ |    +-- modelos/                    # 22 Entidades puras y objetos de valor
+ |    |    +-- RolloTextil.java       # Trazabilidad por rollo fisico y tintoreria
+ |    |    +-- Producto.java          # Ficha tecnica textil, VIP y moderacion
+ |    |    +-- Usuario.java           # Cuenta de usuario con rol RBAC, estado y tasa_comision
+ |    |    +-- PerfilVendedor.java    # Perfil de tienda tipo red social (portada, avatar, bio, politicas)
+ |    |    +-- ResenaVendedor.java    # Calificaciones y comentarios verificados sobre tiendas
+ |    |    +-- AlertaVendedor.java    # Alertas reales de oportunidad VIP, stock bajo y reporte de mermas
+ |    |    +-- Pedido.java            # Sub-pedido con grupo_checkout, monto_comision_admin y ganancia_neta_vendedor
+ |    |    +-- TransaccionWompi.java  # Eventos de pasarela y conciliacion financiera
  |    |    +-- LoteInventario.java    # Lote de compra a proveedores de tejeduria
  |    |    +-- EventoMerma.java       # Registro de retazos liquidados y mermas tecnicas
  |    |    +-- Cupon.java             # Reglas de cupones de descuento (porcentaje o fijo)
  |    |    +-- ItemCarrito.java       # Items temporales vinculados al carrito de compra
- |    |    +-- Resena.java            # Calificaciones y comentarios de clientes
+ |    |    +-- Resena.java            # Calificaciones y comentarios de clientes en productos
  |    |    +-- TicketSoporte.java     # Reclamos de garantia y devoluciones
- |    |    +-- UmbralStock.java       # Alertas minimas de metros por categoria
+ |    |    +-- UmbralStock.java       # Alertas minimas de metros por tela/categoria
  |    |    +-- ReporteError.java      # Reportes de incidencias tecnicas
  |    |    +-- DiapositivaCarrusel.java # Banners del carrusel dinamico de la tienda
  |    |    +-- SeccionInicio.java     # Secciones modulares de la pagina principal
@@ -51,40 +55,57 @@ src/
  |         +-- ExcepcionDominio.java  # Excepcion controlada para violacion de reglas
  |
  +-- aplicacion/
- |    +-- servicios/                  # Casos de uso y logica de negocio
- |         +-- ServicioCorteTextil.java  # Motor de validacion continua, mermas y tarifas
- |         +-- ServicioAutenticacion.java # Hasheo SHA-256 en UTF-8 y validacion de roles
- |         +-- ServicioFactura.java       # Generador de representacion XML simulada
+ |    +-- servicios/                  # 8 Servicios de aplicacion y logica de negocio
+ |         +-- ServicioCorteTextil.java        # Motor de validacion continua, mermas y tarifas
+ |         +-- ServicioAutenticacion.java      # Hasheo SHA-256 en UTF-8 y validacion de roles
+ |         +-- ServicioExclusividadVIP.java    # Algoritmo de elegibilidad VIP y alertas de oportunidad
+ |         +-- ServicioCriptoWompi.java        # Firmas de integridad y checksum SHA-256 de webhooks
+ |         +-- ServicioFactura.java            # Generador de facturas electronicas simuladas
+ |         +-- ServicioEtiquetasBodega.java    # Generacion de etiquetas termicas 100x50mm con QR
+ |         +-- ServicioNotificacionesEmail.java # Despacho de correos transaccionales
+ |         +-- VerificadorIdentidadSSO.java    # Interfaz para validacion OAuth / OIDC
  |
  +-- infraestructura/
- |    +-- configuracion/
- |    |    +-- Conexion.java          # Inicializacion del Pool HikariCP y driver PostgreSQL
- |    +-- persistencia/jdbc/          # Acceso a datos relacionales (DAOs)
+ |    +-- configuracion/              # 4 Configuradores de entorno, DB, SSO y Wompi
+ |    |    +-- Conexion.java          # Pool HikariCP y driver PostgreSQL
+ |    |    +-- ConfiguracionEntorno.java
+ |    |    +-- ConfiguracionSSO.java
+ |    |    +-- ConfiguracionWompi.java
+ |    +-- seguridad/
+ |    |    +-- TokenSesion.java       # Emision y validacion de tokens HMAC-SHA256
+ |    |    +-- VerificadorIdentidadSSOHttp.java # Verificacion Google / Microsoft Identity
+ |    +-- persistencia/jdbc/          # 15 DAOs y Migradores JDBC
  |    |    +-- JdbcRepositorioUsuarioImpl.java # Implementacion del contrato RepositorioUsuario
- |    |    +-- UsuarioDAO.java        # Consultas SQL para gestion de usuarios
- |    |    +-- ProductoDAO.java       # Consultas y persistencia de telas e imagenes
- |    |    +-- PedidoDAO.java         # Transacciones atomicas con SELECT FOR UPDATE
- |    |    +-- InventarioDAO.java     # Gestion de lotes, mermas y rollos fisicos
- |    |    +-- CarritoDAO.java        # Persistencia de items de carrito por usuario
- |    |    +-- CuponDAO.java          # Validacion de codigos promocionales
- |    |    +-- SoporteDAO.java        # Administracion de tickets de reclamos
- |    |    +-- ResenasDAO.java        # Persistencia de calificaciones
- |    |    +-- CarruselDAO.java       # Gestion de diapositivas
- |    |    +-- SeccionesInicioDAO.java # Configuracion de secciones dinamicas
- |    |    +-- ConfiguracionDAO.java  # Parametros globales del sistema
+ |    |    +-- ProductoDAO.java                # Catalogo, fichas textiles y comparador de competencia
+ |    |    +-- TiendaVendedorDAO.java          # Perfiles de tienda, resenas de vendedor y alertas reales
+ |    |    +-- PedidoDAO.java                  # Split multi-vendedor, comisiones y SELECT FOR UPDATE
+ |    |    +-- InventarioDAO.java              # Rollos, lotes, mermas y reportes reales
+ |    |    +-- PagoWompiDAO.java               # Idempotencia y auditoria de eventos Wompi
+ |    |    +-- MigradorEsquemaMarketplace.java # Idempotent DDL de tablas/columnas marketplace
+ |    |    +-- MigradorEsquemaPagos.java       # Idempotent DDL de tablas de pagos y direcciones
+ |    |    +-- CarritoDAO.java                 # Persistencia de items de carrito por usuario
+ |    |    +-- CuponDAO.java                   # Validacion de codigos promocionales
+ |    |    +-- SoporteDAO.java                 # Administracion de tickets y reportes de fallo
+ |    |    +-- ResenasDAO.java                 # Persistencia de resenas de producto
+ |    |    +-- CarruselDAO.java                # Gestion de diapositivas
+ |    |    +-- SeccionesInicioDAO.java         # Configuracion de secciones dinamicas
+ |    |    +-- ConfiguracionDAO.java           # Parametros globales del sistema
  |    +-- api/
- |         +-- ServidorApi.java       # Servidor HTTP central, enrutamiento y DI manual
- |         +-- manejadores/           # Controladores de endpoints REST
- |              +-- ManejadorBase.java              # Filtros comunes: RateLimit, CORS, CorrelationId
- |              +-- ManejadorAutenticacion.java     # POST /api/login, /api/register
- |              +-- ManejadorProductos.java         # GET/POST/PUT/DELETE /api/products
- |              +-- ManejadorPedidos.java           # GET/POST /api/orders, actualizacion de estados
+ |         +-- ServidorApi.java       # Servidor HTTP central (Java 21 HttpServer), enrutamiento y DI manual
+ |         +-- manejadores/           # 18 Controladores de endpoints REST
+ |              +-- ManejadorBase.java              # RateLimit, CORS, CorrelationId y RBAC helpers
+ |              +-- ManejadorAutenticacion.java     # POST /api/login, /api/register, /api/auth/sso
+ |              +-- ManejadorProductos.java         # /api/productos, /competencia, /moderar (antifraude)
+ |              +-- ManejadorTiendas.java           # /api/tiendas*, /api/vendedor/alertas*, /elegibilidad-vip
+ |              +-- ManejadorPedidos.java           # /api/orders, split checkout con comision admin
+ |              +-- ManejadorPagosWompi.java        # /api/pagos/wompi/* e idempotencia webhook
+ |              +-- ManejadorFactura.java           # GET /api/pedidos/{id}/factura*
  |              +-- ManejadorCarrito.java           # GET/POST/DELETE /api/cart
  |              +-- ManejadorCupones.java           # GET/POST /api/cupones, validacion
- |              +-- ManejadorInventario.java        # GET/POST /api/inventory, lotes, mermas
+ |              +-- ManejadorInventario.java        # /api/inventario*, rollos, notificar-stock, reportes merma
  |              +-- ManejadorUsuarios.java          # GET/PUT /api/users, suspension, activacion
  |              +-- ManejadorSoporte.java           # GET/POST /api/support, tickets y bugs
- |              +-- ManejadorResenas.java           # GET/POST /api/reviews
+ |              +-- ManejadorResenas.java           # GET/POST /api/reviews (solo cliente)
  |              +-- ManejadorCarrusel.java          # GET/POST/PUT/DELETE /api/carousel
  |              +-- ManejadorSeccionesInicio.java   # GET/POST/PUT /api/home-sections
  |              +-- ManejadorConfiguracion.java     # GET/POST /api/settings
@@ -92,9 +113,12 @@ src/
  |              +-- ManejadorSalud.java             # GET /health/live, /health/ready
  |
  +-- App.java                         # Punto de entrada de la aplicacion
- +-- SembradorDatosPrueba.java         # Sembrador automatico de datos y contrasenas SHA-256
- +-- PruebasReglasNegocioTextil.java  # Suite de pruebas unitarias (14 pruebas)
- +-- PruebasSeguridadIntegridad.java       # Suite de pruebas de seguridad y concurrencia (12 pruebas)
+ +-- SembradorDatosPrueba.java        # Sembrador automatico con 4 proveedores reales y SHA-256
+ +-- PruebasReglasNegocioTextil.java  # Suite 1: Reglas textiles (14 pruebas)
+ +-- PruebasSeguridadIntegridad.java  # Suite 2: Seguridad HMAC, RBAC e integridad (20 pruebas)
+ +-- PruebasConcurrenciaYPagos.java   # Suite 3: Concurrencia multihilo y Wompi (11 pruebas)
+ +-- PruebasContratoApi.java          # Suite 4: Validacion de contrato OpenAPI (9 pruebas)
+ +-- PruebasMarketplace.java          # Suite 5: Marketplace, VIP, comisiones y antifraude (8 pruebas)
 ```
 
 ---
@@ -115,7 +139,7 @@ flowchart TD
         direction LR
         cliente["Cliente / Confeccionista<br/><b>[Persona]</b><br/>Consulta catálogo textil, calcula metrajes,<br/>realiza compras fraccionadas y rastrea envíos."]:::personStyle
         vendedor["Asesor Comercial / Vendedor<br/><b>[Persona]</b><br/>Publica telas en catálogo, monitorea inventario<br/>y analiza comisiones y métricas."]:::personStyle
-        operario["Operario de Mesa de Corte<br/><b>[Persona]</b><br/>Escanea órdenes de corte QR, ejecuta cortes<br/>físicos y registra retazos y mermas."]:::personStyle
+        vendedorExt["Vendedores / Proveedores Externos<br/><b>[Persona]</b><br/>Editan su perfil de tienda tipo red social,<br/>gestionan precios, rollos, cortes y alertas VIP."]:::personStyle
         admin["Administrador del Sistema<br/><b>[Persona]</b><br/>Monitorea finanzas, modera catálogo,<br/>gestiona cupones y audita seguridad."]:::personStyle
     end
 
@@ -131,7 +155,7 @@ flowchart TD
 
     cliente -->|"1. Navega catálogo, compra telas y radica tickets<br/>[HTTPS / JSON]"| sistemaTextil
     vendedor -->|"2. Publica telas y gestiona inventario<br/>[HTTPS / JSON]"| sistemaTextil
-    operario -->|"3. Confirma cortes físicos y registra mermas<br/>[App Móvil / HTTPS]"| sistemaTextil
+    vendedorExt -->|"3. Administra tiendas, telas, precios y rollos<br/>[Panel Vendedor / HTTPS]"| sistemaTextil
     admin -->|"4. Supervisa transacciones, finanzas y usuarios<br/>[HTTPS / JSON]"| sistemaTextil
 
     sistemaTextil -->|"5. Solicita cobros y procesa confirmaciones<br/>[HTTPS REST / Webhooks]"| pasarelaPagos
@@ -142,7 +166,7 @@ flowchart TD
 
 ### 3.2. Nivel 2: Diagrama de Contenedores
 
-A continuación se ilustra la interacción entre los contenedores de software que conforman el ecosistema (SPA en React, App Móvil en Android/Kotlin, Backend en Java 17, Base de Datos PostgreSQL 17 y Almacenamiento Multimedia):
+A continuación se ilustra la interacción entre los contenedores de software que conforman el ecosistema (SPA en React 18, App Android complementaria, Backend en Java 21, Base de Datos PostgreSQL 17 y Almacenamiento Multimedia):
 
 ```mermaid
 flowchart TD
@@ -154,22 +178,22 @@ flowchart TD
     subgraph Usuarios ["Capa de Usuarios"]
         direction LR
         userWeb["Clientes, Vendedores y Administradores<br/><b>[Navegadores de Escritorio / Móviles]</b>"]:::actorStyle
-        userBodega["Operarios de Mesa de Corte<br/><b>[Dispositivos Móviles / Tablets en Bodega]</b>"]:::actorStyle
+        userBodega["Proveedores Externos (Vendedores)<br/><b>[Navegador Web — /vendedor/*]</b>"]:::actorStyle
     end
 
     subgraph CapaPresentacion ["1. Capa de Presentación (Frontend & Móvil)"]
         direction LR
         frontendWeb["Single Page Application (SPA)<br/><b>[React 18 + Vite + TailwindCSS]</b><br/>Interfaz reactiva con catálogo interactivo,<br/>simulador de metraje, carrito y paneles de rol.<br/><i>Puerto 5173 / 3001</i>"]:::containerStyle
-        appMovil["Aplicación Móvil Bodega<br/><b>[Android / Kotlin + WebView]</b><br/>Cliente optimizado con lector QR para mesa de corte<br/>y confirmación física de fraccionamiento."]:::containerStyle
+        appMovil["App Complementaria / Scanner<br/><b>[Android / Kotlin + WebView]</b><br/>Soporte móvil para lectura de códigos QR<br/>y consulta rápida de órdenes de despacho."]:::containerStyle
     end
 
     subgraph CapaLogica ["2. Capa de Lógica de Negocio (Backend)"]
-        backendApi["Backend Java Corporativo<br/><b>[Java 17 Vanilla + HttpServer]</b><br/>Servidor HTTP con pool concurrente de 32 hilos,<br/>Clean Architecture, motor de corte textil y autenticación SHA-256.<br/><i>Puerto 8081</i>"]:::containerStyle
+        backendApi["Backend Java Corporativo<br/><b>[Java 21 Vanilla + HttpServer]</b><br/>Servidor HTTP con pool concurrente escalable (mín. 32 hilos),<br/>Clean Architecture, Marketplace, motor textil y SHA-256.<br/><i>Puerto 8081</i>"]:::containerStyle
     end
 
     subgraph CapaPersistencia ["3. Capa de Almacenamiento y Datos"]
         direction LR
-        postgresDb[("Base de Datos Relacional<br/><b>[PostgreSQL 17]</b><br/>25 tablas normalizadas en 3FN, transacciones ACID,<br/>bloqueos pesimistas SELECT FOR UPDATE e índices B-Tree.<br/><i>Puerto 5432</i>")]:::dbStyle
+        postgresDb[("Base de Datos Relacional<br/><b>[PostgreSQL 17]</b><br/>31 tablas normalizadas en 3FN y 31 FKs,<br/>transacciones ACID y bloqueos SELECT FOR UPDATE.<br/><i>Puerto 5432</i>")]:::dbStyle
         volumenUploads[("Almacenamiento Multimedia<br/><b>[Volumen Persistente Docker]</b><br/>Persistencia en disco de imágenes de telas y recibos.<br/><i>Ruta: /app/uploads</i>")]:::dbStyle
     end
 
@@ -180,10 +204,10 @@ flowchart TD
     end
 
     userWeb -->|"Interactúa vía interfaz web<br/>[HTTPS]"| frontendWeb
-    userBodega -->|"Escanea códigos QR en rollos<br/>[HTTPS]"| appMovil
+    userBodega -->|"Administra tienda, precios y rollos<br/>[Panel Vendedor HTTPS]"| frontendWeb
 
     frontendWeb -->|"Peticiones HTTP REST<br/>[JSON / HTTPS con CORS]"| backendApi
-    appMovil -->|"Lecturas de corte y mermas<br/>[JSON / HTTPS]"| backendApi
+    appMovil -->|"Consultas QR y despacho<br/>[JSON / HTTPS]"| backendApi
 
     backendApi -->|"Consultas relacionales y reservas atómicas<br/>[JDBC / Pool HikariCP]"| postgresDb
     backendApi -->|"Lectura y escritura de fotografías<br/>[I/O Sistema de Archivos]"| volumenUploads
@@ -208,14 +232,15 @@ flowchart TD
 
     subgraph CapaHTTP ["1. Capa de Infraestructura HTTP (Controladores REST)"]
         direction TB
-        ManejadorBase["ManejadorBase<br/>• RateLimiting (120 req/min)<br/>• Validación CORS y Encabezados<br/>• Filtro X-Correlation-ID"]:::httpStyle
+        ManejadorBase["ManejadorBase<br/>• RateLimiting (1200 req/min)<br/>• Validación CORS y Encabezados<br/>• Filtro X-Correlation-ID"]:::httpStyle
         
-        subgraph HandlersEspecializados ["Manejadores Especializados (Extienden ManejadorBase)"]
+        subgraph HandlersEspecializados ["Manejadores Especializados (18 Controladores REST)"]
             direction LR
             ManejadorAuth["ManejadorAutenticacion<br/>(/api/login, /api/register)"]:::httpStyle
-            ManejadorProd["ManejadorProductos<br/>(/api/products, filtros)"]:::httpStyle
-            ManejadorPed["ManejadorPedidos<br/>(/api/orders, checkout)"]:::httpStyle
-            ManejadorInv["ManejadorInventario<br/>(/api/inventory, rollos, mermas)"]:::httpStyle
+            ManejadorProd["ManejadorProductos<br/>(/api/productos, competencia, moderar)"]:::httpStyle
+            ManejadorTiendas["ManejadorTiendas<br/>(/api/tiendas, /vendedor/alertas, VIP)"]:::httpStyle
+            ManejadorPed["ManejadorPedidos & Pagos<br/>(/api/pedidos, split checkout, Wompi)"]:::httpStyle
+            ManejadorInv["ManejadorInventario<br/>(/api/inventario, rollos, notificar-stock)"]:::httpStyle
         end
         HandlersEspecializados -.->|Heredan control| ManejadorBase
     end
@@ -224,50 +249,57 @@ flowchart TD
         direction LR
         ServicioAuth["ServicioAutenticacion<br/>• hashearContrasena()<br/>• validarCredenciales()"]:::appStyle
         ServicioCorte["ServicioCorteTextil<br/>• validarMetrajeContinuo()<br/>• procesarCorteYRemanente()<br/>• calcularTarifaEscalonada()"]:::appStyle
+        ServicioVIP["ServicioExclusividadVIP<br/>• evaluarElegibilidad()<br/>• alertasOportunidad()"]:::appStyle
         ServicioWompi["ServicioCriptoWompi<br/>• generarFirmaIntegridad()<br/>• validarChecksumWebhook()"]:::appStyle
         ServicioFac["ServicioFactura<br/>• generarFacturaXmlSimulada()"]:::appStyle
     end
 
-    subgraph CapaDominio ["3. Capa de Dominio (Entidades de Negocio Puras)"]
+    subgraph CapaDominio ["3. Capa de Dominio (22 Entidades Puras)"]
         direction LR
-        Rollo["RolloTextil<br/>(codigo, metros, lote_tintoreria)"]:::domainStyle
-        Producto["Producto<br/>(precio, ancho, peso, stock)"]:::domainStyle
-        Pedido["Pedido<br/>(items, total, estado_pago)"]:::domainStyle
-        Merma["EventoMerma<br/>(metros_perdidos, motivo, costo)"]:::domainStyle
+        Rollo["RolloTextil & LoteInventario<br/>(codigo, metros, lote_tintoreria)"]:::domainStyle
+        Producto["Producto & PerfilVendedor<br/>(precio, ancho, peso, stock, tienda)"]:::domainStyle
+        Pedido["Pedido (Marketplace Split)<br/>(grupo_checkout, comision_admin, neto_vendedor)"]:::domainStyle
+        Merma["EventoMerma & AlertaVendedor<br/>(mermas, stock_bajo, vip_recomendado)"]:::domainStyle
     end
 
-    subgraph CapaPersistencia ["4. Capa de Persistencia (DAOs y Pool HikariCP)"]
+    subgraph CapaPersistencia ["4. Capa de Persistencia (15 DAOs y Pool HikariCP)"]
         direction LR
-        UsuarioDAO["UsuarioDAO<br/>(Cuentas RBAC)"]:::daoStyle
-        ProductoDAO["ProductoDAO<br/>(Fichas Textiles)"]:::daoStyle
-        PedidoDAO["PedidoDAO<br/>(Transacciones Atómicas)"]:::daoStyle
-        InventarioDAO["InventarioDAO<br/>(Rollos y Lotes)"]:::daoStyle
+        RepoUsuario["JdbcRepositorioUsuarioImpl<br/>(Cuentas RBAC)"]:::daoStyle
+        ProductoDAO["ProductoDAO<br/>(Fichas Textiles y Competencia)"]:::daoStyle
+        TiendaDAO["TiendaVendedorDAO<br/>(Perfiles, Reseñas y Alertas)"]:::daoStyle
+        PedidoDAO["PedidoDAO<br/>(Split Multi-Vendedor ACID)"]:::daoStyle
+        InventarioDAO["InventarioDAO<br/>(Rollos, Lotes y Mermas)"]:::daoStyle
         PagoWompiDAO["PagoWompiDAO<br/>(Auditoría Webhooks)"]:::daoStyle
         ConexionPool[("Conexion (HikariCP)<br/>Pool de 20 conexiones")]:::daoStyle
     end
 
     subgraph MotorPostgres ["5. Base de Datos"]
-        PostgresDB[("PostgreSQL 17<br/>Bloqueo SELECT FOR UPDATE")]:::dbStyle
+        PostgresDB[("PostgreSQL 17<br/>31 Tablas 3FN · 31 FKs · SELECT FOR UPDATE")]:::dbStyle
     end
 
     %% Invocaciones entre capas
     ManejadorAuth -->|Invoca| ServicioAuth
-    ManejadorProd -->|Consulta catálogo| ProductoDAO
+    ManejadorProd -->|Consulta y modera catálogo| ProductoDAO
+    ManejadorTiendas -->|Gestiona tiendas y reseñas| TiendaDAO
+    ManejadorTiendas -->|Evalúa recurrencia y genera alertas| ServicioVIP
     ManejadorPed -->|Ejecuta validación y corte| ServicioCorte
     ManejadorPed -->|Calcula firma y valida pago| ServicioWompi
     ManejadorPed -->|Genera XML| ServicioFac
     ManejadorInv -->|Aplica reglas de fraccionamiento| ServicioCorte
+    ManejadorInv -->|Notifica stock/mermas| TiendaDAO
 
     ServicioCorte -->|Manipula ciclo de vida| Rollo
     ServicioCorte -->|Genera registro| Merma
     ServicioCorte -->|Actualiza metros| InventarioDAO
-    ServicioAuth -->|Consulta usuarios| UsuarioDAO
+    ServicioVIP -->|Consulta frecuencia compras| TiendaDAO
+    ServicioAuth -->|Consulta usuarios| RepoUsuario
     ServicioWompi -->|Registra evento con Savepoint| PagoWompiDAO
 
-    ManejadorPed -->|Persiste orden y detalle| PedidoDAO
+    ManejadorPed -->|Persiste sub-pedidos y comisión| PedidoDAO
 
-    UsuarioDAO --> ConexionPool
+    RepoUsuario --> ConexionPool
     ProductoDAO --> ConexionPool
+    TiendaDAO --> ConexionPool
     PedidoDAO --> ConexionPool
     InventarioDAO --> ConexionPool
     PagoWompiDAO --> ConexionPool
@@ -293,7 +325,7 @@ flowchart TD
     subgraph DispositivosClientes ["1. Nodos de Cliente y Dispositivos de Acceso"]
         direction LR
         cliWeb["PC / Portátil Cliente<br/><b>[Navegador Web: Chrome/Firefox/Safari]</b><br/>React 18 SPA, Catálogo interactivo,<br/>simulador de metraje y Checkout."]:::clientNode
-        cliMovil["Smartphone Cliente / Operario<br/><b>[Navegador Móvil / App Android]</b><br/>Android WebView + Kotlin con<br/>escaneo de códigos QR en bodega."]:::clientNode
+        cliMovil["Smartphone Cliente / Vendedor<br/><b>[Navegador Móvil / App Android]</b><br/>SPA responsiva y lector de códigos QR<br/>para consulta y despacho de pedidos."]:::clientNode
         cliAdmin["Terminal Administrativa<br/><b>[Navegador de Gestión]</b><br/>Paneles ERP, analítica comercial,<br/>gestión de inventario y moderación."]:::clientNode
     end
 
@@ -306,9 +338,9 @@ flowchart TD
 
         subgraph RedBackend ["RED DOCKER: backend-net (Bridge Interno Defensivo Aislado)"]
             direction TB
-            contBackend["Contenedor: backend-java<br/><b>[OpenJDK 17 Slim]</b><br/>Vanilla Java 17 HttpServer (Pool 32 Hilos Concurrentes)<br/>Clean Architecture, motor de corte textil y firma criptográfica.<br/><i>Puerto Expuesto al Host: 8081:8081</i>"]:::containerNode
+            contBackend["Contenedor: backend-java<br/><b>[Eclipse Temurin JRE/JDK 21]</b><br/>Vanilla Java 21 HttpServer (Pool escalable mín. 32 Hilos)<br/>Clean Architecture, Marketplace, motor textil y SHA-256.<br/><i>Puerto Expuesto al Host: 8081:8081</i>"]:::containerNode
 
-            contPostgres[("Contenedor: postgres<br/><b>[PostgreSQL 17 Alpine]</b><br/>25 tablas relacionales 3FN, transacciones ACID,<br/>bloqueos pesimistas SELECT FOR UPDATE e índices B-Tree.<br/><i>Puerto Interno: 5432 (Sin exposición externa)</i>")]:::dbNode
+            contPostgres[("Contenedor: postgres<br/><b>[PostgreSQL 17 Alpine]</b><br/>31 tablas relacionales 3FN y 31 FKs, transacciones ACID,<br/>bloqueos pesimistas SELECT FOR UPDATE e índices B-Tree.<br/><i>Puerto Interno: 5432 (Sin exposición externa)</i>")]:::dbNode
         end
 
         subgraph AlmacenamientoPersistente ["Volúmenes Persistentes de Host"]
@@ -370,13 +402,13 @@ flowchart TD
     end
 
     subgraph NucleoDAndD ["Núcleo Transaccional D&D Textil"]
-        BackendJava["Backend Java 17 + PostgreSQL 17<br/>Validación continua de metraje, transacciones ACID<br/>y orquestación de pedidos"]:::sistemaStyle
+        BackendJava["Backend Java 21 + PostgreSQL 17<br/>Validación continua de metraje, Marketplace Split,<br/>exclusividad VIP y transacciones ACID"]:::sistemaStyle
     end
 
     subgraph CanalesSalida ["Canales de Comunicación Sistema &rarr; Cliente (Notificaciones)"]
-        CanalEmail["Correo Electrónico (SendGrid / SMTP)<br/>• Confirmación de pedido y resumen de metraje<br/>• Factura comercial XML simulada"]:::salidaStyle
+        CanalEmail["Correo Electrónico (SendGrid / SMTP)<br/>• Confirmación de pedido y resumen de metraje<br/>• Factura comercial PDF generada en memoria"]:::salidaStyle
         CanalSMS["Mensajería Celular (Twilio SMS / WhatsApp)<br/>• Alerta de rollo en corte<br/>• Número de guía de transporte nacional"]:::salidaStyle
-        CanalTracking["Portal de Rastreo en Línea (/cliente/rastreo)<br/>• Línea de tiempo interactiva en tiempo real<br/>• Estados: pending &rarr; cutting &rarr; shipped &rarr; delivered"]:::salidaStyle
+        CanalTracking["Portal de Rastreo en Línea (/cliente/pedidos/rastreo)<br/>• Línea de tiempo interactiva en tiempo real<br/>• Estados: pending &rarr; cutting &rarr; shipped &rarr; delivered"]:::salidaStyle
         CanalSoporte["Módulo de Garantías (/cliente/soporte)<br/>• Radicación y seguimiento de tickets postventa"]:::salidaStyle
     end
 
@@ -430,7 +462,7 @@ sequenceDiagram
     UI->>Auth: Redirección OAuth 2.0 / OpenID Connect
     Auth-->>UI: Retorno con Token de Acceso
     UI->>API: POST /api/login (Validación de credenciales / perfil SSO)
-    API-->>UI: Token de sesión emitido y perfil cargado en AuthContext
+    API-->>UI: Token de sesión emitido y perfil cargado en ContextoAutenticacion
     end
 
     %% FASE 3: Compra y Pasarela
@@ -479,7 +511,7 @@ El backend implementa los cinco principios de diseno de Robert C. Martin:
 Cada componente posee una sola razon para cambiar:
 - `ManejadorAutenticacion`: Se limita a capturar la peticion HTTP, verificar cabeceras CORS, deserializar el cuerpo JSON y enviar la respuesta HTTP correspondiente. No ejecuta hashes ni consultas SQL.
 - `ServicioAutenticacion`: Contiene exclusivamente la logica de negocio (generacion de hash SHA-256 en UTF-8, verificacion de suspension de cuenta y evaluacion de roles).
-- `UsuarioDAO` / `JdbcRepositorioUsuarioImpl`: Maneja de forma estricta las sentencias SQL preparadas (`SELECT`, `INSERT`, `UPDATE`), mapeando los conjuntos de resultados (`ResultSet`) a instancias de `Usuario`.
+- `JdbcRepositorioUsuarioImpl`: Maneja de forma estricta las sentencias SQL preparadas (`SELECT`, `INSERT`, `UPDATE`), mapeando los conjuntos de resultados (`ResultSet`) a instancias de `Usuario`.
 
 ### 4.2. O - Open/Closed Principle (Principio de Abierto/Cerrado)
 El despachador central `ServidorApi.java` esta estructurado para incorporar nuevas rutas de la API sin requerir la modificacion de los manejadores existentes. Nuevos metodos de calculo textil o pasarelas de pago extienden las interfaces de dominio sin alterar los flujos ya probados.
@@ -569,7 +601,7 @@ El servidor escucha por defecto en el puerto **`8081`** y expone cabeceras CORS 
 | `GET` | `/api/orders` | Consulta de pedidos segun rol | N/A | 200 |
 | `POST` | `/api/orders` | Creacion de pedido con reserva continua | JSON con datos de envio e items | 201, 400 |
 | `PUT` | `/api/orders/{id}/status` | Cambio de estado (`cutting`, `shipped`) | `{"status":"cutting"}` | 200, 400 |
-| `GET` | `/api/orders/{id}/invoice` | Emision de representacion XML simulada | N/A | 200, 404 |
+| `GET` | `/api/orders/{id}/invoice` | Generacion en memoria de factura electronica en PDF | N/A | 200, 404 |
 | `GET` | `/api/cart` | Obtener items de carrito del usuario | N/A | 200 |
 | `POST` | `/api/cart` | Agregar tela al carrito de compras | `{"productId":14, "quantity":6}` | 200, 400 |
 | `DELETE` | `/api/cart` | Vaciar carrito o eliminar item especifico | Query Param: `productId` (opcional) | 200 |
@@ -578,6 +610,17 @@ El servidor escucha por defecto en el puerto **`8081`** y expone cabeceras CORS 
 | `POST` | `/api/inventory/batches` | Registro de nuevo lote de compra | JSON con lote, metros y proveedor | 201, 400 |
 | `GET` | `/api/inventory/waste` | Historial de mermas y retazos liquidados | N/A | 200 |
 | `POST` | `/api/inventory/waste` | Registro manual de merma en corte | JSON con metros perdidos y motivo | 201, 400 |
+| `GET` | `/api/tiendas` | Directorio publico de tiendas proveedoras reales | Query Params opcionales | 200 |
+| `GET` | `/api/tiendas/{id}` | Perfil publico tipo red social de una tienda y catalogo | N/A | 200, 404 |
+| `GET` / `PUT` | `/api/tiendas/mi-perfil` | Consulta o edicion en vivo de perfil comercial (portada, bio, avatar) | JSON `PerfilVendedor` (`vendedor`) | 200, 403 |
+| `GET` / `POST` | `/api/tiendas/{id}/resenas` | Consulta y publicacion de resenas de tienda (`POST` solo `cliente`) | `{"calificacion":5, "comentario":"..."}` | 200, 201, 403 |
+| `GET` / `PUT` | `/api/vendedor/alertas` | Bandeja y lectura de alertas VIP, stock bajo, mermas y auditoria | `PUT /alertas/{id}` | 200, 403 |
+| `GET` | `/api/clientes/elegibilidad-vip` | Evaluacion de recurrencia del cliente para acceso a telas VIP | N/A (Rol `cliente`) | 200, 401 |
+| `GET` | `/api/productos/{id}/competencia` | Comparador multivendedor de precios y stock para una tela | N/A | 200, 404 |
+| `PUT` | `/api/productos/{id}` | Edicion de tela/precio solo por `vendedor` propietario (`admin` bloqueado) | JSON ficha textil (`403` si admin) | 200, 403 |
+| `PUT` | `/api/productos/{id}/moderar` | Auditoria de catalogo por `administrador` con alerta real (`changes_requested`) | `{"estadoModeracion":"...", "motivo":"..."}` | 200, 400, 403 |
+| `POST` | `/api/inventario/notificar-stock` | Envio real de alerta de stock bajo por `administrador` al vendedor | `{"productoId":..., "mensaje":"..."}` | 200, 403 |
+| `POST` | `/api/inventario/enviar-reporte-mermas` | Envio real de reporte de mermas por `administrador` al vendedor | `{"vendedorId":..., "resumen":"..."}` | 200, 403 |
 | `GET` | `/health/live` | Probe de liveness (servidor vivo) | N/A | 200 |
 | `GET` | `/health/ready` | Probe de readiness (conexion PostgreSQL activa) | N/A | 200, 503 |
 
