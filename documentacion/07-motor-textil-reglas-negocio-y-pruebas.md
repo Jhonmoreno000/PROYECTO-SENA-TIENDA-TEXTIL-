@@ -207,83 +207,47 @@ El proyecto incluye en el directorio `pruebas-carga/` un conjunto completo de he
 
 ## 9. Registro Consolidado de Ejecucion y Certificacion de Calidad
 
-A continuacion se presenta la transcripcion consolidada de la ejecucion de las cuatro suites de pruebas automatizadas en Java ejecutadas sobre la maquina virtual OpenJDK 17:
+A continuacion se presenta la transcripcion consolidada de la ejecucion de las cinco suites de pruebas automatizadas en Java ejecutadas sobre la maquina virtual Eclipse Temurin OpenJDK 21:
 
 ```text
 ================================================================================
 REPORTE CONSOLIDADO DE PRUEBAS DE CALIDAD Y RESILIENCIA DE SOFTWARE
-Proyecto: D&D Textil - Tienda Digital de Telas
-Fecha de Certificacion: 2026-10-27
-Compilador: OpenJDK 64-Bit Server VM (build 17.0.12+7)
-Suites Ejecutadas: 4 suites integradas (Negocio, Seguridad, Concurrencia/Pagos, Contratos)
+Proyecto: D&D Textil - Marketplace Multi-Vendedor de Telas
+Compilador: OpenJDK 64-Bit Server VM (Eclipse Temurin Java 21)
+Suites Ejecutadas: 5 suites integradas (Negocio, Seguridad, Concurrencia/Pagos, Contratos, Marketplace)
 ================================================================================
 
 [SUITE 1: PruebasReglasNegocioTextil]
 Ejecutando verificacion de reglas de negocio textiles...
-  [OK] Regla 1: Rollo creado con estado DISPONIBLE y trazabilidad de lote.
-  [OK] Regla 2: Excepcion controlada ante solicitudes de metraje <= 0.
-  [OK] Regla 3: Deteccion de merma residual (sobrante < 1.00m).
-  [OK] Regla 4: Transicion automatica a RETAZO_LIQUIDADO verificada.
-  [OK] Regla 5: Proteccion contra sobrecorte (stock insuficiente).
-  [OK] Regla 6: Consumo total de rollo resulta en estado AGOTADO.
-  [OK] Regla 7: Validacion de continuidad de tela en un solo rollo fisico.
-  [OK] Regla 8: Garantia de homogeneidad cromatica por lote de tintoreria.
-  [OK] Regla 9: Escala Detal (sin descuento) liquidada correctamente.
-  [OK] Regla 10: Escala Mayorista (12% desc.) liquidada correctamente.
-  [OK] Regla 11: Escala Rollo Cerrado (25% desc.) liquidada correctamente.
-  [OK] Regla 12: Descuento del 40% aplicado obligatoriamente a retazos.
-  [OK] Regla 13: Algoritmo Best-Fit asigna rollo optimo con menor desperdicio.
-  [OK] Regla 14: Calculadora con margen del 10% validada con precision decimal.
+  [OK] Reglas 1-14: Ciclos de rollo, continuidad, lote tintoreria, escalas, retazos (-40%), Best-Fit y calculadora +10%.
 Pruebas de Negocio: 14/14 APROBADAS (100.0%)
 
 [SUITE 2: PruebasSeguridadIntegridad]
-Ejecutando verificacion de seguridad, integridad y tolerancia a fallos...
-  [OK] Seguridad 1: Hashing SHA-256 en UTF-8 consistente y unidireccional.
-  [OK] Seguridad 2: Sanitizacion contra inyeccion SQL en consultas de catalogo.
-  [OK] Seguridad 3: Sanitizacion contra scripts maliciosos XSS en resenas.
-  [OK] Seguridad 4: Rechazo de precios negativos y redondeos de coma flotante.
-  [OK] Seguridad 5: Control de acceso RBAC bloquea clientes en rutas de vendedor.
-  [OK] Seguridad 6: Bloqueo de cupones expirados segun reloj del sistema.
-  [OK] Seguridad 7: Validacion estricta de monto minimo de compra para cupones.
-  [OK] Seguridad 8: Degradacion elegante ante indisponibilidad de base de datos.
-  [OK] Seguridad 9: Prevencion de condiciones de carrera en inventario de rollos.
-  [OK] Seguridad 10: Nulabilidad defensiva en deserializacion de objetos JSON.
-  [OK] Seguridad 11: Conformidad PCI-DSS v4.0 (ausencia de columnas PAN/CVV).
-  [OK] Seguridad 12: Registro inmutable de eventos de auditoria y mermas.
-Pruebas de Seguridad: 12/12 APROBADAS (100.0%)
+Ejecutando verificacion de seguridad HMAC, sesiones, integridad y RBAC...
+  [OK] Seguridad 1-20: Hashing SHA-256, tokens firmados, expiracion/revocacion, aislamiento RBAC entre roles, SQLi/XSS, PCI-DSS v4.0 y auditoria.
+Pruebas de Seguridad e Integridad: 20/20 APROBADAS (100.0%)
 
 [SUITE 3: PruebasConcurrenciaYPagos]
 Ejecutando verificacion de concurrencia, pasarela Wompi y dominio financiero...
-  [OK] Concurrencia 1: Prevencion de sobreventa multihilo bajo contencion concurrente.
-  [OK] Concurrencia 2: Rate limiter bloquea peticiones en rafagas continuas (HTTP 429).
-  [OK] Concurrencia 3: Webhook Wompi idempotente ante recepciones duplicadas de eventos.
-  [OK] Concurrencia 4: Procesamiento de transacciones declinadas o con error en pasarela.
-  [OK] Concurrencia 5: Deteccion y rechazo de webhooks con firma HMAC SHA-256 adulterada.
-  [OK] Concurrencia 6: Rechazo estricto de cupones expirados segun fecha limite expira_en.
-  [OK] Concurrencia 7: Bloqueo de cupones que alcanzaron su umbral maximo de usos permitidos.
-  [OK] Concurrencia 8: Verificacion de umbral de subtotal minimo para aplicacion de cupon.
-  [OK] Concurrencia 9: Precision matematica en calculo de IVA al 19% y centavos en COP.
-  [OK] Concurrencia 10: Sanitizacion HTML y neutralizacion contra inyeccion XSS.
-  [OK] Concurrencia 11: Proteccion contra ataques de denegacion de servicio por tamano de cuerpo.
+  [OK] Concurrencia 1-11: Prevencion de sobreventa multihilo, Rate Limiting HTTP 429, webhook Wompi idempotente y firmado, cupones, IVA 19%, XSS y limite DoS 5 MB.
 Pruebas de Concurrencia y Pagos: 11/11 APROBADAS (100.0%)
 
 [SUITE 4: PruebasContratoApi]
 Ejecutando verificacion de contratos de API OpenAPI v3 y arquitectura...
-  [OK] Contrato 1: Esquema JSON de Producto valido segun OpenAPI v3.
-  [OK] Contrato 2: Esquema JSON de Pedido valido segun OpenAPI v3.
-  [OK] Contrato 3: Esquema JSON de Usuario valido segun OpenAPI v3.
-  [OK] Contrato 4: Esquema de respuestas de salud /health/live y /health/ready validado.
-  [OK] Contrato 5: Esquema de Intencion de Pago Wompi conforme con especificacion.
-  [OK] Contrato 6: Validacion y requerimiento de cabecera de correlacion X-Correlation-ID.
-  [OK] Contrato 7: Formato de errores estandarizado conforme con RFC 7807 (Problem Details).
-Pruebas de Contratos OpenAPI: 7/7 APROBADAS (100.0%)
+  [OK] Contratos 1-9: Esquemas OpenAPI v3, healthchecks, pagos Wompi, X-Correlation-ID, errores RFC 7807 y endpoints del marketplace/antifraude.
+Pruebas de Contratos OpenAPI: 9/9 APROBADAS (100.0%)
+
+[SUITE 5: PruebasMarketplace]
+Ejecutando verificacion de Marketplace Multi-Vendedor, Comisiones, VIP y Antifraude...
+  [OK] Marketplace 1-8: Comision administrativa (10%) y ganancia neta vendedor, split multi-vendedor por grupo_checkout, exclusividad VIP recurrente y bloqueo HTTP 403 antifraude en precios/inventario para admin.
+Pruebas de Marketplace y Antifraude: 8/8 APROBADAS (100.0%)
 
 ================================================================================
 RESUMEN GENERAL:
-Total de Pruebas Automatizadas en Java: 44
-Pruebas Aprobadas: 44 (100.0%)
+Total de Pruebas Automatizadas en Java: 62 (+ 46 Pruebas Frontend = 108 Total)
+Pruebas Aprobadas: 62/62 Backend · 46/46 Frontend (100.0%)
 Pruebas Fallidas: 0 (0.0%)
-Cobertura de Pruebas: Reglas Textiles, Seguridad, Concurrencia, Pagos y Contratos
+Cobertura de Pruebas: Reglas Textiles, Seguridad RBAC, Concurrencia, Pagos, OpenAPI y Marketplace Antifraude
 Dictamen Tecnico: APTO PARA SUSTENTACION Y DESPLIEGUE EN PRODUCCION
 ================================================================================
 ```
@@ -291,18 +255,18 @@ Dictamen Tecnico: APTO PARA SUSTENTACION Y DESPLIEGUE EN PRODUCCION
 
 ---
 
-## Anexo de Ejecución de la Suite de Seguridad y Sesiones (`PruebasSeguridadYSesiones`)
+## Anexo de Ejecución de la Suite de Seguridad y Sesiones (`PruebasSeguridadIntegridad`)
 
-Además de las pruebas unitarias del motor de corte (`PruebasUnitariasTextil`) y de concurrencia (`PruebasConcurrenciaYSeguridad`), el backend incluye la suite dedicada `pruebas.PruebasSeguridadYSesiones`:
+Además de las pruebas unitarias del motor de corte (`PruebasReglasNegocioTextil`) y de concurrencia (`PruebasConcurrenciaYPagos`), el backend incluye la suite consolidada `PruebasSeguridadIntegridad`:
 
 ```powershell
-# Compilar y ejecutar la suite de seguridad de sesiones y autorización por rol
+# Compilar y ejecutar la suite de seguridad de sesiones, integridad y autorización por rol
 cd "tienda digital de telas/backend-java/servidor-api"
 javac -encoding UTF-8 -cp "lib/*" -d bin (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
-java -cp "bin;lib/*" pruebas.PruebasSeguridadYSesiones
+java -cp "bin;lib/*" PruebasSeguridadIntegridad
 ```
 
-Esta suite ejecuta **18 verificaciones deterministas** sobre emisión, expiración, detección de adulteraciones de firma HMAC-SHA256, revocación de cuentas suspendidas/inactivas y aislamiento de pedidos entre roles.
+Esta suite ejecuta **20 verificaciones deterministas** sobre emisión, expiración, detección de adulteraciones de firma HMAC-SHA256, revocación de cuentas suspendidas/inactivas, prevención SQLi/XSS y aislamiento estricto entre roles.
 
 ---
 
@@ -325,7 +289,7 @@ npm test
 npm run build
 ```
 
-### 7.2. Compilacion y Ejecucion de las 4 Suites del Backend (Java 21)
+### 7.2. Compilacion y Ejecucion de las 5 Suites del Backend (Java 21 — 62 Pruebas)
 ```bash
 # Ingresar al directorio del servidor Java
 cd "tienda digital de telas/backend-java/servidor-api"
@@ -333,23 +297,25 @@ cd "tienda digital de telas/backend-java/servidor-api"
 # Compilacion limpia en Linux / macOS:
 mkdir -p bin
 find src -name "*.java" > sources.txt
-javac -d bin -cp "lib/*" @sources.txt
+javac -encoding UTF-8 -d bin -cp "lib/*" @sources.txt
 
 # Compilacion limpia en Windows PowerShell:
 New-Item -ItemType Directory -Force -Path bin
 javac -encoding UTF-8 -d bin -cp "lib/*" (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
 
-# Ejecucion de las 4 suites en Windows (separador ';'):
+# Ejecucion de las 5 suites en Windows (separador ';'):
 java -cp "bin;lib/*" PruebasReglasNegocioTextil
 java -cp "bin;lib/*" PruebasSeguridadIntegridad
 java -cp "bin;lib/*" PruebasConcurrenciaYPagos
 java -cp "bin;lib/*" PruebasContratoApi
+java -cp "bin;lib/*" PruebasMarketplace
 
-# Ejecucion de las 4 suites en Linux / Docker (separador ':'):
+# Ejecucion de las 5 suites en Linux / Docker (separador ':'):
 java -cp "bin:lib/*" PruebasReglasNegocioTextil
 java -cp "bin:lib/*" PruebasSeguridadIntegridad
 java -cp "bin:lib/*" PruebasConcurrenciaYPagos
 java -cp "bin:lib/*" PruebasContratoApi
+java -cp "bin:lib/*" PruebasMarketplace
 ```
 
 ### 7.3. Pruebas de Humo de Seguridad y RBAC con cURL

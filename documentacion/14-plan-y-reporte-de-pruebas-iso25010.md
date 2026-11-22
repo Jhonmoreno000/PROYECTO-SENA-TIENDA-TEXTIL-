@@ -2,7 +2,7 @@
 
 > **Estándar de Referencia:** ISO/IEC 25010:2011 (SQuaRE) / IEEE 829  
 > **Estado del Dictamen QA:** **100 % APROBADO (0 Fallos Críticos / 0 Regresiones)**  
-> **Cobertura Funcional y No Funcional:** Backend Java 21 (4 suites nativas) + Frontend React/ESM (38 aserciones) + Pruebas de Carga k6
+> **Cobertura Funcional y No Funcional:** Backend Java 21 (5 suites nativas · 62 aserciones) + Frontend React/ESM (46 aserciones) = **108 pruebas automatizadas** + Pruebas de Carga k6
 
 ---
 
@@ -24,16 +24,17 @@ El aseguramiento de calidad de **D&D Textil** se diseñó bajo un enfoque de **V
 
 ```mermaid
 flowchart TD
-    QA["Arnés de Pruebas Automatizadas D&D Textil"] --> B1["Suite Backend 1: PruebasUnitariasTextil (14 pruebas)"]
-    QA --> B2["Suite Backend 2: PruebasSeguridadYSesiones (18 pruebas)"]
-    QA --> B3["Suite Backend 3: PruebasConcurrenciaYSeguridad (11 pruebas)"]
-    QA --> B4["Suite Backend 4: ValidadorContratoOpenAPI (Contrato v3.0.3)"]
-    QA --> F1["Suite Frontend: ejecutar-pruebas-frontend.mjs (38 pruebas)"]
+    QA["Arnés de Pruebas Automatizadas D&D Textil (108 Pruebas)"] --> B1["Suite Backend 1: PruebasReglasNegocioTextil (14 pruebas)"]
+    QA --> B2["Suite Backend 2: PruebasSeguridadIntegridad (20 pruebas)"]
+    QA --> B3["Suite Backend 3: PruebasConcurrenciaYPagos (11 pruebas)"]
+    QA --> B4["Suite Backend 4: PruebasContratoApi (9 pruebas · Contrato v3.0.3)"]
+    QA --> B5["Suite Backend 5: PruebasMarketplace (8 pruebas · VIP, Comisiones, Antifraude)"]
+    QA --> F1["Suite Frontend: ejecutar-pruebas-frontend.mjs (46 pruebas)"]
 ```
 
 ---
 
-## 2. Suite Backend 1: Reglas de Negocio y Motor de Corte Textil (`PruebasUnitariasTextil.java`)
+## 2. Suite Backend 1: Reglas de Negocio y Motor de Corte Textil (`PruebasReglasNegocioTextil.java` — 14 Pruebas)
 
 Esta suite verifica el núcleo de dominio textil (`ServicioCorteTextil`, `RolloTela`, `CalculadoraPreciosTextil`) asegurando precisión financiera y física en la bodega:
 
@@ -56,7 +57,7 @@ Esta suite verifica el núcleo de dominio textil (`ServicioCorteTextil`, `RolloT
 
 ---
 
-## 3. Suite Backend 2: Seguridad de Sesiones HMAC-SHA256 y Autorización RBAC (`PruebasSeguridadYSesiones.java`)
+## 3. Suite Backend 2: Seguridad de Sesiones HMAC-SHA256, Integridad y Autorización RBAC (`PruebasSeguridadIntegridad.java` — 20 Pruebas)
 
 Suite introducida para certificar el blindaje criptográfico de sesiones (`TokenSesion`), la revalidación de estado en base de datos (`ManejadorBase.identidadVigente`) y el aislamiento estricto de datos entre clientes y vendedores (`ManejadorPedidos.puedeVerPedido`):
 
@@ -74,10 +75,12 @@ Suite introducida para certificar el blindaje criptográfico de sesiones (`Token
 | **SEC-10** | Aislamiento de pedidos por vendedor de la línea | Un vendedor (`id=5`) solo puede consultar pedidos cargados con sus líneas de producto (`idVendedor=5`). | **APROBADO** |
 | **SEC-11** | Visibilidad global exclusiva para Administrador | El rol `administrador` / `admin` tiene autorización para auditar cualquier pedido del sistema. | **APROBADO** |
 | **SEC-12** | Protección de `PUT /api/usuarios/{id}` | Solo un administrador autenticado puede cambiar roles o estados de cuentas de usuario. | **APROBADO** |
+| **SEC-13..18** | Integridad Hash, SQLi, Path Traversal, Habeas Data, PCI-DSS, SSO, Logs JSON y Best-Fit | Validación PBKDF2 con sal + compatibilidad SHA-256 legado, bloqueo `../`, neutralización SQLi, Ley 1581, ausencia PAN/CVV, extracción Google/Microsoft SSO y algoritmo Best-Fit sobre rollos. | **APROBADO** |
+| **SEC-19..20** | Reglas financieras Wompi y concurrencia de metraje `SELECT FOR UPDATE` | Consistencia de subtotales/descuentos en centavos y serialización pesimista sin saldo negativo (**20/20 verificaciones superadas**). | **APROBADO** |
 
 ---
 
-## 4. Suite Backend 3: Concurrencia Multi-Hilo, Firma Wompi y DAST (`PruebasConcurrenciaYSeguridad.java`)
+## 4. Suite Backend 3: Concurrencia Multi-Hilo, Firma Wompi y DAST (`PruebasConcurrenciaYPagos.java` — 11 Pruebas)
 
 Esta suite somete el motor transaccional a condiciones de carrera extremas y vectores de ataque OWASP Top 10:
 
@@ -96,12 +99,25 @@ Esta suite somete el motor transaccional a condiciones de carrera extremas y vec
 
 ## 5. Suite Backend 4 (Contrato OpenAPI v3) y Suite Automatizada Frontend
 
-### 5.1. Validador de Contrato OpenAPI (`ValidadorContratoOpenAPI.java`)
+### 5.1. Validador de Contrato OpenAPI (`PruebasContratoApi.java` — 9 Pruebas)
 
 - Analiza estáticamente `documentacion/openapi_tienda_textil.yaml` y lo contrasta con los contextos registrados en `ServidorApi.java`.
 - Certifica que los endpoints críticos (`/api/login`, `/api/register`, `/api/products`, `/api/orders`, `/api/wompi/signature`, `/api/wompi/webhook`, `/health/live`, `/health/ready`) estén documentados con sus esquemas JSON, códigos de estado HTTP (`200`, `201`, `400`, `401`, `403`, `404`, `503`) y esquema de seguridad `BearerAuth`.
 
-### 5.2. Suite Automatizada del Frontend (`tienda digital de telas/ejecutar-pruebas-frontend.mjs`)
+### 5.2. Suite Backend 5: Marketplace Multi-Vendedor, Comisiones, VIP y Antifraude (`PruebasMarketplace.java` — 8 Pruebas)
+
+| ID Caso | Caso de Prueba | Regla Marketplace / Antifraude Verificada | Resultado |
+| :--- | :--- | :--- | :---: |
+| **MKT-01** | Modelo `PerfilVendedor` tipo red social | Serialización de portada, avatar, ciudad, calificación promedio, reseñas, teléfono real y tasa de comisión (10 %). | **APROBADO** |
+| **MKT-02** | División multi-vendedor y comisión administrativa | Sub-pedidos con `grupo_checkout` compartido liquidan exactamente `monto_comision_admin` y `ganancia_neta_vendedor`. | **APROBADO** |
+| **MKT-03** | Algoritmo `ServicioExclusividadVIP` | Rechaza acceso VIP a visitantes anónimos (`usuarioId=0`) y valida umbrales de recurrencia para desbloquear telas exclusivas. | **APROBADO** |
+| **MKT-04** | Métricas competitivas de producto | Validación de distintivo *Más Vendido*, descuento propio del vendedor e identidad de tienda. | **APROBADO** |
+| **MKT-05** | `AlertaVendedor` y `ResenaVendedor` | Entidades de oportunidad VIP (`demanda_vip` / `activar_exclusivo`) y reseñas directas al proveedor. | **APROBADO** |
+| **MKT-06** | Restricción de compras estricta a `cliente` | Únicamente `TokenSesion.Identidad.esCliente()` autoriza compra; `vendedor` y `administrador` quedan bloqueados. | **APROBADO** |
+| **MKT-07** | Moderación localizada sin códigos crudos | Mapeo bidireccional limpio en español (*Aprobado*, *Pendiente*, *Cambios solicitados*, *Suspendido*). | **APROBADO** |
+| **MKT-08** | Trazabilidad real de vendedor en `LoteInventario` y `EventoMerma` | Inclusión obligatoria de `sellerId`, `storeName` y `sellerEmail` reales desde PostgreSQL sin datos ficticios. | **APROBADO** |
+
+### 5.3. Suite Automatizada del Frontend (`tienda digital de telas/ejecutar-pruebas-frontend.mjs` — 46 Pruebas)
 
 Ejecutable directamente con `node "tienda digital de telas/ejecutar-pruebas-frontend.mjs"`:
 
@@ -112,17 +128,19 @@ Ejecutable directamente con `node "tienda digital de telas/ejecutar-pruebas-fron
 
 ---
 
-## 6. Matriz de Trazabilidad y Cierre de Defectos (v1.0 → v2.0)
+## 6. Matriz de Trazabilidad y Cierre de Defectos (v1.0 → v3.0)
 
-Durante la auditoría integral de calidad e integración entre repositorios se identificaron, corrigieron y certificaron con pruebas de regresión los siguientes hallazgos:
+Durante la auditoría integral de calidad, seguridad Marketplace e integración entre repositorios se identificaron, corrigieron y certificaron con pruebas de regresión los siguientes hallazgos:
 
 | Código Defecto | Severidad | Descripción del Hallazgo Original | Solución Implementada y Certificada | Estado |
 | :--- | :---: | :--- | :--- | :---: |
 | **BUG-SEC-01** | Crítica | Las peticiones autenticadas confiaban en cabeceras manipulables por el cliente sin firma criptográfica del servidor. | Implementación de `TokenSesion` con firma **HMAC-SHA256**, expiración de 12 h y revalidación de rol/estado en base de datos en cada petición (`ManejadorBase`). | **CERRADO** |
 | **BUG-SEC-02** | Alta | El endpoint `GET /api/orders` permitía que un rol no administrativo recibiera pedidos de otros clientes o de otros vendedores. | Filtrado estricto en `ManejadorPedidos` y `PedidoDAO`: cada cliente ve solo sus compras y cada vendedor ve únicamente las líneas de sus productos. | **CERRADO** |
 | **BUG-SEC-03** | Alta | El endpoint `PUT /api/usuarios/{id}` no exigía verificación de rol administrador en backend. | Restricción exclusiva a identidades vigentes con `esAdministrador() == true` en `ManejadorUsuarios`. | **CERRADO** |
+| **BUG-SEC-04** | Crítica | El panel administrativo permitía editar precios de vendedores o alterar lotes/mermas directamente, y visitantes/vendedores/admin podían iniciar checkout. | Bloqueo `HTTP 403` antifraude para `administrador` sobre mutación de precios/inventario (`ManejadorProductos`, `ManejadorInventario`), notificaciones reales hacia `alertas_vendedor` y `<ProtectedRoute roles="cliente" strict={true}>` en `/checkout` y `/pago`. | **CERRADO** |
+| **BUG-MKT-01** | Alta | El dashboard administrativo mostraba métricas/vendedores hardcodeados y códigos crudos de moderación (`changes_requested`). | Eliminación total de arreglos ficticios en frontend; carga real de 4 proveedores desde PostgreSQL y mapeo de estado localizado con observación obligatoria en `/moderar`. | **CERRADO** |
 | **BUG-UX-01** | Media | Las imágenes locales inexistentes en `/uploads/` recibían el `index.html` con estado `200 OK` en el servidor de desarrollo, rompiendo el `onError` de `<img>`. | Middleware en `vite.config.js` que verifica existencia física en `public/uploads` y devuelve `404 Not Found` inmediato cuando el archivo no existe. | **CERRADO** |
-| **BUG-UX-02** | Media | El filtro de proyecto **"Tapicería"** no coincidía con categorías sin tilde (`"Tapiceria"`) y **"Verano"** omitía telas con tilde en `material` (`"Algodón"`). | Normalización NFD sin diacríticos tanto en `category` como en `material` dentro de `ProductGrid.jsx`. | **CERRADO** |
+| **BUG-UX-02** | Media | El filtro de proyecto **"Tapicería"** no coincidía con categorías sin tilde (`"Tapiceria"`) y **"Verano"** omitía telas con tilde en `material` (`"Algodón"`). | Normalización NFD sin diacríticos tanto en `category` como en `material` dentro de `ProductGrid.jsx`, más scroll paginado incremental sin lag y contraste cromático 60-30-10. | **CERRADO** |
 | **BUG-OPS-01** | Media | En `docker-compose.yml`, `DB_URL` del archivo `.env` (`localhost`) sobrescribía el hostname interno `db` de la red Docker. | Fijación explícita de `DB_URL: jdbc:postgresql://db:5432/...` y `PORT: 8081` en el servicio `backend` de `docker-compose.yml`. | **CERRADO** |
 
-Suite Frontend (Node.js ESM):     46 / 46 pruebas superadas (100%)
+> **Consolidado Final Verificado:** **62 / 62 pruebas Backend Java** (14 Reglas Textiles + 20 Seguridad/Integridad + 11 Concurrencia/Pagos + 9 Contratos API + 8 Marketplace/Antifraude) + **46 / 46 pruebas Frontend** = **108 / 108 pruebas superadas (100 %)**.
