@@ -31,7 +31,7 @@ const isNative = Capacitor.isNativePlatform();
 const bottomNavLinks = [
     { name: 'Inicio', path: '/', icon: Inicio },
     { name: 'Catálogo', path: '/catalogo', icon: Store },
-    { name: 'Nosotros', path: '/nosotros', icon: Info },
+    { name: 'Tiendas', path: '/tiendas', icon: LayoutDashboard },
     { name: 'Contacto', path: '/contacto', icon: Phone },
 ];
 
@@ -55,6 +55,7 @@ function Encabezado() {
     const navLinks = [
         { name: 'Inicio', path: '/' },
         { name: 'Catálogo', path: '/catalogo' },
+        { name: 'Tiendas', path: '/tiendas' },
         { name: 'Nosotros', path: '/nosotros' },
         { name: 'Contacto', path: '/contacto' },
     ];
