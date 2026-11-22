@@ -46,6 +46,7 @@ services:
       WOMPI_ENV: ${WOMPI_ENV:-sandbox}
     ports:
       - "${BACKEND_PORT:-8081}:8081"
+      - "${WS_PORT:-8082}:8082"
     networks:
       - backend-net
       - frontend-net

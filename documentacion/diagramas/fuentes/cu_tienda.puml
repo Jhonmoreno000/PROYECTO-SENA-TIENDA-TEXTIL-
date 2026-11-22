@@ -16,6 +16,7 @@ rectangle "D&D Textil" {
   package "Cuenta" {
     usecase "CU-03 Registrarse" as CU03
     usecase "CU-04 Iniciar sesión" as CU04
+    usecase "Iniciar con Google\no Microsoft" as SSO
     usecase "Aceptar Habeas Data" as HD
   }
   package "Institucional" {
@@ -29,6 +30,8 @@ rectangle "D&D Textil" {
     usecase "Registrar datos\nde envío" as ENV
     usecase "Pagar con tarjeta" as TAR
     usecase "Pagar con PSE" as PSE
+    usecase "Pagar con Nequi\no Bre-B" as NEQ
+    usecase "Pagar contraentrega" as CON
   }
   package "Posventa" {
     usecase "CU-07 Consultar pedidos\ny rastrear envío" as CU07
@@ -49,26 +52,32 @@ V --> CU04
 V --> CU05
 V --> CU13
 V --> CU14
+V --> CU10
 
 C --> CU06
 C --> CU07
 C --> CU08
 C --> CU09
-C --> CU10
 C --> CU11
 C --> CU12
 
 CU02 ..> LR : <<include>>
 CU03 ..> HD : <<include>>
+CU04 <.. SSO : <<extend>>
 CU05 <.. CUP : <<extend>>
 CU06 ..> ENV : <<include>>
 CU06 <.. TAR : <<extend>>
 CU06 <.. PSE : <<extend>>
+CU06 <.. NEQ : <<extend>>
+CU06 <.. CON : <<extend>>
 
 legend right
   Cliente hereda todo lo que hace el Visitante.
   <<include>>: siempre ocurre como parte del caso.
   <<extend>>: ocurre solo si el usuario lo elige.
-  CU-06 a CU-12 exigen sesión iniciada (CU-04).
+  CU-07 a CU-09, CU-11 y CU-12 exigen sesión iniciada (CU-04).
+  La lista de deseos (CU-10) funciona sin sesión desde /favoritos.
+  Los medios de pago son simulados. En el código actual CU-06
+  no exige sesión (ver observación 4 del mapa de navegación).
 endlegend
 @enduml

@@ -2,7 +2,7 @@ name: CI/CD Pipeline - Tienda Textil SENA
 
 on:
   push:
-    branches: [ "main", "master", "feature/**", "desarrollo" ]
+    branches: [ "main", "master", "feature/**", "feat/**", "fix/**", "docs/**", "desarrollo" ]
   pull_request:
     branches: [ "main", "master" ]
 
@@ -30,6 +30,11 @@ jobs:
         run: |
           cd "tienda digital de telas"
           npm run lint
+
+      - name: Auditoria de seguridad de dependencias (DevSecOps)
+        run: |
+          cd "tienda digital de telas"
+          npm audit --audit-level=critical || true
 
       - name: Ejecutar Pruebas Automatizadas del Frontend
         run: |
@@ -69,6 +74,7 @@ jobs:
           java -cp "bin:lib/*" PruebasConcurrenciaYPagos
           java -cp "bin:lib/*" PruebasContratoApi
           java -cp "bin:lib/*" PruebasMarketplace
+          java -cp "bin:lib/*" PruebasWebSocket
 
   docker-compose-test:
     name: Prueba de Docker Compose

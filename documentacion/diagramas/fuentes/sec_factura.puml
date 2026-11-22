@@ -14,9 +14,8 @@ box "Backend (Java)" #FBF7FA
 end box
 database "PostgreSQL" as DB
 
-U -> UI : "Descargar factura" del pedido N
+U -> UI : «Descargar factura» del pedido N
 UI -> MF : GET /api/facturas/N
-activate MF
 MF -> DAO : obtenerPedidoPorId(N)
 DAO -> DB : SELECT … FROM pedidos WHERE id = N
 DB --> DAO : pedido
@@ -24,24 +23,24 @@ DAO --> MF : Pedido
 alt pedido no existe
   MF --> UI : 404 {error}
 else
-  MF -> DB : SELECT name, email FROM <b>users</b> WHERE id = ?
-  DB --> MF : cliente (tabla en inglés)
-  MF -> DB : SELECT … FROM <b>order_items</b> JOIN <b>products</b>\nWHERE order_id = N
-  DB --> MF : artículos (tablas en inglés)
-  MF -> MF : subtotal = Σ cantidad × precio\nIVA = subtotal × 19 %\ntotal = pedido.total
-  MF -> SF : generarFactura(N, cliente, artículos, subtotal, IVA, total)
-  activate SF
-  SF -> SF : encabezado, datos del cliente,\ntabla de artículos, totales,\nvalor en letras, marca de agua
+  MF -> DAO : obtenerCabeceraFactura(N)
+  DAO -> DB : SELECT nombre_cliente, correo_cliente, direccion_envio,\nmetodo_pago, subtotal, monto_descuento, costo_envio,\nmonto_impuesto, documento_cliente FROM pedidos
+  DB --> DAO : cabecera
+  DAO --> MF : datos del cliente y montos guardados
+  MF -> DAO : obtenerArticulosFactura(N)
+  DAO -> DB : SELECT … FROM items_pedido\nLEFT JOIN productos WHERE pedido_id = N
+  DB --> DAO : artículos
+  DAO --> MF : lista de artículos
+  MF -> MF : usa los montos guardados en el pedido;\nsi faltan: subtotal = Σ cantidad × precio,\nIVA = (subtotal − descuento) × 19 %
+  MF -> SF : generarFactura(N, cliente, artículos, subtotal,\ndescuento, envío, IVA, total, método de pago)
+  SF -> SF : encabezado con CUFE, datos del cliente,\ntabla de artículos, totales,\nvalor en letras, marca de agua
   SF --> MF : byte[] PDF
-  deactivate SF
   MF --> UI : 200 application/pdf\nFAC-00000N.pdf
-  deactivate MF
   UI --> U : descarga el archivo
 end
 
 note over MF, DB
-  El pedido se lee de <b>pedidos</b> (español), pero el cliente y los artículos
-  se leen de <b>users</b> y <b>order_items</b> (inglés). Para un pedido creado desde
-  la tienda la factura sale sin artículos y con datos de cliente equivocados.
+  Todo se lee de las tablas en español (pedidos, items_pedido, productos).
+  El manejador no comprueba el rol ni que el pedido sea del usuario que lo pide.
 end note
 @enduml

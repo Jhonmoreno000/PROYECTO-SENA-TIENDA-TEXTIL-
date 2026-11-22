@@ -75,7 +75,7 @@ El diseño del catálogo y de las etiquetas térmicas de **D&D Textil** está al
 
 ### 4.2. Clasificación Contable y Operativa de Mermas en Bodega
 
-En el módulo **Calculadora de Merma** (`/admin/inventario/mermas`), toda baja de metraje se clasifica bajo una de las siguientes causales auditables:
+En el módulo **Calculadora de Merma** (`/admin/inventario/merma`), toda baja de metraje se clasifica bajo una de las siguientes causales auditables:
 
 - **Defecto de Fábrica / Tejeduría:** nudos, hilos rotos o barrado de tintorería detectado al desenrollar la pieza (reclamable al proveedor).
 - **Daño por Manipulación o Almacenamiento:** humedad, manchas o rasgaduras ocurridas en estantería o mesa de corte.

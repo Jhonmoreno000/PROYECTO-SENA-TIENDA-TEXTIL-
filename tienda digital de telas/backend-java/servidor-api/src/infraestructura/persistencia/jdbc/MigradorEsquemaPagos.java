@@ -86,7 +86,22 @@ public final class MigradorEsquemaPagos {
             "  carga_util TEXT," +
             "  recibido_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
             ")",
-            "CREATE INDEX IF NOT EXISTS ix_eventos_pago_referencia ON eventos_pago_wompi(referencia_pago)"
+            "CREATE INDEX IF NOT EXISTS ix_eventos_pago_referencia ON eventos_pago_wompi(referencia_pago)",
+
+            // 29. Tabla y trazabilidad de Auditoría de Seguridad (Audit Logging Forense)
+            "CREATE TABLE IF NOT EXISTS auditoria_sistema (" +
+            "  id SERIAL PRIMARY KEY," +
+            "  usuario_id INTEGER," +
+            "  rol VARCHAR(50)," +
+            "  accion VARCHAR(100) NOT NULL," +
+            "  recurso VARCHAR(100)," +
+            "  ip_origen VARCHAR(45)," +
+            "  detalles TEXT," +
+            "  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+            ")",
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_usuario ON auditoria_sistema(usuario_id)",
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_accion ON auditoria_sistema(accion)",
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_fecha ON auditoria_sistema(fecha_creacion)"
         };
 
         try (Connection con = Conexion.obtenerConexion(); Statement st = con.createStatement()) {

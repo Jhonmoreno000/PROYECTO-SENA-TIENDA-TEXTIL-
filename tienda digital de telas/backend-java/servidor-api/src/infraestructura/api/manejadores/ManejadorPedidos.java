@@ -190,6 +190,13 @@ public class ManejadorPedidos extends ManejadorBase {
             int idPedido = idsPedidos.isEmpty() ? -1 : idsPedidos.get(0);
 
             if (idPedido > 0) {
+                try {
+                    infraestructura.api.websocket.ServidorWebSocket.transmitir("NUEVO_PEDIDO", java.util.Map.of(
+                            "idPedido", idPedido,
+                            "estado", "pendiente",
+                            "total", total
+                    ));
+                } catch (RuntimeException ignored) {}
                 JsonObject respObj = new JsonObject();
                 respObj.addProperty("success", true);
                 respObj.addProperty("orderId", idPedido);
@@ -243,6 +250,7 @@ public class ManejadorPedidos extends ManejadorBase {
             boolean exito = pedidoDAO.actualizarPedido(idPedido, estadoNorm, numeroGuia, notas);
 
             if (exito) {
+                infraestructura.api.websocket.ServidorWebSocket.transmitirPedido(idPedido, estadoNorm);
                 Pedido pedidoActual = pedidoDAO.obtenerPedidoPorId(idPedido);
                 if (pedidoActual != null && pedidoActual.getCorreoCliente() != null && !pedidoActual.getCorreoCliente().isBlank()) {
                     String correo = pedidoActual.getCorreoCliente();

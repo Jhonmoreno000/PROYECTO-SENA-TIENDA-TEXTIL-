@@ -156,7 +156,7 @@ public abstract class ManejadorBase implements HttpHandler {
      * @param intercambio Contexto de la petición HTTP (`HttpExchange`).
      * @return Dirección IP del cliente (`String`).
      */
-    private String obtenerIpCliente(HttpExchange intercambio) {
+    protected String obtenerIpCliente(HttpExchange intercambio) {
         String ipRemota = "127.0.0.1";
         boolean esProxyConfiable = false;
         if (intercambio.getRemoteAddress() != null && intercambio.getRemoteAddress().getAddress() != null) {

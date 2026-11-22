@@ -12,7 +12,7 @@
 
 ## 1. Iniciar sesión
 
-Todas las peticiones pasan primero por `ManejadorBase.handle()`, que agrega CORS, aplica el límite de 120 peticiones por minuto por IP, registra un log en JSON y convierte `ExcepcionDominio` en una respuesta 400.
+El inicio de sesión comprueba primero el bloqueo por intentos fallidos (`ProtectorFuerzaBruta`), verifica la contraseña con PBKDF2 y, si es correcta, emite un token firmado (`TokenSesion`, 12 horas) que el frontend envía en las peticiones siguientes.
 
 ![1. Iniciar sesión](diagramas/sec_login.png)
 
@@ -22,56 +22,42 @@ Todas las peticiones pasan primero por `ManejadorBase.handle()`, que agrega CORS
 sequenceDiagram
     autonumber
     actor U as Usuario
-    box Frontend - React
     participant UI as IniciarSesion.jsx
     participant CTX as ContextoAutenticacion
-    end
-    box Backend - Java
-    participant BASE as ManejadorBase<br/>(handle)
     participant MA as ManejadorAutenticacion
+    participant PFB as ProtectorFuerzaBruta
     participant SA as ServicioAutenticacion
     participant REPO as JdbcRepositorioUsuarioImpl
-    end
+    participant TK as TokenSesion
     participant DB as PostgreSQL
+
     U->>UI: escribe correo y contraseña
     UI->>CTX: login(email, password)
-    CTX->>BASE: POST /api/iniciar-sesion<br/>{email, password}
-    activate BASE
-    BASE->>BASE: límite de 120 peticiones/min por IP
-    alt límite superado
-    BASE-->>CTX: 429 Demasiadas peticiones
+    CTX->>MA: POST /api/iniciar-sesion
+    MA->>PFB: estaBloqueado(correo, IP)
+    alt 5 intentos fallidos previos
+        MA-->>CTX: 429 con segundos restantes
+        UI-->>U: "Cuenta bloqueada temporalmente"
     end
-    BASE->>MA: procesarPeticion()
-    activate MA
     MA->>SA: iniciarSesion(correo, contrasena)
-    activate SA
-    SA->>SA: generarHashContrasena()<br/>SHA-256
-    SA->>REPO: buscarPorCorreoYValidarContrasena(correo, hash)
-    REPO->>DB: SELECT … FROM usuarios<br/>WHERE correo = ? AND contrasena_hash = ?<br/>AND activo = true
+    SA->>REPO: buscar usuario por correo
+    REPO->>DB: SELECT ... FROM usuarios WHERE correo = ?
     DB-->>REPO: fila o vacío
-    REPO-->>SA: Optional de Usuario
-    alt credenciales incorrectas, cuenta inactiva o suspendida
-    SA-->>MA: ExcepcionDominio
-    MA-->>BASE: (excepción)
-    BASE-->>CTX: 400 {error}
-    CTX-->>UI: success = false
-    UI-->>U: "Credenciales incorrectas"
+    SA->>SA: verifica la contraseña con PBKDF2
+    alt credenciales incorrectas o cuenta suspendida
+        SA-->>MA: ExcepcionDominio
+        MA->>PFB: registrarFallo(correo, IP)
+        MA-->>CTX: 400 {error}
+        UI-->>U: "Credenciales incorrectas"
     else credenciales válidas
-    SA->>REPO: actualizarUltimoAcceso(id)
-    REPO->>DB: UPDATE usuarios SET ultimo_acceso = NOW()
-    SA-->>MA: Usuario
-    deactivate SA
-    MA-->>BASE: 200 {success, user}
-    deactivate MA
-    BASE->>BASE: registrarLogJson(INFO)
-    BASE-->>CTX: 200 {success, user}
-    deactivate BASE
-    CTX->>CTX: normaliza el rol y guarda<br/>authUser en localStorage
-    CTX-->>UI: success = true
-    UI->>UI: navega según rol<br/>cliente → /cliente · vendedor → /vendedor · admin → /admin
-    UI-->>U: panel de su rol
+        SA-->>MA: Usuario
+        MA->>TK: emitir(idUsuario, rol)
+        TK-->>MA: token firmado HMAC-SHA256 (12 h)
+        MA-->>CTX: 200 {success, user, token}
+        CTX->>CTX: guarda authUser y token en localStorage
+        UI-->>U: panel de su rol
     end
-    Note over CTX,BASE: El backend no emite token ni sesión: el frontend guarda el usuario<br/>en localStorage y las demás rutas de la API no verifican el rol.
+    Note over CTX,TK: Las peticiones siguientes llevan Authorization: Bearer token
 ```
 
 </details>
@@ -88,60 +74,51 @@ La validación ocurre dos veces: en el navegador con zod y en `ServicioAutentica
 sequenceDiagram
     autonumber
     actor U as Visitante
-    box Frontend - React
     participant UI as Registro.jsx
     participant CTX as ContextoAutenticacion
-    end
-    box Backend - Java
     participant MA as ManejadorAutenticacion
     participant SA as ServicioAutenticacion
     participant REPO as JdbcRepositorioUsuarioImpl
-    end
     participant DB as PostgreSQL
-    U->>UI: nombre, correo, contraseña<br/>y confirmación
-    UI->>UI: valida con zod<br/>(nombre ≥ 2, correo válido, clave ≥ 6)
+    U->>UI: nombre, correo, contraseña, confirmación<br/>y casilla de autorización de datos
+    UI->>UI: valida con zod (nombre ≥ 2, correo válido,<br/>clave ≥ 8, confirmación igual, casilla marcada)
     alt datos inválidos
-    UI-->>U: mensajes en el formulario
+        UI-->>U: mensajes en el formulario
     else datos válidos
-    UI->>CTX: register(datos)
-    CTX->>MA: POST /api/registro<br/>{name, email, password}
-    activate MA
-    MA->>MA: aceptaHabeasData = true<br/>(no viene en la petición)
-    MA->>SA: registrarCliente(nombre, correo, contrasena, true)
-    activate SA
-    alt faltan campos
-    SA-->>MA: ExcepcionDominio
-    MA-->>CTX: 400 {error}
-    CTX-->>UI: muestra el error
-    else
-    SA->>SA: rol = "cliente"<br/>hash SHA-256
-    SA->>REPO: guardar(usuario, hash)
-    REPO->>DB: INSERT INTO usuarios
-    alt correo repetido (UNIQUE)
-    DB-->>REPO: error
-    REPO-->>SA: false
-    SA-->>MA: ExcepcionDominio("…el correo ya exista")
-    MA-->>CTX: 400 {error}
-    else
-    DB-->>REPO: ok
-    REPO-->>SA: true
-    SA-->>MA: ok
-    deactivate SA
-    MA-->>CTX: 201 {success}
-    deactivate MA
-    CTX-->>UI: cuenta creada
-    UI-->>U: redirige a Inicio (/)
+        UI->>CTX: register(datos)
+        CTX->>MA: POST /api/registro {name, email, password, aceptaHabeasData}
+        MA->>SA: registrarCliente(nombre, correo, contrasena, aceptaHabeasData)
+        alt no acepta la política, faltan campos, correo inválido o clave < 8
+            SA-->>MA: ExcepcionDominio
+            MA-->>CTX: 400 {error}
+            CTX-->>UI: muestra el error
+        else
+            SA->>SA: rol = "cliente"<br/>hash PBKDF2 (10 000 iteraciones + sal)
+            SA->>REPO: guardar(usuario, hash)
+            REPO->>DB: INSERT INTO usuarios
+            alt correo repetido (UNIQUE)
+                DB-->>REPO: error
+                REPO-->>SA: false
+                SA-->>MA: ExcepcionDominio("…el correo ya exista")
+                MA-->>CTX: 400 {error}
+            else
+                DB-->>REPO: ok
+                REPO-->>SA: true
+                MA-->>CTX: 201 {success}
+                CTX->>MA: POST /api/iniciar-sesion (login automático)
+                MA-->>CTX: 200 {usuario, token}
+                UI-->>U: «¡Cuenta creada!» y redirige a Inicio (/)
+            end
+        end
     end
-    end
-    end
-    Note over UI,MA: El formulario no tiene casilla de autorización de datos (Ley 1581 de 2012)<br/>y el frontend no envía el campo, el backend lo da por aceptado.
+    Note over UI,SA: La autorización de datos (Ley 1581 de 2012) se pide en el formulario y el backend la exige;<br/>la fecha de aceptación no se guarda en la base de datos.
 ```
 
 </details>
 
 ## 3. Realizar compra
 
-Es el flujo más importante y el que más diferencias tiene con los requisitos: no hay pasarela de pago, los datos de envío no se guardan y si falla por stock la pantalla no avisa. Lo bueno: la creación del pedido es atómica y usa bloqueo pesimista (`SELECT … FOR UPDATE`) para evitar sobreventa.
+La compra usa `ManejadorPagosWompi` y `PagoWompiDAO`: el backend recalcula el total, valida el stock con `SELECT … FOR SHARE` (sin descontarlo) y crea el pedido `pending` con los datos de envío. El stock solo se descuenta cuando el pago se aprueba (`procesarTransaccionWompi`), y como hoy la confirmación falla, las compras no bajan el stock. El pago es simulado: ningún medio se conecta a una pasarela real. El proceso no exige sesión, y si no la hay `Payment.jsx` asigna el pedido al usuario con id 4.
 
 ![3. Realizar compra](diagramas/sec_compra.png)
 
@@ -151,60 +128,53 @@ Es el flujo más importante y el que más diferencias tiene con los requisitos: 
 sequenceDiagram
     autonumber
     actor U as Cliente
-    box Frontend - React
     participant CAR as Carrito.jsx
-    participant CHK as Pago.jsx<br/>(/checkout)
-    participant PAY as Payment.jsx<br/>(/pago)
-    participant LS as localStorage
-    end
-    box Backend - Java
-    participant MP as ManejadorPedidos
-    participant DAO as PedidoDAO
-    end
+    participant CHK as CheckoutForm (/checkout)
+    participant PAY as Payment.jsx (/pago)
+    participant MP as ManejadorPagosWompi
+    participant DAO as PagoWompiDAO
     participant DB as PostgreSQL
-    U->>CAR: "Proceder al pago"
-    CAR->>CHK: navega a /checkout<br/>(si no hay sesión, ProtectedRoute envía a /login)
-    U->>CHK: datos de envío y cupón
-    CHK->>CHK: subtotal − descuento<br/>+ envío ($15.000 si < $100.000) + IVA 19 %
-    CHK->>LS: guarda lastOrder
-    CHK->>PAY: "Confirmar pedido" → /pago
-    U->>PAY: datos de tarjeta o banco PSE
-    Note right of PAY: No hay pasarela de pago: el formulario<br/>solo se valida en el navegador y pasa<br/>directo a crear el pedido.
-    PAY->>MP: POST /api/pedidos<br/>{clientId, total, items[productId, quantity, unitPrice]}
-    activate MP
-    MP->>DAO: crearPedido(idCliente, total, articulos)
-    activate DAO
+
+    U->>CAR: "Continuar a Envío y Pago"
+    CAR->>CHK: navega a /checkout
+    U->>CHK: datos de quien recibe y dirección
+    CHK->>PAY: continúa a /pago
+    U->>PAY: elige tarjeta, PSE, Nequi / Bre-B o contraentrega
+    PAY->>MP: POST /api/pagos/intencion
+    MP->>DAO: crearIntencionPago(...)
     DAO->>DB: BEGIN
-    DAO->>DB: INSERT INTO pedidos (…, 'Cliente', 'cliente@tienda.com', 'N/A', 'pending')
-    DB-->>DAO: id del pedido
     loop por cada artículo
-    DAO->>DB: SELECT stock FROM productos<br/>WHERE id = ? FOR UPDATE
-    alt producto inexistente o stock < cantidad
-    DAO->>DB: ROLLBACK
-    DAO-->>MP: -1
-    MP-->>PAY: 500 {error: "Error al crear el pedido"}
-    PAY-->>U: (no se muestra ningún mensaje)
-    else hay stock
-    DAO->>DB: UPDATE productos SET stock = stock − cantidad
-    DAO->>DAO: agrega INSERT items_pedido al lote
+        DAO->>DB: SELECT precio, stock ... FOR SHARE
+        alt stock insuficiente
+            DAO->>DB: ROLLBACK
+            MP-->>PAY: 400 {error}
+        end
     end
-    end
-    DAO->>DB: INSERT INTO items_pedido (lote)
+    DAO->>DAO: valida cupón y calcula descuento, envío, IVA y total
+    DAO->>DB: INSERT pedidos ('pending') e items_pedido
     DAO->>DB: COMMIT
-    DAO-->>MP: idPedido
-    deactivate DAO
-    MP-->>PAY: 201 {success, orderId}
-    deactivate MP
-    PAY->>LS: vacía el carrito
-    PAY-->>U: /confirmacion?orderId=…
-    Note over DAO,DB: El total lo calcula el navegador y el backend lo guarda tal cual.<br/>Los datos de envío del formulario no llegan a la base de datos.
+    MP-->>PAY: 200 {reference, amount}
+    PAY->>PAY: aprueba el pago tras 0,8 s (simulado)
+    PAY->>MP: POST /api/pagos/confirmar {reference: DD-<13 dígitos>-XXXX, ...}
+    MP->>MP: contieneDatosTarjetaSensibles(cuerpo)
+    alt la referencia coincide con el patrón de tarjeta (hoy, siempre)
+        MP-->>PAY: 400 "Rechazado por seguridad PCI-DSS"
+        Note over MP,DB: el pedido queda en 'pending'
+    else diseño previsto
+        MP->>DAO: confirmarPagoPorReferencia(...)
+        DAO->>DB: SELECT ... FROM pedidos ... FOR UPDATE (idempotencia)
+        DAO->>DB: UPDATE pedidos SET estado = 'paid'
+        DAO->>DB: UPDATE productos SET stock = GREATEST(0, stock - metros)
+    end
+    PAY-->>U: /confirmacion?referencia=... (muestra "Pago Aprobado" en ambos casos)
+    Note over PAY,DAO: Pago simulado: no hay conexión con una pasarela real. Sin sesión, el pedido se asigna al usuario 4
 ```
 
 </details>
 
 ## 4. Descargar factura PDF
 
-Muestra por qué la facturación falla con pedidos reales: el manejador mezcla la tabla `pedidos` (español) con `users`, `order_items` y `products` (inglés).
+El manejador lee el pedido, la cabecera de facturación y los artículos mediante `PedidoDAO`, todo desde las tablas en español (`pedidos`, `items_pedido`, `productos`), y arma el PDF con PDFBox.
 
 ![4. Descargar factura PDF](diagramas/sec_factura.png)
 
@@ -213,48 +183,42 @@ Muestra por qué la facturación falla con pedidos reales: el manejador mezcla l
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Administrador<br/>o Cliente
-    box Frontend - React
-    participant UI as FacturasAdmin.jsx /<br/>HistorialPedidos.jsx
-    end
-    box Backend - Java
+    actor U as Administrador o Cliente
+    participant UI as FacturasAdmin.jsx / HistorialPedidos.jsx
     participant MF as ManejadorFactura
     participant DAO as PedidoDAO
-    participant SF as ServicioFactura<br/>(PDFBox)
-    end
+    participant SF as ServicioFactura (PDFBox)
     participant DB as PostgreSQL
-    U->>UI: "Descargar factura" del pedido N
+    U->>UI: «Descargar factura» del pedido N
     UI->>MF: GET /api/facturas/N
-    activate MF
     MF->>DAO: obtenerPedidoPorId(N)
     DAO->>DB: SELECT … FROM pedidos WHERE id = N
     DB-->>DAO: pedido
     DAO-->>MF: Pedido
     alt pedido no existe
-    MF-->>UI: 404 {error}
+        MF-->>UI: 404 {error}
     else
-    MF->>DB: SELECT name, email FROM users WHERE id = ?
-    DB-->>MF: cliente (tabla en inglés)
-    MF->>DB: SELECT … FROM order_items JOIN products<br/>WHERE order_id = N
-    DB-->>MF: artículos (tablas en inglés)
-    MF->>MF: subtotal = Σ cantidad × precio<br/>IVA = subtotal × 19 %<br/>total = pedido.total
-    MF->>SF: generarFactura(N, cliente, artículos, subtotal, IVA, total)
-    activate SF
-    SF->>SF: encabezado, datos del cliente,<br/>tabla de artículos, totales,<br/>valor en letras, marca de agua
-    SF-->>MF: byte[] PDF
-    deactivate SF
-    MF-->>UI: 200 application/pdf<br/>FAC-00000N.pdf
-    deactivate MF
-    UI-->>U: descarga el archivo
+        MF->>DAO: obtenerCabeceraFactura(N)
+        DAO->>DB: SELECT nombre_cliente, correo_cliente, direccion_envio, metodo_pago,<br/>subtotal, monto_descuento, costo_envio, monto_impuesto FROM pedidos
+        DAO-->>MF: datos del cliente y montos guardados
+        MF->>DAO: obtenerArticulosFactura(N)
+        DAO->>DB: SELECT … FROM items_pedido LEFT JOIN productos
+        DAO-->>MF: artículos
+        MF->>MF: usa los montos guardados;<br/>si faltan: subtotal = Σ cantidad × precio,<br/>IVA = (subtotal − descuento) × 19 %
+        MF->>SF: generarFactura(N, cliente, artículos, subtotal, descuento, envío, IVA, total, método)
+        SF->>SF: encabezado con CUFE, cliente, artículos,<br/>totales, valor en letras, marca de agua
+        SF-->>MF: byte[] PDF
+        MF-->>UI: 200 application/pdf (FAC-00000N.pdf)
+        UI-->>U: descarga el archivo
     end
-    Note over MF,DB: El pedido se lee de pedidos (español), pero el cliente y los artículos<br/>se leen de users y order_items (inglés). Para un pedido creado desde<br/>la tienda la factura sale sin artículos y con datos de cliente equivocados.
+    Note over MF,DB: Todo se lee de las tablas en español (pedidos, items_pedido, productos).<br/>El manejador no comprueba el rol ni que el pedido sea del usuario que lo pide.
 ```
 
 </details>
 
 ## 5. Motor de corte textil
 
-Documenta las reglas de negocio de corte (retazo por debajo de 1 m con 40 % de descuento; tarifa mayorista desde 15 m con 15 %; rollo cerrado desde 50 m con 25 %). Hoy este servicio solo se ejecuta en las pruebas automatizadas.
+Documenta las reglas de negocio de corte (retazo por debajo de 1 m con 40 % de descuento; tarifa mayorista desde 15 m con 15 %; rollo cerrado desde 50 m con 25 %). El servicio se usa desde `POST /api/inventario/corte`, que actualiza el rollo, registra la merma y sincroniza el stock del producto; ninguna pantalla llama todavía a ese endpoint.
 
 ![5. Motor de corte textil](diagramas/sec_corte.png)
 
@@ -263,57 +227,47 @@ Documenta las reglas de negocio de corte (retazo por debajo de 1 m con 40 % de d
 ```mermaid
 sequenceDiagram
     autonumber
-    participant T as PruebasReglasNegocioTextil
+    actor C as Cliente HTTP (sin pantalla aún)
+    participant MI as ManejadorInventario
+    participant DAO as InventarioDAO
     participant S as ServicioCorteTextil
     participant R as RolloTextil
-    participant M as EventoMerma
-    Note over T,M: 1. Validar metraje continuo
-    T->>S: validarMetrajeContinuo(rollos, metros, loteTintoreria)
-    activate S
-    loop rollos con estado "disponible" del mismo lote
-    S->>R: getMetrajeRemanente()
-    S->>S: suma el metraje del lote y busca<br/>el primer rollo con remanente ≥ metros
-    end
-    alt hay un rollo que alcanza solo
-    S-->>T: CORTE_CONTINUO_OK + rollo asignado
-    else el lote alcanza, pero repartido
-    S-->>T: FRAGMENTED_STOCK (requiere empates)
-    else no alcanza
-    S-->>T: INSUFFICIENT_STOCK
-    end
-    deactivate S
-    Note over T,M: 2. Procesar el corte
-    T->>S: procesarCorteYRemanente(rollo, metros, precioBase)
-    activate S
-    alt metros > remanente
-    S-->>T: IllegalStateException (sobrecorte)
+    participant DB as PostgreSQL
+    C->>MI: POST /api/inventario/corte {rollCode, meters, basePrice}
+    MI->>DAO: obtenerRolloPorCodigoOId(rollCode)
+    DAO->>DB: SELECT … FROM rollos_textil
+    DAO-->>MI: RolloTextil
+    alt rollo no existe
+        MI-->>C: 404 {error}
     else
-    S->>R: setMetrajeRemanente(remanente − metros)
-    alt remanente = 0
-    S->>R: setEstado("agotado")
-    else 0 < remanente < 1,0 m
-    S->>R: setEstado("retazo_liquidado")
-    S->>M: new EventoMerma(remanente, "remanente_sub_metro")
-    S->>S: precio retazo = precioBase × 0,60
-    else remanente ≥ 1,0 m
-    S->>R: setEstado("disponible")
+        opt basePrice ≤ 0
+            MI->>DB: SELECT precio FROM productos (si no hay, 25 000)
+        end
+        MI->>S: validarMetrajeContinuo([rollo], metros, lote)
+        alt el rollo no alcanza
+            S-->>MI: FRAGMENTED_STOCK / INSUFFICIENT_STOCK
+            MI-->>C: 400 {error, code}
+        else alcanza
+            S-->>MI: CORTE_CONTINUO_OK
+            MI->>S: procesarCorteYRemanente(rollo, metros, precio)
+            S->>R: setMetrajeRemanente(remanente − metros)
+            alt remanente = 0
+                S->>R: setEstado("agotado")
+            else 0 < remanente < 1,0 m
+                S->>R: setEstado("retazo_liquidado")
+                S->>S: new EventoMerma(remanente, "remanente_sub_metro")
+            else remanente ≥ 1,0 m
+                S->>R: setEstado("disponible")
+            end
+            S-->>MI: ResultadoProcesamientoCorte
+            MI->>S: calcularPrecioEscalonado(precio, metros)
+            S-->>MI: TarifaCalculada (≥ 50 m −25 %, ≥ 15 m −15 %, resto detal)
+            MI->>DAO: actualizarRolloDespuesDeCorte(rollo, merma)
+            DAO->>DB: transacción: UPDATE rollos_textil,<br/>INSERT eventos_merma (si hay retazo), UPDATE productos.stock
+            MI-->>C: 200 {rollId, remainingMeters, status, totalPrice}
+        end
     end
-    S-->>T: ResultadoProcesamientoCorte
-    end
-    deactivate S
-    Note over T,M: 3. Liquidar precio por volumen
-    T->>S: calcularPrecioEscalonado(precioBase, metros)
-    activate S
-    alt metros ≥ 50
-    S->>S: ROLLO_CERRADO, 25 % de descuento
-    else metros ≥ 15
-    S->>S: MAYORISTA, 15 % de descuento
-    else
-    S->>S: DETAL, sin descuento
-    end
-    S-->>T: TarifaCalculada
-    deactivate S
-    Note over T,M: Ningún endpoint de la API usa este servicio ni existe tabla de rollos:<br/>hoy el motor solo se ejecuta dentro de la suite de pruebas automatizadas.
+    Note over C,S: El endpoint existe y usa el motor, pero ninguna pantalla del frontend lo llama todavía.<br/>El mismo servicio se prueba en PruebasReglasNegocioTextil.
 ```
 
 </details>
@@ -323,20 +277,20 @@ Fuentes editables en PlantUML: `diagramas/fuentes/sec_*.puml`.
 
 ---
 
-## 5. Diagrama de Secuencia: Emisión y Validación de Sesión Firmada (`TokenSesion`)
+## 6. Diagrama de Secuencia: Emisión y Validación de Sesión Firmada (`TokenSesion`)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor U as Usuario (Cliente / Vendedor / Admin)
-    participant SPA as Frontend React (clienteApi.js)
+    participant SPA as Frontend React (ContextoAutenticacion + interceptorSesion.js)
     participant MB as ManejadorBase / ManejadorAutenticacion
     participant TS as TokenSesion (HMAC-SHA256)
     participant DB as PostgreSQL (JdbcRepositorioUsuarioImpl / PedidoDAO)
 
     U->>SPA: Ingresa credenciales en /login
-    SPA->>MB: POST /api/login {email, password}
-    MB->>DB: buscarPorCorreo(email) + verificar SHA-256
+    SPA->>MB: POST /api/iniciar-sesion {email, password}
+    MB->>DB: buscarPorCorreo(email) + verificar PBKDF2 (SHA-256 solo en cuentas antiguas)
     DB-->>MB: Usuario activo (id, rol)
     MB->>TS: emitir(id, rol)
     TS-->>MB: token = base64url({sub,rol,exp}).base64url(HmacSHA256)

@@ -448,59 +448,21 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_estado ON pedidos(usuario_id, est
 CREATE INDEX IF NOT EXISTS idx_rollos_textil_prod_estado_rem ON rollos_textil(producto_id, estado, metraje_remanente);
 CREATE INDEX IF NOT EXISTS idx_cupones_codigo_activo ON cupones(codigo, activo);
 
--- ============================================================================
--- EXTENSIÓN MARKETPLACE MULTI-VENDEDOR (D&D TEXTIL GLOBAL)
--- ============================================================================
-
--- 29. TABLA: perfiles_vendedor (Tiendas oficiales / Perfiles tipo Facebook)
-CREATE TABLE IF NOT EXISTS perfiles_vendedor (
-    vendedor_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
-    nombre_tienda VARCHAR(120) NOT NULL,
-    slug_tienda VARCHAR(140) UNIQUE,
-    descripcion_bio TEXT,
-    url_avatar TEXT,
-    url_portada TEXT,
-    ciudad VARCHAR(80) DEFAULT 'Bogotá',
-    pais VARCHAR(80) DEFAULT 'Colombia',
-    especialidad VARCHAR(120) DEFAULT 'Textiles de Alta Calidad',
-    verificado BOOLEAN DEFAULT true,
-    politica_envio TEXT DEFAULT 'Despachos nacionales en 24-48 horas hábiles.',
-    calificacion_promedio NUMERIC(3,2) DEFAULT 0.00,
-    total_resenas INTEGER DEFAULT 0,
-    total_ventas_metros NUMERIC(12,2) DEFAULT 0.00,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 30. TABLA: resenas_vendedor (Calificación y comentarios directos al proveedor)
-CREATE TABLE IF NOT EXISTS resenas_vendedor (
-    id SERIAL PRIMARY KEY,
-    vendedor_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
-    calificacion INTEGER NOT NULL CHECK (calificacion >= 1 AND calificacion <= 5),
-    comentario TEXT NOT NULL,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (vendedor_id, usuario_id)
-);
-
--- 31. TABLA: alertas_vendedor (Alertas inteligentes para exclusivas, ofertas y competencia)
-CREATE TABLE IF NOT EXISTS alertas_vendedor (
-    id SERIAL PRIMARY KEY,
-    vendedor_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    producto_id INTEGER REFERENCES productos(id) ON DELETE CASCADE,
-    tipo_alerta VARCHAR(50) NOT NULL,
-    titulo VARCHAR(200) NOT NULL,
-    mensaje TEXT NOT NULL,
-    sugerencia_accion VARCHAR(60),
-    descuento_sugerido NUMERIC(5,2) DEFAULT 0.00,
-    leida BOOLEAN DEFAULT false,
-    aplicada BOOLEAN DEFAULT false,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_productos_marketplace ON productos(activo, estado_moderacion, es_exclusivo, categoria_id, precio);
-CREATE INDEX IF NOT EXISTS idx_productos_bestseller ON productos(activo, metros_vendidos DESC);
-CREATE INDEX IF NOT EXISTS idx_pedidos_vip_cliente ON pedidos(usuario_id, estado_pago, creado_en DESC);
-CREATE INDEX IF NOT EXISTS idx_pedidos_grupo_checkout ON pedidos(grupo_checkout);
 CREATE INDEX IF NOT EXISTS idx_resenas_vendedor_id ON resenas_vendedor(vendedor_id);
 CREATE INDEX IF NOT EXISTS idx_alertas_vendedor_id ON alertas_vendedor(vendedor_id, leida);
+
+-- 32. TABLA: auditoria_sistema (Registro forense de eventos y seguridad)
+CREATE TABLE IF NOT EXISTS auditoria_sistema (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER,
+    rol VARCHAR(50),
+    accion VARCHAR(100) NOT NULL,
+    recurso VARCHAR(100),
+    ip_origen VARCHAR(45),
+    detalles TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_usuario ON auditoria_sistema(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_accion ON auditoria_sistema(accion);
+CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_fecha ON auditoria_sistema(fecha_creacion);

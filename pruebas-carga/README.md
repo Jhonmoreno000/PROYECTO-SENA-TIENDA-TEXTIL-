@@ -6,7 +6,7 @@ Este directorio contiene las herramientas y especificaciones de pruebas de rendi
 
 ## 1. Inventario Consolidado de Suites de Pruebas
 
-El sistema cuenta con 4 suites de pruebas unitarias y de integracion implementadas en Java puro (sin dependencias externas pesadas) y 3 herramientas de pruebas de carga:
+El sistema cuenta con 5 suites de pruebas unitarias y de integracion implementadas en Java puro (sin dependencias externas pesadas) y 3 herramientas de pruebas de carga:
 
 ### Suites de Backend (Java)
 1. **Reglas de Negocio Textil (`PruebasReglasNegocioTextil.java`):**
@@ -14,7 +14,8 @@ El sistema cuenta con 4 suites de pruebas unitarias y de integracion implementad
    - Algoritmo de mermas y reclasificacion de retazos sub-metro (< 1.0 m con 40% de descuento).
    - Tarifas escalonadas (detal, mayorista >= 15m, rollo cerrado >= 50m).
 2. **Seguridad e Integridad del Sistema (`PruebasSeguridadIntegridad.java`):**
-   - Hash determinista SHA-256 en UTF-8.
+   - Hash determinista SHA-256 en UTF-8 y PBKDF2 con sal (compatibilidad con cuentas antiguas).
+   - Sesion firmada HMAC-SHA256 y bloqueo por fuerza bruta.
    - Prevencion de Inyeccion SQL (SQLi) y Path Traversal en `/uploads`.
    - Cumplimiento Habeas Data (Ley 1581 de 2012) y proteccion PCI-DSS (deteccion de PAN y CVV).
    - Extraccion segura de parametros numericos en rutas REST.
@@ -42,7 +43,7 @@ Desde la carpeta del backend (`tienda digital de telas/backend-java/servidor-api
 ```bash
 # Compilar todo el codigo fuente incluyendo las suites de prueba
 mkdir -p bin
-javac -encoding UTF-8 -cp "lib/*" -d bin src/*.java src/dominio/modelos/*.java src/dominio/repositorios/*.java src/dominio/excepciones/*.java src/aplicacion/servicios/*.java src/infraestructura/configuracion/*.java src/infraestructura/persistencia/jdbc/*.java src/infraestructura/api/*.java src/infraestructura/api/manejadores/*.java
+javac -encoding UTF-8 -cp "lib/*" -d bin $(find src -name "*.java")
 ```
 
 ### Ejecucion de Suites:
@@ -58,6 +59,11 @@ java -cp "bin;lib/*" PruebasConcurrenciaYPagos
 
 # Suite 4: Contratos de API OpenAPI v3
 java -cp "bin;lib/*" PruebasContratoApi
+
+# Suite 5: Tiempo real (WebSocket)
+java -cp "bin;lib/*" PruebasWebSocket
+
+# En Linux / macOS usar ":" en lugar de ";" en el classpath
 ```
 
 ---
@@ -86,6 +92,6 @@ chmod +x pruebas-carga/simulador_carga_concurrente.sh
 
 | Métrica Evaluada en k6 | Umbral Máximo Permitido | Comportamiento Esperado del Backend Java |
 | :--- | :---: | :--- |
-| **Latencia Percentil 95 (`http_req_duration p(95)`)** | $< 500\text{ ms}$ | Pool de hilos concurrente y HikariCP absorben ráfagas de lectura y escritura sin encolamiento crítico. |
+| **Latencia Percentil 95 (`http_req_duration p(95)`)** | $< 500\text{ ms}$ | Pool de hilos concurrente y el pool de conexiones propio (`Conexion.java`) absorben ráfagas de lectura y escritura sin encolamiento crítico. |
 | **Tasa de Errores Inesperados (HTTP 5xx)** | $0,0\%$ | Ninguna petición concurrente debe provocar excepciones no controladas ni fugas de conexiones JDBC. |
 | **Integridad de Stock bajo Carrera (`POST /api/orders`)** | **0 sobreventas** | Las órdenes que exceden el metraje disponible del rollo reciben rechazo controlado HTTP `400` mientras el stock permanece $\ge 0,0\text{ m}$. |
