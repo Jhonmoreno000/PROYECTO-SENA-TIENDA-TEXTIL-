@@ -50,9 +50,14 @@ export default function ResumenAdmin() {
 
     // ── Métricas derivadas de los datos reales ────────────────────────────
 
-    /** Total de ventas sumando todos los pedidos entregados o completados */
+    /** Total de ventas sumando todos los pedidos */
     const totalRevenue = useMemo(() =>
         orders.reduce((sum, o) => sum + (o.total || 0), 0),
+    [orders]);
+
+    /** Ganancias de la plataforma por comisión sobre ventas de proveedores */
+    const totalAdminCommission = useMemo(() =>
+        orders.reduce((sum, o) => sum + (o.adminCommission > 0 ? o.adminCommission : ((o.total || 0) * ((o.commissionRate || 10) / 100))), 0),
     [orders]);
 
     /** Total de pedidos */
@@ -264,14 +269,14 @@ export default function ResumenAdmin() {
                 {/* ── MÉTRICAS KPI (DATOS REALES) ───────────────────────────── */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <ErpMetricCard
-                        title="Ingresos Totales"
-                        value={formatCurrency(totalRevenue)}
+                        title="Comisión Marketplace (Admin)"
+                        value={formatCurrency(totalAdminCommission)}
                         icon={DollarSign}
                         trendData={salesTrend}
-                        trendValue={`${totalOrders} pedidos`}
+                        trendValue={`GMV: ${formatCurrency(totalRevenue)}`}
                         trendDirection="up"
                         colorKey="orange"
-                        subtitle="Suma real de todos los pedidos"
+                        subtitle="Ganancias plataforma por comisiones"
                     />
                     <ErpMetricCard
                         title="Clientes Registrados"
