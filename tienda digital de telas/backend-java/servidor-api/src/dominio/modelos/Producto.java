@@ -86,6 +86,42 @@ public class Producto {
     @SerializedName(value = "isOffer", alternate = {"esOferta", "isSale"})
     private boolean esOferta;
 
+    /** Porcentaje de descuento definido por el vendedor propietario (`double`, 0..90). */
+    @SerializedName(value = "discountPercent", alternate = {"porcentajeDescuento"})
+    private double porcentajeDescuento;
+
+    /** Acumulado histórico de metros vendidos del producto (`double`). */
+    @SerializedName(value = "soldMeters", alternate = {"metrosVendidos"})
+    private double metrosVendidos;
+
+    /** Calificación promedio del producto según reseñas (`double`). */
+    @SerializedName(value = "rating", alternate = {"calificacionPromedio", "averageRating"})
+    private double calificacionPromedio;
+
+    /** Total de reseñas registradas para este producto (`int`). */
+    @SerializedName(value = "reviewsCount", alternate = {"totalResenas"})
+    private int totalResenas;
+
+    /** Nombre comercial de la tienda del vendedor (`String`). */
+    @SerializedName(value = "storeName", alternate = {"nombreTienda"})
+    private String nombreTienda;
+
+    /** Avatar o logo de la tienda del vendedor (`String`). */
+    @SerializedName(value = "sellerAvatar", alternate = {"avatarTienda"})
+    private String avatarTienda;
+
+    /** Calificación promedio del vendedor propietario (`double`). */
+    @SerializedName(value = "sellerRating", alternate = {"calificacionVendedor"})
+    private double calificacionVendedor;
+
+    /** Total de reseñas del vendedor propietario (`int`). */
+    @SerializedName(value = "sellerReviewsCount", alternate = {"totalResenasVendedor"})
+    private int totalResenasVendedor;
+
+    /** Indica si lidera ventas dentro de su categoría (`boolean`). */
+    @SerializedName(value = "isBestSeller", alternate = {"esMasVendido"})
+    private boolean esMasVendido;
+
     /** Fecha de creación del producto en el catálogo (`String`). */
     @SerializedName(value = "createdAt", alternate = {"fechaCreacion"})
     private String fechaCreacion;
@@ -415,4 +451,31 @@ public class Producto {
      * @param imagenes Lista de imágenes (`List<String>`).
      */
     public void setImagenes(List<String> imagenes) { this.imagenes = imagenes; }
+
+    public double getPorcentajeDescuento() { return porcentajeDescuento; }
+    public void setPorcentajeDescuento(double porcentajeDescuento) { this.porcentajeDescuento = porcentajeDescuento; }
+
+    public double getMetrosVendidos() { return metrosVendidos; }
+    public void setMetrosVendidos(double metrosVendidos) { this.metrosVendidos = metrosVendidos; }
+
+    public double getCalificacionPromedio() { return calificacionPromedio; }
+    public void setCalificacionPromedio(double calificacionPromedio) { this.calificacionPromedio = calificacionPromedio; }
+
+    public int getTotalResenas() { return totalResenas; }
+    public void setTotalResenas(int totalResenas) { this.totalResenas = totalResenas; }
+
+    public String getNombreTienda() { return nombreTienda; }
+    public void setNombreTienda(String nombreTienda) { this.nombreTienda = nombreTienda; }
+
+    public String getAvatarTienda() { return avatarTienda; }
+    public void setAvatarTienda(String avatarTienda) { this.avatarTienda = avatarTienda; }
+
+    public double getCalificacionVendedor() { return calificacionVendedor; }
+    public void setCalificacionVendedor(double calificacionVendedor) { this.calificacionVendedor = calificacionVendedor; }
+
+    public int getTotalResenasVendedor() { return totalResenasVendedor; }
+    public void setTotalResenasVendedor(int totalResenasVendedor) { this.totalResenasVendedor = totalResenasVendedor; }
+
+    public boolean isEsMasVendido() { return esMasVendido; }
+    public void setEsMasVendido(boolean esMasVendido) { this.esMasVendido = esMasVendido; }
 }
