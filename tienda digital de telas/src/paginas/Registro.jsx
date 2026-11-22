@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useForm } from 'react-hook-form';
@@ -31,6 +31,15 @@ function Registro() {
     const [modalSSO, setModalSSO] = useState(null);
     const { showNotification } = useNotificacion();
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnPath = (() => {
+        const path = location.state?.from?.pathname || '';
+        const allowed = ['/checkout', '/pago', '/carrito', '/catalogo', '/producto', '/tienda'];
+        if (allowed.some(p => path.startsWith(p)) && !path.includes('://') && !path.startsWith('//')) {
+            return path;
+        }
+        return '';
+    })();
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -86,7 +95,7 @@ function Registro() {
 
         if (result.success) {
             showNotification('success', '¡Cuenta creada! Bienvenido a D&D Textil');
-            navigate('/');
+            navigate(returnPath || '/');
         } else {
             setAuthError(result.message || 'No se pudo crear la cuenta. Intenta de nuevo.');
         }
@@ -327,7 +336,7 @@ function Registro() {
                     if (authResult.success) {
                         setModalSSO(null);
                         showNotification('success', `¡Cuenta registrada con ${ssoData.proveedor === 'microsoft' ? 'Microsoft' : 'Google'}! Bienvenido a D&D Textil`);
-                        navigate('/cliente', { replace: true });
+                        navigate(returnPath || '/cliente', { replace: true });
                     } else {
                         throw new Error(authResult.message || 'No se pudo completar el registro.');
                     }

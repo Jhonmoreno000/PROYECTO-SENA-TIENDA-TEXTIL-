@@ -125,6 +125,9 @@ function Payment() {
         };
 
     const prepararIntencionOrden = async (metodoNombre) => {
+        if (!user?.id) {
+            throw new Error('Debes iniciar sesión como cliente para pagar.');
+        }
         const infoCliente = obtenerDatosCliente();
         const intencion = await crearIntencionPagoWompi({
             items: cartItems.map((it) => ({
@@ -133,7 +136,7 @@ function Payment() {
             })),
             customerInfo: infoCliente,
             couponCode: appliedCoupon?.code || null,
-            userId: user?.id || 4,
+            userId: user.id,
         });
         if (!intencion || !intencion.reference) {
             throw new Error('No se pudo crear la intención de pago en el servidor.');

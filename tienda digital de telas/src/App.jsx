@@ -38,6 +38,10 @@ const AddressBook = lazy(() => import('./paginas/cliente/Settings/AddressBook'))
 const PanelVendedor = lazy(() => import('./paginas/vendedor/PanelVendedor'));
 const PedidosVendedor = lazy(() => import('./paginas/vendedor/PedidosVendedor'));
 const StockAlerts = lazy(() => import('./paginas/vendedor/StockAlerts'));
+const MiTiendaVendedor = lazy(() => import('./paginas/vendedor/MiTiendaVendedor'));
+const AlertasOportunidad = lazy(() => import('./paginas/vendedor/AlertasOportunidad'));
+const DirectorioTiendas = lazy(() => import('./paginas/DirectorioTiendas'));
+const PerfilTiendaPublico = lazy(() => import('./paginas/PerfilTiendaPublico'));
 
 const ResumenAdmin = lazy(() => import('./paginas/admin/ResumenAdmin'));
 const GestionUsuarios = lazy(() => import('./paginas/admin/GestionUsuarios'));
@@ -80,6 +84,8 @@ function AppRoutes() {
                 {/* Rutas Públicas y Flujo de Compra */}
                 <Route path="/" element={<Inicio />} />
                 <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/tiendas" element={<DirectorioTiendas />} />
+                <Route path="/tienda/:id" element={<PerfilTiendaPublico />} />
                 <Route path="/producto/:id" element={<DetalleProducto />} />
                 <Route path="/carrito" element={<Carrito />} />
                 <Route path="/favoritos" element={<Wishlist />} />
@@ -90,9 +96,30 @@ function AppRoutes() {
                 <Route path="/login" element={<IniciarSesion />} />
                 <Route path="/registro" element={<Registro />} />
                 <Route path="/reportar-fallo" element={<BugReport />} />
-                <Route path="/checkout" element={<Pago />} />
-                <Route path="/pago" element={<Payment />} />
-                <Route path="/confirmacion" element={<ConfirmacionPedido />} />
+                <Route
+                    path="/checkout"
+                    element={
+                        <ProtectedRoute roles="cliente" strict={true}>
+                            <Pago />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/pago"
+                    element={
+                        <ProtectedRoute roles="cliente" strict={true}>
+                            <Payment />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/confirmacion"
+                    element={
+                        <ProtectedRoute roles="cliente" strict={true}>
+                            <ConfirmacionPedido />
+                        </ProtectedRoute>
+                    }
+                />
 
                 {/* Panel de Cliente */}
                 <Route
@@ -202,6 +229,22 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute roles={['vendedor', 'admin']}>
                             <StockAlerts />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendedor/mi-tienda"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <MiTiendaVendedor />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendedor/alertas"
+                    element={
+                        <ProtectedRoute roles={['vendedor', 'admin']}>
+                            <AlertasOportunidad />
                         </ProtectedRoute>
                     }
                 />
