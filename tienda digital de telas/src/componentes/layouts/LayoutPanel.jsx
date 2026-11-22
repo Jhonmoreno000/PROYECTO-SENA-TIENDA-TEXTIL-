@@ -22,76 +22,46 @@
  * - Check         → indicador de selección (reemplaza MdCheck)
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import {
-    Home as Inicio, LogOut, Menu, ChevronRight, Search, Pin, MoreVertical, Check, LayoutDashboard,
+    Home as Inicio, LogOut, Menu, ChevronRight, Search, Pin, LayoutDashboard,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAutenticacion } from '../../contextos/ContextoAutenticacion';
+import { useMetricas } from '../../contextos/ContextoMetricas';
+import { useProductos } from '../../contextos/ContextoProducto';
 import CommandPalette from '../dashboard/CommandPalette';
 
 gsap.registerPlugin(useGSAP);
 
-/* ──────────────────────────────────────────────
-   Tenant / Store Selector
-   ────────────────────────────────────────────── */
 /**
- * TenantSelector — Selector de tienda/sucursal
- * Permite cambiar entre diferentes tiendas o sucursales.
- * Se muestra en la parte superior del sidebar.
- *
- * @param {boolean} isRailMode - Si el sidebar está en modo colapsado (rail)
+ * WorkspaceHeader — Identidad real del espacio de trabajo según el usuario autenticado.
  */
-function TenantSelector({ isRailMode }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [selectedTenant, setSelectedTenant] = useState('Tienda Principal');
-    const tenants = ['Tienda Principal', 'Sucursal Norte', 'Sucursal Sur', 'Bodega Central'];
+function WorkspaceHeader({ isRailMode, user }) {
+    const rolRaw = String(user?.role || user?.rol || '').toLowerCase();
+    const esAdmin = rolRaw === 'administrador' || rolRaw === 'admin';
+    const subtitulo = esAdmin ? 'Panel Administración' : (user?.storeName || user?.nombreTienda || 'Tienda Vendedora');
 
     return (
         <div className="relative p-4 border-b border-gray-200/20 dark:border-slate-700/20">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`w-full flex items-center justify-between p-2 rounded-none hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${isRailMode ? 'justify-center' : ''
-                    }`}
-            >
-                <div className="flex items-center gap-3 overflow-hidden">
-                    {/* Avatar de la tienda con la inicial */}
-                    <div className="w-9 h-9 rounded-none flex items-center justify-center text-white bg-primary-600 font-bold shrink-0 border border-primary-700">
-                        {selectedTenant.charAt(0)}
-                    </div>
-                    {!isRailMode && (
-                        <div className="text-left truncate">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                {selectedTenant}
-                            </p>
-                            <p className="text-xs text-primary-600 dark:text-primary-400 font-semibold tracking-wide uppercase">Enterprise</p>
-                        </div>
-                    )}
+            <div className={`w-full flex items-center p-2 ${isRailMode ? 'justify-center' : 'gap-3'}`}>
+                <div className="w-9 h-9 rounded-none flex items-center justify-center text-white bg-primary-600 font-bold shrink-0 border border-primary-700">
+                    {(subtitulo || 'D').charAt(0).toUpperCase()}
                 </div>
-                {/* MoreVertical: menú de opciones del tenant (reemplaza MdMoreVert) */}
-                {!isRailMode && <MoreVertical className="w-5 h-5 text-gray-400 dark:text-gray-500" />}
-            </button>
-
-            {/* Dropdown Menu para seleccionar tienda */}
-            {isOpen && !isRailMode && (
-                <div className="absolute top-full left-4 right-4 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-none shadow-xl z-50 overflow-hidden animate-fade-in">
-                    <div className="py-2">
-                        {tenants.map(tenant => (
-                            <button
-                                key={tenant}
-                                onClick={() => { setSelectedTenant(tenant); setIsOpen(false); }}
-                                className="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                            >
-                                <span className="text-sm font-medium">{tenant}</span>
-                                {selectedTenant === tenant && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
-                            </button>
-                        ))}
+                {!isRailMode && (
+                    <div className="text-left truncate">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                            D&amp;D Textil
+                        </p>
+                        <p className="text-xs text-primary-600 dark:text-primary-400 font-semibold tracking-wide uppercase truncate">
+                            {subtitulo}
+                        </p>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
@@ -310,6 +280,8 @@ function NavParentNode({ link, isOpen, onToggle, pathname, isRailMode, pinnedIte
  */
 function LayoutPanel({ children, title, links, subtitle }) {
     const { logout, user } = useAutenticacion();
+    const { pendingProducts, supportTickets, inventoryBatches, stockThresholds, sellerAlerts, orders } = useMetricas();
+    const { products } = useProductos();
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -317,6 +289,58 @@ function LayoutPanel({ children, title, links, subtitle }) {
     const userRole = String(user?.role || user?.rol || '').toLowerCase();
     const isCurrentUserAdmin = userRole === 'admin' || userRole === 'administrador';
     const isAuditingOtherPanel = isCurrentUserAdmin && !location.pathname.startsWith('/admin');
+
+    const dynamicBadges = useMemo(() => {
+        const pendingModeration = (pendingProducts || []).filter(p => {
+            const s = String(p?.status || p?.estado || '').toLowerCase();
+            return s === 'pending' || s === 'pendiente';
+        }).length;
+
+        const openTickets = (supportTickets || []).filter(t => {
+            const s = String(t?.status || t?.estado || '').toLowerCase();
+            return s === 'open' || s === 'abierto' || s === 'in_progress' || s === 'en_progreso';
+        }).length;
+
+        const lowStock = (inventoryBatches || []).filter(b => {
+            const fType = b.fabricType || b.tipoTela || '';
+            const thr = (stockThresholds || []).find(t => (t.fabricType === fType || t.tipoTela === fType));
+            const minM = Number(thr?.minMeters ?? thr?.metrosMinimos ?? 20);
+            return Number(b.currentMeters ?? b.metrosActuales ?? 0) <= minM;
+        }).length;
+
+        const unappliedAlerts = (sellerAlerts || []).filter(a => !a.applied).length;
+
+        const vendorLowStock = (products || []).filter(p =>
+            String(p.sellerId ?? p.idVendedor) === String(user?.id) && Number(p.stock ?? 0) <= 20
+        ).length;
+
+        const vendorActiveOrders = (orders || []).filter(o => {
+            const s = String(o.status || o.estado || '').toLowerCase();
+            return String(o.sellerId ?? o.idVendedor) === String(user?.id)
+                && s !== 'delivered' && s !== 'entregado' && s !== 'cancelled' && s !== 'cancelado';
+        }).length;
+
+        return {
+            pendingModeration,
+            openTickets,
+            lowStock,
+            sellerAlerts: unappliedAlerts,
+            vendorLowStock,
+            vendorActiveOrders
+        };
+    }, [pendingProducts, supportTickets, inventoryBatches, stockThresholds, sellerAlerts, products, orders, user?.id]);
+
+    const resolvedLinks = useMemo(() => {
+        const resolveLink = (item) => {
+            const count = item.badgeKey ? (dynamicBadges[item.badgeKey] || 0) : (item.badge || 0);
+            return {
+                ...item,
+                badge: count > 0 ? count : undefined,
+                children: item.children ? item.children.map(resolveLink) : undefined
+            };
+        };
+        return (links || []).map(resolveLink);
+    }, [links, dynamicBadges]);
 
 
     // Estado del modo Rail (sidebar colapsado)
@@ -344,7 +368,7 @@ function LayoutPanel({ children, title, links, subtitle }) {
     // Control de nodos padre abiertos/cerrados (acordeón)
     const [openNodes, setOpenNodes] = useState(() => {
         const initialOpen = {};
-        links.forEach((link) => {
+        resolvedLinks.forEach((link) => {
             if (link.children?.some((child) => location.pathname === child.path)) {
                 initialOpen[link.label] = true;
             }
@@ -381,14 +405,14 @@ function LayoutPanel({ children, title, links, subtitle }) {
     useEffect(() => {
         setOpenNodes((prev) => {
             const next = { ...prev };
-            links.forEach((link) => {
+            resolvedLinks.forEach((link) => {
                 if (link.children?.some((child) => location.pathname === child.path)) {
                     next[link.label] = true;
                 }
             });
             return next;
         });
-    }, [location.pathname, links]);
+    }, [location.pathname, resolvedLinks]);
 
     // Listener de teclas para abrir el Command Palette con Ctrl+K
     useEffect(() => {
@@ -426,7 +450,7 @@ function LayoutPanel({ children, title, links, subtitle }) {
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50 dark:bg-slate-900 flex font-sans">
             {/* Command Palette — búsqueda global accesible con Ctrl+K */}
-            <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} links={links} />
+            <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} links={resolvedLinks} />
 
             {/* Overlay del sidebar en móvil */}
             {sidebarOpen && (
@@ -445,8 +469,8 @@ function LayoutPanel({ children, title, links, subtitle }) {
                 `}
                 style={{ width: isRailMode ? 80 : 256 }}
             >
-                {/* Selector de tienda/sucursal */}
-                <TenantSelector isRailMode={isRailMode} />
+                {/* Encabezado de identidad real */}
+                <WorkspaceHeader isRailMode={isRailMode} user={user} />
 
                 {/* Barra de búsqueda / Disparador del Command Palette */}
                 <div className="px-3 py-3 border-b border-gray-200/20 dark:border-slate-800/20">
@@ -501,7 +525,7 @@ function LayoutPanel({ children, title, links, subtitle }) {
                         </p>
                     )}
                     <div className="space-y-0.5 pb-2">
-                        {links.map((link) => {
+                        {resolvedLinks.map((link) => {
                             // Si el enlace tiene hijos, renderizar como nodo padre (acordeón)
                             if (link.children && link.children.length > 0) {
                                 return (
