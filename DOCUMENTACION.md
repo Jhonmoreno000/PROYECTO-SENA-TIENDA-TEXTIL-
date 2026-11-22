@@ -1,135 +1,86 @@
-# Indice General de Documentacion Tecnica - D&D Textil
-**Proyecto:** Plataforma Distribuida de Comercializacion y Control Logistico Textil (D&D Textil)  
-**Programa de Formacion:** Tecnologo en Analisis y Desarrollo de Software (ADSO) - SENA  
-**Estandares Aplicados:** IEEE 830, ISO/IEC 25010, Modelo C4 (Simon Brown), BDD (Gherkin), Clean Architecture, Domain-Driven Design (DDD), OWASP API Security, PCI-DSS v4.0, Ley 1581 de 2012 (Habeas Data)  
-**Version:** 2.0.0 - Documentacion Tecnica Oficial  
+# Índice General de Documentación Técnica — D&D Textil Marketplace
+**Proyecto:** Plataforma Marketplace Textil Multi-Vendedor y Control Logístico (**D&D Textil**)  
+**Programa de Formación:** Tecnólogo en Análisis y Desarrollo de Software (ADSO) — SENA  
+**Estándares Aplicados:** IEEE 830, ISO/IEC 25010, Modelo C4 (Simon Brown), BDD (Gherkin), Clean Architecture, Domain-Driven Design (DDD), OWASP API Security, PCI-DSS v4.0, Ley 1581 de 2012 (Habeas Data)  
+**Versión:** 3.0.0 — Documentación Técnica Oficial (Marketplace Multi-Vendedor & Gobernanza Antifraude)  
 
 ---
 
-## Presentacion del Proyecto
+## Presentación del Proyecto
 
-La plataforma **D&D Textil** es un ecosistema tecnologico disenado para la comercializacion, control logistico y administracion de inventario continuo y fraccionado de tejidos textiles. El sistema aborda las ineficiencias del sector tradicional (errores de medicion en mesa, acumulacion de mermas y retazos no comerciales, desviaciones de color por lotes de tintoreria y sobreventas por falta de control por rollo fisico).
+La plataforma **D&D Textil** es un ecosistema **Marketplace Multi-Vendedor B2B/B2C** y sistema de control logístico diseñado para la industria textil. Conecta múltiples casas proveedoras textiles externas verificadas con clientes minoristas y talleres de confección, resolviendo problemas históricos del sector (cortes fragmentados, desviaciones de lote de tintorería, mermas sin control, opacidad de precios entre distribuidores y fraude operativo sobre precios o inventarios).
 
-El cuerpo documental oficial del proyecto se encuentra centralizado en el directorio `documentacion/`, organizado en modulos tecnicos exhaustivos sin abreviaciones ni ambiguedades:
+El cuerpo documental oficial está centralizado en `documentacion/` y sincronizado con la arquitectura actual: **React 18 + Vite 5 (58 rutas)**, **Backend Java 21 (18 manejadores HTTP, 8 servicios, 15 DAOs/migradores, 22 modelos)** y **PostgreSQL 17 (31 tablas, 31 llaves foráneas)**.
 
 ---
 
-## Indice de Modulos Documentales (`documentacion/`)
+## Índice de Módulos Documentales (`documentacion/` y Raíz)
 
-### 1. [01. Especificacion de Requerimientos de Software (IEEE 830 y BDD)](documentacion/01-especificacion-requerimientos-ieee830.md)
-*   **Fase de Investigacion y Fundamentacion:** Caracterizacion del problema en el sector textil tradicional colombiano, impacto economico de la digitalizacion, reduccion de mermas en un 18% y justificacion operativa.
-*   **Objetivos del Proyecto:** Objetivo general y cinco objetivos especificos orientados a arquitectura limpia, motor textil, transaccionalidad concurrente, aseguramiento de calidad y despliegue reproducible.
-*   **Alcance y Delimitacion:** Detalle de los seis modulos en alcance y limites operativos de la version inicial.
-*   **Matriz de Requerimientos Funcionales (RF-01 a RF-07):** Especificacion segun IEEE 830 con identificador, rol, prioridad y criterios de aceptacion (catalogo granular, inventario por rollos, calculo de corte continuo, escala de precios, checkout y pagos, gestion de corte en bodega y administracion de mermas).
-*   **Requerimientos No Funcionales (RNF-01 a RNF-05):** Alineados con la norma ISO/IEC 25010 (Eficiencia de desempeno, Fiabilidad, Mantenibilidad, Seguridad y Usabilidad).
-*   **Escenarios BDD (Behavior-Driven Development):** Especificaciones formales en sintaxis Gherkin (Dado-Cuando-Entonces) para validacion de corte continuo, clasificacion automatica de retazos liquidados y consistencia cromatica por lote de tintoreria.
-*   **Matriz de Trazabilidad de Requerimientos:** Cruce bidireccional entre requerimientos de negocio, casos de uso tecnicos y componentes de software.
+### 0. [Modelo de Negocio y Estrategia Marketplace](MODELO_DE_NEGOCIO.md)
+*   **Modelo Comisión + Venta:** Operación multi-vendedor inspirada en Mercado Libre / Falabella / Éxito con tasa de comisión (`tasa_comision`) para el administrador, división automática de carritos en sub-pedidos (`grupo_checkout`), ganancia neta por proveedor, escalas mayoristas y exclusividad VIP para clientes frecuentes.
+*   **Gobernanza Antifraude:** Protección de precios e inventarios de vendedores externos, auditoría real con notificaciones obligatorias, alertas de stock bajo y envío de reportes reales de mermas.
 
-### 2. [02. Arquitectura de Software, Modelo C4 y Backend Java](documentacion/02-arquitectura-software-c4-y-backend.md)
-*   **Vision General del Backend:** Diseno en Vanilla Java 17 de alto desempeno, servidor HTTP nativo con pool de 32 hilos concurrentes, conexion JDBC directa con PostgreSQL y Google Gson.
-*   **Estructura Exhaustiva de Capas y Paquetes:** Distribucion Clean Architecture en capas `dominio`, `aplicacion` e `infraestructura` con correspondencia exacta de clases en idioma espanol.
-*   **Principios SOLID con Ejemplos de Codigo:** Demostracion de SRP, OCP, LSP, ISP y DIP en el contexto textil.
-*   **Diagramas de Arquitectura bajo el Modelo C4 y Despliegue:**
-    *   Nivel 1: Diagrama de Contexto del Sistema (Mermaid estructurado sin solapamientos, con actores, límites y servicios externos).
-    *   Nivel 2: Diagrama de Contenedores (Mermaid con capas ordenadas de cliente web, app móvil, backend Java, persistencia y pasarela Wompi).
-    *   Nivel 3: Diagrama de Componentes del Backend (Mermaid con capas Clean Architecture desacopladas y dependencias descendentes).
-    *   Nivel 4: Diagrama de Despliegue del Sistema (Mapa de Despliegue de nodos clientes, host Docker, redes aisladas, volúmenes y nube).
-    *   Flujo Omnicanal de Comunicación: Diagramas de canales y secuencia de interacción completa entre el Sistema y el Cliente (Catálogo, Checkout, Wompi, Facturación, SMS, Email y Rastreo).
-*   **Orquestacion Transaccional (Patron Saga Coreografiado):** Diagrama de secuencia Mermaid para reserva de metraje, procesamiento en pasarela Wompi y compensacion de inventario ante fallos.
-*   **Catalogo Completo de Endpoints REST:** Definicion de metodos, rutas, codigos de estado HTTP y politicas de autorizacion RBAC.
+### 1. [01. Especificación de Requerimientos de Software (IEEE 830 y BDD)](documentacion/01-especificacion-requerimientos-ieee830.md)
+*   **Requerimientos Funcionales (RF-01 a RF-12):** Cubre RBAC y sesiones, catálogo técnico granular, inventario continuo por rollos y lotes, retazos liquidados, pagos Wompi con compensación Saga, marketplace multi-vendedor con perfiles tipo Facebook, división de comisiones, exclusividad VIP, restricción de compra a clientes autenticados y auditoría antifraude de lotes/mermas/stock.
+*   **Requerimientos No Funcionales (RNF-01 a RNF-05) y BDD (Gherkin):** Criterios medibles de rendimiento, concurrencia `FOR UPDATE`, seguridad y escalabilidad.
 
-### 3. [03. Arquitectura del Frontend y Gestion de Roles de Usuario](documentacion/03-arquitectura-frontend-y-roles.md)
-*   **Arquitectura de la Interfaz:** Single Page Application (SPA) con React 18, Vite 5, TailwindCSS 3 (diseno Glassmorphism) y Context API.
-*   **Arbol de Directorios:** Organizacion de `assets/`, `components/`, `context/`, `pages/`, `panels/` (Cliente, Vendedor y Administrador) y `utils/`.
-*   **Matriz de Roles y Permisos (RBAC):** Politicas de acceso para Cliente, Vendedor, Operario de Corte y Administrador.
-*   **Mapa de Navegacion:** Diagrama Mermaid de flujo de navegación entre rutas públicas y paneles protegidos por `ProtectedRoute`.
-*   **Calculadora de Metraje Inteligente:** Modelado matematico y formulas para cortinas, vestidos, faldas circulares, manteles y tapiceria con margen tecnico de confeccion del +10%.
-*   **Cliente Movil Hibrido (Android Wrapper):** Arquitectura en Kotlin con `WebViewAssetLoader`, ciclo de vida e integracion con el backend.
+### 2. [02. Arquitectura de Software, Modelo C4 y Backend Java 21](documentacion/02-arquitectura-software-c4-y-backend.md)
+*   **Backend en Java 21 nativo:** Servidor HTTP con pool concurrente de hilos, JDBC + HikariCP, Google Gson y arquitectura por capas (`dominio`, `aplicacion`, `infraestructura`).
+*   **Inventario completo de componentes:** 22 modelos, 8 servicios (`ServicioCorteTextil`, `ServicioExclusividadVIP`, `ServicioAutenticacion`, `ServicioFactura`, etc.), 15 DAOs/migradores y 18 manejadores HTTP (incluyendo `ManejadorTiendas`, protección de precios en `ManejadorProductos` y control antifraude en `ManejadorInventario`).
+*   **Catálogo completo de endpoints REST** y orquestación Saga/Wompi.
 
-### 4. [04. Diseno, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md) y [README de Base de Datos](BASE%20DE%20DATOS/README.md)
-*   **Diseno Arquitectonico:** PostgreSQL 17 en codificacion UTF-8, normalizacion en Tercera Forma Normal (3FN), precision decimal en moneda (`NUMERIC(12,2)`) y metrajes (`NUMERIC(10,2)`).
-*   **Modelo Relacional Formal:** Notacion relacional estricta para las 25 tablas con claves primarias (`PK`), claves foraneas (`FK`), restricciones de unicidad (`UK`) y de integridad referencial.
-*   **Diagrama Entidad-Relacion (DER):** Modelado conceptual completo en sintaxis Mermaid integrando auditoría Wompi.
-*   **Arquitectura Modelo-Vista-Controlador (MVC):** Desacoplamiento y mapeo integral del Modelo (PostgreSQL 17 + DAOs JDBC + Clases de Dominio Java), Vista (SPA React 18 + Tailwind CSS) y Controlador (Handlers HTTP nativos de Java 17).
-*   **Vistas de Base de Datos (SQL Views):** Definicion de vistas para catalogo consolidado, alertas de stock critico y resumen de comisiones de vendedores.
-*   **Ciclo de Vida Transaccional MVC:** Diagrama de secuencia Mermaid para el flujo de compra y descuento de inventario con bloqueo pesimista (`SELECT ... FOR UPDATE`).
-*   **Diccionario de Datos Exhaustivo:** Especificacion columna por columna de las tablas de la base de datos (tipos de datos, restricciones PK, FK, UK, nulabilidad y descripcion del proposito comercial).
-*   **Estrategia de Indexacion B-Tree:** Indices para busqueda de catalogo, ordenamiento de inventario por menor remanente y trazabilidad de ordenes de corte.
-*   **Transaccionalidad y Bloqueo Pesimista:** Aplicacion de `SELECT ... FOR UPDATE` para evitar condiciones de carrera en reservas simultaneas de rollos.
+### 3. [03. Arquitectura del Frontend y Gestión de Roles de Usuario](documentacion/03-arquitectura-frontend-y-roles.md)
+*   **Frontend React 18 + Vite 5 + TailwindCSS 3:** Sistema de diseño Glassmorphism bajo **psicología del color 60-30-10** accesible (WCAG), **58 rutas**, directorio de proveedores, perfil tipo Facebook, comparador competitivo y paneles sin datos hardcodeados.
+*   **Matriz RBAC Real:** Visitante (navegación sin compra), Cliente (checkout exclusivo y VIP), Vendedor (gestión autónoma de tienda, precios, stock y alertas) y Administrador (auditoría de solo lectura y notificaciones).
 
-### 5. [05. Politicas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)
-*   **Evaluacion ISO/IEC 25010:** Tabla de cumplimiento y criterios de medicion (Adecuacion Funcional, Fiabilidad, Eficiencia, Mantenibilidad, Seguridad, Usabilidad y Portabilidad).
-*   **Gestion de Identidad y Acceso (IAM):** Autenticacion mediante tokens efimeros (15 minutos), cookies seguras (`HttpOnly; Secure; SameSite=Strict`) y hashing SHA-256 en UTF-8.
-*   **Politica Financiera PCI-DSS v4.0:** Cumplimiento del Requisito 3 mediante politica de cero almacenamiento de datos de tarjeta (PAN y CVV).
-*   **Proteccion de Datos Personales (Ley 1581 de 2012):** Politica de Habeas Data, consentimiento previo y procedimiento de anonimizacion/derecho al olvido.
-*   **Plan de Recuperacion ante Desastres (DRP):** Objetivos RTO <= 2 horas y RPO <= 15 minutos, respaldos fisicos diarios `pg_dump` y procedimiento de contingencia.
-*   **Matriz de Mitigacion OWASP API Security Top 10:** Estrategias implementadas contra Broken Object Level Authorization, Broken Authentication, Broken Object Property Level Authorization, Unrestricted Resource Consumption, Broken Function Level Authorization, etc.
-*   **Observabilidad y Auditoria:** Formato de logs estructurados en JSON, correlacion mediante UUID y trazabilidad inmutable.
+### 4. [04. Diseño, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md) y [README de Base de Datos](BASE%20DE%20DATOS/README.md)
+*   **PostgreSQL 17 (3FN):** **31 tablas y 31 llaves foráneas** definidas en `BASE DE DATOS/01_esquema_espanol.sql` + migrador idempotente `MigradorEsquemaMarketplace`, incorporando `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor`, `rollos_textil`, `eventos_pago_wompi` y `direcciones_usuario`.
+*   **Semillas Reales (`02_datos_iniciales.sql`):** 4 tiendas proveedoras reales, lotes con costos reales, eventos de merma reales y reseñas verificadas.
 
-### 6. [06. Manual Tecnico de Instalacion, Configuracion y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)
-*   **Requisitos de Infraestructura:** Parametros minimos y recomendados de hardware (CPU, RAM, SSD) y software (Java 17, Node.js 18+, PostgreSQL 17, Docker Engine 24+).
-*   **Topologia de Redes Docker Compose:** Diagrama Mermaid de arquitectura de redes y aislamiento entre red publica `frontend-net` y red interna aislada `backend-net`.
-*   **Especificacion de Variables de Entorno (`.env`):** Configuracion completa de conexiones, secretos y puertos.
-*   **Despliegue Automatizado con Docker Compose:** Procedimiento paso a paso para construccion, inicio, verificacion de estado y bitacoras.
-*   **Procedimiento de Instalacion Manual (Entorno Nativo):** Instrucciones para Linux y Windows (PowerShell) para compilar y ejecutar backend y frontend de forma local.
-*   **Probes de Salud:** Verificacion de endpoints `/health/live` y `/health/ready`.
-*   **Guia de Solucion de Problemas (Troubleshooting):** Resolucion de conflictos de puerto, caidas de conexion JDBC y cabeceras CORS.
+### 5. [05. Políticas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)
+*   **Estándar ISO/IEC 25010, PCI-DSS v4.0 y Ley 1581 de 2012:** Tokens `HmacSHA256` verificados contra estado vivo en BD, contraseñas con hashing seguro/PBKDF2, cero almacenamiento de PAN/CVV, cabeceras de seguridad y mitigación OWASP API Security Top 10.
+
+### 6. [06. Manual Técnico de Instalación, Configuración y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)
+*   **Infraestructura Docker Compose:** Topología `db` (`postgres:17`), `backend` (`eclipse-temurin:21-jre`) y `frontend` (`nginx:alpine`), variables `.env`, compilación manual Java 21 / Node 20 y healthchecks.
 
 ### 7. [07. Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)
-*   **Fundamentacion de Dominio:** Peculiaridades del corte de telas (continuidad de pieza, consistencia cromatica por lote, reclasificacion de mermas y tarifas por volumen).
-*   **Entidad RolloTextil:** Estados del ciclo de vida (`DISPONIBLE`, `RESERVADO`, `RETAZO_LIQUIDADO`, `AGOTADO`) y metodos de corte.
-*   **Servicio de Corte Textil:** Algoritmo Best Fit para seleccion de rollo con menor desperdicio y formula de liquidacion con descuentos (12% mayorista, 25% rollo cerrado, 40% retazos).
-*   **Suite 1 (Reglas de Negocio Textiles):** Detalle de los 14 casos de prueba unitarios ejecutados en `PruebasReglasNegocioTextil.java` (100% aprobados).
-*   **Suite 2 (Seguridad e Integridad):** Detalle de los 17 casos de prueba ejecutados en `PruebasSeguridadIntegridad.java` (hashing PBKDF2 con sal, algoritmo Best-Fit anti-merma, RBAC estricto, 100% aprobados).
-*   **Suite 3 (Concurrencia, Pagos Wompi y Dominio Financiero):** Detalle de los 11 casos de prueba ejecutados en `PruebasConcurrenciaYPagos.java` (100% aprobados).
-*   **Suite 4 (Contratos OpenAPI v3 y Arquitectura API):** Detalle de los 7 casos de prueba ejecutados en `PruebasContratoApi.java` (100% aprobados).
-*   **Guia de Comandos de Terminal:** Instrucciones paso a paso para compilacion y ejecucion en terminal nativa (PowerShell y Bash), pruebas de seguridad con cURL y validacion de CI/CD con GitHub CLI (`gh`).
-*   **Framework de Rendimiento:** Pruebas de carga concurrentes multi-herramienta en `pruebas-carga/` (k6, PowerShell y Bash).
-*   **Certificacion de Resultados:** Registro oficial de ejecucion de las pruebas automatizadas en Java y Frontend (100% aprobadas).
+*   **Dominio Textil y 5 Suites Java 21 (62 pruebas):** `PruebasReglasNegocioTextil` (14), `PruebasSeguridadIntegridad` (20), `PruebasConcurrenciaYPagos` (11), `PruebasContratoApi` (9) y `PruebasMarketplace` (8), junto a `ejecutar-pruebas-frontend.mjs` (**46 pruebas**).
 
-### 8. [08. Modelo Entidad-Relacion](documentacion/08-modelo-entidad-relacion.md)
-*   **DER completo y simplificado:** Las 25 tablas del esquema `01_esquema_espanol.sql` con sus 20 llaves foraneas, cardinalidades y diccionario resumido.
+### 8. [08. Modelo Entidad-Relación (31 tablas)](documentacion/08-modelo-entidad-relacion.md)
+*   **DER actualizado:** Esquema completo de las 31 tablas y 31 llaves foráneas incluyendo todo el ecosistema marketplace, comisiones y pagos Wompi.
 
-### 9. [09. Mapa de Navegacion](documentacion/09-mapa-de-navegacion.md)
-*   **Rutas por rol:** Las 50 rutas de `App.jsx` agrupadas en sitio publico, proceso de compra y paneles de cliente, vendedor y administrador, con su proteccion por `ProtectedRoute`.
+### 9. [09. Mapa de Navegación por Rol (58 rutas)](documentacion/09-mapa-de-navegacion.md)
+*   **Navegación completa:** Flujos de tienda pública, directorio `/tiendas`, `/tienda/:id`, checkout exclusivo para cliente y vistas protegidas de Cliente, Vendedor (`/vendedor/mi-tienda`, `/vendedor/alertas`) y Administrador.
 
 ### 10. [10. Casos de Uso](documentacion/10-casos-de-uso.md)
-*   **Diagramas y especificaciones:** Actores, diagramas de casos de uso de la tienda y de la gestion, y fichas con flujo principal, alternos y postcondiciones.
+*   Diagramas y fichas de casos de uso actualizados para tienda, marketplace multi-vendedor, comisiones, alertas VIP y control antifraude.
 
 ### 11. [11. Diagrama de Clases](documentacion/11-diagrama-de-clases.md)
-*   **Backend Java:** Clases de dominio y vista por capas (`dominio`, `aplicacion`, `infraestructura`) generadas desde el codigo fuente.
+*   Vista por capas del backend Java 21 (`dominio`, `aplicacion`, `infraestructura`).
 
 ### 12. [12. Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)
-*   **Flujos clave:** Inicio de sesion, registro, compra con bloqueo de stock, sesiones firmadas HMAC-SHA256, factura en PDF y motor de corte textil.
+*   Flujos de autenticación, compra multi-vendedor con Wompi y división de comisiones, moderación con alerta al vendedor y motor de corte.
 
 ### 13. [13. Manual de Usuario Oficial (Markdown + PDF)](documentacion/13-manual-de-usuario.md)
-*   **Guia paso a paso por roles:** Recorrido ilustrado para Visitantes, Clientes, Vendedores y Administradores, calculadora de metraje, pasarelas de pago y preguntas frecuentes. Disponible tambien en **[PDF Oficial Descargable](documentacion/Manual_de_usuario_DD_Textil.pdf)**.
+*   Guía operativa por rol (**Visitante**, **Cliente**, **Vendedor** y **Administrador**), cubriendo registro obligatorio para comprar, exploración de tiendas tipo Facebook, comparador de vendedores, alertas VIP/auditoría/mermas y auditoría de lotes/stock en solo lectura. Disponible en **[PDF Oficial](documentacion/Manual_de_usuario_DD_Textil.pdf)**.
 
 ### 14. [14. Plan Maestro y Reporte de Pruebas ISO/IEC 25010](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)
-*   **Certificacion QA integral:** Resultados detallados de las suites de Backend Java (reglas de negocio, sesiones HMAC-SHA256 y RBAC, concurrencia y contratos OpenAPI), suite automatizada de Frontend y matriz de cierre de defectos v1.0 a v2.0.
+*   Dictamen QA oficial con **108 pruebas automatizadas (62 backend en 5 suites + 46 frontend, 100 % aprobadas)** y verificación E2E antifraude.
 
-### 15. [15. Glosario Tecnico y Catalogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)
-*   **Dominio Ubicuo Textil (DDD):** Terminologia industrial (gramaje GSM, lote de tintoreria, urdimbre/trama, mermas), especificaciones de telas, formulas matematicas de confeccion y normatividad de etiquetado NTC.
+### 15. [15. Glosario Técnico y Catálogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)
+*   Terminología industrial textil, propiedades de las telas sembradas y fórmulas de confección.
 
-### 16. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
-*   Especificacion Swagger / OpenAPI v3.0 completa y estandarizada de todos los endpoints de la API REST, con esquemas de peticion, esquemas de respuesta y codigos de error HTTP.
+### 16. [16. Guion de Demostración para Sustentación SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)
+*   Guion práctico de sustentación de la plataforma multi-vendedor, comisiones, VIP, auditoría con alerta al vendedor y ejecución de las 108 pruebas automatizadas.
 
-### 14. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx)
-*   Requerimientos funcionales y no funcionales (ISO/IEC 25010) y matriz de trazabilidad hacia casos de uso y clases de diseno.
+### 17. [Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)
+*   Especificación OpenAPI 3.0.3 de endpoints y esquemas incluyendo `/api/tiendas`, `/api/vendedor/alertas`, `/api/clientes/elegibilidad-vip`, `/api/productos/{id}/competencia`, `/api/productos/{id}/moderar`, `/api/inventario/notificar-stock` y `/api/inventario/enviar-reporte-mermas`.
 
-### 15. [Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)
-*   Herramientas automatizadas de estres y desempeno: Script Grafana k6 (`script_k6_estres_tienda.js`), simulador concurrente nativo PowerShell (`simulador_carga_concurrente.ps1`) y script Bash (`simulador_carga_concurrente.sh`) con evaluacion de percentiles P50 a P99 y throughput.
-
-### 16. [Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)
-*   Protocolo formal de sustentacion paso a paso (25 minutos): roles de cliente, operario de corte en bodega, vendedor y administrador, emision de factura PDF con CUFE, impresion de etiquetas termicas con QR, ejecucion de pruebas automatizadas y banco de preguntas tecnicas del jurado evaluador.
-
-### 17. [Modelo de Negocio y Estrategia de Producto](MODELO_DE_NEGOCIO.md)
-*   Estructuracion ejecutiva y comercial del proyecto: Resumen Ejecutivo, Propuesta de Valor (dolores del sector textil y solucion tecnologica), Segmentacion de Clientes (B2B, B2C y Aliados), Modelo de Ingresos y Monetizacion, Estructura de Costos (CAPEX/OPEX), Canales de Distribucion y Adquisicion, Ventaja Competitiva (Matriz Comparativa y Foso Tecnologico) y Metricas Clave (KPIs financieros, comerciales, logísticos y SLA).
+### 18. [Matriz de Requerimientos](documentacion/Matriz_de_requerimientos_v2.xlsx) y [Pruebas de Carga](pruebas-carga/README.md)
+*   Matriz de trazabilidad de requerimientos y suite de carga k6 / PowerShell / Bash.
 
 ---
 
-## Certificacion de Conformidad Tecnica
+## Certificación de Conformidad Técnica
 
-La presente documentacion tecnica satisface la totalidad de los criterios de evaluacion tecnica para proyectos de software del Servicio Nacional de Aprendizaje (SENA) en el programa **ADSO**, garantizando rigor metodologico, coherencia arquitectonica e inmutabilidad operativa.
-
-102 casos de prueba automatizados (56 backend + 46 frontend)
+Esta documentación refleja exactamente la arquitectura, base de datos, reglas de negocio y controles de seguridad implementados en el código fuente del proyecto **D&D Textil** (**108 casos de prueba automatizados: 62 backend + 46 frontend**).
