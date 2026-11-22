@@ -242,6 +242,17 @@ public abstract class ManejadorBase implements HttpHandler {
     }
 
     /**
+     * Obtiene el nombre real del usuario autenticado desde PostgreSQL para registrar trazabilidad en auditorías.
+     */
+    protected String obtenerNombreUsuario(int idUsuario) {
+        if (idUsuario <= 0) return "Administrador";
+        return USUARIOS.buscarPorId(idUsuario)
+                .map(Usuario::getNombre)
+                .filter(n -> n != null && !n.isBlank())
+                .orElse("Administrador #" + idUsuario);
+    }
+
+    /**
      * Envía una respuesta HTTP con cuerpo en formato JSON codificado en UTF-8.
      *
      * @param intercambio   Contexto de la petición HTTP (`HttpExchange`).
