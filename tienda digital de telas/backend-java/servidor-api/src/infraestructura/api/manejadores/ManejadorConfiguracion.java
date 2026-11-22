@@ -83,6 +83,12 @@ public class ManejadorConfiguracion extends ManejadorBase {
                 return;
             }
 
+            if ("product_discounts".equalsIgnoreCase(clave.trim())) {
+                enviarRespuestaJson(intercambio, 403,
+                        "{\"error\":\"Operación bloqueada: solo cada vendedor propietario puede gestionar los descuentos de sus propios productos.\"}");
+                return;
+            }
+
             if (configuracionDAO.guardarConfiguracion(clave, valor)) {
                 enviarRespuestaJson(intercambio, 200, "{\"success\":true}");
             } else {
