@@ -1,25 +1,26 @@
 # Modelo Entidad-Relación (DER) — D&D Textil
 
-> Fuente única: `BASE DE DATOS/01_esquema_espanol.sql`, que es el esquema que usan los DAO del backend (`infraestructura/persistencia/jdbc`). Este documento reemplaza el DER de 8 tablas de `04-base-de-datos-diseno-y-esquema.md` (sección 2.2) y de `BASE DE DATOS/README.md`, que no incluía 17 tablas y mostraba una tabla `ROLLOS_TEXTIL` que no existe en el esquema.
+> Fuente única: `BASE DE DATOS/01_esquema_espanol.sql` junto con las migraciones idempotentes (`MigradorEsquemaPagos` y `MigradorEsquemaMarketplace`), esquema consolidado de **31 tablas** usado por los 15 componentes de persistencia (`infraestructura/persistencia/jdbc`). Este documento actualiza el DER de `04-base-de-datos-diseno-y-esquema.md` y de `BASE DE DATOS/README.md`.
 
 ## 1. Resumen
 
 | Dato | Valor |
 | :--- | :--- |
-| Tablas | 25 |
-| Llaves foráneas (FK) | 20 |
-| Relaciones lógicas sin FK | 2 |
-| Tablas con relaciones | 15 |
-| Tablas independientes | 10 |
+| Tablas | 31 |
+| Llaves foráneas (FK) | 31 |
+| Relaciones lógicas sin FK | 3 |
+| Tablas con relaciones FK | 20 |
+| Tablas independientes (sin FK) | 11 |
 
 **Tablas por módulo**
 
 | Módulo | Tablas |
 | :--- | :--- |
-| Usuarios y acceso | `usuarios`, `actividad_reciente` |
+| Usuarios y acceso | `usuarios`, `direcciones_usuario`, `actividad_reciente` |
+| Marketplace y Tiendas | `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor` |
 | Catálogo | `categorias`, `productos`, `imagenes_producto`, `resenas` |
-| Inventario | `lotes_inventario`, `eventos_merma`, `umbrales_stock`, `inventario_telas_erp` |
-| Ventas | `items_carrito`, `pedidos`, `items_pedido`, `cupones`, `categorias_cupon` |
+| Inventario | `lotes_inventario`, `rollos_textil`, `eventos_merma`, `umbrales_stock`, `inventario_telas_erp` |
+| Ventas y Pagos | `items_carrito`, `pedidos`, `items_pedido`, `eventos_pago_wompi`, `cupones`, `categorias_cupon` |
 | Soporte | `tickets_soporte`, `reportes_errores` |
 | Contenido del inicio y configuración | `secciones_inicio`, `diapositivas_carrusel`, `banner_global`, `configuracion_sistema` |
 | Analítica (ERP) | `metricas_ventas_erp`, `ventas_diarias`, `ventas_region`, `notificaciones_sistema_erp` |
@@ -62,8 +63,16 @@ erDiagram
     USUARIOS |o--o{ REPORTES_ERRORES : "reporta"
     USUARIOS |o--o{ REPORTES_ERRORES : "atiende"
     USUARIOS |o--o{ ACTIVIDAD_RECIENTE : "genera"
+    USUARIOS ||--o{ DIRECCIONES_USUARIO : "registra"
+    USUARIOS ||--o| PERFILES_VENDEDOR : "configura tienda"
+    USUARIOS ||--o{ RESENAS_VENDEDOR : "recibe / escribe"
+    USUARIOS ||--o{ ALERTAS_VENDEDOR : "recibe"
+    PRODUCTOS ||--o{ ROLLOS_TEXTIL : "fracciona en"
+    LOTES_INVENTARIO |o--o{ ROLLOS_TEXTIL : "agrupa"
+    PRODUCTOS |o--o{ ALERTAS_VENDEDOR : "origina"
     SECCIONES_INICIO |o..o{ DIAPOSITIVAS_CARRUSEL : "pertenece a (sin FK)"
     CUPONES |o..o{ PEDIDOS : "usa (sin FK)"
+    PEDIDOS |o..o{ EVENTOS_PAGO_WOMPI : "audita por referencia (sin FK)"
 
     USUARIOS {
         int id PK
@@ -75,6 +84,7 @@ erDiagram
         bool suspendido
         text motivo_suspension
         numeric tasa_comision
+        varchar telefono
         timestamp registrado_en
         timestamp ultimo_acceso
     }
@@ -103,6 +113,10 @@ erDiagram
         bool es_nueva_coleccion
         bool es_exclusivo
         bool es_oferta
+        numeric porcentaje_descuento
+        numeric metros_vendidos
+        numeric calificacion_promedio
+        int total_resenas
         timestamp creado_en
         timestamp actualizado_en
     }
@@ -175,6 +189,13 @@ erDiagram
         varchar metodo_pago
         varchar estado_pago
         varchar numero_guia
+        varchar grupo_checkout
+        numeric porcentaje_comision
+        numeric monto_comision_admin
+        numeric ganancia_neta_vendedor
+        varchar referencia_pago
+        bigint monto_centavos
+        varchar moneda
         text notas
         timestamp creado_en
         timestamp actualizado_en
@@ -312,6 +333,63 @@ erDiagram
         numeric costo_por_metro
         date fecha_ultima_reposicion
     }
+    ROLLOS_TEXTIL {
+        int id PK
+        int producto_id FK
+        int lote_id FK
+        varchar codigo_rollo UK
+        numeric metraje_inicial
+        numeric metraje_remanente
+        varchar lote_tintoreria
+        varchar estado
+        varchar ubicacion_bodega
+    }
+    EVENTOS_PAGO_WOMPI {
+        int id PK
+        varchar referencia_pago
+        varchar transaccion_id
+        varchar estado
+        varchar origen
+        varchar resultado
+        timestamp recibido_en
+    }
+    DIRECCIONES_USUARIO {
+        int id PK
+        int usuario_id FK
+        varchar etiqueta
+        varchar nombre_destinatario
+        text direccion
+        varchar ciudad
+        bool predeterminada
+    }
+    PERFILES_VENDEDOR {
+        int vendedor_id PK
+        varchar nombre_tienda
+        varchar slug_tienda UK
+        varchar ciudad
+        varchar especialidad
+        numeric calificacion_promedio
+        numeric total_ventas_metros
+    }
+    RESENAS_VENDEDOR {
+        int id PK
+        int vendedor_id FK
+        int usuario_id FK
+        int pedido_id FK
+        int calificacion
+        text comentario
+        timestamp creado_en
+    }
+    ALERTAS_VENDEDOR {
+        int id PK
+        int vendedor_id FK
+        int producto_id FK
+        varchar tipo_alerta
+        varchar titulo
+        numeric descuento_sugerido
+        bool leida
+        bool aplicada
+    }
 ```
 
 ## 3. Relaciones
@@ -338,6 +416,12 @@ erDiagram
 | 18 | `usuarios` | `reportes_errores.vendedor_id` | 0..1 : 0..N | usuarios **reporta** reportes_errores | queda en NULL |
 | 19 | `usuarios` | `reportes_errores.asignado_a` | 0..1 : 0..N | usuarios **atiende** reportes_errores | queda en NULL |
 | 20 | `usuarios` | `actividad_reciente.usuario_id` | 0..1 : 0..N | usuarios **genera** actividad_reciente | queda en NULL |
+| 21 | `productos` | `rollos_textil.producto_id` | 1 : 0..N | productos **se fracciona en** rollos_textil | se borran en cascada |
+| 22 | `lotes_inventario` | `rollos_textil.lote_id` | 0..1 : 0..N | lotes_inventario **agrupa** rollos_textil | queda en NULL |
+| 23 | `usuarios` | `direcciones_usuario.usuario_id` | 1 : 0..N | usuarios **registra** direcciones_usuario | se borran en cascada |
+| 24 | `usuarios` | `perfiles_vendedor.vendedor_id` | 1 : 0..1 | vendedores **administran** perfiles_vendedor | se borra en cascada |
+| 25 | `usuarios` / `pedidos` | `resenas_vendedor` (`vendedor_id`, `usuario_id`, `pedido_id`) | 1 : 0..N | clientes **califican** tiendas en resenas_vendedor | se borran en cascada / NULL |
+| 26 | `usuarios` / `productos` | `alertas_vendedor` (`vendedor_id`, `producto_id`) | 1 : 0..N | plataforma y admin **notifican** a vendedores en alertas_vendedor | se borran en cascada |
 
 Notas sobre las relaciones:
 
@@ -363,7 +447,7 @@ Estas tablas no tienen llaves foráneas porque se consultan por clave, fecha o c
 
 ## 4. Observaciones del esquema (para corregir o justificar)
 
-1. **Dos esquemas a la vez (corregido).** El volcado en inglés `TIENDA DIGITAL TEXTIL.sql` se movió a `BASE DE DATOS/legado/`, así que Docker ya no lo ejecuta y solo se crean las 25 tablas en español. `ManejadorFactura` ya lee las facturas desde `pedidos` e `items_pedido`.
+1. **Dos esquemas a la vez (corregido) y evolucion a 31 tablas / 31 FKs.** El volcado en inglés `TIENDA DIGITAL TEXTIL.sql` se movió a `BASE DE DATOS/legado/`, así que Docker ejecuta las tablas en español complementadas al inicio por `MigradorEsquemaPagos` y `MigradorEsquemaMarketplace`, consolidando **31 tablas y 31 llaves foráneas** (incluyendo `rollos_textil`, `eventos_pago_wompi`, `direcciones_usuario`, `perfiles_vendedor`, `resenas_vendedor` y `alertas_vendedor`). `ManejadorFactura` ya lee las facturas desde `pedidos` e `items_pedido`.
 2. **Columnas duplicadas.** `02_datos_iniciales.sql` agrega columnas alias en inglés (`name`, `email`, `role`, `code`, `active`…) y copia los valores una sola vez; después pueden quedar desincronizadas. No se incluyen en el DER.
 3. **Metros enteros en el carrito.** `items_carrito.cantidad` y `productos.stock` son `INTEGER`, mientras que `items_pedido.cantidad` es `NUMERIC(10,2)`. Si se venden fracciones de metro (1,5 m), el carrito no las puede guardar.
 4. **FK opcionales que deberían ser obligatorias.** `lotes_inventario.producto_id`, `eventos_merma.producto_id` y las dos columnas de `categorias_cupon` admiten NULL; un lote o una merma sin producto no tiene sentido.

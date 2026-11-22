@@ -2,7 +2,7 @@
 **Proyecto:** Plataforma Distribuida de Comercializacion y Control Logistico Textil (D&D Textil)  
 **Programa de Formacion:** Tecnologo en Analisis y Desarrollo de Software (ADSO) - SENA  
 **Motor de Base de Datos:** PostgreSQL 17 (Codificacion UTF-8)  
-**Version:** 2.0.0 - Documentacion Tecnica Oficial  
+**Version:** 3.0.0 - Documentacion Tecnica Oficial (Marketplace Multi-Vendedor)  
 
 ---
 
@@ -23,7 +23,7 @@ El modelo relacional traduce los requerimientos del negocio textil a un conjunto
 
 ### 2.1. Diagrama Gráfico Vectorial del Modelo Relacional
 
-A continuación se presenta el **esquema gráfico completo** de las 25 tablas relacionales organizadas por clústeres de negocio (Catálogo Textil, Usuarios y Seguridad, Ventas y Transacciones, Cupones y Métricas ERP), detallando claves primarias (PK en amarillo), claves foráneas (FK en celeste), restricciones únicas (UK en violeta) y líneas de integridad referencial:
+A continuación se presenta el **esquema gráfico completo** de las 31 tablas relacionales (con 31 llaves foráneas) organizadas por clústeres de negocio (Marketplace y Tiendas, Catálogo Textil, Usuarios y Seguridad, Ventas con Comisión y Split Multi-Vendedor, Cupones y Métricas ERP), detallando claves primarias (PK en amarillo), claves foráneas (FK en celeste), restricciones únicas (UK en violeta) y líneas de integridad referencial:
 
 ![Modelo Relacional de Base de Datos - D&D Textil](diagramas/modelo_relacional_actualizado.svg)
 
@@ -113,20 +113,39 @@ En la notación relacional estándar (Codd / Date), cada entidad o tabla se defi
 26. **`INVENTARIO_TELAS_ERP`**  
     `INVENTARIO_TELAS_ERP(`<u>`id`</u>, `sku` [UK], `nombre_tela`, `categoria`, `proveedor`, `metros_actuales`, `metros_minimos`, `costo_por_metro`, `fecha_ultima_reposicion`)
 
+27. **`EVENTOS_PAGO_WOMPI`**  
+    `EVENTOS_PAGO_WOMPI(`<u>`id`</u>, `referencia_pago`, `transaccion_id`, `estado`, `origen`, `resultado`, `carga_util`, `recibido_en`)
+
+28. **`DIRECCIONES_USUARIO`**  
+    `DIRECCIONES_USUARIO(`<u>`id`</u>, `usuario_id` [FK &rarr; `USUARIOS.id`], `etiqueta`, `nombre_destinatario`, `telefono`, `direccion`, `ciudad`, `departamento`, `codigo_postal`, `predeterminada`, `creado_en`)
+
+29. **`PERFILES_VENDEDOR`** *(Marketplace Multi-Vendedor)*  
+    `PERFILES_VENDEDOR(`<u>`vendedor_id`</u> [PK/FK &rarr; `USUARIOS.id`], `nombre_tienda`, `slug_tienda` [UK], `descripcion_bio`, `url_avatar`, `url_portada`, `ciudad`, `pais`, `especialidad`, `verificado`, `politica_envio`, `calificacion_promedio`, `total_resenas`, `total_ventas_metros`, `actualizado_en`)
+
+30. **`RESENAS_VENDEDOR`** *(Marketplace Multi-Vendedor)*  
+    `RESENAS_VENDEDOR(`<u>`id`</u>, `vendedor_id` [FK &rarr; `USUARIOS.id`], `usuario_id` [FK &rarr; `USUARIOS.id`], `pedido_id` [FK &rarr; `PEDIDOS.id`], `calificacion`, `comentario`, `creado_en`)
+
+31. **`ALERTAS_VENDEDOR`** *(VIP, Auditoría Admin, Stock y Mermas)*  
+    `ALERTAS_VENDEDOR(`<u>`id`</u>, `vendedor_id` [FK &rarr; `USUARIOS.id`], `producto_id` [FK &rarr; `PRODUCTOS.id`], `tipo_alerta`, `titulo`, `mensaje`, `sugerencia_accion`, `descuento_sugerido`, `leida`, `aplicada`, `creado_en`)
+
 ---
 
 ### 2.2. Diagrama Entidad-Relacion (DER)
 
-A continuación se presenta el **Diagrama Entidad-Relación (DER)** modelado en sintaxis Mermaid, organizado por clústeres de negocio y conectando el ciclo de compra con la auditoría de pasarela Wompi:
+A continuación se presenta el **Diagrama Entidad-Relación (DER)** modelado en sintaxis Mermaid, organizado por clústeres de negocio y conectando el ciclo de compra marketplace multi-vendedor con la auditoría de pasarela Wompi:
 
 ```mermaid
 erDiagram
-    %% Relaciones de Usuarios y Clientes
+    %% Relaciones de Usuarios y Marketplace
+    USUARIOS ||--o| PERFILES_VENDEDOR : "configura tienda"
     USUARIOS ||--o{ PRODUCTOS : "publica (vendedor)"
     USUARIOS ||--o{ PEDIDOS : "realiza (cliente)"
     USUARIOS ||--o{ PEDIDOS : "gestiona (vendedor)"
+    USUARIOS ||--o{ DIRECCIONES_USUARIO : "guarda"
     USUARIOS ||--o{ ITEMS_CARRITO : "posee"
     USUARIOS ||--o{ RESENAS : "escribe"
+    USUARIOS ||--o{ RESENAS_VENDEDOR : "recibe / escribe"
+    USUARIOS ||--o{ ALERTAS_VENDEDOR : "recibe"
     USUARIOS ||--o{ TICKETS_SOPORTE : "radica"
 
     %% Relaciones de Catalogo e Inventario
@@ -238,12 +257,43 @@ erDiagram
 
     EVENTOS_PAGO_WOMPI {
         int id PK
-        string wompi_transaccion_id
-        string referencia FK
+        string referencia_pago
+        string transaccion_id
         string estado
-        numeric monto_en_centavos
-        boolean checksum_valido
+        string origen
+        string resultado
+        timestamp recibido_en
+    }
+
+    PERFILES_VENDEDOR {
+        int vendedor_id PK
+        string nombre_tienda
+        string slug_tienda UK
+        string ciudad
+        string especialidad
+        numeric calificacion_promedio
+        numeric total_ventas_metros
+    }
+
+    RESENAS_VENDEDOR {
+        int id PK
+        int vendedor_id FK
+        int usuario_id FK
+        int pedido_id FK
+        int calificacion
+        text comentario
         timestamp creado_en
+    }
+
+    ALERTAS_VENDEDOR {
+        int id PK
+        int vendedor_id FK
+        int producto_id FK
+        string tipo_alerta
+        string titulo
+        numeric descuento_sugerido
+        boolean leida
+        boolean aplicada
     }
 
     CUPONES {
@@ -269,11 +319,11 @@ Gestiona las credenciales y perfiles de acceso bajo el modelo RBAC.
 | `nombre` | `VARCHAR` | 100 | NO | - | Nombre y apellido o razon social de la empresa. |
 | `correo` | `VARCHAR` | 150 | NO | **UK** | Direccion de correo electronico corporativo o personal. |
 | `contrasena_hash` | `VARCHAR` | 255 | NO | - | Hash criptografico SHA-256 generado en codificacion UTF-8. |
-| `rol` | `VARCHAR` | 50 | NO | - | Rol de autorizacion: `cliente`, `vendedor`, `operario_corte`, `administrador`. |
+| `rol` | `VARCHAR` | 50 | NO | - | Rol de autorizacion estricto: `cliente`, `vendedor`, `administrador`. |
 | `activo` | `BOOLEAN` | 1 B | NO | - | Estado de habilitacion de la cuenta en el sistema. |
 | `suspendido` | `BOOLEAN` | 1 B | NO | - | Indicador de bloqueo disciplinario de la cuenta. |
 | `motivo_suspension` | `TEXT` | Variable | SI | - | Justificacion de la suspension emitida por el administrador. |
-| `tasa_comision` | `NUMERIC` | 5,2 | SI | - | Porcentaje de comision pactada con el vendedor (ej. 5.50%). |
+| `tasa_comision` | `NUMERIC` | 5,2 | SI | - | Porcentaje de comision pactada de la plataforma por venta (10.00% por defecto). |
 | `registrado_en` | `TIMESTAMP` | 8 B | NO | - | Marca temporal exacta de creacion de la cuenta. |
 | `ultimo_acceso` | `TIMESTAMP` | 8 B | SI | - | Fecha y hora del inicio de sesion exitoso mas reciente. |
 
@@ -303,11 +353,15 @@ Catalogo maestro de telas disponibles para la venta.
 | `stock` | `INTEGER` | 4 B | NO | - | Existencia fisica agregada en metros lineales. |
 | `destacado` | `BOOLEAN` | 1 B | NO | - | Indicador para exhibicion en pagina principal. |
 | `activo` | `BOOLEAN` | 1 B | NO | - | Visibilidad en catalogo publico. |
-| `estado_moderacion` | `VARCHAR` | 50 | NO | - | Estado de aprobacion: `pending`, `approved`, `rejected`. |
-| `motivo_rechazo` | `TEXT` | Variable | SI | - | Justificacion en caso de rechazo de publicacion. |
+| `estado_moderacion` | `VARCHAR` | 50 | NO | - | Estado de aprobacion: `pending`, `approved`, `changes_requested`, `rejected`. |
+| `motivo_rechazo` | `TEXT` | Variable | SI | - | Justificacion de auditoria emitida por el administrador. |
 | `es_nueva_coleccion` | `BOOLEAN` | 1 B | NO | - | Marcador para colecciones de temporada. |
-| `es_exclusivo` | `BOOLEAN` | 1 B | NO | - | Marcador para telas importadas o de edicion limitada. |
+| `es_exclusivo` | `BOOLEAN` | 1 B | NO | - | Marcador para telas VIP exclusivas desbloqueadas para clientes recurrentes. |
 | `es_oferta` | `BOOLEAN` | 1 B | NO | - | Marcador de precios promocionales de descuento. |
+| `porcentaje_descuento` | `NUMERIC` | 5,2 | SI | - | Porcentaje de descuento comercial fijado exclusivamente por el vendedor. |
+| `metros_vendidos` | `NUMERIC` | 12,2 | SI | - | Acumulado historico real de metros lineales vendidos del producto. |
+| `calificacion_promedio` | `NUMERIC` | 3,2 | SI | - | Promedio de calificaciones reales recibidas en el marketplace. |
+| `total_resenas` | `INTEGER` | 4 B | SI | - | Numero total de resenas verificadas publicadas sobre la tela. |
 
 ### 3.4. Tabla: `rollos_textil`
 Registro de unidades fisicas individuales para trazabilidad de corte y tintoreria.
@@ -366,6 +420,11 @@ Encabezado de ordenes comerciales de compra.
 | `estado` | `VARCHAR` | 50 | NO | - | Estado operativo: `pending`, `cutting`, `shipped`, `delivered`, `cancelled`. |
 | `estado_pago` | `VARCHAR` | 50 | NO | - | Estado de cobro: `pending`, `paid`, `refunded`, `failed`. |
 | `numero_guia` | `VARCHAR` | 100 | SI | - | Codigo de rastreo o identificador QR de corte. |
+| `vendedor_id` | `INTEGER` | 4 B | SI | **FK** | Proveedor propietario del sub-pedido (`usuarios.id`). |
+| `grupo_checkout` | `VARCHAR` | 64 | SI | - | Identificador compartido para sub-pedidos de carritos multi-vendedor. |
+| `porcentaje_comision` | `NUMERIC` | 5,2 | SI | - | Tasa de comision aplicada al pedido (10.00% por defecto). |
+| `monto_comision_admin` | `NUMERIC` | 12,2 | SI | - | Ganancia retenida por la plataforma marketplace (administrador). |
+| `ganancia_neta_vendedor` | `NUMERIC` | 12,2 | SI | - | Monto neto liquidado al vendedor despues de comision. |
 
 ### 3.8. Tabla: `items_pedido`
 Detalle de las telas y metrajes contenidos en cada pedido.
@@ -444,17 +503,17 @@ flowchart TD
 
     subgraph VISTA ["1. CAPA VISTA (View - React 18 + TailwindCSS)"]
         direction TB
-        UI_Store["Tienda Pública & Catálogo<br/>(Catalogo.jsx, Carrito.jsx, Payment.jsx)"]:::vistaStyle
-        UI_Admin["Paneles de Gestión por Rol<br/>(AdminDashboard, SellerDashboard, MesaCorte)"]:::vistaStyle
-        UI_Context["Estado Global Reactivo<br/>(AuthContext, CartContext)"]:::vistaStyle
+        UI_Store["Marketplace Público & Tiendas<br/>(Catalogo.jsx, DirectorioTiendas.jsx, PerfilTiendaPublico.jsx, Payment.jsx)"]:::vistaStyle
+        UI_Admin["Paneles de Gestión por Rol<br/>(ResumenAdmin, MiTiendaVendedor, AlertasOportunidad, PanelCliente)"]:::vistaStyle
+        UI_Context["Estado Global Reactivo<br/>(ContextoAutenticacion, ContextoCarrito, ContextoProducto)"]:::vistaStyle
         UI_Store --> UI_Context
         UI_Admin --> UI_Context
     end
 
-    subgraph CONTROLADOR ["2. CAPA CONTROLADOR (Controller - Java 17 HttpServer)"]
+    subgraph CONTROLADOR ["2. CAPA CONTROLADOR (Controller - Java 21 HttpServer)"]
         direction TB
-        BaseHandler["ManejadorBase<br/>(CORS, Rate Limit 120 req/min, Correlation-ID)"]:::controllerStyle
-        Handlers["Manejadores REST Especializados<br/>(ManejadorProductos, ManejadorPedidos, ManejadorInventario)"]:::controllerStyle
+        BaseHandler["ManejadorBase<br/>(CORS, Rate Limit 1200 req/min, Correlation-ID, RBAC)"]:::controllerStyle
+        Handlers["18 Manejadores REST Especializados<br/>(ManejadorProductos, ManejadorTiendas, ManejadorPedidos, ManejadorInventario)"]:::controllerStyle
         Gson["Transformador JSON<br/>(Google Gson DTOs Bidireccionales)"]:::controllerStyle
         BaseHandler --> Handlers
         Handlers --- Gson
@@ -462,15 +521,15 @@ flowchart TD
 
     subgraph MODELO ["3. CAPA MODELO (Model - Java Domain + JDBC DAOs)"]
         direction TB
-        Domain["Entidades de Negocio y Servicios<br/>(Producto, Pedido, RolloTextil, ServicioCorteTextil)"]:::modelStyle
-        DAOs["DAOs de Persistencia JDBC<br/>(ProductoDAO, PedidoDAO, InventarioDAO, PagoWompiDAO)"]:::modelStyle
+        Domain["22 Entidades de Negocio y 8 Servicios<br/>(Producto, PerfilVendedor, Pedido, ServicioExclusividadVIP, ServicioCorteTextil)"]:::modelStyle
+        DAOs["15 DAOs y Migradores JDBC<br/>(ProductoDAO, TiendaVendedorDAO, PedidoDAO, InventarioDAO, PagoWompiDAO)"]:::modelStyle
         Hikari["Pool de Conexiones<br/>(HikariCP 20 Conexiones)"]:::modelStyle
         Domain --> DAOs
         DAOs --> Hikari
     end
 
     subgraph PERSISTENCIA ["4. CAPA DE BASE DE DATOS"]
-        Postgres[("PostgreSQL 17<br/>25 Tablas Relacionales, Índices B-Tree, SELECT FOR UPDATE")]:::modelStyle
+        Postgres[("PostgreSQL 17<br/>31 Tablas Relacionales · 31 FKs · SELECT FOR UPDATE")]:::modelStyle
     end
 
     %% Flujo ordenado de capas
@@ -495,7 +554,7 @@ El **Modelo** es el núcleo de la lógica de negocio y la persistencia de datos.
    * Clases Java encapsuladas (`Producto`, `Pedido`, `Usuario`, `ItemCarrito`, `LoteInventario`, `UmbralStock`, `VentaRegion`, `ActividadReciente`).
    * Manejo bilingüe con anotaciones `@SerializedName` de Google Gson para serialización transparente.
 3. **Objetos de Acceso a Datos (`infraestructura.persistencia.jdbc.*`):**
-   * DAOs especializados (`ProductoDAO`, `PedidoDAO`, `InventarioDAO`, `CarritoDAO`, `UsuarioDAO`, `CuponDAO`).
+   * DAOs especializados (`ProductoDAO`, `TiendaVendedorDAO`, `PedidoDAO`, `InventarioDAO`, `CarritoDAO`, `JdbcRepositorioUsuarioImpl`, `CuponDAO`, `PagoWompiDAO`).
    * Consultas SQL parametrizadas mediante `PreparedStatement` para mitigar ataques de inyección SQL (OWASP Top 10).
 
 ### 6.4. Componente V: La Vista (View)
@@ -507,7 +566,8 @@ La **Vista** es la interfaz visual reactiva con la que interactúan los diferent
    * Estilizado con Tailwind CSS bajo principios de ergonomía visual y accesibilidad (WCAG 2.1).
 2. **Componentes Clave de Vista:**
    * `src/paginas/Catalogo.jsx`: Renderizado del catálogo textil con filtros dinámicos por tipo de tela y precio.
-   * `src/componentes/CarritoDrawer.jsx`: Carrito lateral interactivo con cálculo automático de totales y cupones.
+   * `src/paginas/DirectorioTiendas.jsx` y `PerfilTiendaPublico.jsx`: Vitrina pública de proveedores reales y perfil de tienda tipo red social.
+   * `src/paginas/vendedor/MiTiendaVendedor.jsx` y `AlertasOportunidad.jsx`: Editor en vivo de perfil comercial y bandeja de alertas reales (`alertas_vendedor`).
    * `src/paginas/admin/ResumenAdmin.jsx`: Panel de control con gráficos Recharts para métricas comerciales.
    * `src/paginas/admin/Inventario/ConfiguracionStock.jsx`: Vista de configuración de umbrales y alertas de stock.
 3. **Consumo Desacoplado:**
@@ -519,7 +579,7 @@ El **Controlador** actúa como puente intermediario e inteligente entre la Vista
 
 1. **Manejador Base (`ManejadorBase.java`):**
    * Hereda de `HttpHandler` del servidor embebido de Java.
-   * Aplica políticas DevSecOps globales: cabeceras CORS dinámicas, Rate Limiting per cápita (120 req/min por IP), inyección de `X-Correlation-ID` para trazabilidad y logs estructurados en JSON.
+   * Aplica políticas DevSecOps globales: cabeceras CORS dinámicas, Rate Limiting per cápita (1200 req/min por IP), inyección de `X-Correlation-ID` para trazabilidad y logs estructurados en JSON.
 2. **Controladores Especializados (`infraestructura.api.manejadores.*`):**
    * `ManejadorProductos`: Gestiona las rutas `/api/productos` (GET, POST, PUT, DELETE).
    * `ManejadorPedidos`: Orquesta la creación transaccional de órdenes, validando stock disponible y calculando totales con impuestos.
