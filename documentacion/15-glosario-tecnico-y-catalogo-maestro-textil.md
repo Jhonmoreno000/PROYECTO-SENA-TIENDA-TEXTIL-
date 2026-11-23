@@ -41,7 +41,7 @@ La siguiente matriz documenta las propiedades físico-químicas y comerciales de
 
 ## 3. Fórmulas Matemáticas de la Calculadora de Metraje por Proyecto
 
-El módulo **Calculadora de Metraje** (`/cliente/calculadora` y `formateadores.js`) implementa ecuaciones paramétricas que consideran el ancho del rollo ($A_{\text{rollo}}$), las dimensiones de la prenda/hogar y un **margen de seguridad técnica del 10 %** ($M = 1,10$) para absorber el encogimiento por primer lavado y los márgenes de costura:
+El módulo **Calculadora de Metraje** (`/cliente/coleccion/calculadora` y `formateadores.js`) implementa ecuaciones paramétricas que consideran el ancho del rollo ($A_{\text{rollo}}$), las dimensiones de la prenda/hogar y un **margen de seguridad técnica del 10 %** ($M = 1,10$) para absorber el encogimiento por primer lavado y los márgenes de costura:
 
 ### 3.1. Cortinas Estándar con Fruncido y Dobladillos
 Para una ventana de ancho $W\text{ (m)}$ y alto $H\text{ (m)}$, con factor de fruncido $F$ (por defecto $2,0$), dobladillo superior/inferior de $0,30\text{ m}$ ($15\text{ cm}$ arriba + $15\text{ cm}$ bota) y rollo de ancho estándar $A_{\text{rollo}} = 1,50\text{ m}$:
@@ -75,7 +75,7 @@ El diseño del catálogo y de las etiquetas térmicas de **D&D Textil** está al
 
 ### 4.2. Clasificación Contable y Operativa de Mermas en Bodega
 
-En el módulo **Calculadora de Merma** (`/admin/inventario/mermas`), toda baja de metraje se clasifica bajo una de las siguientes causales auditables:
+En el módulo **Calculadora de Merma** (`/admin/inventario/merma`), toda baja de metraje se clasifica bajo una de las siguientes causales auditables:
 
 - **Defecto de Fábrica / Tejeduría:** nudos, hilos rotos o barrado de tintorería detectado al desenrollar la pieza (reclamable al proveedor).
 - **Daño por Manipulación o Almacenamiento:** humedad, manchas o rasgaduras ocurridas en estantería o mesa de corte.

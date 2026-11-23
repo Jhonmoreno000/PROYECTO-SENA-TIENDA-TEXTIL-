@@ -1,11 +1,13 @@
 # Manual de Usuario — D&D Textil (Tienda Digital de Telas)
 
 > **Documento Oficial de Usuario Final y Operación por Roles**  
-> **Versión:** 1.0 (Octubre 2026)  
+> **Versión:** 1.1 (Noviembre 2026)  
 > **Proyecto:** D&D Textil — Tienda digital de telas  
 > **Programa de formación:** Tecnólogo en Análisis y Desarrollo de Software (ADSO) — SENA  
 > **Dirigido a:** Clientes, vendedores y administradores  
 > **Archivo PDF Oficial:** [Manual_de_usuario_DD_Textil.pdf](./Manual_de_usuario_DD_Textil.pdf)
+
+Este manual describe la aplicación tal como funciona en la versión actual del repositorio. Las pantallas se tomaron el 17 de noviembre de 2026 con la base de datos de demostración. Los recuadros **Aviso** señalan funciones que todavía no están completas o que se comportan distinto a lo que muestra la pantalla.
 
 ---
 
@@ -21,28 +23,31 @@
    - [2.6. Iniciar sesión](#26-iniciar-sesión)
 3. [Comprar telas](#3-comprar-telas)
    - [3.1. Datos de envío](#31-datos-de-envío)
-   - [3.2. Pago](#32-pago)
+   - [3.2. Forma de pago](#32-forma-de-pago)
+   - [3.3. Confirmación](#33-confirmación)
 4. [Panel del cliente](#4-panel-del-cliente)
-   - [4.1. Historial de pedidos](#41-historial-de-pedidos)
-   - [4.2. Rastrear un envío](#42-rastrear-un-envío)
-   - [4.3. Reportar un problema](#43-reportar-un-problema)
-   - [4.4. Calculadora de metraje](#44-calculadora-de-metraje)
-   - [4.5. Lista de deseos](#45-lista-de-deseos)
-   - [4.6. Mi perfil y direcciones](#46-mi-perfil-y-direcciones)
+   - [4.1. Mi resumen](#41-mi-resumen)
+   - [4.2. Historial de pedidos y facturas](#42-historial-de-pedidos-y-facturas)
+   - [4.3. Rastrear un envío](#43-rastrear-un-envío)
+   - [4.4. Reportar un problema y mis tickets](#44-reportar-un-problema-y-mis-tickets)
+   - [4.5. Calculadora de metraje](#45-calculadora-de-metraje)
+   - [4.6. Lista de deseos](#46-lista-de-deseos)
+   - [4.7. Mi perfil y libreta de direcciones](#47-mi-perfil-y-libreta-de-direcciones)
 5. [Panel del vendedor](#5-panel-del-vendedor)
-   - [5.1. Panel principal y productos](#51-panel-principal-y-productos)
-   - [5.2. Pedidos](#52-pedidos)
+   - [5.1. Resumen y mis productos](#51-resumen-y-mis-productos)
+   - [5.2. Gestión de pedidos](#52-gestión-de-pedidos)
    - [5.3. Alertas de stock](#53-alertas-de-stock)
 6. [Panel del administrador](#6-panel-del-administrador)
    - [6.1. Resumen](#61-resumen)
    - [6.2. Usuarios](#62-usuarios)
-   - [6.3. Catálogo](#63-catálogo)
+   - [6.3. Catálogo de textiles](#63-catálogo-de-textiles)
    - [6.4. Carrusel y página de inicio](#64-carrusel-y-página-de-inicio)
    - [6.5. Inventario](#65-inventario)
    - [6.6. Moderación](#66-moderación)
-   - [6.7. Soporte, cupones y reportes](#67-soporte-cupones-y-reportes)
-   - [6.8. Analítica y facturación](#68-analítica-y-facturación)
-   - [6.9. Configuración](#69-configuración)
+   - [6.7. Soporte y cupones](#67-soporte-y-cupones)
+   - [6.8. Analítica](#68-analítica)
+   - [6.9. Facturación y reportes](#69-facturación-y-reportes)
+   - [6.10. Configuración](#610-configuración)
 7. [Uso desde el celular](#7-uso-desde-el-celular)
 8. [Preguntas frecuentes](#8-preguntas-frecuentes)
 
@@ -62,20 +67,20 @@
 
 | Rol | Qué puede hacer | Ruta principal |
 | :--- | :--- | :--- |
-| **Visitante** | Ver el catálogo, usar los filtros y armar el carrito. | `/` y `/catalogo` |
-| **Cliente** | Todo lo anterior + pagar pedidos, descargar facturas, rastrear envíos, usar la calculadora de metraje y abrir tickets de soporte. | `/cliente` |
-| **Vendedor** | Publicar y editar sus telas, atender sus pedidos y revisar alertas de stock bajo. | `/vendedor` |
-| **Administrador** | Controlar toda la tienda: usuarios, catálogo, carrusel, inventario de rollos, moderación, cupones, soporte, analítica y configuración de marca. | `/admin` |
+| **Visitante** | Ver el catálogo, guardar favoritos, armar el carrito y hacer el checkout. | `/` y `/catalogo` |
+| **Cliente** | Todo lo anterior + historial de pedidos, facturas en PDF, rastreo, calculadora de metraje, tickets de soporte, perfil y direcciones. | `/cliente` |
+| **Vendedor** | Publicar, editar y eliminar sus telas, revisar sus pedidos y las alertas de stock. | `/vendedor` |
+| **Administrador** | Controlar toda la tienda: usuarios, catálogo, carrusel, inventario de rollos, moderación, cupones, soporte, analítica, facturación y configuración de marca. | `/admin` |
 
 ### Cuentas de prueba
 
-Si estás probando el sistema en un entorno de demostración, puedes entrar con cualquiera de estas cuentas desde la pantalla de inicio de sesión:
+En la base de datos de demostración existen estas cuentas. También puedes cargarlas con los botones de **Acceso rápido (Demo)** de la pantalla de inicio de sesión.
 
 | Rol | Correo | Contraseña |
 | :--- | :--- | :--- |
 | **Administrador** | `admin@ddtextil.com` | `admin123` |
 | **Vendedor** | `vendedor@ddtextil.com` | `vendedor123` |
-| **Cliente** | `cliente@ddtextil.com` (o `cliente@gmail.com`) | `cliente123` |
+| **Cliente** | `cliente@ddtextil.com` | `cliente123` |
 
 ---
 
@@ -83,283 +88,303 @@ Si estás probando el sistema en un entorno de demostración, puedes entrar con 
 
 ### 2.1. Inicio
 
-Al abrir la dirección de la tienda verás la portada principal con los siguientes controles clave:
+Al abrir la dirección de la tienda verás la portada principal:
 
-1. **Barra superior:** permite ir a **Inicio**, **Catálogo**, **Contacto** y **Sobre Nosotros**.
-2. **Icono de luna / sol:** cambia entre modo claro y modo oscuro.
-3. **Ingresar:** lleva a la pantalla de inicio de sesión. Si ya entraste, muestra tu nombre y el acceso directo a tu panel (**Mi Cuenta**).
-4. **Carrito (icono de bolsa):** muestra cuántos productos llevas agregados y abre el resumen de compra.
-5. **Explorar Colección:** baja directamente al catálogo de telas destacadas o abre la vista completa de catálogo.
+1. **Franja superior:** muestra la promoción vigente (*¡Envío gratis en compras superiores a $200.000 COP a todo el país!*). Se puede cerrar con la **X**.
+2. **Menú:** **Inicio**, **Catálogo**, **Nosotros** y **Contacto**.
+3. **Iconos de la derecha:** luna/sol (modo claro u oscuro), corazón (lista de deseos) y carrito, con un número que indica cuántos productos llevas.
+4. **Ingresar:** abre la pantalla de inicio de sesión. Si ya entraste, muestra tu nombre y te lleva a tu panel.
+5. **Explorar colección** y **Conocer más:** llevan al catálogo y a la página *Nosotros*.
+6. **Asesor en línea:** el botón verde de la esquina inferior derecha abre el chat de WhatsApp con la tienda.
 
 ### 2.2. Catálogo
 
-En **Catálogo** (`/catalogo`) encuentras todas las telas disponibles para compra por metraje:
+En **Catálogo** (`/catalogo`) encuentras todas las telas aprobadas:
 
-- **Apartados rápidos:** en la parte superior puedes alternar entre **Todos**, **Nuevas Colecciones**, **Telas Exclusivas** y **Ofertas Especiales**.
-- **Filtro por proyecto (*¿Qué estás imaginando crear?*):** elige el uso final (**Moda y Confección**, **Cortinas y Hogar**, **Tapicería**, **Verano** o **Invierno**) para que el sistema filtre automáticamente los tejidos recomendados.
-- **Ordenar y precio:** a la izquierda puedes ordenar los resultados y ajustar el control deslizante de **Rango de Precio** máximo por metro lineal.
-- Haz clic sobre la foto o el nombre de cualquier tela para abrir su ficha técnica detallada.
+- **Apartados:** **Todos**, **Nuevas Colecciones**, **Telas Exclusivas** y **Ofertas Especiales**.
+- **¿Qué estás imaginando crear?:** filtra por proyecto (**Todo el Catálogo**, **Vestidos de Gala**, **Muebles de Exterior**, **Moda de Verano**).
+- **Ordenar por:** *Destacados*, *Precio: Menor a Mayor*, *Precio: Mayor a Menor* o *Nombre A-Z*.
+- **Rango de precio:** control deslizante con el precio máximo por metro.
+- El corazón de cada tarjeta guarda la tela en tu lista de deseos. Haz clic en la foto o el nombre para abrir su ficha.
 
 ### 2.3. Ficha de la tela
 
-Dentro de la página de un producto (`/producto/:id`) puedes revisar su información técnica (composición, gramaje $\text{g/m}^2$, ancho útil y cuidados de lavado) y configurar tu corte:
+En la página de un producto (`/producto/:id`) ves la galería de fotos (pasa el cursor para ampliar), el precio por metro y la **Información de la Tela**: material, ancho, peso (g/m²), stock disponible y cuidados de lavado. Debajo puedes:
 
-1. **Metros por corte:** usa los botones `-` y `+` o escribe cuántos metros lineales necesitas en ese corte.
-2. **Cantidad de cortes:** indica cuántos tramos iguales de ese metraje deseas llevar.
-3. **Agregar al carrito:** guarda la selección en tu bolsa de compras para seguir navegando por la tienda.
-4. **Comprar ahora:** agrega el producto y te dirige de inmediato al carrito para finalizar la orden.
-5. **Favoritos (corazón):** guarda la tela en tu **Lista de deseos / Muestrario Virtual** (requiere sesión iniciada).
-6. **Reseñas:** al final de la página puedes leer opiniones verificadas de otros compradores y, si ya iniciaste sesión, calificar la tela de **1 a 5 estrellas** dejando tu comentario.
+1. **Metros por corte:** cuántos metros necesitas en cada corte.
+2. **Cantidad de cortes:** cuántos cortes iguales llevas. El sistema no deja superar el stock.
+3. **Agregar al Carrito** o **Comprar Ahora** (agrega y te lleva al carrito).
+4. **Favoritos** y **Compartir** (copia el enlace de la tela).
+5. **Reseñas:** lee las opiniones de otros compradores. Con la sesión iniciada puedes calificar de 1 a 5 estrellas y dejar un comentario.
 
 ### 2.4. Carrito
 
-Haz clic en el icono de la bolsa en la esquina superior derecha para abrir tu carrito (`/carrito`):
+Haz clic en el icono del carrito para abrir **Carrito de Compras** (`/carrito`):
 
-- **Cambiar metros:** ajusta los metros con `-` y `+` o elimina un corte haciendo clic en el icono de papelera.
-- **Código de cupón:** si cuentas con un código promocional (por ejemplo `BIENVENIDA10`), escríbelo en el campo correspondiente y pulsa **Aplicar**.
-- **Resumen del pedido:** a la derecha se detalla en tiempo real:
-  - **Subtotal** de las telas seleccionadas.
-  - **Descuento** aplicado por cupón o volumen.
-  - **Envío:** tarifa estándar de **$15.000 COP**, o **gratis** en compras iguales o superiores a **$100.000 COP**.
-  - **IVA (19 %)** discriminado legalmente.
-  - **Total a pagar**.
-- Haz clic en **Proceder al Pago** para avanzar al checkout.
+- Cambia los metros con `-` y `+`, elimina un producto con la papelera o usa **Vaciar carrito**.
+- **Cupón:** escribe el código en el campo **CÓDIGO** y pulsa **Aplicar**. En la base de demostración funcionan, por ejemplo, `DESCUENTO10` y `BIENVENIDA20`.
+- **Resumen del pedido:** subtotal, descuento, envío (**$15.000 COP**, gratis desde **$200.000 COP**; el aviso azul indica cuánto falta), **IVA (19 %)** y **Total**.
+- Pulsa **Continuar a Envío y Pago**.
+
+El carrito y el cupón se guardan en el navegador, así que no se pierden al recargar la página.
 
 ### 2.5. Crear una cuenta
 
-Para registrarte como cliente nuevo (`/registro`):
+En **Crear Cuenta** (`/registro`):
 
-1. Haz clic en **Ingresar** en la barra superior y luego selecciona **Regístrate aquí**.
-2. Completa tu **Nombre Completo**, **Correo Electrónico** y una **Contraseña** (mínimo 6 caracteres), o utiliza los botones de registro rápido con **Google** o **Microsoft**.
-3. Marca las casillas de aceptación de **Términos y Condiciones** y la **Política de Tratamiento de Datos Personales (Habeas Data — Ley 1581 de 2012)**.
-4. Haz clic en **Crear Cuenta**.
+1. Escribe tu **Nombre Completo**, **Correo Electrónico**, **Contraseña** (mínimo 8 caracteres) y **Confirmar Contraseña**.
+2. Marca la casilla de autorización de tratamiento de datos personales (**Ley 1581 de 2012, Habeas Data**). Es obligatoria.
+3. Pulsa **Crear Cuenta**.
+
+Debajo aparecen los botones **Google** y **Microsoft** (*O regístrate con*).
+
+> **Aviso:** los botones de Google y Microsoft solo funcionan si el servidor tiene configurados `VITE_GOOGLE_CLIENT_ID` y `VITE_AZURE_CLIENT_ID`. En la instalación de prueba muestran un mensaje de que no están configurados.
 
 ### 2.6. Iniciar sesión
 
-En la pantalla **Bienvenido de nuevo** (`/login`):
+En **Bienvenido de nuevo** (`/login`):
 
-1. Escribe tu **Correo Electrónico** y tu **Contraseña**, y pulsa **Iniciar Sesión**.
-2. Si lo prefieres, entra con tu cuenta corporativa o personal de **Google** o **Microsoft**.
-3. **Solo en entorno de demostración:** debajo del formulario encontrarás tres botones de acceso rápido (**Cliente**, **Vendedor** y **Admin**) que autocompletan las credenciales de prueba con un solo clic para agilizar la sustentación.
+1. Escribe tu **Correo Electrónico** y tu **Contraseña** y pulsa **Iniciar Sesión**.
+2. También puedes usar **Continuar con Google** o **Continuar con Microsoft** (ver el aviso anterior).
+3. **Acceso rápido (Demo):** los botones **Admin**, **Vendedor** y **Cliente** llenan el formulario con las cuentas de prueba.
+
+Si escribes mal la contraseña varias veces seguidas, el sistema bloquea ese correo durante 15 minutos.
 
 ---
 
 ## 3. Comprar telas
 
-Al pulsar **Proceder al Pago** desde el carrito se inicia el proceso de compra en tres pasos guiados (**Envío** → **Pago** → **Confirmación**). Si aún no habías iniciado sesión, el sistema te solicitará hacerlo antes de continuar.
+La compra tiene dos pasos (**Datos de Envío y Facturación** → **Pasarela de Pago**) y una pantalla de confirmación. No es obligatorio iniciar sesión, pero conviene hacerlo: así el pedido queda en tu **Historial de Pedidos**.
 
 ### 3.1. Datos de envío
 
-En el **Paso 1 (Información de Envío)**:
+En **Datos de Envío y Facturación** (`/checkout`):
 
-1. Completa los **Datos de Contacto**: nombre completo, correo electrónico y teléfono de contacto (10 dígitos).
-2. Completa la **Dirección de Entrega**: dirección física exacta, barrio, departamento, ciudad y notas adicionales para el transportador (ej. *"Dejar en portería"*).
-3. Revisa a la derecha el resumen de productos y el total calculado.
-4. Haz clic en **Confirmar Pedido y Pagar**. El sistema registrará el pedido en la base de datos y te llevará a la selección de pasarela de pago.
+1. **Información de Contacto:** nombre completo, correo electrónico y teléfono móvil.
+2. **Dirección de Envío:** dirección de entrega, ciudad o municipio, departamento, código postal y notas (opcional, por ejemplo *"Dejar en portería"*).
+3. A la derecha revisa el **Resumen del Pedido** (productos, subtotal, envío, IVA y total).
+4. Pulsa **Continuar a Pasarela de Pago** (o **Ir a Pasarela de Pago** en el resumen).
 
-### 3.2. Pago
+### 3.2. Forma de pago
 
-En el **Paso 2 (Pasarela de Pagos Multi-Método)** elige cómo deseas pagar utilizando las pestañas superiores:
+En **Elige tu Forma de Pago** (`/pago`) aparece el total y seis opciones:
 
-- **Tarjeta Crédito / Débito:** ingresa los 16 dígitos de la tarjeta, nombre del titular, fecha de vencimiento (`MM/AA`), código de seguridad (`CVV`, que voltea dinámicamente la tarjeta 3D en pantalla), tipo y número de documento, y número de cuotas (1 a 36).
-- **PSE (ACH Colombia):** selecciona tipo de persona (Natural o Jurídica), entidad bancaria de la lista oficial ACH, tipo y número de documento y teléfono celular.
-- **Wompi (Bancolombia):** pago directo mediante cuenta o Botón Bancolombia / corresponsal bancario.
-- **Mercado Pago:** pago con saldo en cuenta de Mercado Pago o tarjetas vinculadas.
-- **Nequi / Bre-B:** ingresa tu número celular de 10 dígitos vinculado a Nequi o tu llave Bre-B (celular, correo, documento o llave alfanumérica) para aprobar la notificación push.
-- **ePayco:** alternativa para pagos en efectivo (Efecty, Baloto, Gana, SuRed) o tarjetas internacionales.
+| Opción | Detalle en pantalla |
+| :--- | :--- |
+| **Wompi Bancolombia** (recomendado) | Nequi, PSE, Botón Bancolombia o tarjetas. |
+| **Mercado Pago** | Checkout Pro, cuotas, Efecty. |
+| **Nequi / Daviplata / Bre-B** | Transferencia con código QR. |
+| **ePayco / Efecty / Gana** | Baloto, Gana Antioquia, SuRed. |
+| **Tarjeta Crédito / Débito** | Visa, Mastercard, Amex. |
+| **PSE / Contraentrega** | Todos los bancos o pago al recibir. |
 
-Pulsa el botón de pago al final del formulario. En pocos segundos verás la pantalla de **¡Pago Exitoso!** (**Paso 3**) con el número de pedido, el código de seguimiento y el botón para ir directamente a **Mis Pedidos**.
+Para pagar con tarjeta llena el nombre del titular, el número, la fecha `MM/AA`, el `CVV` y el tipo y número de documento. La tarjeta de la izquierda se actualiza mientras escribes. Pulsa **Pagar de forma segura**.
+
+> En esta versión todos los medios de pago son simulados: no se hace ningún cobro real.
+
+### 3.3. Confirmación
+
+Al terminar se muestra **¡Pago Aprobado y Pedido Confirmado!** con la **Referencia de Pago** (`DD-…`), el ID de transacción, la fecha y el detalle del pedido.
+
+> **Aviso:** la pantalla de confirmación siempre indica pago aprobado, pero en la versión actual el servidor rechaza la confirmación (`POST /api/pagos/confirmar` responde *"Rechazado por seguridad PCI-DSS"* porque confunde la referencia de pago con un número de tarjeta). El pedido queda en estado **Pendiente** y así aparece en el historial, el rastreo y la facturación. Ver `BUG-PAY-01` en [14-plan-y-reporte-de-pruebas-iso25010.md](14-plan-y-reporte-de-pruebas-iso25010.md).
 
 ---
 
 ## 4. Panel del cliente
 
-Cuando inicias sesión con una cuenta de cliente accedes a tu espacio personal (`/cliente`). Desde el menú lateral izquierdo puedes navegar por todas tus herramientas de compra y postventa.
+Al iniciar sesión como cliente entras a tu panel (`/cliente`). El menú lateral tiene: **Mi Resumen**, **Compras** (Historial de Pedidos, Rastrear Envío), **Mi Colección** (Lista de Deseos, Calculadora de Metraje), **Ayuda** (Mis Tickets, Reportar Problema) y **Ajustes** (Mi Perfil, Libreta de Direcciones). Abajo están tu nombre, el botón de inicio y **Cerrar sesión**.
 
-### 4.1. Historial de pedidos
+### 4.1. Mi resumen
 
-En **Resumen** o **Mis Pedidos** (`/cliente/pedidos`) encuentras todas tus compras realizadas:
+Muestra un resumen de tus compras, pedidos recientes y accesos directos a las demás opciones.
 
-- Cada fila muestra el número de pedido, la fecha de compra, la cantidad de telas, el total pagado y el estado actual (**Pagado**, **En Corte**, **Empacado**, **Enviado** o **Entregado**).
-- Haz clic en **Ver Detalles** para desplegar los artículos del pedido, la dirección de despacho y el botón para descargar tu **Factura Electrónica en PDF** (con código QR y CUFE).
+### 4.2. Historial de pedidos y facturas
 
-### 4.2. Rastrear un envío
+En **Historial de Pedidos** (`/cliente/pedidos`):
 
-En **Rastrear Envío** (`/cliente/seguimiento`):
+- Arriba ves **Total Pedidos**, **En Proceso** y **Entregados**.
+- Busca por número de pedido o de guía, o filtra con **Todos los estados**.
+- Cada pedido muestra número, fecha, estado (**Pendiente**, **Pagado**, **En Corte**, **Empacado**, **Enviado**, **Entregado** o **Cancelado**), total y telas.
+- **Ver Detalles** despliega los productos y la dirección. **Factura** descarga el PDF de la factura (`FAC-000001.pdf`, con CUFE).
+- Si el pedido está **Entregado** aparece además **Reportar Problema**.
 
-1. Escribe el número de pedido (por ejemplo `1001`) o el número de guía logística (por ejemplo `COL987654321`) y pulsa **Buscar**.
-2. También puedes hacer clic directamente sobre cualquiera de tus pedidos recientes listados debajo del buscador.
-3. Verás la barra de progreso con las cinco etapas operativas del despacho:
-   - **Pedido Confirmado** → **En Proceso de Corte** → **Empacado** → **En Tránsito** → **Entregado**, junto con el historial cronológico de actualizaciones de bodega.
+### 4.3. Rastrear un envío
 
-### 4.3. Reportar un problema
+En **Rastrear Envío** (`/cliente/pedidos/rastreo`):
 
-Si recibiste un pedido con alguna novedad de calidad o metraje, ve a **Soporte y Devoluciones** (`/cliente/soporte`):
+1. Escribe el número de pedido (por ejemplo `1`) o la guía (por ejemplo `DDT-COL-1`), o elige uno de tus pedidos.
+2. Verás la línea de etapas **Pago → Corte → Empaque → Envío → Entrega**, la guía y la transportadora, el historial de estados, el **Resumen Financiero** y el **Destino y Destinatario**.
+3. El indicador **En Vivo** y el botón de recarga actualizan la información.
 
-1. Selecciona el **Pedido Relacionado** (el sistema habilita únicamente pedidos en estado **Entregado**).
-2. Elige el **Tipo de Problema**:
-   - *Tela con manchas o daños físicos*.
-   - *Hilos sueltos o imperfectos de tejido*.
-   - *Color diferente al mostrado en catálogo*.
-   - *Metraje incompleto o menor al facturado*.
-3. Escribe una **Descripción Detallada** del inconveniente y, si lo deseas, adjunta fotografías de evidencia del rollo o corte recibido.
-4. Haz clic en **Enviar Reporte**. En la columna derecha podrás consultar en todo momento el estado de tus tickets (**Abierto**, **En Revisión** o **Resuelto**).
+> **Aviso:** mientras el pedido esté pendiente, el historial puede mostrar el texto *"Pago aprobado y registrado"*. El estado real es el que aparece en la etiqueta junto al número de pedido.
 
-### 4.4. Calculadora de metraje
+### 4.4. Reportar un problema y mis tickets
 
-Si no estás seguro de cuántos metros lineales comprar para tu prenda o proyecto de hogar, abre la **Calculadora de Metraje** (`/cliente/calculadora`):
+En **Reportar Problema** (`/cliente/soporte/nuevo`):
 
-1. Elige el **Tipo de Proyecto** entre los 6 moldes paramétricos incluidos:
-   - *Falda Circular*, *Falda Recta*, *Cortinas Estándar*, *Mantel de Mesa*, *Cojines Decorativos* o *Vestido Sencillo*.
-2.Selecciona el **Ancho de la Tela** del rollo (**1,40 m**, **1,50 m**, **1,60 m** o **2,80 m** para lencería de hogar/cortinería).
-3. Ingresa las medidas solicitadas en centímetros (largo, cintura, ancho de ventana, dimensiones de mesa, etc.).
-4. En el recuadro derecho verás de inmediato los **Metros Recomendados**, que ya incluyen un **10 % adicional de margen técnico** por encogimiento de lavado y costuras.
+1. Elige el pedido afectado o **Consulta general / Sin pedido específico**. La lista muestra todos tus pedidos, sin importar su estado.
+2. Elige el tipo de problema: manchas, hilos sueltos, color incorrecto, metraje incorrecto, tela dañada en transporte, tela equivocada, calidad diferente, retraso en la entrega, pago o facturación, u otro.
+3. Escribe la descripción (máximo 500 caracteres) y adjunta hasta 5 fotos.
+4. Pulsa **Enviar Reporte a Soporte**.
 
-### 4.5. Lista de deseos
+En **Mis Tickets** (`/cliente/soporte/tickets`) consultas el estado de tus casos.
 
-En **Lista de Deseos** (`/cliente/favoritos`) se guardan las telas que marcaste con el icono de corazón en el catálogo:
+### 4.5. Calculadora de metraje
 
-- Funciona como un **Muestrario Virtual**: puedes filtrar tus telas guardadas por categoría o quitarlas cuando ya no las necesites, facilitando la planeación de colecciones de confección.
+En **Calculadora de Metraje** (`/cliente/coleccion/calculadora`):
 
-### 4.6. Mi perfil y direcciones
+1. En **¿Qué vas a hacer?** elige: *Falda Circular*, *Falda Recta*, *Cortinas*, *Mantel*, *Cojines* o *Vestido Sencillo*.
+2. Elige el **Ancho de la tela** (1,10 m, 1,40 m, 1,50 m estándar, 2,80 m o 3,00 m) y, si quieres un costo estimado, escribe el **Precio por metro (opcional)**.
+3. Escribe las medidas en centímetros y pulsa **Calcular Metraje**.
 
-En **Configuración** (`/cliente/perfil`) puedes administrar tu cuenta en tres pestañas:
+El resultado incluye un margen de seguridad (10 % en la mayoría de proyectos) por encogimiento y costuras.
 
-- **Datos Personales:** actualiza tu nombre, correo electrónico o teléfono y pulsa **Guardar Cambios**.
-- **Direcciones:** agrega, edita o elimina direcciones de entrega frecuentes y marca una como **Principal** para agilizar futuros checkouts.
-- **Seguridad:** cambia tu contraseña actual y configura tus preferencias de notificaciones por correo.
+### 4.6. Lista de deseos
+
+En **Lista de Deseos** (`/cliente/coleccion`, también `/favoritos`) están las telas que marcaste con el corazón. Funciona como **Muestrario Virtual**: puedes filtrarlas por categoría y quitarlas.
+
+> **Aviso:** la lista de deseos se guarda en el navegador, no en la base de datos. Si cambias de equipo o borras los datos del navegador, no la verás.
+
+### 4.7. Mi perfil y libreta de direcciones
+
+- **Mi Perfil** (`/cliente/configuracion`): cambia tu foto, nombre, correo y teléfono, y pulsa **Guardar Cambios**. En **Seguridad** está **Cambiar contraseña**.
+- **Libreta de Direcciones** (`/cliente/configuracion/direcciones`): **Agregar Nueva Dirección**, editarla, eliminarla y marcar una como **Principal**.
 
 ---
 
 ## 5. Panel del vendedor
 
-Al ingresar con una cuenta de vendedor accedes al panel **ERP Vendedor** (`/vendedor`), diseñado para gestionar tu catálogo propio y el alistamiento de tus órdenes.
+Al ingresar como vendedor entras a **ERP Vendedor** (`/vendedor`). El menú tiene **Resumen**, **Inventario** (Mis Productos, Alertas de Stock), **Ventas** (Gestión de Pedidos), **Ayuda y Soporte** y **Configuración**.
 
-### 5.1. Panel principal y productos
+> **Aviso:** los números rojos del menú (por ejemplo, 2 y 5) son fijos. No cuentan alertas ni pedidos reales.
 
-En **Panel Principal** y **Productos** (`/vendedor/productos`):
+### 5.1. Resumen y mis productos
 
-- En la parte superior se presentan tus indicadores clave en tiempo real: **Ventas del Mes**, **Pedidos Activos**, **Productos Activos** y **Stock Bajo**.
-- En la tabla de **Gestión de Inventario Textil** puedes:
-  - **Editar (icono de lápiz):** modificar nombre, categoría, precio por metro, metros disponibles en stock, descripción e imagen del producto.
-  - **Desactivar / Activar (icono de ojo):** ocultar temporalmente una tela de la tienda pública sin borrar su historial.
-  - **Eliminar (icono de papelera):** retirar definitivamente un producto del catálogo.
-- Para publicar una tela nueva, haz clic en el botón **+ Nuevo Producto** (`/vendedor/productos/nuevo`), completa los datos técnicos y sube las fotografías. Todo producto nuevo o editado pasa por la cola de **Moderación** del administrador antes de hacerse visible al público.
+- **Filtros Operativos:** periodo (*Últimos 7 días*) y categoría.
+- **Indicadores:** **Mis Ventas Totales**, **Pedidos Procesados**, **Ticket Promedio** y **Estado de Inventario**.
+- **Desempeño de Ventas Diarias** y **Productos Estrella**.
+- **Control de Inventario y Catálogo:** tabla con producto, precio, stock (en rojo si es bajo) y categoría. El lápiz edita y la papelera elimina.
+- **+ Nuevo Producto** abre el formulario para publicar una tela (nombre, precio, stock, categoría, descripción e imagen). El producto queda publicado de inmediato.
 
-### 5.2. Pedidos
+### 5.2. Gestión de pedidos
 
-En **Pedidos** (`/vendedor/pedidos`) consultas exclusivamente las órdenes de compra que incluyen telas de tu catálogo:
+En **Gestión de Pedidos** (`/vendedor/pedidos`) aparecen los indicadores **Total Pedidos**, **En Preparación**, **Enviados** y **Entregados**, y la tabla **Mis Pedidos** con las pestañas **Todos**, **En Preparación**, **Enviados** y **Entregados**.
 
-- Filtra rápidamente usando las pestañas **Todos**, **Preparando**, **Enviados** y **Entregados**, o busca por número de pedido o nombre del cliente.
-- Cada tarjeta detalla los cortes solicitados (producto, metros lineales y subtotal) junto con el estado actual del despacho para coordinar el corte en bodega.
+> **Aviso:** los pedidos que hacen los clientes no guardan el vendedor de cada tela, por eso esta pantalla muestra *"No tienes pedidos aún"* aunque existan compras.
 
 ### 5.3. Alertas de stock
 
-En **Alertas Stock** (`/vendedor/alertas`) el sistema agrupa automáticamente las referencias que están próximas a agotarse:
+En **Alertas de Stock** (`/vendedor/stock`):
 
-- **Stock Crítico (menos de 10 metros):** requiere reposición inmediata de rollos para evitar quiebres de inventario.
-- **Stock Bajo:** advertencia preventiva de reabastecimiento.
-- Desde cada tarjeta puedes escribir la nueva cantidad de metros disponibles cuando recibas mercancía y actualizar el inventario con un clic.
+- Indicadores **Stock Crítico** (menos de 10 m), **Stock Bajo** (menos de 20 m), **Agotados** y **Reportes Abiertos**.
+- La lista **Stock Crítico – Acción Urgente** muestra cada tela con sus metros. **Reponer Urgente** abre una ventana para registrar los metros que llegan.
 
 ---
 
 ## 6. Panel del administrador
 
-El panel **ERP Intelligence** (`/admin`) reúne todas las herramientas operativas, financieras y de gobierno de la tienda en un menú lateral organizado por áreas.
+El panel **ERP Intelligence** (`/admin`) agrupa las herramientas en el menú lateral: **Resumen**, **Usuarios**, **Catálogo**, **Inventario**, **Moderación**, **Analítica**, **Soporte**, **Facturación**, **Reportes** y **Configuración**.
+
+> **Aviso:** como en el panel del vendedor, los números rojos del menú (3 en Moderación y 12 en Soporte) son fijos.
 
 ### 6.1. Resumen
 
-Al entrar al panel (`/admin`) verás el tablero ejecutivo de control:
-
-- **Filtros globales:** filtra las métricas por rango de fechas, vendedor o categoría textil.
-- **Indicadores clave (KPIs):** ingresos totales, pedidos completados, ticket promedio, tasa de conversión y estado general del inventario.
-- **Centro de alertas:** notificaciones rápidas sobre rollos con stock bajo, reportes técnicos abiertos y solicitudes pendientes en cola de moderación.
+- **Filtros Globales:** periodo y categoría. La etiqueta **PostgreSQL en vivo** indica que los datos vienen de la base de datos.
+- **Indicadores:** **Ingresos Totales**, **Clientes Registrados**, **Valor Inventario** y **Pedidos Totales**.
+- **Ventas Reales (Base de Datos)**, **Centro de Alertas**, **Actividad Reciente** y **Top Vendedores**.
 
 ### 6.2. Usuarios
 
-En **Usuarios** (`/admin/usuarios`) administras todas las cuentas registradas en la plataforma:
+En **Gestión de Usuarios** (`/admin/usuarios`):
 
-- Busca usuarios por nombre o correo y filtra por rol (**Administrador**, **Vendedor**, **Cliente**).
-- **Cambiar rol:** usa el selector desplegable de la columna **Rol** para promover o reasignar permisos de un usuario (revalidado en base de datos en cada petición).
-- **Suspender / Activar:** bloquea temporalmente el acceso de una cuenta sin borrar su historial transaccional, o elimínala con el icono de papelera.
+- Indicadores **Total Usuarios**, **Administradores**, **Vendedores** y **Clientes Activos**.
+- Filtra con **Todos**, **Admins**, **Vendedores** y **Clientes**, o busca por nombre o correo.
+- Cambia el rol con el selector **Rol** y bloquea o reactiva una cuenta con **Suspender**.
+- En el submenú están también **Vendedores** y **Clientes**, con métricas de cada grupo.
 
-### 6.3. Catálogo
+### 6.3. Catálogo de textiles
 
-En **Catálogo** (`/admin/productos`) tienes vista y control sobre absolutamente todas las telas de la plataforma, sin importar qué vendedor las haya creado. Puedes crear nuevas referencias, editar precios, ajustar stock, destacar productos en portada o eliminarlos.
+En **Catálogo de Textiles** (`/admin/productos`) ves todas las telas de todos los vendedores, con los indicadores **Total Productos**, **Destacados**, **Stock Bajo** y **Agotados**, filtros por categoría y buscador. Cada fila tiene editar y eliminar.
+
+> **Aviso:** el botón **+ Nuevo Textil** solo muestra el mensaje *"Módulo de creación en desarrollo"*. Para crear telas usa **+ Nuevo Producto** en el panel del vendedor.
 
 ### 6.4. Carrusel y página de inicio
 
-En **Carrusel / Home** (`/admin/carrusel`) personalizas la portada pública de la tienda sin tocar código:
-
-- **Diapositivas del carrusel:** pulsa **+ Agregar Slide** para subir una nueva imagen promocional con su título, subtítulo y enlace, reordena las diapositivas con las flechas o actívalas/desactívalas individualmente.
-- **Visibilidad de secciones:** en la parte inferior puedes mostrar u ocultar con un interruptor las secciones de la página principal (**Portada**, **Carrusel**, **Productos Destacados**, **Novedades**, **Beneficios**, etc.).
+- **Carrusel** (`/admin/carrusel`): **Agregar Slide**, editar o borrar cada diapositiva (*Nueva Colección 2026*, *Telas Exclusivas*, *Ofertas Especiales*) y cambiar los textos de **Apartados del Inicio**. Los cambios se guardan en la base de datos.
+- **Página Inicio** (`/admin/home`): muestra u oculta las secciones **Portada**, **Carrusel de Promociones**, **Productos Destacados** y **Sección de Beneficios**.
 
 ### 6.5. Inventario
 
-El módulo de **Inventario** está diseñado específicamente para la operación física de una bodega textil y se divide en cuatro pantallas:
+1. **Control de Lotes** (`/admin/inventario/lotes`): indicadores **Rollos Totales**, **En Movimiento**, **Alertas de Stock** y **Capital Riesgo**; filtros **Todo el Inventario**, **Lotes Sanos**, **Stock Bajo** y **Críticos**; deslizador de **Umbral Crítico**. Cada tarjeta de lote muestra disponibilidad y merma acumulada, y **Ajustar** permite corregir los metros actuales.
+2. **Calculadora de Merma** (`/admin/inventario/merma`): **Registrar Merma** abre *Registrar Incidente de Merma* (lote, volumen en metros, clasificación, causa y responsable). Al guardar se descuentan los metros del lote.
+3. **Alertas de Stock** (`/admin/inventario/alertas`): tabla **Umbrales por Tipo de Tela**. Haz clic en el valor para editarlo y presiona Enter. Incluye el interruptor de **Notificaciones Email**.
+4. **Historial de Movimientos** (`/admin/inventario/historial`): ventas, mermas y ajustes con buscador, filtros **Todos**, **Merma** y **Ventas**, y botón **Exportar CSV**.
 
-1. **Control de Lotes** (`/admin/inventario/lotes`): registra cada rollo físico que entra a bodega indicando tipo de tela, metraje inicial, proveedor y **código de lote de tintorería**. Permite descontar metros manualmente cuando se realiza un corte en mostrador.
-2. **Calculadora de Merma** (`/admin/inventario/mermas`): registra pérdidas de tela por daños de fábrica, manchas, cortes defectuosos o muestras comerciales. El sistema descuenta automáticamente esos metros del rollo afectado y calcula el costo financiero de la pérdida.
-3. **Alertas de Stock** (`/admin/inventario/alertas`): define el umbral mínimo de metros por producto y permite registrar entradas rápidas de mercancía.
-4. **Historial de Movimientos** (`/admin/inventario/movimientos`): bitácora completa de auditoría con todas las entradas, ventas, ajustes y mermas. Incluye filtros por fecha/tipo y botón **Exportar CSV** para contabilidad.
+> **Aviso:** el botón **Ingresar Lote** solo muestra un mensaje; todavía no hay formulario para registrar rollos nuevos desde la pantalla.
 
 ### 6.6. Moderación
 
-En el bloque de **Moderación** supervisas la calidad del catálogo multi-vendedor:
+- **Cola de Aprobación** (`/admin/moderacion/aprobacion`): productos en estado pendiente, con **Aprobar** o **Rechazar** indicando el motivo. Si no hay ninguno se muestra *"¡Todo al día!"*.
+- **Rendimiento** (`/admin/moderacion/vendedores`): ventas y resultados de cada vendedor.
 
-- **Cola de Aprobación** (`/admin/moderacion/cola`): revisa las telas nuevas o editadas por los vendedores. Puedes **Aprobar** su publicación inmediata o **Rechazar** el cambio escribiendo el motivo de corrección (por ejemplo, *"Falta especificar el gramaje o mejorar la iluminación de la foto"*).
-- **Rendimiento** (`/admin/moderacion/rendimiento`): consulta las ventas, cumplimiento de despacho, calificación promedio y tasa de devoluciones de cada vendedor.
+> **Aviso:** los productos creados desde el panel del vendedor se publican como aprobados, así que normalmente la cola está vacía.
 
-### 6.7. Soporte, cupones y reportes
+### 6.7. Soporte y cupones
 
-En el bloque de **Operaciones** gestionas la atención al cliente, el marketing promocional y la salud técnica:
+- **Gestión de Tickets** (`/admin/soporte/tickets`): indicadores **Total Tickets**, **Backlog Activo**, **Resueltos Hoy** y **Prioridad Alta**; filtros **Todos**, **Abiertos**, **En Acción** y **Resueltos**. Abre un ticket para cambiar su estado.
+- **Crear Cupones** (`/admin/soporte/cupones`): **Crear Cupón** abre *Nueva Campaña* con código, tipo (**%** o **COP Fijo**), valor, fecha de expiración y reglas opcionales (compra mínima, usos máximos y *solo para nuevos clientes*). Pulsa **Activar Campaña**. Cada cupón se puede **Desactivar**.
 
-- **Gestión de Tickets** (`/admin/soporte/tickets`): bandeja centralizada con los reclamos enviados por los clientes. Permite filtrar por prioridad (**Alta**, **Media**, **Baja**), asignar responsable y cambiar el estado hasta su cierre (**Resuelto**).
-- **Cupones** (`/admin/marketing/cupones`): pulsa **+ Crear Cupón** para definir códigos promocionales por **porcentaje** (ej. `15%`) o **valor fijo** (ej. `$20.000 COP`), fecha de vencimiento, límite máximo de usos y reglas acumulables.
-- **Gestión de Reportes** (`/admin/operaciones/bugs`): registro interno para reportar y hacer seguimiento a fallos técnicos o mejoras operativas del sistema.
+### 6.8. Analítica
 
-### 6.8. Analítica y facturación
+- **Mapa de Ventas** (`/admin/analytics/mapa-ventas`): ventas por departamento (mapa de calor), mejor región y promedio por región.
+- **Rotación de Inventario** (`/admin/analytics/rotacion`): telas con más y menos movimiento.
+- **Análisis de Devoluciones** (`/admin/analytics/devoluciones`): motivos de reclamo más frecuentes.
+- **Proyección de Ingresos** (`/admin/analytics/proyeccion`): escenarios proyectado, conservador y optimista.
 
-En el bloque de **Analítica** cuentas con cinco herramientas de inteligencia de negocios textil:
+### 6.9. Facturación y reportes
 
-- **Mapa de Ventas** (`/admin/analitica/mapa`): distribución geográfica de las ventas e ingresos por departamento y región de Colombia (Antioquia, Cundinamarca, Valle del Cauca, Atlántico, Eje Cafetero, Santander).
-- **Rotación de Inventario** (`/admin/analitica/rotacion`): identifica qué telas se venden más rápido (*alta rotación*) y cuáles llevan semanas sin movimiento en estantería (*capital inmovilizado*).
-- **Análisis de Devoluciones** (`/admin/analitica/devoluciones`): estadísticas detalladas de los motivos más frecuentes de reclamo por tela y por proveedor/vendedor.
-- **Proyección de Ingresos** (`/admin/analitica/proyeccion`): estimación financiera de ventas para los próximos meses basada en el comportamiento histórico.
-- **Facturación** (`/admin/facturacion`): listado consolidado de todas las facturas electrónicas emitidas por la tienda, con buscador por cliente o número de factura y descarga directa en PDF.
+- **Facturación** (`/admin/facturas`): lista de facturas electrónicas con buscador por número de pedido o cliente, estado y total. **PDF** descarga la factura y **Actualizar** recarga la lista.
+- **Reportes** (`/admin/reportes`): reportes de fallos técnicos enviados desde **Reportar fallo** (`/reportar-fallo`), con filtros **Todos**, **Abiertos**, **En Progreso** y **Resueltos**.
 
-### 6.9. Configuración
+### 6.10. Configuración
 
-En **Configuración** (`/admin/configuracion`) se encuentra la **Central de Control de Marca** y parámetros globales:
+En **Central de Control de Marca** (`/admin/configuracion`):
 
-- Cambia el nombre comercial de la tienda, el logo y los colores principales de la interfaz con **vista previa en vivo (*Live Preview*)**.
-- Ajusta parámetros financieros y logísticos globales como el porcentaje de **IVA**, el costo de envío estándar y el monto mínimo para **envío gratuito**.
+- **Identidad de Marca:** nombre del e-commerce, colores **Primario**, **Secundario** y **Acento (CTA)**, **Restaurar Valores de Fábrica** y **Modo Oscuro por Defecto**, con **Live Preview**.
+- **Parámetros Financieros & Stock:** tasa de impuesto, costo de envío, umbral de envío gratis y umbral de stock bajo.
+- **Banner global:** activa la franja superior y define su mensaje y color.
+- Pulsa **Guardar Configuración** para aplicar los cambios.
+
+> **Aviso:** la base de datos inicial trae los colores violeta `#8B5CF6`, rosa `#EC4899` y ámbar `#F59E0B`, por eso las capturas de este manual se ven en violeta. Los colores oficiales de la marca son naranja `#F97316`, pizarra `#0F172A` y `#EA580C` ([Manual de identidad visual](./17-manual-de-identidad-visual.md), sección 06). Para aplicarlos, pulsa **Restaurar Valores de Fábrica** y luego **Guardar Configuración**.
 
 ---
 
 ## 7. Uso desde el celular
 
-La tienda se adapta automáticamente a pantallas de celular y tablet (**Diseño Responsivo Mobile-First** y soporte **PWA / App Android**):
+La tienda se adapta a celulares y tablets:
 
-- El menú superior se convierte en un botón de tres líneas (**menú hamburguesa**) en la esquina superior derecha para navegar cómodamente con el pulgar.
-- Dentro de los paneles de **Cliente**, **Vendedor** y **Administrador**, el menú lateral se abre y se cierra tocando el icono de menú en la esquina superior izquierda.
-- Las tablas extensas de inventario, pedidos y movimientos se pueden desplazar horizontalmente deslizando con el dedo sin perder legibilidad.
+- Arriba quedan el logo, los iconos (tema, favoritos, carrito, cuenta) y el botón de **menú** (tres líneas) con las páginas.
+- Los apartados y filtros del catálogo se acomodan en varias filas.
+- En los paneles, el menú lateral se abre y se cierra con el icono de menú.
+- Las tablas largas se desplazan horizontalmente con el dedo.
+
+El repositorio incluye además el proyecto **Android** (Capacitor) para empaquetar la tienda como aplicación.
 
 ---
 
 ## 8. Preguntas frecuentes
 
-### ¿Por qué no aparecen los botones de acceso rápido (Cliente / Vendedor / Admin) en el login?
-Esos botones solo se muestran cuando la aplicación corre en modo de prueba o demostración local (`VITE_ENABLE_DEMO_ACCOUNTS=true`). En el entorno de producción real se ocultan automáticamente por seguridad.
+### ¿Los pagos cobran dinero real?
+No. Todas las pasarelas funcionan en modo simulado. Además, en la versión actual la confirmación del pago falla en el servidor y el pedido queda **Pendiente** aunque la pantalla diga *Pago Aprobado* (ver la sección 3.3).
 
-### ¿Los pagos realizados en el entorno de prueba cobran dinero real?
-No. En el entorno de demostración la pasarela de pagos funciona en modo simulador (*Sandbox*) para que puedas probar tarjetas de crédito/débito, PSE, Wompi, Mercado Pago, Nequi/Bre-B y ePayco sin realizar cargos bancarios reales.
+### ¿Por qué no funcionan los botones de Google y Microsoft?
+Necesitan los identificadores `VITE_GOOGLE_CLIENT_ID` y `VITE_AZURE_CLIENT_ID` en el archivo `.env` del frontend. Sin ellos el sistema muestra un aviso y se debe entrar con correo y contraseña.
 
-### ¿Por qué no puedo reportar un problema sobre un pedido que acabo de hacer?
-El formulario de **Soporte y Devoluciones** solo habilita pedidos que ya figuran como **Entregado**, ya que está diseñado para reportar novedades sobre la tela física recibida en tu dirección.
+### ¿Puedo reportar un problema de un pedido que acabo de hacer?
+Sí. **Reportar Problema** lista todos tus pedidos e incluye la opción de consulta general. El acceso directo desde el historial solo aparece en pedidos **Entregados**.
 
-### ¿Qué hago si al navegar muy rápido aparece un aviso de "Demasiadas peticiones"?
-El servidor cuenta con un límite de seguridad contra abusos automatizados (*Rate Limiting* de **1.200 peticiones por minuto por IP**). Espera unos segundos y vuelve a recargar la página.
+### ¿Qué hago si aparece un aviso de "Demasiadas peticiones"?
+El servidor limita a **1.200 peticiones por minuto por IP**. Espera unos segundos y recarga la página. Si el aviso aparece al iniciar sesión, puede ser el bloqueo de 15 minutos por intentos fallidos.
 
 ### ¿Se borra mi carrito si recargo la página?
-No. El carrito de compras, el tema visual (claro/oscuro) y tu sesión firmada se conservan en el navegador hasta que cierres sesión explícitamente o el token cumpla su ciclo de expiración de 12 horas.
+No. El carrito, el cupón aplicado, la lista de deseos y el tema (claro u oscuro) se guardan en el navegador. La sesión dura 12 horas.

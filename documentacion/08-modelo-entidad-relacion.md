@@ -6,20 +6,20 @@
 
 | Dato | Valor |
 | :--- | :--- |
-| Tablas | 25 |
-| Llaves foráneas (FK) | 20 |
+| Tablas | 29 |
+| Llaves foráneas (FK) | 25 |
 | Relaciones lógicas sin FK | 2 |
-| Tablas con relaciones | 15 |
-| Tablas independientes | 10 |
+| Tablas con relaciones | 17 |
+| Tablas independientes | 12 |
 
 **Tablas por módulo**
 
 | Módulo | Tablas |
 | :--- | :--- |
-| Usuarios y acceso | `usuarios`, `actividad_reciente` |
+| Usuarios y acceso | `usuarios`, `direcciones_usuario`, `actividad_reciente`, `auditoria_sistema` |
 | Catálogo | `categorias`, `productos`, `imagenes_producto`, `resenas` |
-| Inventario | `lotes_inventario`, `eventos_merma`, `umbrales_stock`, `inventario_telas_erp` |
-| Ventas | `items_carrito`, `pedidos`, `items_pedido`, `cupones`, `categorias_cupon` |
+| Inventario | `lotes_inventario`, `eventos_merma`, `umbrales_stock`, `inventario_telas_erp`, `rollos_textil` |
+| Ventas | `items_carrito`, `pedidos`, `items_pedido`, `cupones`, `categorias_cupon`, `eventos_pago_wompi` |
 | Soporte | `tickets_soporte`, `reportes_errores` |
 | Contenido del inicio y configuración | `secciones_inicio`, `diapositivas_carrusel`, `banner_global`, `configuracion_sistema` |
 | Analítica (ERP) | `metricas_ventas_erp`, `ventas_diarias`, `ventas_region`, `notificaciones_sistema_erp` |
@@ -34,7 +34,7 @@ Vista completa con atributos, tipos y llaves, útil para el informe técnico:
 
 ![DER completo](diagramas/der_completo.png)
 
-Las versiones vectoriales están en `diagramas/der_simple.svg` y `diagramas/der_completo.svg`.
+Las versiones vectoriales están en `diagramas/der_simple.svg` y `diagramas/der_completo.svg`. Las cuatro imágenes se generan a partir del esquema SQL con `python3 diagramas/fuentes/generar_der.py "BASE DE DATOS/01_esquema_espanol.sql" documentacion/diagramas` (requiere Graphviz).
 
 **Cómo leer la notación (pata de gallo):** la barra `|` indica *uno*, el círculo `o` indica *cero* (opcional) y la pata de gallo indica *muchos*. El símbolo más cercano a la tabla es el máximo; el más lejano, el mínimo. La línea punteada marca una relación que el código usa pero que la base de datos no obliga con una FOREIGN KEY.
 
@@ -58,23 +58,59 @@ erDiagram
     PRODUCTOS ||--o{ RESENAS : "recibe"
     USUARIOS ||--o{ RESENAS : "escribe"
     USUARIOS |o--o{ TICKETS_SOPORTE : "abre"
+    USUARIOS ||--o{ DIRECCIONES_USUARIO : "guarda"
+    USUARIOS |o--o{ EVENTOS_MERMA : "registra"
+    PEDIDOS |o--o{ TICKETS_SOPORTE : "se reclama en"
+    PRODUCTOS |o--o{ REPORTES_ERRORES : "se reporta en"
+    PRODUCTOS |o--o{ ROLLOS_TEXTIL : "se almacena en"
     USUARIOS |o--o{ TICKETS_SOPORTE : "atiende"
     USUARIOS |o--o{ REPORTES_ERRORES : "reporta"
     USUARIOS |o--o{ REPORTES_ERRORES : "atiende"
     USUARIOS |o--o{ ACTIVIDAD_RECIENTE : "genera"
-    SECCIONES_INICIO |o..o{ DIAPOSITIVAS_CARRUSEL : "pertenece a (sin FK)"
-    CUPONES |o..o{ PEDIDOS : "usa (sin FK)"
-
+    DIRECCIONES_USUARIO {
+        int id PK
+        int usuario_id FK
+        varchar etiqueta
+        varchar nombre_destinatario
+        varchar telefono
+        text direccion
+        varchar ciudad
+        varchar departamento
+        varchar codigo_postal
+        bool predeterminada
+        timestamp creado_en
+    }
+    EVENTOS_PAGO_WOMPI {
+        int id PK
+        varchar referencia_pago
+        varchar transaccion_id
+        varchar estado
+        varchar origen
+        varchar resultado
+        text carga_util
+        timestamp recibido_en
+    }
+    AUDITORIA_SISTEMA {
+        int id PK
+        int usuario_id
+        varchar rol
+        varchar accion
+        varchar recurso
+        varchar ip_origen
+        text detalles
+        timestamp fecha_creacion
+    }
     USUARIOS {
         int id PK
         varchar nombre
         varchar correo UK
+        varchar telefono
         varchar contrasena_hash
         varchar rol
         bool activo
         bool suspendido
         text motivo_suspension
-        numeric tasa_comision
+        decimal tasa_comision
         timestamp registrado_en
         timestamp ultimo_acceso
     }
@@ -88,14 +124,14 @@ erDiagram
         int id PK
         varchar nombre
         int categoria_id FK
-        numeric precio
+        decimal precio
         int vendedor_id FK
         text descripcion
         varchar material
         varchar ancho
         varchar peso
         text cuidados
-        int stock
+        decimal stock
         bool destacado
         bool activo
         varchar estado_moderacion
@@ -116,9 +152,11 @@ erDiagram
         int id PK
         int producto_id FK
         varchar numero_lote
-        numeric metros_recibidos
-        numeric costo_por_metro
+        decimal metros_recibidos
+        decimal metros_actuales
+        decimal costo_por_metro
         varchar proveedor
+        varchar estado
         date fecha_recepcion
         text notas
         timestamp creado_en
@@ -126,24 +164,28 @@ erDiagram
     EVENTOS_MERMA {
         int id PK
         int producto_id FK
-        numeric metros_perdidos
+        varchar id_lote
+        decimal metros_perdidos
         varchar motivo
-        numeric impacto_costo
+        text descripcion
+        decimal impacto_costo
+        varchar responsable
+        int usuario_id FK
         timestamp creado_en
     }
     UMBRALES_STOCK {
         int id PK
         varchar tipo_tela UK
-        numeric metros_minimos
+        decimal metros_minimos
         bool alerta_activa
     }
     CUPONES {
         int id PK
         varchar codigo UK
         varchar tipo_descuento
-        numeric valor_descuento
+        decimal valor_descuento
         timestamp expira_en
-        numeric compra_minima
+        decimal compra_minima
         int usos_maximos
         bool solo_primera_vez
         int conteo_usos
@@ -162,18 +204,24 @@ erDiagram
         varchar nombre_cliente
         varchar correo_cliente
         varchar telefono_cliente
+        varchar documento_cliente
         text direccion_envio
         varchar ciudad_envio
         varchar departamento_envio
-        numeric monto_total
-        numeric subtotal
-        numeric monto_impuesto
-        numeric costo_envio
-        numeric monto_descuento
+        decimal monto_total
+        decimal subtotal
+        decimal monto_impuesto
+        decimal costo_envio
+        decimal monto_descuento
         varchar codigo_cupon
         varchar estado
         varchar metodo_pago
         varchar estado_pago
+        varchar referencia_pago UK
+        bigint monto_centavos
+        varchar moneda
+        varchar wompi_transaccion_id
+        timestamp pagado_en
         varchar numero_guia
         text notas
         timestamp creado_en
@@ -183,15 +231,15 @@ erDiagram
         int id PK
         int pedido_id FK
         int producto_id FK
-        numeric cantidad
-        numeric precio_por_metro
-        numeric subtotal
+        decimal cantidad
+        decimal precio_por_metro
+        decimal subtotal
     }
     ITEMS_CARRITO {
         int id PK
         int usuario_id FK
         int producto_id FK
-        int cantidad
+        decimal cantidad
         timestamp agregado_en
         timestamp actualizado_en
     }
@@ -206,8 +254,10 @@ erDiagram
     TICKETS_SOPORTE {
         int id PK
         int usuario_id FK
+        int pedido_id FK
         varchar nombre_usuario
         varchar correo_usuario
+        varchar categoria
         varchar asunto
         text descripcion
         varchar estado
@@ -221,7 +271,12 @@ erDiagram
         int id PK
         int vendedor_id FK
         varchar nombre_vendedor
+        varchar correo_reportante
+        varchar titulo
         varchar area
+        varchar severidad
+        int producto_id FK
+        varchar nombre_producto
         text descripcion
         text pasos
         varchar estado
@@ -266,23 +321,25 @@ erDiagram
     METRICAS_VENTAS_ERP {
         int id PK
         date fecha_registro UK
-        numeric ventas_reales
-        numeric ventas_objetivo
-        numeric margen_ganancia
+        decimal ventas_reales
+        decimal ventas_objetivo
+        decimal margen_ganancia
         timestamp creado_en
     }
     VENTAS_DIARIAS {
         int id PK
         date fecha_venta UK
-        numeric ventas_totales
+        decimal ventas_totales
         int pedidos_totales
         timestamp creado_en
     }
     VENTAS_REGION {
         int id PK
-        varchar region
-        numeric ventas_totales
-        numeric porcentaje
+        varchar region UK
+        varchar capital
+        decimal ventas_totales
+        int pedidos_totales
+        decimal porcentaje
         timestamp creado_en
     }
     ACTIVIDAD_RECIENTE {
@@ -307,10 +364,22 @@ erDiagram
         varchar nombre_tela
         varchar categoria
         varchar proveedor
-        numeric metros_actuales
-        numeric metros_minimos
-        numeric costo_por_metro
+        decimal metros_actuales
+        decimal metros_minimos
+        decimal costo_por_metro
         date fecha_ultima_reposicion
+    }
+    ROLLOS_TEXTIL {
+        int id PK
+        int producto_id FK
+        varchar codigo_rollo UK
+        decimal metraje_inicial
+        decimal metraje_remanente
+        varchar lote_tintoreria
+        varchar estado
+        varchar ubicacion_bodega
+        timestamp creado_en
+        timestamp actualizado_en
     }
 ```
 
@@ -338,6 +407,11 @@ erDiagram
 | 18 | `usuarios` | `reportes_errores.vendedor_id` | 0..1 : 0..N | usuarios **reporta** reportes_errores | queda en NULL |
 | 19 | `usuarios` | `reportes_errores.asignado_a` | 0..1 : 0..N | usuarios **atiende** reportes_errores | queda en NULL |
 | 20 | `usuarios` | `actividad_reciente.usuario_id` | 0..1 : 0..N | usuarios **genera** actividad_reciente | queda en NULL |
+| 21 | `usuarios` | `eventos_merma.usuario_id` | 0..1 : 0..N | usuarios **registra** eventos_merma | queda en NULL |
+| 22 | `pedidos` | `tickets_soporte.pedido_id` | 0..1 : 0..N | pedidos **se reclama en** tickets_soporte | queda en NULL |
+| 23 | `productos` | `reportes_errores.producto_id` | 0..1 : 0..N | productos **se reporta en** reportes_errores | queda en NULL |
+| 24 | `productos` | `rollos_textil.producto_id` | 1 : 0..N | productos **se almacena en** rollos_textil | se borran en cascada |
+| 25 | `usuarios` | `direcciones_usuario.usuario_id` | 1 : 0..N | usuarios **guarda** direcciones_usuario | se borran en cascada |
 
 Notas sobre las relaciones:
 
@@ -357,13 +431,15 @@ Notas sobre las relaciones:
 
 Estas tablas no tienen llaves foráneas porque se consultan por clave, fecha o código:
 
+- **Usuarios y acceso:** `auditoria_sistema` (guarda `usuario_id` como dato, sin llave foránea)
+- **Ventas:** `eventos_pago_wompi` (se relaciona con `pedidos` por `referencia_pago`, sin llave foránea)
 - **Inventario:** `umbrales_stock`, `inventario_telas_erp`
 - **Contenido del inicio y configuración:** `secciones_inicio`, `diapositivas_carrusel`, `banner_global`, `configuracion_sistema`
 - **Analítica (ERP):** `metricas_ventas_erp`, `ventas_diarias`, `ventas_region`, `notificaciones_sistema_erp`
 
 ## 4. Observaciones del esquema (para corregir o justificar)
 
-1. **Dos esquemas a la vez (corregido).** El volcado en inglés `TIENDA DIGITAL TEXTIL.sql` se movió a `BASE DE DATOS/legado/`, así que Docker ya no lo ejecuta y solo se crean las 25 tablas en español. `ManejadorFactura` ya lee las facturas desde `pedidos` e `items_pedido`.
+1. **Dos esquemas a la vez (corregido).** El volcado en inglés `TIENDA DIGITAL TEXTIL.sql` se movió a `BASE DE DATOS/legado/`, así que Docker ya no lo ejecuta y solo se crean las 29 tablas en español. `ManejadorFactura` ya lee las facturas desde `pedidos` e `items_pedido`.
 2. **Columnas duplicadas.** `02_datos_iniciales.sql` agrega columnas alias en inglés (`name`, `email`, `role`, `code`, `active`…) y copia los valores una sola vez; después pueden quedar desincronizadas. No se incluyen en el DER.
 3. **Metros enteros en el carrito.** `items_carrito.cantidad` y `productos.stock` son `INTEGER`, mientras que `items_pedido.cantidad` es `NUMERIC(10,2)`. Si se venden fracciones de metro (1,5 m), el carrito no las puede guardar.
 4. **FK opcionales que deberían ser obligatorias.** `lotes_inventario.producto_id`, `eventos_merma.producto_id` y las dos columnas de `categorias_cupon` admiten NULL; un lote o una merma sin producto no tiene sentido.

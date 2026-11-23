@@ -1,6 +1,6 @@
 # Mapa de navegación — D&D Textil
 
-> Generado a partir del código: las 50 rutas de `tienda digital de telas/src/App.jsx`, los menús laterales de `src/datos/enlacesCliente.js`, `enlacesVendedor.js` y `enlacesAdmin.js`, y los enlaces del encabezado, carrito y pago. Reemplaza la sección 4 de `03-arquitectura-frontend-y-roles.md` (que solo cubría las vistas públicas) y la imagen `public/images/diagrams/mapa-navegacion.png`.
+> Generado a partir del código: las 54 rutas de `tienda digital de telas/src/App.jsx`, los menús laterales de `src/datos/enlacesCliente.js`, `enlacesVendedor.js` y `enlacesAdmin.js`, y los enlaces del encabezado, carrito y pago. Reemplaza la sección 4 de `03-arquitectura-frontend-y-roles.md` (que solo cubría las vistas públicas) y la imagen `public/images/diagrams/mapa-navegacion.png`.
 
 ## 1. Diagrama general
 
@@ -10,7 +10,8 @@ Versión vectorial: `diagramas/mapa_navegacion.svg`.
 
 **Reglas de acceso** (componente `ProtectedRoute`):
 
-- Si una ruta protegida se abre sin sesión, redirige a `/login` guardando la ruta pedida (ver observación 4).
+- Si una ruta protegida se abre sin sesión, redirige a `/login`.
+- El proceso de compra (`/checkout`, `/pago`, `/confirmacion`) y `/favoritos` **no** están protegidos: se pueden usar sin iniciar sesión (ver observación 4).
 - Si el usuario tiene sesión pero no el rol requerido, redirige a `/`.
 - Al iniciar sesión, `IniciarSesion.jsx` envía a cada rol a su panel: cliente → `/cliente`, vendedor → `/vendedor`, admin → `/admin`.
 - El administrador también puede entrar al panel del vendedor (rutas con `roles={['vendedor','admin']}`).
@@ -30,33 +31,38 @@ flowchart LR
         r_contacto["Contacto<br/>/contacto"]
         r_login["Iniciar sesión<br/>/login"]
         r_registro["Registro<br/>/registro"]
+        r_favoritos["Favoritos<br/>/favoritos"]
         r_reportar_fallo["Reportar fallo<br/>/reportar-fallo · sin enlace"]
+        r_wishlist["Favoritos (alias)<br/>/wishlist · sin enlace"]
+        r_404["Página no encontrada<br/>* · cualquier ruta inexistente"]
     end
-    subgraph BUY["Proceso de compra (requiere sesión)"]
+    subgraph BUY["Proceso de compra (no exige sesión)"]
         r_checkout["Datos de envío<br/>/checkout"]
-        r_pago["Pago (tarjeta o PSE)<br/>/pago"]
+        r_pago["Pago (tarjeta, PSE, Nequi o contraentrega)<br/>/pago"]
         r_confirmacion["Confirmación del pedido<br/>/confirmacion"]
     end
     r_cliente["Mi Resumen<br/>/cliente"]
-    r_vendedor["Panel Principal<br/>/vendedor"]
+    r_vendedor["Resumen<br/>/vendedor"]
     r_admin["Resumen<br/>/admin"]
     r_inicio -->|menú| r_catalogo
     r_inicio -->|menú| r_nosotros
     r_inicio -->|menú| r_contacto
     r_inicio -->|ícono carrito| r_carrito
+    r_inicio -->|ícono favoritos| r_favoritos
+    r_404 -.->|volver al inicio| r_inicio
     r_inicio -->|Ingresar| r_login
     r_catalogo -->|ver tela| r_producto_id
     r_producto_id -->|agregar| r_carrito
     r_login -->|crear cuenta| r_registro
     r_registro -.->|cuenta creada| r_inicio
-    r_carrito -->|Proceder al pago| r_checkout
-    r_checkout -->|Confirmar pedido| r_pago
+    r_carrito -->|Continuar a Envío y Pago| r_checkout
+    r_checkout -->|continuar| r_pago
     r_pago -->|pago aprobado| r_confirmacion
     r_login -->|rol cliente| r_cliente
     r_login -->|rol vendedor| r_vendedor
     r_login -->|rol admin| r_admin
     classDef orphan stroke-dasharray: 5 5,fill:#fff,color:#555
-    class r_reportar_fallo orphan
+    class r_reportar_fallo,r_wishlist,r_404 orphan
 ```
 
 ### 2.2. Panel del cliente
@@ -95,7 +101,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    r_vendedor["Panel Principal<br/>/vendedor"]
+    r_vendedor["Resumen<br/>/vendedor"]
     subgraph VENDEDOR_1["Inventario"]
         r_vendedor_productos["Mis Productos<br/>/vendedor/productos"]
         r_vendedor_stock["Alertas de Stock<br/>/vendedor/stock"]
@@ -107,6 +113,11 @@ flowchart LR
     r_vendedor --> VENDEDOR_2
     r_vendedor_configuracion["Configuración<br/>/vendedor/configuracion"]
     r_vendedor --> r_vendedor_configuracion
+    subgraph VENDEDOR_3["Ayuda y Soporte"]
+        r_vend_soporte_nuevo["Reportar Problema<br/>/cliente/soporte/nuevo"]
+        r_vend_soporte_tickets["Mis Tickets<br/>/cliente/soporte/tickets"]
+    end
+    r_vendedor --> VENDEDOR_3
     style r_vendedor fill:#FBF1E3,stroke:#A8641A,stroke-width:2px
 ```
 
@@ -177,9 +188,9 @@ flowchart LR
 | 7 | `/login` | Iniciar sesión | `IniciarSesion` | Pública | Botón Ingresar del encabezado; redirección de rutas protegidas |
 | 8 | `/registro` | Registro | `Registro` | Pública | Enlace desde Iniciar sesión |
 | 9 | `/reportar-fallo` | Reportar fallo | `BugReport` | Pública | Ningún enlace (solo escribiendo la URL) |
-| 10 | `/pago` | Pago (tarjeta o PSE) | `Payment` | Cualquier usuario con sesión | Botón «Confirmar pedido» en Datos de envío |
-| 11 | `/checkout` | Datos de envío | `Pago` | Cualquier usuario con sesión | Botón «Proceder al pago» del carrito |
-| 12 | `/confirmacion` | Confirmación del pedido | `ConfirmacionPedido` | Cualquier usuario con sesión | Automático tras un pago aprobado (tarjeta o PSE) |
+| 10 | `/pago` | Pago (tarjeta o PSE) | `Payment` | Pública (no exige sesión) | Botón «Confirmar pedido» en Datos de envío |
+| 11 | `/checkout` | Datos de envío | `Pago` | Pública (no exige sesión) | Botón «Continuar a Envío y Pago» del carrito |
+| 12 | `/confirmacion` | Confirmación del pedido | `ConfirmacionPedido` | Pública (no exige sesión) | Automático tras un pago aprobado (tarjeta o PSE) |
 | 13 | `/cliente` | Mi Resumen | `PanelCliente` | Cliente | Inicio de sesión con rol cliente; menú de usuario del encabezado |
 | 14 | `/cliente/perfil` | Perfil (duplicado) | `Perfil` | Cliente | Ningún enlace (solo escribiendo la URL) |
 | 15 | `/cliente/pedidos` | Historial de Pedidos | `ClientOrderHistory` | Cliente | Menú lateral › Compras › Historial de Pedidos |
@@ -190,8 +201,8 @@ flowchart LR
 | 20 | `/cliente/soporte/tickets` | Mis Tickets | `MyTickets` | Cliente | Menú lateral › Ayuda › Mis Tickets |
 | 21 | `/cliente/configuracion` | Mi Perfil | `Perfil` | Cliente | Menú lateral › Ajustes › Mi Perfil |
 | 22 | `/cliente/configuracion/direcciones` | Libreta de Direcciones | `AddressBook` | Cliente | Menú lateral › Ajustes › Libreta de Direcciones |
-| 23 | `/vendedor` | Panel Principal | `ProductosVendedor` | Vendedor y admin | Inicio de sesión con rol vendedor |
-| 24 | `/vendedor/productos` | Mis Productos | `ProductosVendedor` | Vendedor y admin | Menú lateral › Inventario › Mis Productos |
+| 23 | `/vendedor` | Resumen | `PanelVendedor` | Vendedor y admin | Inicio de sesión con rol vendedor |
+| 24 | `/vendedor/productos` | Mis Productos | `PanelVendedor` | Vendedor y admin | Menú lateral › Inventario › Mis Productos |
 | 25 | `/vendedor/pedidos` | Gestión de Pedidos | `PedidosVendedor` | Vendedor y admin | Menú lateral › Ventas › Gestión de Pedidos |
 | 26 | `/vendedor/stock` | Alertas de Stock | `StockAlerts` | Vendedor y admin | Menú lateral › Inventario › Alertas de Stock |
 | 27 | `/vendedor/configuracion` | Configuración | `Perfil` | Vendedor y admin | Menú lateral › Configuración |
@@ -218,22 +229,26 @@ flowchart LR
 | 48 | `/admin/soporte/tickets` | Gestión de Tickets | `GestionTickets` | Admin | Menú lateral › Soporte › Gestión de Tickets |
 | 49 | `/admin/soporte/cupones` | Crear Cupones | `CreacionCupones` | Admin | Menú lateral › Soporte › Crear Cupones |
 | 50 | `/admin/configuracion` | Configuración | `ConfiguracionSistema` | Admin | Menú lateral › Configuración |
+| 51 | `/favoritos` | Favoritos | `Wishlist` | Pública | Ícono de favoritos (corazón) del encabezado |
+| 52 | `/wishlist` | Favoritos (alias) | `Wishlist` | Pública | Ningún enlace (solo escribiendo la URL) |
+| 53 | `/cliente/favoritos` | Favoritos (alias) | `Wishlist` | Pública | Ningún enlace (solo escribiendo la URL) |
+| 54 | `*` | Página no encontrada | `NoEncontrado` | Pública | Cualquier ruta que no existe; enlaza a Inicio y Catálogo |
 
 ## 4. Observaciones de navegación
 
-1. **Rutas sin enlace.** `/reportar-fallo`, `/cliente/perfil` y `/admin/actividad` existen en `App.jsx` pero ningún menú, botón ni enlace lleva a ellas. Hay que enlazarlas o eliminarlas.
-2. **Pantallas duplicadas.** `/cliente/perfil` y `/cliente/configuracion` cargan el mismo componente `Perfil`; `/vendedor` y `/vendedor/productos` cargan el mismo `ProductosVendedor`, así que el «Panel Principal» del vendedor no es un resumen sino la lista de productos.
+1. **Rutas sin enlace.** `/reportar-fallo`, `/cliente/perfil`, `/admin/actividad`, `/wishlist` y `/cliente/favoritos` existen en `App.jsx` pero ningún menú, botón ni enlace lleva a ellas. Hay que enlazarlas o eliminarlas.
+2. **Pantallas duplicadas.** `/cliente/perfil` y `/cliente/configuracion` cargan el mismo componente `Perfil`; `/vendedor` y `/vendedor/productos` cargan el mismo `PanelVendedor`; `/favoritos`, `/wishlist`, `/cliente/favoritos` y `/cliente/coleccion` cargan el mismo `Wishlist`.
 3. **Nombres cruzados en el pago.** `/checkout` usa el archivo `Pago.jsx` (datos de envío) y `/pago` usa `payment/Payment.jsx` (tarjeta o PSE). Conviene renombrar los archivos para que coincidan con la ruta.
-4. **El login no regresa a la compra.** `IniciarSesion.jsx` guarda la ruta pedida en `from`, pero solo la usa si el rol no es cliente, vendedor ni admin. En la práctica, un cliente que pulsa «Proceder al pago» sin sesión termina en `/cliente` en vez de volver a `/checkout`.
-5. **Destino distinto para el vendedor.** Tras el login va a `/vendedor`, pero el menú de usuario del encabezado lo lleva a `/vendedor/productos`.
-6. **Documentación anterior.** La sección 4 de `03-arquitectura-frontend-y-roles.md` menciona `/contactos` y `/checkout/success`, que no existen; las rutas reales son `/contacto` y `/confirmacion`.
+4. **La compra no exige sesión.** `/checkout`, `/pago` y `/confirmacion` no usan `ProtectedRoute`. Si alguien compra sin iniciar sesión, `Payment.jsx` envía `userId: user?.id || 4`, así que el pedido queda a nombre del usuario con id 4. Hay que proteger estas rutas o permitir la compra como invitado sin asignarla a otro usuario.
+5. **Destino del vendedor (corregido).** Tras el login y desde el menú de usuario del encabezado, el vendedor llega a `/vendedor`.
+6. **Documentación anterior (corregido).** Los documentos 03, 13 y 15 usaban rutas que no existen (`/contactos`, `/checkout/success`, `/cliente/calculadora`, `/admin/analitica/*`, entre otras); ya usan las rutas reales de `App.jsx`.
 
 
 ---
 
 ## Anexo de Navegación Segura: Verificación de Vigencia de Token y Activos Estáticos
 
-1. **Guardia de Navegación con Vigencia Temporal (`RutaProtegida.jsx`):**
-   - Antes de renderizar cualquier ruta privada (`/cliente/*`, `/vendedor/*`, `/admin/*` o `/checkout`), el guardia verifica no solo la presencia del objeto `usuario`, sino también que `sesionVigente(usuario)` sea verdadera. Si el token caducó, redirige limpiamente a `/login`.
+1. **Guardia de Navegación con Vigencia Temporal (`ProtectedRoute.jsx`):**
+   - Antes de renderizar cualquier ruta privada (`/cliente/*`, `/vendedor/*` y `/admin/*`), el guardia exige un `usuario` en sesión y el rol correcto. `ContextoAutenticacion` solo carga el usuario guardado si `sesionVigente(usuario)` es verdadera y programa el cierre cuando el token vence, así que una sesión caducada termina en `/login`.
 2. **Resolución Limpia de Imágenes en `/uploads/*`:**
    - Tanto el manejador de archivos estáticos del backend (`ManejadorArchivosEstaticos`) como el middleware del servidor de desarrollo Vite (`vite.config.js`) devuelven estrictamente `HTTP 404` cuando un recurso bajo `/uploads/` no existe en disco, permitiendo que los componentes visuales (`Imagen Seguras` / `onError`) activen de inmediato la fotografía textil de respaldo sin pantallas rotas.

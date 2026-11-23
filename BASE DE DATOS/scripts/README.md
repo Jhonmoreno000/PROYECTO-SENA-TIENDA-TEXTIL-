@@ -2,13 +2,20 @@
 
 **Proyecto:** Plataforma Distribuida de Comercializacion y Control Logistico Textil (D&D Textil)  
 **Modulo:** Plan de Recuperacion ante Desastres (Disaster Recovery Plan - DRP)  
-**Objetivos:** RPO <= 15 minutos | RTO <= 2 horas  
+**Objetivos:** RPO <= 15 minutos | RTO <= 2 horas (el RPO solo se cumple si el script se programa cada 15 minutos con el Programador de tareas de Windows o con `cron`; los scripts no se programan solos)  
 
 ---
 
 ## 1. Descripcion General
 
 Este modulo contiene scripts automatizados para generar volcados logicos de la base de datos PostgreSQL, comprimirlos mediante algoritmo Gzip, verificar su integridad matematica mediante SHA-256 y aplicar politicas de retencion y purga automatica para evitar el desbordamiento de disco.
+
+Datos de cada ejecucion:
+
+- Los archivos quedan en `BASE DE DATOS/respaldos/` (`respaldo_ddtextil_AAAAMMDD_HHMMSS.sql.gz` y su `.sha256`). Esa carpeta esta en `.gitignore`.
+- Si `pg_dump` no esta instalado, el script lo ejecuta dentro del contenedor `ddtextil-db`.
+- Los scripts no piden la contrasena: definala antes en la variable `PGPASSWORD` o en el archivo `.pgpass` (`pgpass.conf` en Windows).
+- La rotacion borra los respaldos con mas dias que `DiasRetencion` (7 por defecto).
 
 ---
 
@@ -44,6 +51,7 @@ En caso de contingencia o corrupcion de datos:
    ```bash
    sha256sum -c respaldo_ddtextil_YYYYMMDD_HHMMSS.sql.gz.sha256
    ```
+   En Windows: `Get-FileHash respaldo_ddtextil_YYYYMMDD_HHMMSS.sql.gz -Algorithm SHA256` y comparar con el contenido del `.sha256`.
 
 2. **Descomprimir el respaldo:**
    ```bash

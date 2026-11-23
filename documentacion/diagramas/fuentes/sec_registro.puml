@@ -15,23 +15,21 @@ box "Backend (Java)" #FBF7FA
 end box
 database "PostgreSQL" as DB
 
-U -> UI : nombre, correo, contraseña\ny confirmación
-UI -> UI : valida con zod\n(nombre ≥ 2, correo válido, clave ≥ 6)
+U -> UI : nombre, correo, contraseña, confirmación\ny casilla de autorización de datos
+UI -> UI : valida con zod\n(nombre ≥ 2, correo válido, clave ≥ 8,\nconfirmación igual, casilla marcada)
 alt datos inválidos
   UI --> U : mensajes en el formulario
 else datos válidos
   UI -> CTX : register(datos)
-  CTX -> MA : POST /api/registro\n{name, email, password}
-  activate MA
-  MA -> MA : aceptaHabeasData = true\n(no viene en la petición)
-  MA -> SA : registrarCliente(nombre, correo, contrasena, true)
-  activate SA
-  alt faltan campos
+  CTX -> MA : POST /api/registro\n{name, email, password, aceptaHabeasData}
+  MA -> MA : lee aceptaHabeasData\n(si no viene, queda en false)
+  MA -> SA : registrarCliente(nombre, correo, contrasena, aceptaHabeasData)
+  alt no acepta la política, faltan campos,\ncorreo inválido o clave < 8
     SA --> MA : ExcepcionDominio
     MA --> CTX : 400 {error}
     CTX --> UI : muestra el error
   else
-    SA -> SA : rol = "cliente"\nhash SHA-256
+    SA -> SA : rol = "cliente"\nhash PBKDF2 (10 000 iteraciones + sal)
     SA -> REPO : guardar(usuario, hash)
     REPO -> DB : INSERT INTO usuarios
     alt correo repetido (UNIQUE)
@@ -39,20 +37,21 @@ else datos válidos
       REPO --> SA : false
       SA --> MA : ExcepcionDominio("…el correo ya exista")
       MA --> CTX : 400 {error}
+      CTX --> UI : muestra el error
     else
       DB --> REPO : ok
       REPO --> SA : true
       SA --> MA : ok
-      deactivate SA
       MA --> CTX : 201 {success}
-      deactivate MA
-      CTX --> UI : cuenta creada
-      UI --> U : redirige a Inicio (/)
+      CTX -> MA : login(correo, contraseña)\nPOST /api/iniciar-sesion
+      MA --> CTX : 200 {usuario, token}
+      CTX --> UI : sesión iniciada
+      UI --> U : «¡Cuenta creada!» y redirige a Inicio (/)
     end
   end
 end
-note over UI, MA
-  El formulario no tiene casilla de autorización de datos (Ley 1581 de 2012)
-  y el frontend no envía el campo; el backend lo da por aceptado.
+note over UI, SA
+  La autorización de datos (Ley 1581 de 2012) se pide en el formulario y el backend
+  la exige; la fecha de aceptación no se guarda en la base de datos.
 end note
 @enduml

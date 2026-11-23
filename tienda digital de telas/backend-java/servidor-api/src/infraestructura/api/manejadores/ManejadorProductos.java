@@ -215,7 +215,7 @@ public class ManejadorProductos extends ManejadorBase {
                     String nombreVendedor = existente.getNombreVendedor() != null ? existente.getNombreVendedor() : "Responsable de Bodega";
                     String nombreTela = actualizaciones.getNombre() != null ? actualizaciones.getNombre() : existente.getNombre();
                     servicioNotificaciones.enviarAlertaStockCritico(correoAlerta, nombreVendedor, nombreTela, stockExplicito);
-                } catch (Exception ignored) {}
+                } catch (RuntimeException ignored) {}
             }
             enviarRespuestaJson(intercambio, exito ? 200 : 404, exito ? "{\"success\":true}" : "{\"error\":\"Producto no encontrado\"}");
 

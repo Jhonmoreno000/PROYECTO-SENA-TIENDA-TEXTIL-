@@ -16,7 +16,7 @@ La arquitectura del sistema ha sido evaluada y verificada segun las caracteristi
 | **Fiabilidad / Resiliencia** | Tolerancia a fallos en servicios externos (notificaciones o pasarelas) y recuperacion de reservas fallidas. | Implementacion de transacciones compensatorias Saga y probes `/health/live` y `/health/ready`. |
 | **Eficiencia de Desempeno** | Busqueda de telas por categoria o composicion bajo concurrencia de compradores. | Tiempos de respuesta p95 <= 200 ms mediante indices B-Tree en PostgreSQL y pool de 32 hilos. |
 | **Mantenibilidad** | Separacion de dominios (Domain-Driven Design) para actualizar modulos sin impacto cruzado. | Clean Architecture dividida en capas `dominio`, `aplicacion`, `infraestructura` con bajo acoplamiento. |
-| **Seguridad** | Proteccion de contrasenas, aislamiento de roles RBAC y no almacenamiento de datos de pago. | Hashing SHA-256 en UTF-8, politicas PCI-DSS v4.0 y cumplimiento de la Ley 1581 de 2012. |
+| **Seguridad** | Proteccion de contrasenas, aislamiento de roles RBAC y no almacenamiento de datos de pago. | Contrasenas con PBKDF2 con sal, tokens de sesion firmados, politicas PCI-DSS v4.0 y cumplimiento de la Ley 1581 de 2012. |
 | **Usabilidad** | Calculadora de metraje inteligente con margen del 10% y linea de tiempo de rastreo de pedidos. | Interfaz intuitiva y reactiva desarrollada en React 18 con diseno Glassmorphism. |
 | **Portabilidad** | Despliegue agnostico de la infraestructura mediante contenedores ligeros. | Orquestacion reproducible en cualquier servidor con Docker Compose y redes puente aisladas. |
 
@@ -32,26 +32,25 @@ Todo acceso a los recursos y endpoints de la plataforma esta condicionado a la a
 - **Rol `operario_corte`:** Escaneo de ordenes de corte con codigo QR, descuento de metros en rollos fisicos y registro de mermas en bodega. No tiene acceso a datos de facturacion ni precios.
 - **Rol `administrador`:** Moderacion de productos, auditoria de seguridad, gestion de usuarios, creacion de cupones y configuracion del sistema. Acceso total con registro de auditoria inmutable.
 
-### 2.2. Ciclo de Vida y Rotacion de Tokens
-- **Access Token:** Tiempo de vida efimero de **15 minutos**. Contiene unicamente los claims no sensibles (`sub`, `rol`, `email`, `exp`, `jti`).
-- **Refresh Token:** Validez maxima de **7 dias**, asociado a una sesion revocable de inmediato en memoria ante sospecha de vulneracion o cambio de clave.
-- **Directivas de Transmision en Navegadores:** Se transmiten exclusivamente mediante cabeceras HTTP seguras:
+### 2.2. Ciclo de Vida del Token de Sesion
+- **Token de sesion (`TokenSesion`):** Firmado por el servidor con **HMAC-SHA256** y vigente durante **12 horas**. Contiene unicamente los reclamos `sub` (id del usuario), `rol` y `exp`.
+- **Sin token de refresco:** Al vencer el token, el usuario inicia sesion de nuevo. No existe un refresh token.
+- **Revalidacion en cada peticion:** `ManejadorBase` vuelve a leer en la base de datos el rol y el estado de la cuenta; una cuenta suspendida o inactiva pierde el acceso de inmediato.
+- **Transmision:** El frontend guarda el token en `localStorage` y lo envia en la cabecera `Authorization`:
   ```http
-  Set-Cookie: auth_token=eyJhbGciOi...; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=900
+  Authorization: Bearer <token>
   ```
+- **Bloqueo por intentos fallidos (`ProtectorFuerzaBruta`):** Tras **5 intentos fallidos** de inicio de sesion, el correo o la IP quedan bloqueados durante **15 minutos** y la API responde `429` con el tiempo restante.
 
 ### 2.3. Hashing Criptografico de Contrasenas
-Las contrasenas se procesan en el backend con **SHA-256 en codificacion UTF-8**, garantizando consistencia independientemente de los caracteres especiales o tildes:
+Las contrasenas se almacenan con **PBKDF2WithHmacSHA256**, con una sal aleatoria de 16 bytes por usuario, 10.000 iteraciones y llave de 256 bits. El valor guardado tiene el formato `pbkdf2$<iteraciones>$<salHex>$<hashHex>` y la verificacion se hace en tiempo constante:
 ```java
-MessageDigest digest = MessageDigest.getInstance("SHA-256");
-digest.update(contrasena.getBytes(StandardCharsets.UTF_8));
-byte[] bytes = digest.digest();
-StringBuilder constructor = new StringBuilder();
-for (byte b : bytes) {
-    constructor.append(String.format("%02x", b));
-}
-return constructor.toString();
+byte[] salt = new byte[16];
+new SecureRandom().nextBytes(salt);
+PBEKeySpec spec = new PBEKeySpec(contrasena.toCharArray(), salt, 10000, 256);
+byte[] hash = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
 ```
+Las cuentas creadas antes de este cambio conservan su hash SHA-256 y se siguen aceptando como respaldo.
 
 ---
 
@@ -68,7 +67,7 @@ De acuerdo con el estandar **PCI-DSS v4.0 (Requisito 3)**, la plataforma **D&D T
    - La captura de datos de pago se realiza en el navegador mediante componentes provistos por la pasarela transaccional certificada PCI Nivel 1.
    - Nuestros servidores reciben unicamente un **token transaccional cifrado** y un identificador de transaccion de un solo uso para confirmar la aprobacion o rechazo del cobro.
 3. **Verificacion Automatizada en Backend:**
-   - La suite de pruebas `PruebasSeguridadIntegridad.java` (Test 11) inspecciona activamente que ningun payload de pedido contenga secuencias numericas compatibles con el algoritmo de Luhn (tarjetas Visa, Mastercard o American Express) ni campos de CVV, rechazando de inmediato la solicitud con codigo HTTP 400 Bad Request.
+   - La suite de pruebas `PruebasSeguridadIntegridad.java` (Test 11) comprueba el filtro `ServicioAutenticacion.contieneDatosTarjetaSensibles`, que rechaza con HTTP 400 los cuerpos de pedidos y pagos que contengan una secuencia de 13 a 19 digitos (con o sin espacios o guiones) o un campo de CVV. El filtro no aplica el algoritmo de Luhn, por eso tambien rechaza numeros que no son tarjetas, como la referencia de pago `DD-<marca de tiempo>-XXXX` (ver doc 02, «Flujo de Pago Vigente»).
 
 ---
 
@@ -111,12 +110,12 @@ En cumplimiento de la legislacion colombiana de proteccion de datos personales (
 
 | Identificador OWASP | Vulnerabilidad | Riesgo en Comercio Textil | Mecanismo de Mitigacion Implementado |
 | :---: | :--- | :--- | :--- |
-| **API1:2023** | **BOLA (Broken Object Level Authorization)** | Un usuario manipula el ID en `/api/orders/14` para ver telas o direcciones de otro cliente. | Verificacion estricta de propiedad en `PedidoDAO.java`: el `usuario_id` del pedido debe coincidir con el usuario autenticado o poseer rol `administrador`. |
-| **API2:2023** | **Broken Authentication** | Ataques de fuerza bruta contra el formulario de inicio de sesion de vendedores. | Mecanismo de Rate Limiting en `ManejadorBase.java` (limite de 60 peticiones/minuto por direccion IP) y bloqueo tras intentos fallidos. |
+| **API1:2023** | **BOLA (Broken Object Level Authorization)** | Un usuario manipula el ID en `/api/pedidos/14` para ver telas o direcciones de otro cliente. | `ManejadorPedidos` solo entrega el pedido si quien consulta es el cliente dueño (`usuario_id`), el vendedor del pedido (`vendedor_id`) o el administrador. **Pendiente:** facturas (`/api/facturas/{id}`) no hace esta verificacion. |
+| **API2:2023** | **Broken Authentication** | Ataques de fuerza bruta contra el formulario de inicio de sesion de vendedores. | Rate Limiting en `ManejadorBase.java` (1200 peticiones/minuto por IP) y `ProtectorFuerzaBruta`: 5 intentos fallidos bloquean el correo o la IP durante 15 minutos (HTTP 429). |
 | **API3:2023** | **Broken Object Property Level Authorization** | Un atacante inyecta el campo `"rol":"administrador"` en el JSON de registro publico. | El backend fuerza de forma estricta el rol a `cliente` en registros publicos, ignorando cualquier campo de elevacion de privilegios. |
-| **API4:2023** | **Unrestricted Resource Consumption** | Peticiones masivas para consultar el catalogo completo sin limites, saturando la memoria. | Paginacion obligatoria con limites maximos de 50 registros por consulta y pool de hilos concurrente dimensionado a 32 hilos. |
-| **API5:2023** | **Broken Function Level Authorization** | Un cliente invoca directamente `PUT /api/users/{id}/suspend` para inhabilitar a otros usuarios. | Validacion centralizada de roles en los manejadores HTTP; operaciones de suspension exigen rol `administrador`. |
-| **API6:2023** | **Unrestricted Access to Sensitive Business Flows** | Bots automatizados reservan todos los rollos de tela dejando a la tienda sin existencias. | Orquestacion Saga con liberacion automatica de reservas no confirmadas en menos de 10 minutos. |
+| **API4:2023** | **Unrestricted Resource Consumption** | Peticiones masivas para consultar el catalogo completo sin limites, saturando la memoria. | Limite de 5 MB por cuerpo de peticion (HTTP 413), limite de 1200 peticiones/minuto por IP y pool de minimo 32 hilos. **Pendiente:** el catalogo no esta paginado; devuelve todos los productos activos. |
+| **API5:2023** | **Broken Function Level Authorization** | Un cliente invoca directamente `PUT /api/usuarios/{id}` con `"activo": false` para inhabilitar a otros usuarios. | Validacion centralizada de roles en los manejadores HTTP; operaciones de suspension exigen rol `administrador`. |
+| **API6:2023** | **Unrestricted Access to Sensitive Business Flows** | Bots automatizados reservan todos los rollos de tela dejando a la tienda sin existencias. | La intencion de pago solo valida el stock (`FOR SHARE`); se descuenta al aprobar el pago, asi que un pedido sin pagar no reserva metros. **Pendiente:** el descuento al aprobar no vuelve a validar el stock (usa `GREATEST(0, stock - metros)`), y hoy la confirmacion falla, por lo que el stock no baja con las compras. |
 | **API7:2023** | **Server Side Request Forgery (SSRF)** | Envio de URLs maliciosas en la carga de imagenes para escanear la red interna de Docker. | Las imagenes solo se aceptan codificadas en Base64 validado o desde origenes autorizados en la lista blanca interna. |
 | **API8:2023** | **Security Misconfiguration** | Exposicion de trazas de error internas de Java (Stack Traces) con datos de rutas o credenciales. | Manejo global de excepciones en `ManejadorBase.java` devolviendo mensajes genericos de error HTTP 500 y emitiendo el detalle solo al log interno. |
 | **API9:2023** | **Improper Inventory Management** | Uso de rutas de prueba o endpoints antiguos expuestos sin control. | Depuracion completa de clases y manejadores huerfanos (`AutenticacionDAO`, `ManejadorImagenProducto`). |
@@ -157,3 +156,20 @@ Para eliminar cualquier riesgo de suplantación de identidad o escalamiento hori
    - En cada petición protegida, una vez verificada la firma HMAC y la vigencia temporal (12 horas), el backend consulta el registro actual del usuario en PostgreSQL.
    - Si la cuenta fue suspendida (`suspendido = true`) o desactivada (`activo = false`), el acceso se revoca de inmediato (`401/403`) sin esperar a que expire el token.
    - El rol efectivo de autorización se toma siempre del registro vigente en la base de datos y nunca a ciegas del reclamo del token.
+
+---
+
+## Anexo de Seguridad v3.0: Estado Real de los Controles (revision del 16/11/2026)
+
+Esta tabla resume que controles estan implementados y cuales siguen pendientes, segun la revision del codigo de la rama `main`.
+
+| Control | Estado | Detalle |
+| :--- | :--- | :--- |
+| Contrasenas con PBKDF2 y sal | Implementado | `ServicioAutenticacion.generarHashPBKDF2` |
+| Token de sesion firmado (12 horas) | Implementado | `TokenSesion` + revalidacion de rol en `ManejadorBase` |
+| Bloqueo tras 5 intentos fallidos | Implementado | `ProtectorFuerzaBruta`, respuesta `429` |
+| Consultas preparadas contra inyeccion SQL | Implementado | Todos los DAO usan `PreparedStatement` |
+| Validacion de rol en la API | Parcial | Solo usuarios, productos, pedidos y cupones validan el token. Configuracion, inventario, carrusel, secciones, soporte, facturas y resenas aun no |
+| Verificacion del pago | Pendiente | El pago es simulado: `/api/pagos/confirmar` acepta el estado que envia el navegador. Ademas, hoy la confirmacion responde `400` porque el filtro PCI confunde la referencia `DD-<13 digitos>-XXXX` con un numero de tarjeta, y el pedido queda `pending` |
+| Acceso a facturas | Pendiente | `GET /api/facturas/{id}` entrega el PDF de cualquier pedido sin sesion (verificado el 17/11/2026 con `curl`): basta con cambiar el numero para ver datos de otro cliente |
+| Fecha de autorizacion de datos (Ley 1581) | Pendiente | El registro exige la autorizacion, pero no guarda la fecha |

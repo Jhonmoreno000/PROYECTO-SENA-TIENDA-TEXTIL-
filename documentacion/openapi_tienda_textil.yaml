@@ -1,290 +1,1600 @@
 openapi: 3.0.3
 info:
-  title: API REST - Plataforma Textil D&D Textil
-  description: |
-    Contrato formal de interfaz (OpenAPI v3.0) para la plataforma distribuida de comercialización
-    y control logístico de telas por metraje fraccionado, inventario de rollos y órdenes de corte.
-    Desarrollado para la sustentación del Tecnólogo ADSO - SENA.
-  version: 2.0.0
+  title: API REST - D&D Textil
+  version: 3.0.0
+  description: 'Contrato de la API del backend Java 21 (`HttpServer`, puerto 8081). Cada ruta en español tiene un alias en inglés (`/api/productos` y `/api/products`). `ManejadorBase` aplica CORS, límite
+    de 1200 peticiones por minuto por IP y de 5 MB por cuerpo. El servidor WebSocket (puerto 8082) emite NUEVO_PEDIDO, PEDIDO_ACTUALIZADO, STOCK_ACTUALIZADO, NUEVO_PRODUCTO, OFERTA_ACTUALIZADA y NOTIFICACION.
+
+
+    Los pagos son simulados: ningún medio se conecta a una pasarela real. Solo los manejadores de usuarios, productos, pedidos y cupones validan el token; en las demás rutas se indica en la descripción.
+
+
+    Generado el 17/11/2026 a partir del código de la rama `main`.'
   contact:
-    name: Soporte Técnico D&D Textil
-    email: contacto@ddtextil.com
-
+    name: Equipo D&D Textil - SENA ADSO
 servers:
-  - url: http://localhost:8081
-    description: Servidor de Desarrollo Local
-  - url: http://backend:8081
-    description: Contenedor Docker Interno en Red Bridge
-
+- url: http://localhost:8081
+  description: Desarrollo local
+- url: http://backend:8081
+  description: Red interna de Docker Compose
+tags:
+- name: Autenticación
+- name: Usuarios
+- name: Productos
+- name: Pedidos
+- name: Pagos
+- name: Carrito
+- name: Cupones
+- name: Facturas
+- name: Reseñas
+- name: Soporte
+- name: Inventario
+- name: Analítica
+- name: Contenido
+- name: Salud
 paths:
-  # =========================================================================
-  # 1. AUTENTICACIÓN Y CONTROL DE ACCESO
-  # =========================================================================
-  /api/login:
+  /api/iniciar-sesion:
     post:
-      summary: Autenticación de usuarios
-      description: Valida credenciales contra la base de datos comparando hash SHA-256 en UTF-8.
-      tags: [Autenticación]
+      summary: Iniciar sesión
+      tags:
+      - Autenticación
+      description: 'Alias: `/api/login`. Verifica la contraseña (PBKDF2; SHA-256 para cuentas antiguas) y devuelve el usuario con un token firmado (HMAC-SHA256, 12 horas). Tras 5 intentos fallidos bloquea
+        el correo o la IP durante 15 minutos.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email, password]
               properties:
                 email:
                   type: string
                   format: email
-                  example: cliente@ddtextil.com
-                password:
+                password: &id001
                   type: string
-                  format: password
-                  example: MiClaveSegura#2026
+              required:
+              - email
+              - password
       responses:
         '200':
-          description: Autenticación exitosa. Retorna el perfil del usuario autenticado.
+          description: Operación exitosa
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UsuarioPerfil'
         '400':
-          description: Credenciales inválidas o campos faltantes.
-        '403':
-          description: Cuenta suspendida por la administración.
-
-  /api/register:
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Demasiadas peticiones o cuenta bloqueada temporalmente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/registro:
     post:
-      summary: Registro público de clientes
-      description: Crea una nueva cuenta de cliente forzando el rol seguro 'cliente'.
-      tags: [Autenticación]
+      summary: Registrar cliente
+      tags:
+      - Autenticación
+      description: 'Alias: `/api/register`. Crea una cuenta con rol `cliente`. Exige `aceptaHabeasData = true` (Ley 1581 de 2012) y contraseña de 8 o más caracteres.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [name, email, password]
               properties:
-                name:
-                  type: string
-                  example: Carlos Confeccionista
+                name: *id001
                 email:
                   type: string
                   format: email
-                  example: carlos@telas.com
-                password:
-                  type: string
-                  format: password
-                  example: Segura#1234
+                password: *id001
+                aceptaHabeasData: &id002
+                  type: boolean
+              required:
+              - name
+              - email
+              - password
+              - aceptaHabeasData
       responses:
         '201':
-          description: Usuario registrado exitosamente.
+          description: Creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  message: *id001
         '400':
-          description: Datos incompletos o correo ya registrado.
-
-  # =========================================================================
-  # 2. CATÁLOGO TEXTIL Y PRODUCTOS
-  # =========================================================================
-  /api/products:
-    get:
-      summary: Listado paginado de telas y catálogo
-      description: Retorna la lista de productos filtrables por categoría, estado y precio.
-      tags: [Catálogo Textil]
-      parameters:
-        - name: category
-          in: query
-          schema:
-            type: integer
-          description: ID de categoría para filtrar
-        - name: q
-          in: query
-          schema:
-            type: string
-          description: Texto de búsqueda en nombre o descripción
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/autenticacion/sso:
+    post:
+      summary: Iniciar sesión con Google o Microsoft
+      tags:
+      - Autenticación
+      description: 'Alias: `/api/sso`. El backend valida el token con el proveedor y crea la cuenta si no existe.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  enum:
+                  - google
+                  - microsoft
+                token: *id001
+              required:
+              - provider
+              - token
       responses:
         '200':
-          description: Catálogo textil obtenido correctamente.
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioPerfil'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/usuarios:
+    get:
+      summary: Listar usuarios
+      tags:
+      - Usuarios
+      description: 'Solo administrador. Alias: `/api/users`.'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/usuarios/{id}:
+    get:
+      summary: Consultar usuario
+      tags:
+      - Usuarios
+      description: El propio usuario o el administrador.
+      parameters: &id003
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+    put:
+      summary: Actualizar usuario
+      tags:
+      - Usuarios
+      description: El propio usuario edita su perfil. Rol, comisión, suspensión y activación solo el administrador.
+      parameters: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: *id001
+                email: *id001
+                phone: *id001
+                role: *id001
+                active: *id002
+                suspended: *id002
+                suspensionReason: *id001
+                commissionRate: &id005
+                  type: number
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+    delete:
+      summary: Eliminar usuario
+      tags:
+      - Usuarios
+      description: Solo administrador.
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/usuarios/{id}/direcciones:
+    get:
+      summary: Listar direcciones
+      tags:
+      - Usuarios
+      description: El propio usuario o el administrador.
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Direccion'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+    post:
+      summary: Agregar dirección
+      tags:
+      - Usuarios
+      parameters: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Direccion'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Direccion'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/productos:
+    get:
+      summary: Catálogo
+      tags:
+      - Productos
+      description: 'Público. Devuelve los productos activos (sin paginación). Alias: `/api/products`.'
+      responses:
+        '200':
+          description: Operación exitosa
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Producto'
-
     post:
-      summary: Publicar nueva tela en catálogo
-      description: Crea un nuevo producto textil con su ficha técnica granular (gramaje, ancho, cuidados).
-      tags: [Catálogo Textil]
-      security:
-        - BearerAuth: []
+      summary: Publicar tela
+      tags:
+      - Productos
+      description: Vendedor o administrador. El producto queda con `estado_moderacion = pending` si el cuerpo no indica otro estado.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductoCreacion'
+              $ref: '#/components/schemas/Producto'
       responses:
         '201':
-          description: Tela creada exitosamente en estado de moderación 'approved'.
-
-  /api/products/{id}:
+          description: Creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  id: &id004
+                    type: integer
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/productos/pendientes:
     get:
-      summary: Obtener detalle técnico de una tela
-      tags: [Catálogo Textil]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      summary: Telas pendientes de moderación
+      tags:
+      - Productos
+      description: Vendedor o administrador.
       responses:
         '200':
-          description: Detalle del producto obtenido.
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Producto'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/productos/{id}:
+    get:
+      summary: Detalle de una tela
+      tags:
+      - Productos
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Producto'
         '404':
-          description: Tela no encontrada.
-
-  # =========================================================================
-  # 3. PEDIDOS, CORTE Y TRANSACCIONES SAGA
-  # =========================================================================
-  /api/orders:
-    get:
-      summary: Listar pedidos del sistema
-      description: Clientes ven sus pedidos; administradores y operarios de corte ven el consolidado.
-      tags: [Pedidos y Corte]
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Editar tela
+      tags:
+      - Productos
+      description: 'Vendedor dueño o administrador. Marcar ofertas: solo administrador. Emite `STOCK_ACTUALIZADO` u `OFERTA_ACTUALIZADA` por WebSocket.'
+      parameters: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Producto'
       responses:
         '200':
-          description: Lista de pedidos.
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+    delete:
+      summary: Retirar tela
+      tags:
+      - Productos
+      description: Borrado lógico (`activo = false`). Vendedor dueño o administrador.
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/productos/{id}/imagen:
+    put:
+      summary: Subir imagen en Base64
+      tags:
+      - Productos
+      description: Vendedor dueño o administrador.
+      parameters: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                image: *id001
+              required:
+              - image
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  url: *id001
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/productos/{id}/moderar:
+    put:
+      summary: Aprobar o rechazar una tela
+      tags:
+      - Productos
+      description: Solo administrador.
+      parameters: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - approved
+                  - rejected
+                reason: *id001
+              required:
+              - status
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/pedidos:
+    get:
+      summary: Listar pedidos
+      tags:
+      - Pedidos
+      description: 'Filtrados por rol: el administrador ve todos, el vendedor los suyos (`vendedor_id`) y el cliente los propios (`usuario_id`). Alias: `/api/orders`.'
+      responses:
+        '200':
+          description: Operación exitosa
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Pedido'
-
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
     post:
-      summary: Crear pedido con reserva de metraje continuo
-      description: Valida stock continuo, ejecuta bloqueo pesimista en base de datos y genera orden de corte.
-      tags: [Pedidos y Corte]
+      summary: Crear pedido
+      tags:
+      - Pedidos
+      description: 'No exige sesión: el cliente se toma de `userId` en el cuerpo. Rechaza datos de tarjeta (PAN/CVV). Si falta stock responde 500.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PedidoCreacion'
+              type: object
+              properties:
+                userId: *id004
+                total: *id005
+                subtotal: *id005
+                tax: *id005
+                shippingCost: *id005
+                discount: *id005
+                couponCode: *id001
+                customerName: *id001
+                customerEmail: *id001
+                customerPhone: *id001
+                customerDocument: *id001
+                shippingAddress: *id001
+                shippingCity: *id001
+                shippingDepartment: *id001
+                paymentMethod: *id001
+                items:
+                  type: array
+                  items:
+                    type: object
+              required:
+              - userId
+              - items
       responses:
         '201':
-          description: Pedido creado y metraje reservado en rollo físico.
+          description: Creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  orderId: *id004
         '400':
-          description: Stock insuficiente, tela fragmentada o datos inválidos.
-
-  /api/orders/{id}/status:
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/pedidos/{id}:
+    get:
+      summary: Detalle de un pedido
+      tags:
+      - Pedidos
+      description: Solo el cliente dueño, el vendedor del pedido o el administrador.
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
     put:
-      summary: Actualizar estado operativo del pedido
-      description: Cambia el estado a 'cutting', 'shipped', 'delivered' o 'cancelled'.
-      tags: [Pedidos y Corte]
+      summary: Actualizar estado, guía o notas
+      tags:
+      - Pedidos
+      description: Vendedor o administrador. Emite `PEDIDO_ACTUALIZADO` por WebSocket.
+      parameters: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: *id001
+                trackingNumber: *id001
+                notes: *id001
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/pagos/configuracion:
+    get:
+      summary: Configuración pública de pagos
+      tags:
+      - Pagos
+      description: 'Alias: `/api/pagos/config`.'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configured: *id002
+                  publicKey: *id001
+                  currency: *id001
+                  environment: *id001
+  /api/pagos/estado:
+    get:
+      summary: Estado de un pago
+      tags:
+      - Pagos
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
+      - name: referencia
+        in: query
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [status]
-              properties:
-                status:
-                  type: string
-                  enum: [pending, cutting, shipped, delivered, cancelled]
+        schema:
+          type: string
       responses:
         '200':
-          description: Estado del pedido actualizado.
-
-  # =========================================================================
-  # 4. INVENTARIO, LOTES Y MERMAS
-  # =========================================================================
-  /api/inventory/batches:
-    get:
-      summary: Listar lotes de tela recibidos
-      tags: [Inventario y Mermas]
-      responses:
-        '200':
-          description: Lotes de inventario.
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reference: *id001
+                  status: *id001
+                  paymentStatus: *id001
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/pagos/intencion:
     post:
-      summary: Registrar nuevo lote de compra de fábrica
-      tags: [Inventario y Mermas]
+      summary: Crear intención de pago
+      tags:
+      - Pagos
+      description: 'No exige sesión. El backend recalcula el total con los precios de la base de datos, crea el pedido en `pending`, descuenta el stock con `SELECT ... FOR UPDATE` y devuelve la referencia
+        firmada. Alias: `/api/pagos/intent`.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [productId, batchNumber, receivedMeters, costPerMeter]
               properties:
-                productId:
-                  type: integer
-                batchNumber:
-                  type: string
-                receivedMeters:
-                  type: number
-                costPerMeter:
-                  type: number
-                provider:
-                  type: string
+                userId: *id004
+                couponCode: *id001
+                customerInfo:
+                  type: object
+                  properties:
+                    fullName: *id001
+                    email: *id001
+                    phone: *id001
+                    address: *id001
+                    city: *id001
+                    state: *id001
+                    notes: *id001
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId: *id004
+                      quantity: *id005
+              required:
+              - items
       responses:
         '201':
-          description: Lote registrado.
-
-  /api/inventory/waste:
-    get:
-      summary: Consultar historial de mermas y retazos
-      tags: [Inventario y Mermas]
-      responses:
-        '200':
-          description: Eventos de merma.
+          description: Creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  orderId: *id004
+                  reference: *id001
+                  amountInCents:
+                    type: integer
+                    format: int64
+                  currency: *id001
+                  integritySignature: *id001
+                  publicKey: *id001
+                  subtotal: *id005
+                  discount: *id005
+                  shipping: *id005
+                  tax: *id005
+                  total: *id005
+                  customerInfo:
+                    type: object
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/pagos/confirmar:
     post:
-      summary: Registrar merma o reclasificación a retazo sub-metro
-      tags: [Inventario y Mermas]
+      summary: Confirmar pago (simulado)
+      tags:
+      - Pagos
+      description: 'El backend acepta el `estadoPago` que envía el navegador; no verifica la transacción con la pasarela. Alias: `/api/pagos/confirm`.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [productId, lostMeters, reason]
               properties:
-                productId:
-                  type: integer
-                lostMeters:
-                  type: number
-                reason:
+                referencia: *id001
+                transaccionId: *id001
+                metodoPago: *id001
+                estadoPago:
                   type: string
-                  example: remanente_sub_metro
-                costImpact:
-                  type: number
+                  example: APPROVED
+              required:
+              - referencia
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  reference: *id001
+                  status: *id001
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/pagos/webhook:
+    post:
+      summary: Webhook de Wompi
+      tags:
+      - Pagos
+      description: 'Verifica la firma del evento y guarda el evento en `eventos_pago_wompi` (idempotencia). Alias: `/api/pagos/wompi-webhook`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Falta el token o no es válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/carrito:
+    get:
+      summary: Carrito de un usuario
+      tags:
+      - Carrito
+      description: Este manejador no valida el token ni el rol.
+      parameters:
+      - name: userId
+        in: query
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemCarrito'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Agregar al carrito
+      tags:
+      - Carrito
+      description: Este manejador no valida el token ni el rol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCarrito'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/cupones:
+    get:
+      summary: Listar cupones
+      tags:
+      - Cupones
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cupon'
+    post:
+      summary: Crear cupón
+      tags:
+      - Cupones
+      description: Solo administrador.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cupon'
       responses:
         '201':
-          description: Merma registrada.
-
-  # =========================================================================
-  # 5. MONITOREO Y SALUD (DEVSECOPS)
-  # =========================================================================
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cupon'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/cupones/{id}/activar:
+    put:
+      summary: Activar cupón
+      tags:
+      - Cupones
+      description: Solo administrador.
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/cupones/{id}/desactivar:
+    put:
+      summary: Desactivar cupón
+      tags:
+      - Cupones
+      description: Solo administrador.
+      parameters: *id003
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+        '403':
+          description: El rol no tiene permiso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - BearerAuth: []
+  /api/facturas:
+    get:
+      summary: Listar facturas
+      tags:
+      - Facturas
+      description: 'Este manejador no valida el token ni el rol. Alias: `/api/invoices`.'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/facturas/{id}:
+    get:
+      summary: Descargar factura PDF
+      tags:
+      - Facturas
+      description: Este manejador no valida el token ni el rol. Lee el pedido, la cabecera y los artículos de `pedidos`, `items_pedido` y `productos`.
+      parameters: *id003
+      responses:
+        '200':
+          description: PDF de la factura
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Pedido no encontrado
+  /api/resenas:
+    get:
+      summary: Reseñas de un producto
+      tags:
+      - Reseñas
+      parameters:
+      - name: productId
+        in: query
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resena'
+    post:
+      summary: Publicar reseña
+      tags:
+      - Reseñas
+      description: Una reseña por usuario y producto; calificación de 1 a 5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resena'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resena'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/soporte/tickets:
+    get:
+      summary: Listar tickets
+      tags:
+      - Soporte
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TicketSoporte'
+    post:
+      summary: Abrir ticket
+      tags:
+      - Soporte
+      description: También lo usa el formulario de contacto.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketSoporte'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketSoporte'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/soporte/errores:
+    get:
+      summary: Listar reportes de fallo
+      tags:
+      - Soporte
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReporteError'
+    post:
+      summary: Reportar un fallo
+      tags:
+      - Soporte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReporteError'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReporteError'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/inventario/lotes:
+    get:
+      summary: Lotes de inventario
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoteInventario'
+    post:
+      summary: Registrar lote
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoteInventario'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  id: *id004
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/inventario/rollos:
+    get:
+      summary: Rollos textiles
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RolloTextil'
+    post:
+      summary: Registrar rollo
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolloTextil'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  id: *id004
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/inventario/mermas:
+    get:
+      summary: Eventos de merma
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventoMerma'
+    post:
+      summary: Registrar merma
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoMerma'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  id: *id004
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/inventario/umbrales:
+    get:
+      summary: Umbrales de stock
+      tags:
+      - Inventario
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UmbralStock'
+  /api/inventario/corte:
+    post:
+      summary: Cortar un rollo
+      tags:
+      - Inventario
+      description: 'Este manejador no valida el token ni el rol. Usa `ServicioCorteTextil`: valida metraje continuo, procesa el corte (retazo < 1 m con merma) y calcula la tarifa por volumen. Ninguna pantalla
+        lo llama todavía.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rollCode: *id001
+                meters: *id005
+                basePrice: *id005
+              required:
+              - rollCode
+              - meters
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: *id002
+                  rollId: *id004
+                  remainingMeters: *id005
+                  status: *id001
+                  totalPrice: *id005
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/metricas/ventas:
+    get:
+      summary: Ventas para el panel
+      tags:
+      - Analítica
+      description: También `/api/metricas/regiones`, `/api/metricas/ventas-erp`, `/api/metricas/notificaciones` y `/api/metricas/inventario-telas`. Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/actividad:
+    get:
+      summary: Actividad reciente
+      tags:
+      - Analítica
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/banner:
+    get:
+      summary: Banner global
+      tags:
+      - Contenido
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/carrusel:
+    get:
+      summary: Diapositivas activas del carrusel
+      tags:
+      - Contenido
+      description: Con `/todos` devuelve también las inactivas. Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/secciones-inicio:
+    get:
+      summary: Apartados del inicio
+      tags:
+      - Contenido
+      description: Con `/activas` solo las activas. Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/configuracion:
+    get:
+      summary: Configuración de la tienda
+      tags:
+      - Contenido
+      description: Este manejador no valida el token ni el rol.
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
   /health/live:
     get:
-      summary: Probe de Liveness para Kubernetes o Docker
-      description: Verifica que el proceso HTTP de Java esté activo y recibiendo conexiones.
-      tags: [Monitoreo]
+      summary: Sonda de vida
+      tags:
+      - Salud
+      description: 'Alias: `/api/salud`.'
       responses:
         '200':
-          description: Servidor vivo.
+          description: Operación exitosa
           content:
             application/json:
               schema:
@@ -293,152 +1603,427 @@ paths:
                   status:
                     type: string
                     example: UP
-
   /health/ready:
     get:
-      summary: Probe de Readiness
-      description: Verifica la conectividad efectiva contra el pool de PostgreSQL.
-      tags: [Monitoreo]
+      summary: Sonda de disponibilidad
+      tags:
+      - Salud
+      description: Comprueba la conexión con PostgreSQL.
       responses:
         '200':
-          description: Servidor y base de datos listos para tráfico.
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: *id001
         '503':
-          description: Base de datos no disponible temporalmente.
-
+          description: Base de datos no disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: HMAC-SHA256-TokenSesion
-      description: |
-        Token de sesión firmado por el servidor con HmacSHA256 (<cargaBase64Url>.<firmaBase64Url>),
-        vigencia de 12 horas y revalidación de rol y estado activo/suspendido en base de datos en cada petición.
-
+      bearerFormat: TokenSesion (HMAC-SHA256)
+      description: Token firmado por el servidor, válido 12 horas. En cada petición protegida el backend vuelve a leer el rol y el estado del usuario.
   schemas:
+    Error:
+      type: object
+      properties:
+        error: *id001
+        message: *id001
     UsuarioPerfil:
       type: object
       properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: Juan Perez
-        email:
-          type: string
-          example: juan@ddtextil.com
+        id: *id004
+        name: *id001
+        email: *id001
         role:
           type: string
-          example: cliente
-        status:
-          type: string
-          example: Activo
+          enum:
+          - cliente
+          - vendedor
+          - administrador
+        status: *id001
         token:
           type: string
-          description: Token de sesión firmado con HMAC-SHA256 emitido tras autenticación exitosa.
-          example: eyJzdWIiOjEsInJvbCI6ImNsaWVudGUiLCJleHAiOjE4MDAwNDMyMDB9.8f9a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1
-
-    Producto:
+          description: Token firmado `<cargaBase64Url>.<firmaBase64Url>`, válido 12 horas.
+    Usuario:
       type: object
+      description: Modelo `dominio.modelos.Usuario` (nombres JSON de `@SerializedName`).
       properties:
         id:
           type: integer
-          example: 10
         name:
           type: string
-          example: Lino Crudo Italiano
-        price:
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        active:
+          type: boolean
+        suspended:
+          type: boolean
+        suspensionReason:
+          type: string
+        commissionRate:
           type: number
-          example: 35000.0
-        stock:
-          type: integer
-          example: 120
-        category:
+        registeredAt:
           type: string
-          example: Lino
-        material:
+        lastLogin:
           type: string
-          example: 100% Lino Natural
-        width:
-          type: string
-          example: 1.50 metros
-        weight:
-          type: string
-          example: 240 g/m2
-        moderationStatus:
-          type: string
-          example: approved
-
-    ProductoCreacion:
-      type: object
-      required: [name, price, categoryId]
-      properties:
-        name:
-          type: string
-        price:
-          type: number
-        categoryId:
-          type: integer
-        stock:
-          type: integer
-        material:
-          type: string
-        width:
-          type: string
-        weight:
-          type: string
-        careInstructions:
-          type: string
-
-    Pedido:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1042
-        customerName:
-          type: string
-          example: María Confecciones
-        totalAmount:
-          type: number
-          example: 180000.0
         status:
           type: string
-          example: cutting
-        paymentStatus:
-          type: string
-          example: paid
-        guideNumber:
-          type: string
-          example: DND-ORDER-1042-QR
-
-    PedidoCreacion:
+    Direccion:
       type: object
-      required: [customerName, customerEmail, shippingAddress, items]
       properties:
-        customerName:
+        id: *id004
+        label: *id001
+        recipientName: *id001
+        phone: *id001
+        address: *id001
+        city: *id001
+        department: *id001
+        postalCode: *id001
+        isDefault: *id002
+    Producto:
+      type: object
+      description: Modelo `dominio.modelos.Producto` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
           type: string
-        customerEmail:
+        name:
           type: string
-        customerPhone:
+        category:
+          type: string
+        price:
+          type: number
+        sellerId:
+          type: integer
+        sellerName:
+          type: string
+        description:
+          type: string
+        material:
+          type: string
+        width:
+          type: string
+        weight:
+          type: string
+        care:
+          type: string
+        stock:
+          type: number
+        featured:
+          type: boolean
+        active:
+          type: boolean
+        status:
+          type: string
+        rejectionReason:
+          type: string
+        isNewCollection:
+          type: boolean
+        isExclusive:
+          type: boolean
+        isOffer:
+          type: boolean
+        createdAt:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+    Pedido:
+      type: object
+      description: Modelo `dominio.modelos.Pedido` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        clientId:
+          type: integer
+        sellerId:
+          type: integer
+        client:
+          type: string
+        clientEmail:
+          type: string
+        clientPhone:
+          type: string
+        total:
+          type: number
+        subtotal:
+          type: number
+        shippingCost:
+          type: number
+        tax:
+          type: number
+        discountAmount:
+          type: number
+        couponCode:
+          type: string
+        status:
+          type: string
+        paymentMethod:
+          type: string
+        paymentStatus:
           type: string
         shippingAddress:
           type: string
-        city:
+        shippingCity:
           type: string
-        department:
+        shippingDepartment:
+          type: string
+        trackingNumber:
+          type: string
+        notes:
+          type: string
+        date:
           type: string
         items:
+          type: integer
+        totalMeters:
+          type: number
+        productIds:
+          type: array
+          items:
+            type: integer
+        productNames:
+          type: array
+          items:
+            type: string
+        lineItems:
           type: array
           items:
             type: object
-            required: [productId, quantity, unitPrice]
-            properties:
-              productId:
-                type: integer
-              quantity:
-                type: number
-                description: Metros lineales solicitados
-              unitPrice:
-                type: number
+    ItemCarrito:
+      type: object
+      description: Modelo `dominio.modelos.ItemCarrito` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        productId:
+          type: integer
+        quantity:
+          type: number
+        addedAt:
+          type: string
+        updatedAt:
+          type: string
+        productName:
+          type: string
+        productPrice:
+          type: number
+        productImage:
+          type: string
+    Cupon:
+      type: object
+      description: Modelo `dominio.modelos.Cupon` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        discountType:
+          type: string
+        discountValue:
+          type: number
+        expiresAt:
+          type: string
+        active:
+          type: boolean
+        usageCount:
+          type: integer
+        rules:
+          type: object
+    Resena:
+      type: object
+      description: Modelo `dominio.modelos.Resena` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+        createdAt:
+          type: string
+    TicketSoporte:
+      type: object
+      description: Modelo `dominio.modelos.TicketSoporte` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        clientEmail:
+          type: string
+        orderId:
+          type: integer
+        subject:
+          type: string
+        description:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        assignedTo:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        resolvedAt:
+          type: string
+    ReporteError:
+      type: object
+      description: Modelo `dominio.modelos.ReporteError` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        sellerId:
+          type: integer
+        sellerName:
+          type: string
+        user:
+          type: string
+        email:
+          type: string
+        productId:
+          type: integer
+        productName:
+          type: string
+        area:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        steps:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        severity:
+          type: string
+        assignedTo:
+          type: integer
+        reportedAt:
+          type: string
+        date:
+          type: string
+        createdAt:
+          type: string
+        resolvedAt:
+          type: string
+    LoteInventario:
+      type: object
+      description: Modelo `dominio.modelos.LoteInventario` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: string
+        productId:
+          type: integer
+        batchNumber:
+          type: string
+        fabricType:
+          type: string
+        supplier:
+          type: string
+        initialMeters:
+          type: number
+        currentMeters:
+          type: number
+        costPerMeter:
+          type: number
+        status:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+        lastUpdate:
+          type: string
+    EventoMerma:
+      type: object
+      description: Modelo `dominio.modelos.EventoMerma` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        batchId:
+          type: string
+        meters:
+          type: number
+        reason:
+          type: string
+        description:
+          type: string
+        costImpact:
+          type: number
+        responsible:
+          type: string
+        eventDate:
+          type: string
+        createdAt:
+          type: string
+        userId:
+          type: integer
+    RolloTextil:
+      type: object
+      description: Modelo `dominio.modelos.RolloTextil` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        productName:
+          type: string
+        rollCode:
+          type: string
+        initialMeters:
+          type: number
+        remainingMeters:
+          type: number
+        dyeLot:
+          type: string
+        status:
+          type: string
+        warehouseLocation:
+          type: string
+    UmbralStock:
+      type: object
+      description: Modelo `dominio.modelos.UmbralStock` (nombres JSON de `@SerializedName`).
+      properties:
+        id:
+          type: integer
+        fabricType:
+          type: string
+        minMeters:
+          type: number
+        alertEnabled:
+          type: boolean

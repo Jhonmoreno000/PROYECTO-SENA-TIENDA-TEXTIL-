@@ -56,15 +56,15 @@ flowchart TD
         end
 
         subgraph RedFrontend ["RED BRIDGE: frontend-net (Red Pública Expuesta)"]
-            ContFrontend["Contenedor: frontend<br/>• Imagen: node:18-alpine<br/>• SPA React 18 / Vite<br/>• Puerto Mapeado: 5173:5173"]:::frontStyle
+            ContFrontend["Contenedor: ddtextil-frontend<br/>• Imagen: nginx:alpine (compilada con node:20-alpine)<br/>• SPA React 18 servida por Nginx<br/>• Puerto Mapeado: 3001:80"]:::frontStyle
         end
 
         subgraph RedesCompartidas ["Enlace Inter-Red (Puertos Internos)"]
-            ContBackend["Contenedor: backend-java<br/>• Imagen: openjdk:17-slim<br/>• Vanilla Java 17 HttpServer (Pool 32 Hilos)<br/>• Puerto Mapeado: 8081:8081"]:::backStyle
+            ContBackend["Contenedor: ddtextil-backend<br/>• Imagen: eclipse-temurin:21-jre<br/>• Vanilla Java 21 HttpServer (Pool 32 Hilos)<br/>• Puertos: 8081 (API) y 8082 (WebSocket)"]:::backStyle
         end
 
-        subgraph RedBackend ["RED BRIDGE: backend-net (Red Aislada No Expuesta)"]
-            ContPostgres[("Contenedor: postgres<br/>• Imagen: postgres:17-alpine<br/>• PostgreSQL 17 (UTF-8)<br/>• Puerto Interno: 5432 (Sin mapeo al host)")]:::dbStyle
+        subgraph RedBackend ["RED BRIDGE: backend-net"]
+            ContPostgres[("Contenedor: ddtextil-db<br/>• Imagen: postgres:17<br/>• PostgreSQL 17 (UTF-8)<br/>• Puerto: 5432 (mapeado al host con DB_PORT)")]:::dbStyle
         end
 
         subgraph VolumenesDocker ["Almacenamiento Persistente"]
@@ -73,7 +73,7 @@ flowchart TD
         end
     end
 
-    UserWeb -->|"HTTP / Puerto 5173"| ContFrontend
+    UserWeb -->|"HTTP / Puerto 3001"| ContFrontend
     UserApp -->|"HTTP / Puerto 8081"| ContBackend
 
     ContFrontend -->|"HTTP REST / Proxy: 8081<br/>[frontend-net]"| ContBackend
@@ -87,21 +87,21 @@ flowchart TD
 +-----------------------------------------------------------------------------------+
 |                                HOST ANFITRION                                     |
 |                                                                                   |
-|   Navegador Web / Cliente                     Estacion de Corte / Bodega         |
+|   Navegador Web / Cliente                     Estacion de Corte / Bodega          |
 |         |                                                 |                       |
 |         +-----------------------+ +-----------------------+                       |
 |                                 | |                                               |
 |                                 v v                                               |
-|                         [Puerto 5173]                                           |
+|                         [Puerto 3001]                                             |
 |                                 |                                                 |
 |   +-----------------------------v---------------------------------------------+   |
 |   | RED: frontend-net                                                         |   |
 |   |                                                                           |   |
 |   |   +-----------------------+              +----------------------------+   |   |
-|   |   | Contenedor: frontend  |              | Contenedor: backend-java   |   |   |
-|   |   | Imagen: node:18-alpine|              | Imagen: openjdk:17-slim    |   |   |
-|   |   | Servicio: React/Vite  | ------------>| Servicio: HTTP Server      |   |   |
-|   |   | Puerto: 5173          |  (HTTP 8081) | Puerto: 8081               |   |   |
+|   |   | ddtextil-frontend     |              | ddtextil-backend           |   |   |
+|   |   | Imagen: nginx:alpine  |              | Imagen: eclipse-temurin:21 |   |   |
+|   |   | Servicio: React+Nginx | ------------>| Servicio: API + WebSocket  |   |   |
+|   |   | Puerto: 3001 -> 80    |  (HTTP 8081) | Puertos: 8081 y 8082       |   |   |
 |   |   +-----------------------+              +--------------+-------------+   |   |
 |   +---------------------------------------------------------|-----------------+   |
 |                                                             |                     |
@@ -109,22 +109,22 @@ flowchart TD
 |   | RED: backend-net                                        |                 |   |
 |   |                                                         v                 |   |
 |   |                                          +----------------------------+   |   |
-|   |                                          | Contenedor: postgres       |   |   |
-|   |                                          | Imagen: postgres:17-alpine |   |   |
+|   |                                          | ddtextil-db                |   |   |
+|   |                                          | Imagen: postgres:17        |   |   |
 |   |                                          | Servicio: PostgreSQL RDBMS |   |   |
-|   |                                          | Puerto interno: 5432       |   |   |
+|   |                                          | Puerto: 5432 (DB_PORT)     |   |   |
 |   |                                          +--------------+-------------+   |   |
 |   |                                                         |                 |   |
 |   +---------------------------------------------------------|-----------------+   |
 |                                                             v                     |
-|                                                   [postgres_data]               |
+|                                                   [pgdata]                        |
 |                                                   Volumen Persistente             |
 +-----------------------------------------------------------------------------------+
 ```
 
 ### 2.1. Politica de Aislamiento de Red
 - **`frontend-net`**: Conecta el contenedor de frontend con el puerto HTTP del backend. No tiene visibilidad ni acceso de red al contenedor de base de datos PostgreSQL.
-- **`backend-net`**: Conecta exclusivamente el contenedor de backend con el motor PostgreSQL. El frontend no puede comunicarse con esta red, impidiendo ataques directos o vectores de inyeccion que omitan la logica de control de acceso.
+- **`backend-net`**: Conecta el contenedor de backend con el motor PostgreSQL. El frontend no puede comunicarse con esta red. Nota: `docker-compose.yml` publica el puerto 5432 de la base de datos en el host (`DB_PORT`) para facilitar el desarrollo; en un despliegue real conviene quitar ese mapeo.
 
 ---
 
@@ -134,29 +134,46 @@ El sistema desacopla la configuracion sensible del codigo fuente mediante archiv
 
 ### 3.1. Archivo `.env` Integral del Sistema
 
+La plantilla oficial es `.env.example`; basta con copiarla (`cp .env.example .env`) y cambiar las contraseñas y secretos. Estas son sus variables:
+
 ```bash
-# =============================================================================
-# VARIABLES DE CONFIGURACION DE LA BASE DE DATOS (POSTGRESQL)
-# =============================================================================
-DB_HOST=postgres
+# 1. Base de datos (PostgreSQL 17)
+POSTGRES_DB=tienda_digital_textiles_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=<contraseña>
 DB_PORT=5432
-DB_NAME=tienda_digital_textiles_db
+
+# 2. Conexion JDBC del backend (solo fuera de Docker; en Docker Compose apunta al servicio 'db')
+DB_URL=jdbc:postgresql://localhost:5432/tienda_digital_textiles_db
 DB_USER=postgres
-DB_PASSWORD=postgres_secure_password_2026
+DB_PASSWORD=<contraseña>
 
-# =============================================================================
-# VARIABLES DE CONFIGURACION DEL BACKEND (JAVA)
-# =============================================================================
-SERVER_PORT=8081
+# 3. Puertos
+PORT=8081
+BACKEND_PORT=8081
+FRONTEND_PORT=3001
+WS_PORT=8082
+
+# 4. Seguridad
+CORS_ALLOWED_ORIGIN=*
+SESSION_SECRET=            # vacio = secreto aleatorio por proceso (las sesiones se pierden al reiniciar)
+
+# 5. Wompi (firma de la intencion de pago y verificacion del webhook; el pago sigue siendo simulado)
+WOMPI_PUBLIC_KEY=<llave>
+WOMPI_PRIVATE_KEY=<llave>
+WOMPI_INTEGRITY_SECRET=<secreto>
+WOMPI_EVENTS_SECRET=<secreto>
 WOMPI_ENV=sandbox
-ENVIRONMENT=production
-LOG_LEVEL=INFO
 
-# =============================================================================
-# VARIABLES DE CONFIGURACION DEL FRONTEND (VITE / REACT)
-# =============================================================================
-VITE_API_URL=http://localhost:8081
-VITE_APP_TITLE="D&D Textil - Tienda Digital de Telas"```
+# 6. Inicio de sesion con Google y Microsoft (opcional)
+GOOGLE_CLIENT_ID=
+VITE_GOOGLE_CLIENT_ID=
+AZURE_CLIENT_ID=
+VITE_AZURE_CLIENT_ID=
+VITE_AZURE_TENANT_ID=common
+```
+
+Otras variables opcionales que lee el backend: `DB_POOL_SIZE` (tamaño del pool de conexiones, 24 por defecto) y `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` para el envio de correos.
 
 ---
 
@@ -191,10 +208,10 @@ docker compose ps
 
 Salida esperada:
 ```text
-NAME                IMAGE               COMMAND                  SERVICE             STATUS                    PORTS
-textil-backend      openjdk:17-slim     "java -cp target:lib…"backend             Up (healthy)              0.0.0.0:8081->8081/tcp
-textil-frontend     node:18-alpine      "npm run dev -- --ho…"frontend            Up                        0.0.0.0:5173->5173/tcp
-textil-postgres     postgres:17-alpine  "docker-entrypoint.s…"postgres            Up (healthy)              0.0.0.0:5432->5432/tcp
+NAME                IMAGE                       SERVICE    STATUS          PORTS
+ddtextil-backend    ddtextil-backend:latest     backend    Up (healthy)    0.0.0.0:8081->8081/tcp, 0.0.0.0:8082->8082/tcp
+ddtextil-db         postgres:17                 db         Up (healthy)    0.0.0.0:5432->5432/tcp
+ddtextil-frontend   ddtextil-frontend:latest    frontend   Up              0.0.0.0:3001->80/tcp
 ```
 
 ### Paso 5: Verificacion de Bitacoras y Logs de Inicio
@@ -275,7 +292,7 @@ En estaciones de trabajo para desarrollo local donde no se disponga de Docker, l
    ```bash
    npm run dev
    ```
-4. Abrir en un navegador web la direccion local: `http://localhost:5173`.
+4. Abrir en un navegador web la direccion local: `http://localhost:3001` (puerto definido en `vite.config.js`; Vite reenvia `/api` y `/uploads` al backend en el 8081).
 
 ---
 
@@ -326,55 +343,60 @@ Content-Type: application/json; charset=UTF-8
 
 El backend incluye suites de pruebas unitarias y de seguridad sin dependencias externas que pueden ejecutarse de manera autonoma para certificar la integridad de las reglas de negocio antes de un paso a produccion:
 
-### 7.1. Pruebas del Motor Textil y Reglas de Negocio
+### 7.1. Comandos
+
+Desde `tienda digital de telas/backend-java/servidor-api`, después de compilar (sección 5.2):
+
 ```powershell
-java -cp "bin;$jars"PruebasReglasNegocioTextil
-```
-Salida certificada:
-```text
-============================================================
-EJECUTANDO SUITE DE PRUEBAS: REGLAS DE NEGOCIO TEXTIL (D&D)
-============================================================
-[EXITO] Prueba 1: Creacion valida de rollo textil
-[EXITO] Prueba 2: Rechazo de metraje negativo o cero
-[EXITO] Prueba 3: Deteccion de merma al cortar rollo (< 1.0m)
-[EXITO] Prueba 4: Clasificacion automatica a RETAZO_LIQUIDADO
-[EXITO] Prueba 5: Bloqueo de corte por metraje insuficiente
-[EXITO] Prueba 6: Agotamiento exacto del rollo (0.0 metros)
-[EXITO] Prueba 7: Validacion estricta de continuidad de metraje
-[EXITO] Prueba 8: Validacion de consistencia cromatica por lote
-[EXITO] Prueba 9: Tarifa Detal (< 15 metros) sin descuento
-[EXITO] Prueba 10: Tarifa Mayorista (>= 15 metros) con 12% desc.
-[EXITO] Prueba 11: Tarifa Rollo Cerrado (>= 50 metros) con 25% desc.
-[EXITO] Prueba 12: Descuento obligatorio para retazos (40%)
-[EXITO] Prueba 13: Asignacion de rollo optimo por menor remanente
-[EXITO] Prueba 14: Calculo con margen tecnico de confeccion (+10%)
-============================================================
-TOTAL PRUEBAS EJECUTADAS: 14 | EXITOSAS: 14 | FALLIDAS: 0
-TASA DE EXITO: 100.0%
-============================================================
+# Windows (PowerShell): el separador del classpath es ";"
+java -cp "bin;lib/*" PruebasReglasNegocioTextil
+java -cp "bin;lib/*" PruebasSeguridadIntegridad
+java -cp "bin;lib/*" PruebasConcurrenciaYPagos
+java -cp "bin;lib/*" PruebasContratoApi
+java -cp "bin;lib/*" PruebasWebSocket
 ```
 
-### 7.2. Pruebas de Seguridad y Correccion de Concurrencia
-```powershell
-java -cp "bin;$jars"PruebasSeguridadIntegridad
+```bash
+# Linux / macOS: el separador del classpath es ":"
+for s in PruebasReglasNegocioTextil PruebasSeguridadIntegridad PruebasConcurrenciaYPagos PruebasContratoApi PruebasWebSocket; do
+  java -cp "bin:lib/*" "$s"
+done
 ```
-Salida certificada:
+
+Las suites no necesitan PostgreSQL. Los avisos `SESSION_SECRET no configurado` y `WOMPI_INTEGRITY_SECRET no está configurado` son normales en desarrollo.
+
+### 7.2. Resultado de la última ejecución (16/11/2026, OpenJDK 21)
+
+| Suite | Pruebas | Resultado |
+| :--- | :---: | :---: |
+| `PruebasReglasNegocioTextil` | 14 | 14 aprobadas |
+| `PruebasSeguridadIntegridad` | 21 | 21 aprobadas |
+| `PruebasConcurrenciaYPagos` | 11 | 11 aprobadas |
+| `PruebasContratoApi` | 9 | 9 aprobadas |
+| `PruebasWebSocket` | 4 | 4 aprobadas |
+| **Total backend** | **59** | **59 aprobadas** |
+| Frontend (`node ejecutar-pruebas-frontend.mjs`) | 46 | 46 aprobadas |
+
+Cada suite termina con un resumen como este:
+
 ```text
-============================================================
-EJECUTANDO SUITE DE PRUEBAS: SEGURIDAD Y CASOS EXTREMOS
-============================================================
-TOTAL PRUEBAS EJECUTADAS: 12 | EXITOSAS: 12 | FALLIDAS: 0
-TASA DE EXITO: 100.0%
-============================================================
+=================================================================
+                    RESUMEN DE PRUEBAS UNITARIAS
+=================================================================
+  Pruebas superadas con éxito: 14
+  Pruebas fallidas:            0
+
+>>> TODAS LAS PRUEBAS DE REGLAS DE NEGOCIO TEXTIL PASARON (100%) <<<
 ```
+
+El detalle de cada prueba está en los documentos 07 y 14.
 
 ---
 
 ## 8. Guia de Solucion de Problemas Operativos (Troubleshooting)
 
 ### 8.1. Conflicto de Puerto Ocupado (Error `BindException: Address already in use`)
-- **Causa:** El puerto `8081` (backend), `5173` (frontend) o `5432` (PostgreSQL) esta siendo utilizado por otro servicio o instancia previa.
+- **Causa:** El puerto `8081` (backend), `8082` (WebSocket), `3001` (frontend) o `5432` (PostgreSQL) esta siendo utilizado por otro servicio o instancia previa.
 - **Solucion en Linux:**
   ```bash
   sudo lsof -i :8081
@@ -428,7 +450,7 @@ Al desplegar **D&D Textil** en entornos de pruebas o producción, tenga en cuent
 
 ### Verificación Rápida de Compilación sobre OpenJDK 21 LTS
 
-Para validar localmente la compilación del backend y las 4 suites de pruebas sin requerir demonios externos:
+Para validar localmente la compilación del backend y las 5 suites de pruebas sin requerir demonios externos:
 
 ```bash
 cd "tienda digital de telas/backend-java/servidor-api"
@@ -438,4 +460,5 @@ java -ea -cp "bin:lib/*" PruebasReglasNegocioTextil
 java -ea -cp "bin:lib/*" PruebasSeguridadIntegridad
 java -ea -cp "bin:lib/*" PruebasConcurrenciaYPagos
 java -ea -cp "bin:lib/*" PruebasContratoApi
+java -ea -cp "bin:lib/*" PruebasWebSocket
 ```
