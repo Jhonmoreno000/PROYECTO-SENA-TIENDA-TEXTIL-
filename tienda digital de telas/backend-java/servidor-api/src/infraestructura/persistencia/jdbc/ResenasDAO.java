@@ -80,6 +80,16 @@ public class ResenasDAO {
                         resena.setId(rs.getInt(1));
                     }
                 }
+                String sqlRecalc = "UPDATE productos SET " +
+                        "calificacion_promedio = COALESCE((SELECT ROUND(AVG(calificacion)::numeric, 2) FROM resenas WHERE producto_id = ?), 0), " +
+                        "total_resenas = COALESCE((SELECT COUNT(*) FROM resenas WHERE producto_id = ?), 0) " +
+                        "WHERE id = ?";
+                try (PreparedStatement pstRecalc = con.prepareStatement(sqlRecalc)) {
+                    pstRecalc.setInt(1, resena.getIdProducto());
+                    pstRecalc.setInt(2, resena.getIdProducto());
+                    pstRecalc.setInt(3, resena.getIdProducto());
+                    pstRecalc.executeUpdate();
+                } catch (SQLException ignored) {}
                 return true;
             }
             return false;

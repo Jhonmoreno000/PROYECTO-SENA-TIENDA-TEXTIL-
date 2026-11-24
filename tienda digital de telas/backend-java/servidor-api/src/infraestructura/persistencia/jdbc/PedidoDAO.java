@@ -30,11 +30,12 @@ public class PedidoDAO {
     public List<Pedido> consultarPedidos(String clausulaWhere, Integer parametro) {
         Map<Integer, Pedido> mapaPedidos = new LinkedHashMap<>();
 
-        String consulta = "SELECT o.*, " +
+        String consulta = "SELECT o.*, pv.nombre_tienda, " +
                 "oi.id AS item_id, oi.producto_id, oi.cantidad, oi.precio_por_metro, oi.subtotal AS item_subtotal, " +
                 "p.nombre AS nombre_producto, " +
                 "(SELECT ip.url_imagen FROM imagenes_producto ip WHERE ip.producto_id = p.id ORDER BY ip.orden_visualizacion ASC LIMIT 1) AS url_imagen " +
                 "FROM pedidos o " +
+                "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = o.vendedor_id " +
                 "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "LEFT JOIN productos p ON oi.producto_id = p.id " +
                 (clausulaWhere != null && !clausulaWhere.isBlank() ? " " + clausulaWhere : "") + " " +
@@ -221,16 +222,35 @@ public class PedidoDAO {
                     Object objVendedor = articulos.get(0).getOrDefault("sellerId", articulos.get(0).get("idVendedor"));
                     if (objVendedor instanceof Number) {
                         idVendedor = ((Number) objVendedor).intValue();
+                    } else {
+                        Object objProd0 = articulos.get(0).getOrDefault("productId", articulos.get(0).getOrDefault("idProducto", articulos.get(0).get("id")));
+                        if (objProd0 != null) {
+                            try (PreparedStatement pstV = con.prepareStatement("SELECT vendedor_id FROM productos WHERE id = ?")) {
+                                pstV.setInt(1, Integer.parseInt(String.valueOf(objProd0)));
+                                try (ResultSet rsV = pstV.executeQuery()) {
+                                    if (rsV.next() && rsV.getInt("vendedor_id") > 0) {
+                                        idVendedor = rsV.getInt("vendedor_id");
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                        }
                     }
                 }
+
+                double tasaComision = obtenerTasaComisionVendedor(con, idVendedor);
+                double baseComision = subtotal > 0 ? subtotal : total;
+                double montoComisionAdmin = Math.round((baseComision * (tasaComision / 100.0)) * 100.0) / 100.0;
+                double gananciaNetaVendedor = Math.round((baseComision - montoComisionAdmin) * 100.0) / 100.0;
+                String grupoCheckout = comoTexto(meta.getOrDefault("grupoCheckout", meta.get("checkoutGroup")));
 
                 String sqlPedido = "INSERT INTO pedidos (" +
                         "usuario_id, vendedor_id, monto_total, subtotal, costo_envio, monto_impuesto, monto_descuento, " +
                         "codigo_cupon, metodo_pago, estado_pago, notas, " +
                         "nombre_cliente, correo_cliente, telefono_cliente, " +
                         "direccion_envio, ciudad_envio, departamento_envio, documento_cliente, " +
+                        "grupo_checkout, porcentaje_comision, monto_comision_admin, ganancia_neta_vendedor, " +
                         "estado, creado_en, actualizado_en) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
 
                 try (PreparedStatement pst = con.prepareStatement(sqlPedido, Statement.RETURN_GENERATED_KEYS)) {
                     pst.setInt(1, idCliente);
@@ -251,6 +271,10 @@ public class PedidoDAO {
                     pst.setString(16, ciudadEnvio);
                     pst.setString(17, departamentoEnvio);
                     pst.setString(18, documentoCliente);
+                    pst.setString(19, grupoCheckout);
+                    pst.setDouble(20, tasaComision);
+                    pst.setDouble(21, montoComisionAdmin);
+                    pst.setDouble(22, gananciaNetaVendedor);
                     pst.executeUpdate();
 
                     try (ResultSet rs = pst.getGeneratedKeys()) {
@@ -271,11 +295,13 @@ public class PedidoDAO {
                     }));
 
                     String sqlBloqueoPesimista = "SELECT id, stock, nombre, precio, vendedor_id FROM productos WHERE id = ? FOR UPDATE";
-                    String sqlActualizarStock = "UPDATE productos SET stock = stock - ?, actualizado_en = NOW() WHERE id = ?";
+                    String sqlActualizarStock = "UPDATE productos SET stock = stock - ?, metros_vendidos = COALESCE(metros_vendidos, 0) + ?, actualizado_en = NOW() WHERE id = ?";
+                    String sqlActualizarVentasTienda = "UPDATE perfiles_vendedor SET total_ventas_metros = COALESCE(total_ventas_metros, 0) + ? WHERE vendedor_id = ?";
                     String sqlArticulo = "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) VALUES (?, ?, ?, ?, ?)";
 
                     try (PreparedStatement pstBloqueo = con.prepareStatement(sqlBloqueoPesimista);
                          PreparedStatement pstActualizarStock = con.prepareStatement(sqlActualizarStock);
+                         PreparedStatement pstTiendaMetros = con.prepareStatement(sqlActualizarVentasTienda);
                          PreparedStatement pstItem = con.prepareStatement(sqlArticulo)) {
 
                         for (Map<String, Object> articulo : articulosOrdenados) {
@@ -290,6 +316,7 @@ public class PedidoDAO {
                                 precio = (objPrecio instanceof Number) ? ((Number) objPrecio).doubleValue() : Double.parseDouble(String.valueOf(objPrecio));
                             }
 
+                            int idVendProd = idVendedor;
                             pstBloqueo.setInt(1, idProd);
                             try (ResultSet rsBloqueo = pstBloqueo.executeQuery()) {
                                 if (!rsBloqueo.next()) {
@@ -297,6 +324,7 @@ public class PedidoDAO {
                                 }
                                 double stockDisponible = rsBloqueo.getDouble("stock");
                                 String nombreTela = rsBloqueo.getString("nombre");
+                                idVendProd = rsBloqueo.getInt("vendedor_id");
                                 if (precio < 0) {
                                     precio = rsBloqueo.getDouble("precio");
                                 }
@@ -308,8 +336,15 @@ public class PedidoDAO {
                             }
 
                             pstActualizarStock.setDouble(1, cant);
-                            pstActualizarStock.setInt(2, idProd);
+                            pstActualizarStock.setDouble(2, cant);
+                            pstActualizarStock.setInt(3, idProd);
                             pstActualizarStock.executeUpdate();
+
+                            if (idVendProd > 0) {
+                                pstTiendaMetros.setDouble(1, cant);
+                                pstTiendaMetros.setInt(2, idVendProd);
+                                pstTiendaMetros.executeUpdate();
+                            }
 
                             pstItem.setInt(1, idPedido);
                             pstItem.setInt(2, idProd);
@@ -341,17 +376,119 @@ public class PedidoDAO {
     }
 
     /**
+     * Consulta la tasa de comisión configurada para un vendedor específico (por defecto 10%).
+     */
+    private double obtenerTasaComisionVendedor(Connection con, int idVendedor) {
+        String sql = "SELECT COALESCE(tasa_comision, 10.00) AS tasa FROM usuarios WHERE id = ?";
+        try (PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, idVendedor);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    double tasa = rs.getDouble("tasa");
+                    if (tasa >= 0 && tasa <= 100) return tasa;
+                }
+            }
+        } catch (SQLException ignored) {}
+        return 10.0;
+    }
+
+    /**
+     * Divide un carrito con productos de múltiples vendedores en sub-pedidos independientes por vendedor
+     * compartiendo un `grupoCheckout` unificado, calculando comisiones e ingresos netos por tienda.
+     *
+     * @return Lista de identificadores de pedidos creados (`List<Integer>`).
+     */
+    public List<Integer> crearPedidosMultiVendedor(int idCliente, double total, List<Map<String, Object>> articulos, Map<String, Object> metadatos) {
+        List<Integer> idsCreados = new ArrayList<>();
+        if (articulos == null || articulos.isEmpty()) {
+            int unico = crearPedidoConMetadatos(idCliente, total, articulos, metadatos);
+            if (unico > 0) idsCreados.add(unico);
+            return idsCreados;
+        }
+
+        // Agrupar líneas de pedido según el vendedor real registrado en productos
+        Map<Integer, List<Map<String, Object>>> gruposPorVendedor = new LinkedHashMap<>();
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pstProd = con.prepareStatement("SELECT vendedor_id, precio FROM productos WHERE id = ?")) {
+            for (Map<String, Object> art : articulos) {
+                Object objProd = art.getOrDefault("productId", art.getOrDefault("idProducto", art.get("id")));
+                int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
+                int idVend = 1;
+                pstProd.setInt(1, idProd);
+                try (ResultSet rs = pstProd.executeQuery()) {
+                    if (rs.next() && rs.getInt("vendedor_id") > 0) {
+                        idVend = rs.getInt("vendedor_id");
+                    }
+                }
+                art.put("sellerId", idVend);
+                gruposPorVendedor.computeIfAbsent(idVend, k -> new ArrayList<>()).add(art);
+            }
+        } catch (Exception e) {
+            int unico = crearPedidoConMetadatos(idCliente, total, articulos, metadatos);
+            if (unico > 0) idsCreados.add(unico);
+            return idsCreados;
+        }
+
+        if (gruposPorVendedor.size() <= 1) {
+            int unico = crearPedidoConMetadatos(idCliente, total, articulos, metadatos);
+            if (unico > 0) idsCreados.add(unico);
+            return idsCreados;
+        }
+
+        // Split multi-vendedor proporcional
+        Map<String, Object> metaBase = metadatos != null ? new HashMap<>(metadatos) : new HashMap<>();
+        String grupoCheckout = "CHK-" + System.currentTimeMillis();
+        double subtotalGlobal = comoDouble(metaBase.get("subtotal"), total);
+        double envioGlobal = comoDouble(metaBase.getOrDefault("costoEnvio", metaBase.get("shippingCost")), 0.0);
+        double impuestoGlobal = comoDouble(metaBase.getOrDefault("impuestos", metaBase.get("tax")), 0.0);
+        double descuentoGlobal = comoDouble(metaBase.getOrDefault("descuento", metaBase.get("discount")), 0.0);
+
+        double sumaSubtotalesItems = 0.0;
+        Map<Integer, Double> subtotalPorVendedor = new LinkedHashMap<>();
+        for (Map.Entry<Integer, List<Map<String, Object>>> entry : gruposPorVendedor.entrySet()) {
+            double sub = 0.0;
+            for (Map<String, Object> art : entry.getValue()) {
+                double cant = comoDouble(art.getOrDefault("quantity", art.getOrDefault("cantidad", art.get("meters"))), 1.0);
+                double unit = comoDouble(art.getOrDefault("unitPrice", art.getOrDefault("precioUnitario", art.get("price"))), 0.0);
+                sub += cant * unit;
+            }
+            subtotalPorVendedor.put(entry.getKey(), sub);
+            sumaSubtotalesItems += sub;
+        }
+        double denom = sumaSubtotalesItems > 0 ? sumaSubtotalesItems : Math.max(1.0, subtotalGlobal);
+
+        for (Map.Entry<Integer, List<Map<String, Object>>> entry : gruposPorVendedor.entrySet()) {
+            double subV = subtotalPorVendedor.getOrDefault(entry.getKey(), 0.0);
+            double proporcion = subV / denom;
+            Map<String, Object> subMeta = new HashMap<>(metaBase);
+            subMeta.put("grupoCheckout", grupoCheckout);
+            subMeta.put("subtotal", Math.round(subV * 100.0) / 100.0);
+            subMeta.put("costoEnvio", Math.round((envioGlobal * proporcion) * 100.0) / 100.0);
+            subMeta.put("impuestos", Math.round((impuestoGlobal * proporcion) * 100.0) / 100.0);
+            subMeta.put("descuento", Math.round((descuentoGlobal * proporcion) * 100.0) / 100.0);
+            double subTotalPedido = Math.round((total * proporcion) * 100.0) / 100.0;
+
+            int idSub = crearPedidoConMetadatos(idCliente, subTotalPedido, entry.getValue(), subMeta);
+            if (idSub > 0) {
+                idsCreados.add(idSub);
+            }
+        }
+        return idsCreados;
+    }
+
+    /**
      * Obtiene un pedido específico por su identificador único con el detalle de sus ítems.
      *
      * @param idPedido Identificador numérico del pedido (`int`).
      * @return Instancia de `Pedido` o `null` si no existe.
      */
     public Pedido obtenerPedidoPorId(int idPedido) {
-        String consulta = "SELECT o.*, " +
+        String consulta = "SELECT o.*, pv.nombre_tienda, " +
                 "oi.id AS item_id, oi.producto_id, oi.cantidad, oi.precio_por_metro, oi.subtotal AS item_subtotal, " +
                 "p.nombre AS nombre_producto, " +
                 "(SELECT ip.url_imagen FROM imagenes_producto ip WHERE ip.producto_id = p.id ORDER BY ip.orden_visualizacion ASC LIMIT 1) AS url_imagen " +
                 "FROM pedidos o " +
+                "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = o.vendedor_id " +
                 "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "LEFT JOIN productos p ON oi.producto_id = p.id " +
                 "WHERE o.id = ? " +
@@ -543,6 +680,13 @@ public class PedidoDAO {
         pedido.setDepartamentoEnvio(rs.getString("departamento_envio"));
         pedido.setNumeroGuia(rs.getString("numero_guia"));
         pedido.setNotas(rs.getString("notas"));
+        try {
+            pedido.setGrupoCheckout(rs.getString("grupo_checkout"));
+            pedido.setPorcentajeComision(rs.getDouble("porcentaje_comision"));
+            pedido.setMontoComisionAdmin(rs.getDouble("monto_comision_admin"));
+            pedido.setGananciaNetaVendedor(rs.getDouble("ganancia_neta_vendedor"));
+            pedido.setNombreTienda(rs.getString("nombre_tienda"));
+        } catch (SQLException ignored) {}
         if (rs.getTimestamp("creado_en") != null) {
             pedido.setFecha(rs.getTimestamp("creado_en").toString().split(" ")[0]);
         }

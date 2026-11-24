@@ -74,6 +74,10 @@ function MetricasVendedor() {
     }, { scope: containerRef });
 
     const totalVentas = sellersWithMetrics.reduce((s, v) => s + v.metrics.totalSales, 0);
+    const totalComisiones = sellersWithMetrics.reduce((s, v) => {
+        const rate = Number(v.commissionRate ?? 10);
+        return s + (v.metrics.totalSales * (rate / 100));
+    }, 0);
     const avgVentas = totalVentas / (sellersWithMetrics.length || 1);
     const totalReportes = sellersWithMetrics.reduce((s, v) => s + v.metrics.bugReportsCount, 0);
 
@@ -90,8 +94,8 @@ function MetricasVendedor() {
                     {/* Resumen KPI */}
                     <div className="grid md:grid-cols-3 gap-6 mb-8">
                         {[
-                            { label: 'Mejor Vendedor', value: sellersWithMetrics[0]?.name || 'N/A', sub: sellersWithMetrics[0] ? formatCurrency(sellersWithMetrics[0].metrics.totalSales) : formatCurrency(0), icon: TrendingUp, color: 'indigo' },
-                            { label: 'Ventas Promedio', value: formatCurrency(avgVentas), sub: 'por vendedor', icon: DollarSign, color: 'emerald' },
+                            { label: 'Comisión Plataforma (Admin)', value: formatCurrency(totalComisiones), sub: `Sobre ${formatCurrency(totalVentas)} en ventas`, icon: DollarSign, color: 'emerald' },
+                            { label: 'Mejor Proveedor', value: sellersWithMetrics[0]?.name || 'N/A', sub: sellersWithMetrics[0] ? formatCurrency(sellersWithMetrics[0].metrics.totalSales) : formatCurrency(0), icon: TrendingUp, color: 'indigo' },
                             { label: 'Total Reportes', value: totalReportes, sub: 'en todos los vendedores', icon: AlertCircle, color: totalReportes > 5 ? 'rose' : 'slate' },
                         ].map(({ label, value, sub, icon: Icon, color }) => (
                             <div key={label} className={`kpi-card ${glassCard} p-6 overflow-hidden relative group hover:-translate-y-1 transition-all duration-300`}>

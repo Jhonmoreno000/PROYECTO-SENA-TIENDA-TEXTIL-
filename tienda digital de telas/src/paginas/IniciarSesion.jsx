@@ -41,8 +41,14 @@ export function determinarRutaPorRol(rol, fromPath) {
         return defaultDashboard;
     }
 
-    // Rutas públicas de catálogo, carrito y proceso de compra
-    const shoppingPaths = ['/checkout', '/pago', '/carrito', '/favoritos', '/wishlist', '/catalogo', '/producto'];
+    // Rutas exclusivas de compra solo accesibles si se autentica como cliente
+    const purchaseOnlyPaths = ['/checkout', '/pago', '/confirmacion'];
+    if (purchaseOnlyPaths.some(p => fromPath.startsWith(p))) {
+        return rawRole === 'cliente' ? fromPath : defaultDashboard;
+    }
+
+    // Rutas de navegación/catálogo permitidas tras iniciar sesión
+    const shoppingPaths = ['/carrito', '/favoritos', '/wishlist', '/catalogo', '/producto', '/tienda'];
     if (shoppingPaths.some(p => fromPath.startsWith(p))) {
         return fromPath;
     }
@@ -73,7 +79,7 @@ function IniciarSesion() {
     const location = useLocation();
     const from = (() => {
         const path = location.state?.from?.pathname || '/';
-        const allowedPrefixes = ['/', '/cliente', '/vendedor', '/admin', '/catalogo', '/carrito', '/checkout', '/perfil'];
+        const allowedPrefixes = ['/', '/cliente', '/vendedor', '/admin', '/catalogo', '/carrito', '/checkout', '/pago', '/confirmacion', '/perfil', '/tienda'];
         if (allowedPrefixes.some(p => path.startsWith(p)) && !path.includes('://') && !path.startsWith('//')) {
             return path;
         }

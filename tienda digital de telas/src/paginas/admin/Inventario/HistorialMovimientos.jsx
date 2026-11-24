@@ -17,6 +17,32 @@ const colorVariants = {
     emerald: { icon: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-100 dark:border-emerald-500/20", value: "text-emerald-600 dark:text-emerald-400" },
 };
 
+const ETIQUETAS_ESTADO_MOVIMIENTO = {
+    completed: 'Completado',
+    completado: 'Completado',
+    pending: 'Pendiente',
+    pendiente: 'Pendiente',
+    paid: 'Pagado',
+    pagado: 'Pagado',
+    confirmed: 'Confirmado',
+    confirmado: 'Confirmado',
+    cutting: 'En corte',
+    en_corte: 'En corte',
+    shipped: 'Enviado',
+    enviado: 'Enviado',
+    delivered: 'Entregado',
+    entregado: 'Entregado',
+    cancelled: 'Cancelado',
+    cancelado: 'Cancelado',
+    approved: 'Aprobado',
+    aprobado: 'Aprobado'
+};
+
+function traducirEstadoMovimiento(estado) {
+    const clave = String(estado || '').trim().toLowerCase();
+    return ETIQUETAS_ESTADO_MOVIMIENTO[clave] || 'Completado';
+}
+
 function HistorialMovimientos() {
     const { inventoryBatches, wasteEvents, orders } = useMetricas();
     const [filterType, setFilterType] = useState('all');
@@ -32,7 +58,16 @@ function HistorialMovimientos() {
 
     const exportToCSV = () => {
         const headers = ['Fecha', 'Tipo', 'Usuario', 'Rollo', 'Tela', 'Metros', 'Razón', 'Estado'];
-        const rows = filteredMovements.map(m => [m.date, m.type, m.user, m.rollId, m.fabricType, m.metersChanged, m.reason, m.status]);
+        const rows = filteredMovements.map(m => [
+            m.date,
+            m.type === 'waste' ? 'Merma' : m.type === 'sale' ? 'Venta' : 'Ingreso',
+            m.user,
+            m.rollId,
+            m.fabricType,
+            m.metersChanged,
+            m.reason,
+            traducirEstadoMovimiento(m.status)
+        ]);
         const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -115,7 +150,7 @@ function HistorialMovimientos() {
                     </div>
 
                     <div className={`table-panel ${glassCard} overflow-hidden`}>
-                        <div className="overflow-x-auto">
+                        <div tabIndex={0} role="region" aria-label="Historial de movimientos de inventario" className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase font-black tracking-widest bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
                                     <tr>{['Fecha', 'Tipo', 'Usuario', 'Rollo', 'Tipo de Tela', 'Metros', 'Razón', 'Estado'].map(h => <th key={h} className="px-6 py-5">{h}</th>)}</tr>
@@ -141,7 +176,7 @@ function HistorialMovimientos() {
                                             <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 max-w-[160px] truncate">{m.reason}</td>
                                             <td className="px-6 py-4">
                                                 <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                                                    {m.status === 'completed' ? 'Completado' : m.status}
+                                                    {traducirEstadoMovimiento(m.status)}
                                                 </span>
                                             </td>
                                         </tr>

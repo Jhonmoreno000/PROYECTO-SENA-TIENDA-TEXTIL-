@@ -15,11 +15,20 @@
  */
 export function calculateWastePercentage(batch, wasteEvents = []) {
     if (!batch) return "0.00";
-    const batchId = batch.id;
+    const batchId = String(batch.id || '');
+    const batchNumber = String(batch.batchNumber || batch.batchCode || '');
+    const productId = batch.productId ? String(batch.productId) : '';
     const initial = Number(batch.initialMeters ?? batch.metrosIniciales ?? batch.metersReceived ?? batch.metrosRecibidos ?? 0);
 
     const batchWaste = (wasteEvents || [])
-        .filter(event => (event.rollId === batchId || event.loteId === batchId || event.idProducto === batchId))
+        .filter(event => {
+            const evBatch = String(event.batchId ?? event.rollId ?? event.loteId ?? '');
+            const evProd = String(event.productId ?? event.idProducto ?? '');
+            if (batchNumber && evBatch && evBatch === batchNumber) return true;
+            if (batchId && evBatch && evBatch === batchId) return true;
+            if (!evBatch && productId && evProd && evProd === productId) return true;
+            return false;
+        })
         .reduce((sum, event) => sum + Number(event.meters ?? event.metros ?? event.metrosPerdidos ?? 0), 0);
 
     return initial > 0
@@ -55,17 +64,18 @@ export function generateMovementHistory(batches = [], wasteEvents = [], orders =
 
     (batches || []).forEach(batch => {
         const initialM = Number(batch.initialMeters ?? batch.metrosIniciales ?? 0);
-        if (initialM > 0 && (batch.entryDate || batch.fechaIngreso)) {
+        const batchNum = batch.batchNumber || batch.batchCode || String(batch.id);
+        if (initialM > 0 && (batch.entryDate || batch.createdAt || batch.fechaIngreso)) {
             movements.push({
                 id: `entry-${batch.id}`,
-                date: batch.entryDate || batch.fechaIngreso,
+                date: batch.entryDate || batch.createdAt || batch.fechaIngreso,
                 type: 'entry',
                 tipo: 'ingreso',
-                user: batch.supplier || batch.proveedor || 'Proveedor',
-                rollId: batch.batchCode || batch.codigoLote || String(batch.id),
+                user: batch.storeName || batch.supplier || batch.proveedor || 'Proveedor',
+                rollId: batchNum,
                 fabricType: batch.fabricType || batch.tipoTela || 'Tela',
                 metersChanged: initialM,
-                reason: `Ingreso de lote ${batch.batchCode || batch.id}`,
+                reason: `Ingreso de lote ${batchNum}`,
                 status: 'completed'
             });
         }
@@ -73,7 +83,9 @@ export function generateMovementHistory(batches = [], wasteEvents = [], orders =
 
     (wasteEvents || []).forEach(event => {
         const bId = event.batchId || event.rollId || event.loteId || event.idProducto;
-        const batch = (batches || []).find(b => String(b.id) === String(bId) || String(b.batchCode) === String(bId));
+        const batch = (batches || []).find(
+            b => String(b.id) === String(bId) || String(b.batchNumber || '') === String(bId) || String(b.batchCode || '') === String(bId)
+        );
         const meters = Number(event.meters ?? event.metros ?? event.metrosPerdidos ?? 0);
 
         movements.push({
@@ -81,9 +93,9 @@ export function generateMovementHistory(batches = [], wasteEvents = [], orders =
             date: event.eventDate || event.date || event.fecha || event.fechaCreacion || new Date().toISOString(),
             type: 'waste',
             tipo: 'merma',
-            user: event.responsible || event.responsable || 'Administrador',
-            rollId: batch?.batchCode || bId || 'Sin lote',
-            fabricType: event.fabricType || batch?.fabricType || batch?.tipoTela || 'Desconocido',
+            user: event.responsible || event.responsable || event.storeName || 'Vendedor',
+            rollId: batch?.batchNumber || batch?.batchCode || bId || 'Sin lote',
+            fabricType: event.productName || event.fabricType || batch?.fabricType || batch?.tipoTela || 'Tela',
             metersChanged: -meters,
             reason: event.notes || event.description || event.descripcion || event.reason || event.motivo || 'Merma textil',
             status: 'completed'

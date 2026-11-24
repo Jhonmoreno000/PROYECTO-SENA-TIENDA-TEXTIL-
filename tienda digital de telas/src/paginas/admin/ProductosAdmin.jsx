@@ -26,39 +26,52 @@
 // - useState: guardar valores que pueden cambiar (el texto de búsqueda, qué producto se edita)
 // - useRef: guardar referencias a elementos HTML para poder animarlos con GSAP
 // - useMemo: calcular listas filtradas sin repetir el cálculo innecesariamente
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 
-// Íconos visuales del panel (librería lucide-react)
 import {
-  Package,        // Ícono de caja (productos)
-  Search,         // Lupa para buscar
-  Edit,          // Lápiz para editar
-  Trash2,         // Basurero para eliminar
-  Save,           // Diskette para guardar
-  X as XIcon,     // X para cerrar o indicar "agotado"
-  Plus,           // Botón de crear nuevo
-  Filter,         // Ícono de filtros
-  Star,           // Estrella para "más vendidos"
-  AlertTriangle,  // Triángulo de advertencia para stock bajo
-  Image as ImageIcon, // Ícono de imagen cuando no hay foto
-  ShieldCheck,    // Insignia de autorización
-  Tag,            // Etiqueta de oferta
+  Package,
+  Search,
+  Eye,
+  X as XIcon,
+  Filter,
+  Star,
+  AlertTriangle,
+  Image as ImageIcon,
+  ShieldCheck,
+  Lock,
+  Store,
+  CheckCircle2
 } from 'lucide-react';
 
-// GSAP: librería de animaciones profesionales
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
-// Componentes compartidos del proyecto
-import LayoutPanel from '../../componentes/layouts/LayoutPanel'; // Marco del panel con el menú lateral
-import enlacesAdmin from '../../datos/enlacesAdmin';       // Links del menú del administrador
-import { formatCurrency } from '../../utilidades/formateadores';               // Convierte 25000 → "25.000 COP"
-import { useProductos } from '../../contextos/ContextoProducto';            // Trae los productos de la API
-import { useNotificacion } from '../../contextos/ContextoNotificacion';   // Muestra notificaciones en pantalla
-import { useMetricas } from '../../contextos/ContextoMetricas';
-import { useAutenticacion } from '../../contextos/ContextoAutenticacion';
-import BackButton from '../../componentes/dashboard/BackButton';         // Botón "← Volver"
+import LayoutPanel from '../../componentes/layouts/LayoutPanel';
+import enlacesAdmin from '../../datos/enlacesAdmin';
+import { formatCurrency } from '../../utilidades/formateadores';
+import { useProductos } from '../../contextos/ContextoProducto';
+import { useNotificacion } from '../../contextos/ContextoNotificacion';
+import BackButton from '../../componentes/dashboard/BackButton';
 import { getApiUrl } from '../../config';
+
+const ETIQUETAS_MODERACION = {
+  approved: {
+    label: 'Aprobado',
+    cls: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
+  },
+  changes_requested: {
+    label: 'Cambios solicitados',
+    cls: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
+  },
+  rejected: {
+    label: 'Suspendido',
+    cls: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'
+  },
+  pending: {
+    label: 'Pendiente',
+    cls: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600'
+  }
+};
 
 // ── Estilos reutilizables de las tarjetas (fondo blanco con borde sutil) ─────
 // Usamos cadenas de texto de clases CSS para no repetirlas en cada elemento
@@ -82,26 +95,54 @@ const glassInput = [
 // COMPONENTE PRINCIPAL
 // =============================================================================
 export default function ProductosAdmin() {
-  // Función para mostrar notificaciones (ej: "Producto eliminado")
   const { showNotification } = useNotificacion();
+  const { products: contextProducts, loading: productsLoading, refreshProducts } = useProductos();
 
-  // Datos de productos:
-  // - products: lista de todos los productos de la base de datos
-  // - loading: true mientras están cargando (muestra el "skeleton")
-  // - deleteProduct / updateProduct: funciones para guardar cambios en la API
-  const { products, loading: productsLoading, deleteProduct, updateProduct, refreshProducts } = useProductos();
-  const { productDiscounts, saveProductDiscount } = useMetricas();
-  const { user } = useAutenticacion();
-  const esAdmin = user?.rol === 'administrador' || user?.rol === 'admin';
-
-  // ── Estado local ──────────────────────────────────────────────────────────
+  const [adminProducts,   setAdminProducts]   = useState([]);
   const [searchTerm,      setSearchTerm]      = useState('');
   const [filterCategory,  setFilterCategory]  = useState('all');
   const [editingProduct,  setEditingProduct]  = useState(null);
-  const [editForm,        setEditForm]        = useState({});
+  const [moderationReason, setModerationReason] = useState('');
 
   const containerRef = useRef(null);
   const modalRef     = useRef(null);
+
+  const cargarCatalogoAuditoria = useCallback(async () => {
+    try {
+      const res = await fetch(getApiUrl('/api/productos?includeInactive=true'));
+      if (res.ok) {
+        const raw = await res.json();
+        if (Array.isArray(raw)) {
+          setAdminProducts(raw.map(p => ({
+            ...p,
+            id: String(p.id),
+            name: p.name || p.nombre || '',
+            category: p.category || p.categoria || '',
+            price: Number(p.price ?? p.precio ?? 0),
+            stock: Number(p.stock ?? p.existencias ?? 0),
+            images: p.images || p.imagenes || [],
+            status: String(p.status ?? p.moderationStatus ?? p.estadoModeracion ?? 'approved').toLowerCase(),
+            rejectionReason: p.rejectionReason ?? p.motivoRechazo ?? '',
+            storeName: p.storeName || p.nombreTienda || p.sellerName || p.nombreVendedor || 'Proveedor',
+            sellerName: p.sellerName || p.nombreVendedor || '',
+            discountPercent: Number(p.discountPercent ?? p.porcentajeDescuento ?? 0),
+            soldMeters: Number(p.soldMeters ?? p.metrosVendidos ?? 0),
+            isNewCollection: Boolean(p.isNewCollection ?? p.esNuevaColeccion),
+            isExclusive: Boolean(p.isExclusive ?? p.esExclusivo),
+            isOffer: Boolean(p.isOffer ?? p.esOferta ?? p.isSale),
+          })));
+        }
+      }
+    } catch {
+      // Mantiene productos del contexto si falla consulta extendida
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarCatalogoAuditoria();
+  }, [cargarCatalogoAuditoria, contextProducts]);
+
+  const products = adminProducts.length > 0 ? adminProducts : contextProducts;
 
   // ── Categorías únicas (memoizadas) ────────────────────────────────────────
   const categories = useMemo(
@@ -115,7 +156,8 @@ export default function ProductosAdmin() {
       const matchSearch =
         !searchTerm ||
         p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category?.toLowerCase().includes(searchTerm.toLowerCase());
+        p.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.storeName?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchCategory = filterCategory === 'all' || p.category === filterCategory;
       return matchSearch && matchCategory;
     });
@@ -154,86 +196,51 @@ export default function ProductosAdmin() {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openEditModal = (product) => {
-    const existingDiscount = productDiscounts?.[product.id];
     setEditingProduct(product);
-    setEditForm({
-      name:     product.name,
-      price:    product.price,
-      stock:    product.stock,
-      images:   product.images,
-      category: product.category,
-      material: product.material,
-      width:    product.width,
-      weight:   product.weight,
-      care:     product.care,
-      isNewCollection: !!product.isNewCollection,
-      isExclusive:     !!product.isExclusive,
-      isOffer:         !!product.isOffer,
-      discountActive: existingDiscount?.active || false,
-      discountPercent: existingDiscount?.percent || 0,
-    });
+    setModerationReason(product.rejectionReason || '');
   };
 
   const closeEditModal = () => {
     if (modalRef.current) {
       gsap.to(modalRef.current, {
         opacity: 0, scale: 0.98, y: 12, duration: 0.18, ease: 'power2.in',
-        onComplete: () => { setEditingProduct(null); setEditForm({}); },
+        onComplete: () => { setEditingProduct(null); setModerationReason(''); },
       });
     } else {
       setEditingProduct(null);
-      setEditForm({});
+      setModerationReason('');
     }
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    const updatedForm = { ...editForm };
+  const handleModerateProduct = async (status) => {
+    if (!editingProduct) return;
+    const motivoLimpio = moderationReason.trim();
+    if ((status === 'changes_requested' || status === 'rejected') && !motivoLimpio) {
+      showNotification('error', 'Debes escribir una observación real de auditoría para notificar al vendedor.');
+      return;
+    }
 
-    // Si hay imagen nueva en base64, súbela primero
-    if (updatedForm.images?.[0]?.startsWith('data:')) {
-      try {
-        const res = await fetch(
-          getApiUrl(`/api/productos/${editingProduct.id}/imagen`),
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              image: updatedForm.images[0],
-              imagen: updatedForm.images[0]
-            }),
-          }
+    try {
+      const res = await fetch(getApiUrl(`/api/productos/${editingProduct.id}/moderar`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, estado: status, reason: motivoLimpio, motivo: motivoLimpio })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const etiquetaEspanol = data.statusLabel || ETIQUETAS_MODERACION[status]?.label || 'Auditado';
+        showNotification(
+          'success',
+          `Producto marcado como "${etiquetaEspanol}". Alerta enviada automáticamente al vendedor (precios e inventario intactos).`
         );
-        if (res.ok) {
-          const d = await res.json();
-          updatedForm.images = [d.url];
-        }
-      } catch (err) {
-        console.error('Error subiendo imagen:', err);
+        closeEditModal();
+        await cargarCatalogoAuditoria();
+        refreshProducts();
+      } else {
+        showNotification('error', data?.error || 'No se pudo actualizar el estado de moderación.');
       }
-    }
-
-    await updateProduct({ ...updatedForm, id: editingProduct.id });
-    await saveProductDiscount(editingProduct.id, {
-      active: editForm.discountActive,
-      percent: Number(editForm.discountPercent) || 0,
-    });
-    closeEditModal();
-    showNotification('success', 'Producto actualizado correctamente');
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setEditForm(prev => ({ ...prev, images: [reader.result] }));
-    reader.readAsDataURL(file);
-  };
-
-  const handleDelete = async (id) => {
-    const eliminado = await deleteProduct(id);
-    if (eliminado) {
-      showNotification('success', 'Producto eliminado exitosamente');
+    } catch {
+      showNotification('error', 'Error de conexión al moderar producto.');
     }
   };
 
@@ -248,18 +255,16 @@ export default function ProductosAdmin() {
           <div className="mb-8 mt-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                Catálogo de Textiles
+                Auditoría de Catálogo Marketplace
               </h1>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">
-                {totalProducts} productos registrados · Gestión y control del inventario publicado.
+                {totalProducts} telas publicadas por proveedores externos · Vista de solo lectura y moderación (los precios son protegidos e inalterables por administración).
               </p>
             </div>
-            <button
-              onClick={() => showNotification('info', 'Módulo de creación en desarrollo')}
-              className="flex items-center gap-2 px-6 py-3 text-sm font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95"
-            >
-              <Plus className="w-4 h-4" /> Nuevo Textil
-            </button>
+            <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
+              <Lock className="w-4 h-4 shrink-0" />
+              Precios y Descuentos Protegidos (Propiedad del Vendedor)
+            </div>
           </div>
 
           {/* ── KPI CARDS ──────────────────────────────────────────────── */}
@@ -413,6 +418,14 @@ export default function ProductosAdmin() {
                               {product.category}
                             </span>
                           )}
+                          {(() => {
+                            const modInfo = ETIQUETAS_MODERACION[product.status] || ETIQUETAS_MODERACION.approved;
+                            return (
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border ${modInfo.cls}`}>
+                                {modInfo.label}
+                              </span>
+                            );
+                          })()}
                           {sectionBadges.map(badge => (
                             <span key={badge.label} className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-widest uppercase border ${badge.cls}`}>
                               {badge.label}
@@ -420,14 +433,25 @@ export default function ProductosAdmin() {
                           ))}
                         </div>
 
-                        <p className="text-xs font-mono text-slate-400 dark:text-slate-500 mb-1.5">
-                          #{String(product.id).padStart(6, '0')}
+                        <p className="text-xs font-mono text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-2">
+                          <span>#{String(product.id).padStart(6, '0')}</span>
+                          <span>·</span>
+                          <span className="inline-flex items-center gap-1 font-sans font-bold text-primary-600 dark:text-primary-400">
+                            <Store size={12} /> {product.storeName || product.sellerName || 'Proveedor'}
+                          </span>
                         </p>
 
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border ${stockBadge.bg}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${stockBadge.dot}`} />
-                          {stockBadge.label}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border ${stockBadge.bg}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${stockBadge.dot}`} />
+                            {stockBadge.label}
+                          </span>
+                          {product.rejectionReason && (
+                            <span className="text-xs text-amber-700 dark:text-amber-300 truncate max-w-md" title={product.rejectionReason}>
+                              Obs: {product.rejectionReason}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -445,17 +469,10 @@ export default function ProductosAdmin() {
                       <div className="flex items-center gap-2 ml-auto sm:ml-0">
                         <button
                           onClick={() => openEditModal(product)}
-                          className="p-2.5 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-xl transition-colors"
-                          title="Editar Producto"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-xl transition-colors"
+                          title="Auditar Ficha y Notificar al Vendedor"
                         >
-                          <Edit size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="p-2.5 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-xl transition-colors"
-                          title="Eliminar Producto"
-                        >
-                          <Trash2 size={15} />
+                          <Eye size={15} /> Auditar
                         </button>
                       </div>
                     </div>
@@ -467,7 +484,7 @@ export default function ProductosAdmin() {
         </div>
       </div>
 
-      {/* ── MODAL DE EDICIÓN ────────────────────────────────────────────────── */}
+      {/* ── MODAL DE AUDITORÍA SOLO LECTURA + MODERACIÓN ───────────────────── */}
       {editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div onClick={closeEditModal} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
@@ -475,14 +492,18 @@ export default function ProductosAdmin() {
             ref={modalRef}
             className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]"
           >
-            {/* Encabezado modal */}
-            <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/60 shrink-0">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  <Edit size={18} />
-                </div>
-                Editar: {editingProduct.name}
-              </h2>
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700/60 shrink-0">
+              <div>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                    <Lock size={18} />
+                  </div>
+                  Auditoría (Solo Lectura): {editingProduct.name}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Proveedor: <strong>{editingProduct.storeName || editingProduct.sellerName || 'Vendedor Externo'}</strong> · Precios bloqueados contra edición administrativa
+                </p>
+              </div>
               <button
                 onClick={closeEditModal}
                 className="p-2 text-slate-400 hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-full transition-colors"
@@ -491,272 +512,84 @@ export default function ProductosAdmin() {
               </button>
             </div>
 
-            {/* Formulario */}
-            <form onSubmit={handleSave} className="p-6 sm:p-8 overflow-y-auto flex-1">
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
               <div className="flex flex-col md:flex-row gap-6">
-                {/* Zona de imagen */}
                 <div className="w-full md:w-1/3">
-                  <div className="aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 relative group cursor-pointer">
-                    {editForm.images?.[0] ? (
-                      <img src={editForm.images[0]} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="aspect-square rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                    {editingProduct.images?.[0] ? (
+                      <img src={editingProduct.images[0]} alt={editingProduct.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
                         <ImageIcon size={28} />
-                        <span className="text-xs font-bold">Sin imagen</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 bg-white/20 rounded-xl border border-white/30 backdrop-blur-sm">
-                        Cambiar
-                      </span>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
                   </div>
                 </div>
 
-                {/* Campos del formulario */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Nombre del Textil
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.name || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
-                      required
-                    />
+                <div className="flex-1 grid grid-cols-2 gap-3 text-sm">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Precio Vendedor / m</span>
+                    <span className="font-black text-lg text-slate-900 dark:text-white">{formatCurrency(editingProduct.price)}</span>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Categoría
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.category || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
-                      required
-                    />
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Descuento Activo</span>
+                    <span className="font-black text-lg text-primary-600">
+                      {Number(editingProduct.discountPercent || 0)}% OFF
+                    </span>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Precio / metro
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
-                      <input
-                        type="number"
-                        value={editForm.price || ''}
-                        onChange={e => setEditForm(prev => ({ ...prev, price: Number(e.target.value) }))}
-                        className={`w-full pl-8 pr-4 py-3 font-black ${glassInput}`}
-                        required
-                        min={0}
-                      />
-                    </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Stock Declarado</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{editingProduct.stock} metros</span>
                   </div>
-
-                  <div className="md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Stock (metros)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        value={editForm.stock ?? ''}
-                        onChange={e => setEditForm(prev => ({ ...prev, stock: Number(e.target.value) }))}
-                        className={`w-full pl-4 pr-14 py-3 font-black ${glassInput}`}
-                        required
-                        min={0}
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs uppercase">
-                        mts
-                      </span>
-                    </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Metros Vendidos</span>
+                    <span className="font-bold text-emerald-600">{Math.round(editingProduct.soldMeters || 0)} m</span>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Material / Composición
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.material || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, material: e.target.value }))}
-                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
-                      placeholder="Ej: 100% Algodón"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Ancho
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.width || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, width: e.target.value }))}
-                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
-                      placeholder="Ej: 1.50 m"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Peso
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.weight || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, weight: e.target.value }))}
-                      className={`w-full px-4 py-3 text-sm font-bold ${glassInput}`}
-                      placeholder="Ej: 180 gr/m²"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Cuidado y lavado
-                    </label>
-                    <textarea
-                      value={editForm.care || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, care: e.target.value }))}
-                      className={`w-full px-4 py-3 text-sm font-bold resize-none ${glassInput}`}
-                      rows="3"
-                      placeholder="Lavar en agua fría, no usar blanqueador, secar a la sombra..."
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700/60 pt-4">
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <Tag className="w-4 h-4 text-orange-500" />
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">
-                          Oferta y Descuento Promocional
-                        </span>
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-                        <ShieldCheck className="w-3 h-3" /> Exclusivo Administrador
-                      </span>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/10 space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <label className={`flex items-center gap-2.5 ${esAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
-                          <div
-                            onClick={() => {
-                              if (!esAdmin) {
-                                showNotification('error', 'Solo el Administrador puede activar o desactivar ofertas.');
-                                return;
-                              }
-                              setEditForm(prev => {
-                                const nextState = !prev.discountActive;
-                                return {
-                                  ...prev,
-                                  discountActive: nextState,
-                                  isOffer: nextState, // Sincroniza automáticamente la bandera de oferta especial
-                                  discountPercent: nextState ? (prev.discountPercent || 15) : 0
-                                };
-                              });
-                            }}
-                            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${editForm.discountActive ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-slate-300 dark:bg-slate-600'}`}
-                          >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${editForm.discountActive ? 'left-6' : 'left-1'}`} />
-                          </div>
-                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                            {editForm.discountActive ? 'Oferta Activa' : 'Activar oferta comercial'}
-                          </span>
-                        </label>
-
-                        {editForm.discountActive && (
-                          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-orange-200 dark:border-orange-500/30 shadow-xs">
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Descuento:</span>
-                            <input
-                              type="number"
-                              disabled={!esAdmin}
-                              value={editForm.discountPercent || ''}
-                              onChange={e => setEditForm(prev => ({ ...prev, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) }))}
-                              className="w-16 px-2 py-1 font-black text-sm text-center bg-transparent border-b border-orange-400 outline-none text-orange-600 dark:text-orange-400"
-                              min={1}
-                              max={99}
-                              placeholder="15"
-                            />
-                            <span className="text-xs font-black text-orange-500">% OFF</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Cálculo en vivo de precio con descuento */}
-                      {editForm.discountActive && editForm.price && (
-                        <div className="pt-2 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs">
-                          <span className="text-slate-500 dark:text-slate-400">
-                            Precio de liquidación con descuento:
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="line-through text-slate-400">
-                              {formatCurrency(editForm.price)}
-                            </span>
-                            <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
-                              {formatCurrency(Number(editForm.price) * (1 - (Number(editForm.discountPercent) || 0) / 100))}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                <div className="md:col-span-2 border-t border-slate-100 dark:border-slate-700/60 pt-4">
-                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
-                      Apartados del Inicio
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        { key: 'isNewCollection', label: 'Nueva Colección', desc: 'Sección Nuevas Colecciones del Inicio' },
-                        { key: 'isExclusive', label: 'Telas Exclusivas', desc: 'Sección Telas Exclusivas del Inicio' },
-                        { key: 'isOffer', label: 'Ofertas Especiales', desc: 'Sección Ofertas Especiales del Inicio' },
-                      ].map(({ key, label, desc }) => (
-                        <label key={key} className="flex items-center gap-2 cursor-pointer">
-                          <div
-                            onClick={() => setEditForm(prev => ({ ...prev, [key]: !prev[key] }))}
-                            className={`relative w-11 h-6 rounded-full transition-all duration-300 shrink-0 ${editForm[key] ? 'bg-indigo-600 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'bg-slate-300 dark:bg-slate-600'}`}
-                          >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${editForm[key] ? 'left-6' : 'left-1'}`} />
-                          </div>
-                          <div>
-                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300 block leading-tight">{label}</span>
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{desc}</span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
+                  <div className="col-span-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-1 text-xs">
+                    <p><strong>Categoría:</strong> {editingProduct.category || '—'} · <strong>Material:</strong> {editingProduct.material || '—'}</p>
+                    <p><strong>Ancho:</strong> {editingProduct.width || '—'} · <strong>Peso:</strong> {editingProduct.weight || '—'}</p>
+                    <p><strong>Exclusiva VIP:</strong> {editingProduct.isExclusive ? 'Sí (solo clientes frecuentes)' : 'No'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Botones de acción */}
-              <div className="flex gap-3 mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/60">
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  className="flex-1 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-[2] py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2 shadow-md"
-                >
-                  <Save size={17} /> Guardar Cambios
-                </button>
+              {/* Controles Exclusivos de Moderación Administrativa */}
+              <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-500/30 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                  <ShieldCheck className="w-4 h-4" /> Moderación de Cumplimiento (Sin Alterar Precios)
+                </div>
+                <input
+                  type="text"
+                  value={moderationReason}
+                  onChange={(e) => setModerationReason(e.target.value)}
+                  placeholder="Observación real de auditoría (obligatoria al solicitar cambios o suspender)..."
+                  className={`w-full px-4 py-2.5 text-sm ${glassInput}`}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleModerateProduct('approved')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                  >
+                    <CheckCircle2 size={14} /> Aprobar Publicación
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleModerateProduct('changes_requested')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold"
+                  >
+                    <AlertTriangle size={14} /> Solicitar Cambios
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleModerateProduct('rejected')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
+                  >
+                    <XIcon size={14} /> Suspender Producto
+                  </button>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

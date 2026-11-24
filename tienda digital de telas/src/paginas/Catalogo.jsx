@@ -24,7 +24,7 @@ const DEFAULT_SECTIONS = [
 ];
 
 function Catalogo() {
-    const { products, loading, error, refreshProducts } = useProductos();
+    const { products, vipEligibility, loading, error, refreshProducts } = useProductos();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [sections, setSections] = useState(DEFAULT_SECTIONS);
@@ -91,7 +91,44 @@ function Catalogo() {
 
                     {/* Apartados de la tienda: chips de navegación */}
                     {!loading && (
-                        <section className="section-container !pt-8 !pb-0">
+                        <section className="section-container !pt-8 !pb-0 space-y-4">
+                            {vipEligibility?.esClienteFrecuente && (
+                                <div className="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-amber-400/40 bg-gradient-to-r from-amber-500/10 via-white/75 to-primary-500/10 dark:from-amber-500/15 dark:via-slate-900/75 dark:to-primary-500/15">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                                            <Crown className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white">
+                                                ¡Nivel {vipEligibility.nivelVip} Desbloqueado!
+                                            </p>
+                                            <p className="text-xs text-slate-600 dark:text-slate-300">
+                                                Por tus compras frecuentes ({vipEligibility.comprasCompletadas} pedidos · {vipEligibility.metrosAcumulados} m) tienes acceso exclusivo a colecciones privadas de nuestros mejores proveedores.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/catalogo?seccion=exclusivas')}
+                                        className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shrink-0 shadow-sm transition-transform active:scale-95"
+                                    >
+                                        Ver Telas Exclusivas
+                                    </button>
+                                </div>
+                            )}
+
+                            {currentSection?.key === 'exclusivas' && !vipEligibility?.esClienteFrecuente && (
+                                <div className="glass-panel rounded-2xl p-6 text-center space-y-2 border-primary-300/40">
+                                    <Crown className="w-8 h-8 text-amber-500 mx-auto" />
+                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                                        Sección reservada para Clientes Frecuentes VIP
+                                    </h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
+                                        Las telas exclusivas se desbloquean automáticamente al completar {vipEligibility?.umbralPedidos || 3} compras o acumular {vipEligibility?.umbralMetros || 50} metros adquiridos en la plataforma.
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="flex flex-wrap items-center justify-center gap-2.5">
                                 <button
                                     onClick={() => navigate('/catalogo')}
@@ -114,7 +151,11 @@ function Catalogo() {
                                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-primary-300'}`}
                                         >
                                             <Icon className="w-4 h-4" /> {s.title}
-                                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white/20 text-white">{count}</span>
+                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                                                currentSection?.key === s.key
+                                                    ? 'bg-white/25 text-white'
+                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                            }`}>{count}</span>
                                         </button>
                                     );
                                 })}

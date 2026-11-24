@@ -63,9 +63,11 @@ public class ServidorApi {
         ManejadorArchivosEstaticos manejadorArchivosEstaticos = new ManejadorArchivosEstaticos();
         ManejadorSalud manejadorSalud = new ManejadorSalud();
         ManejadorPagosWompi manejadorPagosWompi = new ManejadorPagosWompi();
+        ManejadorTiendas manejadorTiendas = new ManejadorTiendas();
 
-        // Ejecutar migración de columnas y tablas de Wompi de manera segura
+        // Ejecutar migración de columnas y tablas de Wompi y Marketplace de manera segura
         infraestructura.persistencia.jdbc.MigradorEsquemaPagos.ejecutar();
+        infraestructura.persistencia.jdbc.MigradorEsquemaMarketplace.ejecutar();
 
         // --- Registro de Rutas (Bilingüe para compatibilidad gradual con frontend) ---
         // Observabilidad y Health Checks (SENA / Kubernetes / Docker)
@@ -140,6 +142,14 @@ public class ServidorApi {
 
         // Archivos estáticos
         servidor.createContext("/uploads", manejadorArchivosEstaticos);
+
+        // Ecosistema Marketplace Multi-Vendedor (Tiendas, Reseñas Vendedor, Alertas y VIP)
+        servidor.createContext("/api/tiendas", manejadorTiendas);
+        servidor.createContext("/api/stores", manejadorTiendas);
+        servidor.createContext("/api/vendedor/alertas", manejadorTiendas);
+        servidor.createContext("/api/seller/alerts", manejadorTiendas);
+        servidor.createContext("/api/clientes/elegibilidad-vip", manejadorTiendas);
+        servidor.createContext("/api/clients/vip-eligibility", manejadorTiendas);
 
         // Pool de Hilos para alta concurrencia
         int numeroHilos = Math.max(32, Runtime.getRuntime().availableProcessors() * 8);

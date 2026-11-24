@@ -1,6 +1,6 @@
 # Mapa de navegación — D&D Textil
 
-> Generado a partir del código: las 54 rutas de `tienda digital de telas/src/App.jsx`, los menús laterales de `src/datos/enlacesCliente.js`, `enlacesVendedor.js` y `enlacesAdmin.js`, y los enlaces del encabezado, carrito y pago. Reemplaza la sección 4 de `03-arquitectura-frontend-y-roles.md` (que solo cubría las vistas públicas) y la imagen `public/images/diagrams/mapa-navegacion.png`.
+> Generado a partir del código: las 58 rutas de `tienda digital de telas/src/App.jsx`, los menús laterales de `src/datos/enlacesCliente.js`, `enlacesVendedor.js` y `enlacesAdmin.js`, y los enlaces del encabezado, directorio de tiendas (`/tiendas`, `/tienda/:id`), carrito y pago exclusivo para clientes (`strict={true}`). Reemplaza la sección 4 de `03-arquitectura-frontend-y-roles.md`.
 
 ## 1. Diagrama general
 
@@ -10,8 +10,7 @@ Versión vectorial: `diagramas/mapa_navegacion.svg`.
 
 **Reglas de acceso** (componente `ProtectedRoute`):
 
-- Si una ruta protegida se abre sin sesión, redirige a `/login`.
-- El proceso de compra (`/checkout`, `/pago`, `/confirmacion`) y `/favoritos` **no** están protegidos: se pueden usar sin iniciar sesión (ver observación 4).
+- Si una ruta protegida se abre sin sesión, redirige a `/login` guardando la ruta pedida. Las rutas de compra (`/checkout`, `/pago`, `/confirmacion`) operan con `roles="cliente" strict={true}` (solo un usuario autenticado como cliente puede pagar).
 - Si el usuario tiene sesión pero no el rol requerido, redirige a `/`.
 - Al iniciar sesión, `IniciarSesion.jsx` envía a cada rol a su panel: cliente → `/cliente`, vendedor → `/vendedor`, admin → `/admin`.
 - El administrador también puede entrar al panel del vendedor (rutas con `roles={['vendedor','admin']}`).
@@ -22,47 +21,47 @@ Versión vectorial: `diagramas/mapa_navegacion.svg`.
 
 ```mermaid
 flowchart LR
-    subgraph PUB["Sitio público"]
+    subgraph PUB["Sitio público Marketplace"]
         r_inicio["Inicio<br/>/"]
         r_catalogo["Catálogo<br/>/catalogo"]
+        r_tiendas["Tiendas Proveedoras<br/>/tiendas"]
+        r_tienda_id["Perfil Público de Tienda<br/>/tienda/:id"]
         r_producto_id["Detalle de tela<br/>/producto/:id"]
         r_carrito["Carrito<br/>/carrito"]
         r_nosotros["Nosotros<br/>/nosotros"]
         r_contacto["Contacto<br/>/contacto"]
         r_login["Iniciar sesión<br/>/login"]
         r_registro["Registro<br/>/registro"]
-        r_favoritos["Favoritos<br/>/favoritos"]
-        r_reportar_fallo["Reportar fallo<br/>/reportar-fallo · sin enlace"]
-        r_wishlist["Favoritos (alias)<br/>/wishlist · sin enlace"]
-        r_404["Página no encontrada<br/>* · cualquier ruta inexistente"]
+        r_reportar_fallo["Reportar fallo<br/>/reportar-fallo · URL directa"]
     end
-    subgraph BUY["Proceso de compra (no exige sesión)"]
+    subgraph BUY["Proceso de compra (solo rol cliente · strict)"]
         r_checkout["Datos de envío<br/>/checkout"]
-        r_pago["Pago (tarjeta, PSE, Nequi o contraentrega)<br/>/pago"]
-        r_confirmacion["Confirmación del pedido<br/>/confirmacion"]
+        r_pago["Pago (tarjeta, Wompi o PSE)<br/>/pago"]
+        r_confirmacion["Confirmación de sub-pedidos<br/>/confirmacion"]
     end
     r_cliente["Mi Resumen<br/>/cliente"]
-    r_vendedor["Resumen<br/>/vendedor"]
+    r_vendedor["Panel Principal<br/>/vendedor"]
     r_admin["Resumen<br/>/admin"]
     r_inicio -->|menú| r_catalogo
+    r_inicio -->|menú| r_tiendas
     r_inicio -->|menú| r_nosotros
     r_inicio -->|menú| r_contacto
     r_inicio -->|ícono carrito| r_carrito
-    r_inicio -->|ícono favoritos| r_favoritos
-    r_404 -.->|volver al inicio| r_inicio
     r_inicio -->|Ingresar| r_login
+    r_tiendas -->|ver tienda| r_tienda_id
+    r_tienda_id -->|ver tela| r_producto_id
     r_catalogo -->|ver tela| r_producto_id
     r_producto_id -->|agregar| r_carrito
     r_login -->|crear cuenta| r_registro
     r_registro -.->|cuenta creada| r_inicio
-    r_carrito -->|Continuar a Envío y Pago| r_checkout
-    r_checkout -->|continuar| r_pago
+    r_carrito -->|"Solo rol cliente (strict)"| r_checkout
+    r_checkout -->|Confirmar pedido| r_pago
     r_pago -->|pago aprobado| r_confirmacion
     r_login -->|rol cliente| r_cliente
     r_login -->|rol vendedor| r_vendedor
     r_login -->|rol admin| r_admin
     classDef orphan stroke-dasharray: 5 5,fill:#fff,color:#555
-    class r_reportar_fallo,r_wishlist,r_404 orphan
+    class r_reportar_fallo orphan
 ```
 
 ### 2.2. Panel del cliente
@@ -101,11 +100,15 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    r_vendedor["Resumen<br/>/vendedor"]
+    r_vendedor["Panel Principal<br/>/vendedor"]
+    r_vendedor_tienda["Mi Tienda (Perfil)<br/>/vendedor/mi-tienda"]
+    r_vendedor_alertas["Alertas y Auditorías<br/>/vendedor/alertas"]
     subgraph VENDEDOR_1["Inventario"]
         r_vendedor_productos["Mis Productos<br/>/vendedor/productos"]
         r_vendedor_stock["Alertas de Stock<br/>/vendedor/stock"]
     end
+    r_vendedor --> r_vendedor_tienda
+    r_vendedor --> r_vendedor_alertas
     r_vendedor --> VENDEDOR_1
     subgraph VENDEDOR_2["Ventas"]
         r_vendedor_pedidos["Gestión de Pedidos<br/>/vendedor/pedidos"]
@@ -113,11 +116,6 @@ flowchart LR
     r_vendedor --> VENDEDOR_2
     r_vendedor_configuracion["Configuración<br/>/vendedor/configuracion"]
     r_vendedor --> r_vendedor_configuracion
-    subgraph VENDEDOR_3["Ayuda y Soporte"]
-        r_vend_soporte_nuevo["Reportar Problema<br/>/cliente/soporte/nuevo"]
-        r_vend_soporte_tickets["Mis Tickets<br/>/cliente/soporte/tickets"]
-    end
-    r_vendedor --> VENDEDOR_3
     style r_vendedor fill:#FBF1E3,stroke:#A8641A,stroke-width:2px
 ```
 
@@ -138,10 +136,10 @@ flowchart LR
         r_admin_home["Página Inicio<br/>/admin/home"]
     end
     r_admin --> ADMIN_2
-    subgraph ADMIN_3["Inventario"]
-        r_admin_inventario_lotes["Control de Lotes<br/>/admin/inventario/lotes"]
-        r_admin_inventario_merma["Calculadora de Merma<br/>/admin/inventario/merma"]
-        r_admin_inventario_alertas["Alertas de Stock<br/>/admin/inventario/alertas"]
+    subgraph ADMIN_3["Inventario (Auditoría Antifraude)"]
+        r_admin_inventario_lotes["Auditoría de Lotes<br/>/admin/inventario/lotes"]
+        r_admin_inventario_merma["Auditoría de Mermas<br/>/admin/inventario/merma"]
+        r_admin_inventario_alertas["Notificar Stock Bajo<br/>/admin/inventario/alertas"]
         r_admin_inventario_historial["Historial de Movimientos<br/>/admin/inventario/historial"]
     end
     r_admin --> ADMIN_3
@@ -175,80 +173,81 @@ flowchart LR
     style r_admin fill:#E8EEF9,stroke:#3B5BA9,stroke-width:2px
 ```
 
-## 3. Inventario de rutas
+## 3. Inventario completo de las 58 rutas (`App.jsx`)
 
 | # | Ruta | Pantalla | Componente | Acceso | Cómo se llega |
 | :-: | :--- | :--- | :--- | :--- | :--- |
 | 1 | `/` | Inicio | `Inicio` | Pública | Logo y menú superior |
 | 2 | `/catalogo` | Catálogo | `Catalogo` | Pública | Menú superior y pie de página |
-| 3 | `/producto/:id` | Detalle de tela | `DetalleProducto` | Pública | Tarjeta de producto en Catálogo o Inicio |
-| 4 | `/carrito` | Carrito | `Carrito` | Pública | Ícono del carrito en el encabezado |
-| 5 | `/nosotros` | Nosotros | `About` | Pública | Menú superior y pie de página |
-| 6 | `/contacto` | Contacto | `Contact` | Pública | Menú superior y pie de página |
-| 7 | `/login` | Iniciar sesión | `IniciarSesion` | Pública | Botón Ingresar del encabezado; redirección de rutas protegidas |
-| 8 | `/registro` | Registro | `Registro` | Pública | Enlace desde Iniciar sesión |
-| 9 | `/reportar-fallo` | Reportar fallo | `BugReport` | Pública | Ningún enlace (solo escribiendo la URL) |
-| 10 | `/pago` | Pago (tarjeta o PSE) | `Payment` | Pública (no exige sesión) | Botón «Confirmar pedido» en Datos de envío |
-| 11 | `/checkout` | Datos de envío | `Pago` | Pública (no exige sesión) | Botón «Continuar a Envío y Pago» del carrito |
-| 12 | `/confirmacion` | Confirmación del pedido | `ConfirmacionPedido` | Pública (no exige sesión) | Automático tras un pago aprobado (tarjeta o PSE) |
-| 13 | `/cliente` | Mi Resumen | `PanelCliente` | Cliente | Inicio de sesión con rol cliente; menú de usuario del encabezado |
-| 14 | `/cliente/perfil` | Perfil (duplicado) | `Perfil` | Cliente | Ningún enlace (solo escribiendo la URL) |
-| 15 | `/cliente/pedidos` | Historial de Pedidos | `ClientOrderHistory` | Cliente | Menú lateral › Compras › Historial de Pedidos |
-| 16 | `/cliente/pedidos/rastreo` | Rastrear Envío | `SeguimientoPedido` | Cliente | Menú lateral › Compras › Rastrear Envío |
-| 17 | `/cliente/coleccion` | Lista de Deseos | `Wishlist` | Cliente | Menú lateral › Mi Colección › Lista de Deseos |
-| 18 | `/cliente/coleccion/calculadora` | Calculadora de Metraje | `ProjectCalculator` | Cliente | Menú lateral › Mi Colección › Calculadora de Metraje |
-| 19 | `/cliente/soporte/nuevo` | Reportar Problema | `NewReport` | Cliente | Menú lateral › Ayuda › Reportar Problema |
-| 20 | `/cliente/soporte/tickets` | Mis Tickets | `MyTickets` | Cliente | Menú lateral › Ayuda › Mis Tickets |
-| 21 | `/cliente/configuracion` | Mi Perfil | `Perfil` | Cliente | Menú lateral › Ajustes › Mi Perfil |
-| 22 | `/cliente/configuracion/direcciones` | Libreta de Direcciones | `AddressBook` | Cliente | Menú lateral › Ajustes › Libreta de Direcciones |
-| 23 | `/vendedor` | Resumen | `PanelVendedor` | Vendedor y admin | Inicio de sesión con rol vendedor |
-| 24 | `/vendedor/productos` | Mis Productos | `PanelVendedor` | Vendedor y admin | Menú lateral › Inventario › Mis Productos |
-| 25 | `/vendedor/pedidos` | Gestión de Pedidos | `PedidosVendedor` | Vendedor y admin | Menú lateral › Ventas › Gestión de Pedidos |
-| 26 | `/vendedor/stock` | Alertas de Stock | `StockAlerts` | Vendedor y admin | Menú lateral › Inventario › Alertas de Stock |
-| 27 | `/vendedor/configuracion` | Configuración | `Perfil` | Vendedor y admin | Menú lateral › Configuración |
-| 28 | `/admin` | Resumen | `ResumenAdmin` | Admin | Inicio de sesión con rol admin; menú de usuario del encabezado |
-| 29 | `/admin/usuarios` | Gestión de Usuarios | `GestionUsuarios` | Admin | Menú lateral › Usuarios › Gestión de Usuarios |
-| 30 | `/admin/vendedores` | Vendedores | `MetricasVendedor` | Admin | Menú lateral › Usuarios › Vendedores |
-| 31 | `/admin/clientes` | Clientes | `MetricasCliente` | Admin | Menú lateral › Usuarios › Clientes |
-| 32 | `/admin/productos` | Productos | `ProductosAdmin` | Admin | Menú lateral › Catálogo › Productos |
-| 33 | `/admin/carrusel` | Carrusel | `GestionarCarrusel` | Admin | Menú lateral › Catálogo › Carrusel |
-| 34 | `/admin/home` | Página Inicio | `GestionarInicio` | Admin | Menú lateral › Catálogo › Página Inicio |
-| 35 | `/admin/facturas` | Facturación | `FacturasAdmin` | Admin | Menú lateral › Facturación |
-| 36 | `/admin/reportes` | Reportes | `ReportesAdmin` | Admin | Menú lateral › Reportes |
-| 37 | `/admin/actividad` | Actividad reciente | `ActividadAdmin` | Admin | Ningún enlace (solo escribiendo la URL) |
-| 38 | `/admin/inventario/lotes` | Control de Lotes | `ControlLotes` | Admin | Menú lateral › Inventario › Control de Lotes |
-| 39 | `/admin/inventario/merma` | Calculadora de Merma | `CalculadoraMerma` | Admin | Menú lateral › Inventario › Calculadora de Merma |
-| 40 | `/admin/inventario/alertas` | Alertas de Stock | `ConfiguracionStock` | Admin | Menú lateral › Inventario › Alertas de Stock |
-| 41 | `/admin/inventario/historial` | Historial de Movimientos | `HistorialMovimientos` | Admin | Menú lateral › Inventario › Historial de Movimientos |
-| 42 | `/admin/moderacion/aprobacion` | Cola de Aprobación | `ColaAprobacion` | Admin | Menú lateral › Moderación › Cola de Aprobación |
-| 43 | `/admin/moderacion/vendedores` | Rendimiento | `RendimientoVendedores` | Admin | Menú lateral › Moderación › Rendimiento |
-| 44 | `/admin/analytics/mapa-ventas` | Mapa de Ventas | `MapaVentas` | Admin | Menú lateral › Analítica › Mapa de Ventas |
-| 45 | `/admin/analytics/rotacion` | Rotación de Inventario | `RankingRotacion` | Admin | Menú lateral › Analítica › Rotación de Inventario |
-| 46 | `/admin/analytics/devoluciones` | Análisis de Devoluciones | `AnalisisDevoluciones` | Admin | Menú lateral › Analítica › Análisis de Devoluciones |
-| 47 | `/admin/analytics/proyeccion` | Proyección de Ingresos | `ProyeccionIngresos` | Admin | Menú lateral › Analítica › Proyección de Ingresos |
-| 48 | `/admin/soporte/tickets` | Gestión de Tickets | `GestionTickets` | Admin | Menú lateral › Soporte › Gestión de Tickets |
-| 49 | `/admin/soporte/cupones` | Crear Cupones | `CreacionCupones` | Admin | Menú lateral › Soporte › Crear Cupones |
-| 50 | `/admin/configuracion` | Configuración | `ConfiguracionSistema` | Admin | Menú lateral › Configuración |
-| 51 | `/favoritos` | Favoritos | `Wishlist` | Pública | Ícono de favoritos (corazón) del encabezado |
-| 52 | `/wishlist` | Favoritos (alias) | `Wishlist` | Pública | Ningún enlace (solo escribiendo la URL) |
-| 53 | `/cliente/favoritos` | Favoritos (alias) | `Wishlist` | Pública | Ningún enlace (solo escribiendo la URL) |
-| 54 | `*` | Página no encontrada | `NoEncontrado` | Pública | Cualquier ruta que no existe; enlaza a Inicio y Catálogo |
+| 3 | `/tiendas` | Tiendas Proveedoras | `DirectorioTiendas` | Pública | Menú superior *Tiendas*, tarjetas de tienda |
+| 4 | `/tienda/:id` | Perfil Público de Tienda | `PerfilTiendaPublico` | Pública | Tarjeta de vendedor en `/tiendas` o `/producto/:id` |
+| 5 | `/producto/:id` | Detalle de tela y comparador | `DetalleProducto` | Pública | Tarjeta de producto en Catálogo, Tienda o Inicio |
+| 6 | `/carrito` | Carrito multi-vendedor | `Carrito` | Pública | Ícono del carrito en el encabezado |
+| 7 | `/favoritos` | Lista de Deseos (alias) | `Wishlist` | Pública | Enlace Lista de Deseos |
+| 8 | `/wishlist` | Lista de Deseos (alias) | `Wishlist` | Pública | Enlace Lista de Deseos |
+| 9 | `/cliente/favoritos` | Lista de Deseos (alias) | `Wishlist` | Pública | Acceso directo a favoritos |
+| 10 | `/nosotros` | Nosotros | `About` | Pública | Menú superior y pie de página |
+| 11 | `/contacto` | Contacto | `Contact` | Pública | Menú superior y pie de página |
+| 12 | `/login` | Iniciar sesión | `IniciarSesion` | Pública | Botón Ingresar del encabezado; redirección de rutas protegidas |
+| 13 | `/registro` | Registro | `Registro` | Pública | Enlace desde Iniciar sesión |
+| 14 | `/reportar-fallo` | Reportar fallo | `BugReport` | Pública | URL directa para reporte técnico |
+| 15 | `/checkout` | Datos de envío | `Pago` | **Solo `cliente` (`strict`)** | Botón «Proceder al pago» del carrito |
+| 16 | `/pago` | Pago (tarjeta, Wompi o PSE) | `Payment` | **Solo `cliente` (`strict`)** | Botón «Confirmar pedido» en Datos de envío |
+| 17 | `/confirmacion` | Confirmación de sub-pedidos | `ConfirmacionPedido` | **Solo `cliente` (`strict`)** | Automático tras un pago aprobado |
+| 18 | `/cliente` | Mi Resumen | `PanelCliente` | `cliente` | Inicio de sesión como cliente; menú de usuario |
+| 19 | `/cliente/perfil` | Perfil (alias) | `Perfil` | `cliente` | Acceso directo al perfil |
+| 20 | `/cliente/pedidos` | Historial de Pedidos | `ClientOrderHistory` | `cliente` | Menú lateral › Compras › Historial de Pedidos |
+| 21 | `/cliente/pedidos/rastreo` | Rastrear Envío | `SeguimientoPedido` | `cliente`, `vendedor`, `admin` | Menú lateral › Compras › Rastrear Envío |
+| 22 | `/cliente/coleccion` | Lista de Deseos | `Wishlist` | Pública / Cliente | Menú lateral › Mi Colección › Lista de Deseos |
+| 23 | `/cliente/coleccion/calculadora` | Calculadora de Metraje | `ProjectCalculator` | `cliente`, `vendedor`, `admin` | Menú lateral › Mi Colección › Calculadora de Metraje |
+| 24 | `/cliente/soporte/nuevo` | Reportar Problema | `NewReport` | `cliente`, `vendedor`, `admin` | Menú lateral › Ayuda › Reportar Problema |
+| 25 | `/cliente/soporte/tickets` | Mis Tickets | `MyTickets` | `cliente`, `vendedor`, `admin` | Menú lateral › Ayuda › Mis Tickets |
+| 26 | `/cliente/configuracion` | Mi Perfil | `Perfil` | `cliente` | Menú lateral › Ajustes › Mi Perfil |
+| 27 | `/cliente/configuracion/direcciones` | Libreta de Direcciones | `AddressBook` | `cliente` | Menú lateral › Ajustes › Libreta de Direcciones |
+| 28 | `/vendedor` | Resumen y Catálogo Vendedor | `PanelVendedor` | `vendedor`, `admin` | Inicio de sesión como vendedor |
+| 29 | `/vendedor/productos` | Mis Productos | `PanelVendedor` | `vendedor`, `admin` | Menú lateral › Inventario › Mis Productos |
+| 30 | `/vendedor/pedidos` | Gestión de Pedidos | `PedidosVendedor` | `vendedor`, `admin` | Menú lateral › Ventas › Gestión de Pedidos |
+| 31 | `/vendedor/stock` | Alertas de Stock | `StockAlerts` | `vendedor`, `admin` | Menú lateral › Inventario › Alertas de Stock |
+| 32 | `/vendedor/mi-tienda` | Mi Tienda (Editor Social) | `MiTiendaVendedor` | `vendedor`, `admin` | Menú lateral › Mi Tienda (Perfil) |
+| 33 | `/vendedor/alertas` | Alertas y Auditorías | `AlertasOportunidad` | `vendedor`, `admin` | Menú lateral › Alertas y Auditorías |
+| 34 | `/vendedor/configuracion` | Configuración | `Perfil` | `vendedor`, `admin` | Menú lateral › Configuración |
+| 35 | `/admin` | Resumen | `ResumenAdmin` | `admin` | Inicio de sesión como admin; menú de usuario |
+| 36 | `/admin/usuarios` | Gestión de Usuarios | `GestionUsuarios` | `admin` | Menú lateral › Usuarios › Gestión de Usuarios |
+| 37 | `/admin/vendedores` | Vendedores | `MetricasVendedor` | `admin` | Menú lateral › Usuarios › Vendedores |
+| 38 | `/admin/clientes` | Clientes | `MetricasCliente` | `admin` | Menú lateral › Usuarios › Clientes |
+| 39 | `/admin/productos` | Productos (Auditoría) | `ProductosAdmin` | `admin` | Menú lateral › Catálogo › Productos |
+| 40 | `/admin/carrusel` | Carrusel | `GestionarCarrusel` | `admin` | Menú lateral › Catálogo › Carrusel |
+| 41 | `/admin/home` | Página Inicio | `GestionarInicio` | `admin` | Menú lateral › Catálogo › Página Inicio |
+| 42 | `/admin/facturas` | Facturación | `FacturasAdmin` | `admin` | Menú lateral › Facturación |
+| 43 | `/admin/reportes` | Reportes | `ReportesAdmin` | `admin` | Menú lateral › Reportes |
+| 44 | `/admin/actividad` | Actividad reciente | `ActividadAdmin` | `admin` | URL directa de auditoría |
+| 45 | `/admin/inventario/lotes` | Auditoría de Lotes | `ControlLotes` | `admin` | Menú lateral › Inventario › Auditoría de Lotes |
+| 46 | `/admin/inventario/merma` | Auditoría de Mermas | `CalculadoraMerma` | `admin` | Menú lateral › Inventario › Auditoría de Mermas |
+| 47 | `/admin/inventario/alertas` | Notificar Stock Bajo | `ConfiguracionStock` | `admin` | Menú lateral › Inventario › Notificar Stock Bajo |
+| 48 | `/admin/inventario/historial` | Historial de Movimientos | `HistorialMovimientos` | `admin` | Menú lateral › Inventario › Historial de Movimientos |
+| 49 | `/admin/moderacion/aprobacion` | Cola de Aprobación | `ColaAprobacion` | `admin` | Menú lateral › Moderación › Cola de Aprobación |
+| 50 | `/admin/moderacion/vendedores` | Rendimiento | `RendimientoVendedores` | `admin` | Menú lateral › Moderación › Rendimiento |
+| 51 | `/admin/analytics/mapa-ventas` | Mapa de Ventas | `MapaVentas` | `admin` | Menú lateral › Analítica › Mapa de Ventas |
+| 52 | `/admin/analytics/rotacion` | Rotación de Inventario | `RankingRotacion` | `admin` | Menú lateral › Analítica › Rotación de Inventario |
+| 53 | `/admin/analytics/devoluciones` | Análisis de Devoluciones | `AnalisisDevoluciones` | `admin` | Menú lateral › Analítica › Análisis de Devoluciones |
+| 54 | `/admin/analytics/proyeccion` | Proyección de Ingresos | `ProyeccionIngresos` | `admin` | Menú lateral › Analítica › Proyección de Ingresos |
+| 55 | `/admin/soporte/tickets` | Gestión de Tickets | `GestionTickets` | `admin` | Menú lateral › Soporte › Gestión de Tickets |
+| 56 | `/admin/soporte/cupones` | Crear Cupones | `CreacionCupones` | `admin` | Menú lateral › Soporte › Crear Cupones |
+| 57 | `/admin/configuracion` | Configuración | `ConfiguracionSistema` | `admin` | Menú lateral › Configuración |
+| 58 | `*` | Página 404 | `NoEncontrado` | Pública | Cualquier ruta inexistente |
 
-## 4. Observaciones de navegación
+## 4. Observaciones y Controles de Navegación
 
-1. **Rutas sin enlace.** `/reportar-fallo`, `/cliente/perfil`, `/admin/actividad`, `/wishlist` y `/cliente/favoritos` existen en `App.jsx` pero ningún menú, botón ni enlace lleva a ellas. Hay que enlazarlas o eliminarlas.
-2. **Pantallas duplicadas.** `/cliente/perfil` y `/cliente/configuracion` cargan el mismo componente `Perfil`; `/vendedor` y `/vendedor/productos` cargan el mismo `PanelVendedor`; `/favoritos`, `/wishlist`, `/cliente/favoritos` y `/cliente/coleccion` cargan el mismo `Wishlist`.
-3. **Nombres cruzados en el pago.** `/checkout` usa el archivo `Pago.jsx` (datos de envío) y `/pago` usa `payment/Payment.jsx` (tarjeta o PSE). Conviene renombrar los archivos para que coincidan con la ruta.
-4. **La compra no exige sesión.** `/checkout`, `/pago` y `/confirmacion` no usan `ProtectedRoute`. Si alguien compra sin iniciar sesión, `Payment.jsx` envía `userId: user?.id || 4`, así que el pedido queda a nombre del usuario con id 4. Hay que proteger estas rutas o permitir la compra como invitado sin asignarla a otro usuario.
-5. **Destino del vendedor (corregido).** Tras el login y desde el menú de usuario del encabezado, el vendedor llega a `/vendedor`.
-6. **Documentación anterior (corregido).** Los documentos 03, 13 y 15 usaban rutas que no existen (`/contactos`, `/checkout/success`, `/cliente/calculadora`, `/admin/analitica/*`, entre otras); ya usan las rutas reales de `App.jsx`.
+1. **Bloqueo estricto de compras para rol `cliente`:** `/checkout`, `/pago` y `/confirmacion` usan `<ProtectedRoute roles="cliente" strict={true}>`, impidiendo que visitantes anónimos, vendedores o administradores ejecuten pagos en plataforma.
+2. **Separación antifraude en Inventario del Administrador:** las rutas `/admin/inventario/lotes`, `/admin/inventario/merma` y `/admin/inventario/alertas` operan como tableros de auditoría en modo solo lectura con botones reales para notificar stock bajo y enviar reportes de mermas a cada vendedor (`/vendedor/alertas`).
+3. **Ecosistema Marketplace Público y Vendedor:** `/tiendas` (`DirectorioTiendas`), `/tienda/:id` (`PerfilTiendaPublico`), `/vendedor/mi-tienda` (`MiTiendaVendedor`) y `/vendedor/alertas` (`AlertasOportunidad`) integran el flujo social y de oportunidades VIP de extremo a extremo.
 
 
 ---
 
 ## Anexo de Navegación Segura: Verificación de Vigencia de Token y Activos Estáticos
 
-1. **Guardia de Navegación con Vigencia Temporal (`ProtectedRoute.jsx`):**
-   - Antes de renderizar cualquier ruta privada (`/cliente/*`, `/vendedor/*` y `/admin/*`), el guardia exige un `usuario` en sesión y el rol correcto. `ContextoAutenticacion` solo carga el usuario guardado si `sesionVigente(usuario)` es verdadera y programa el cierre cuando el token vence, así que una sesión caducada termina en `/login`.
+1. **Guardia de Navegación con Vigencia Temporal (`RutaProtegida.jsx`):**
+   - Antes de renderizar cualquier ruta privada (`/cliente/*`, `/vendedor/*`, `/admin/*` o `/checkout`), el guardia verifica no solo la presencia del objeto `usuario`, sino también que `sesionVigente(usuario)` sea verdadera. Si el token caducó, redirige limpiamente a `/login`.
 2. **Resolución Limpia de Imágenes en `/uploads/*`:**
    - Tanto el manejador de archivos estáticos del backend (`ManejadorArchivosEstaticos`) como el middleware del servidor de desarrollo Vite (`vite.config.js`) devuelven estrictamente `HTTP 404` cuando un recurso bajo `/uploads/` no existe en disco, permitiendo que los componentes visuales (`Imagen Seguras` / `onError`) activen de inmediato la fotografía textil de respaldo sin pantallas rotas.
