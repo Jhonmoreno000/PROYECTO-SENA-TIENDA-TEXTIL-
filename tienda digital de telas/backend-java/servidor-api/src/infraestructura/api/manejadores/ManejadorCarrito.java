@@ -70,7 +70,22 @@ public class ManejadorCarrito extends ManejadorBase {
                 return;
             }
 
-            boolean exito = carritoDAO.agregarAlCarrito(idUsuario, idProducto, cantidad);
+            java.util.Map<String, Object> validacion = new infraestructura.persistencia.jdbc.InventarioDAO()
+                    .validarDisponibilidadArticulos(java.util.List.of(java.util.Map.of(
+                            "type", "TELA",
+                            "productId", idProducto,
+                            "quantity", aplicacion.servicios.ServicioCorteTextil.redondear2(cantidad).doubleValue()
+                    )));
+            if (!Boolean.TRUE.equals(validacion.get("available"))) {
+                enviarRespuestaJson(intercambio, 409, gson.toJson(java.util.Map.of(
+                        "success", false,
+                        "error", "Stock insuficiente para el metraje solicitado",
+                        "details", validacion.get("errors")
+                )));
+                return;
+            }
+
+            boolean exito = carritoDAO.agregarAlCarrito(idUsuario, idProducto, aplicacion.servicios.ServicioCorteTextil.redondear2(cantidad).doubleValue());
             enviarRespuestaJson(intercambio, exito ? 200 : 500, "{\"success\":" + exito + "}");
 
         } else if ("PUT".equals(metodo)) {

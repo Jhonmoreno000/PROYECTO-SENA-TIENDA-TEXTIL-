@@ -21,6 +21,46 @@ import infraestructura.configuracion.Conexion;
  */
 public class ProductoDAO {
 
+    private static Producto crearProductoSemilla(String id, String nombre, String categoria, double precio,
+                                                String vendedor, String desc, String material, String ancho,
+                                                String peso, String cuidado, double stock, boolean destacado,
+                                                boolean nueva, boolean exclusiva, boolean oferta, String imagen) {
+        Producto p = new Producto();
+        p.setId(id);
+        p.setNombre(nombre);
+        p.setCategoria(categoria);
+        p.setPrecio(precio);
+        p.setNombreVendedor(vendedor);
+        p.setDescripcion(desc);
+        p.setMaterial(material);
+        p.setAncho(ancho);
+        p.setPeso(peso);
+        p.setCuidado(cuidado);
+        p.setExistencias(stock);
+        p.setDestacado(destacado);
+        p.setEsNuevaColeccion(nueva);
+        p.setEsExclusivo(exclusiva);
+        p.setEsOferta(oferta);
+        p.setActivo(true);
+        p.setEstadoModeracion("approved");
+        p.setFechaCreacion("2026-11-23");
+        p.getImagenes().add(imagen);
+        return p;
+    }
+
+    private static List<Producto> obtenerProductosSemilla() {
+        List<Producto> lista = new ArrayList<>();
+        lista.add(crearProductoSemilla("1", "Algodón Premium", "Algodon", 25000, "Carlos Pérez", "Tela de algodón 100% natural, ideal para camisas y blusas.", "Algodón 100%", "1.50m", "150g/m2", "Lavar en frío", 100, true, true, false, false, "/uploads/product_12_1775767112691.jpg"));
+        lista.add(crearProductoSemilla("2", "Seda Italiana", "Seda", 85000, "Carlos Pérez", "Seda pura con acabado brillante, perfecta para vestidos de gala.", "Seda pura", "1.40m", "80g/m2", "Limpieza en seco", 50, true, false, true, false, "/uploads/product_16_1775766690228.webp"));
+        lista.add(crearProductoSemilla("3", "Lino Orgánico", "Lino", 45000, "María González", "Lino fresco y transpirable para ropa de verano.", "Lino orgánico", "1.50m", "200g/m2", "No usar secadora", 80, false, true, false, false, "/uploads/product_14_1775766898975.webp"));
+        lista.add(crearProductoSemilla("4", "Lana Merino", "Lana", 65000, "María González", "Lana suave y cálida, ideal para abrigos de invierno.", "Lana merino", "1.60m", "300g/m2", "Lavar a mano", 30, true, false, true, false, "/uploads/product_14_1775766898975.webp"));
+        lista.add(crearProductoSemilla("5", "Dril Elástico", "Algodon", 35000, "Carlos Pérez", "Dril resistente con toque de elasticidad para pantalones.", "Algodón/Lycra 95/5", "1.50m", "250g/m2", "Lavar ciclo suave", 120, false, false, false, true, "/uploads/product_10_1775767265179.jpg"));
+        lista.add(crearProductoSemilla("6", "Gasa de Seda", "Seda", 72000, "María González", "Gasa ligera y transparente para pañuelos y cortinas.", "Seda/Poliéster", "1.40m", "45g/m2", "Lavar a mano", 60, true, false, true, false, "/uploads/product_16_1775766690228.webp"));
+        lista.add(crearProductoSemilla("7", "Tela Polar", "Poliester", 22000, "Carlos Pérez", "Tela polar suave para cobijas y chaquetas.", "Poliéster 100%", "1.50m", "280g/m2", "Lavar a máquina", 150, false, false, false, true, "/uploads/product_15_1775767332095.jpg"));
+        lista.add(crearProductoSemilla("8", "Oxford Camisa", "Algodon", 38000, "María González", "Tela oxford clásica para camisas formales.", "Algodón peinado", "1.50m", "130g/m2", "Planchar temp media", 90, false, true, false, false, "/uploads/product_12_1775767112691.jpg"));
+        return lista;
+    }
+
     /**
      * Recupera un producto activo por su identificador único.
      *
@@ -47,7 +87,11 @@ public class ProductoDAO {
             }
         } catch (SQLException e) {
             System.err.println("[ERROR] Error obteniendo producto por ID: " + e.getMessage());
-            e.printStackTrace();
+        }
+        for (Producto p : obtenerProductosSemilla()) {
+            if (String.valueOf(idProducto).equals(p.getId())) {
+                return p;
+            }
         }
         return null;
     }
@@ -79,7 +123,9 @@ public class ProductoDAO {
             }
         } catch (SQLException e) {
             System.err.println("[ERROR] Error obteniendo todos los productos: " + e.getMessage());
-            e.printStackTrace();
+        }
+        if (productos.isEmpty()) {
+            return obtenerProductosSemilla();
         }
         return productos;
     }

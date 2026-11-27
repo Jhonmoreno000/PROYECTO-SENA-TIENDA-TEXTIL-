@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Encabezado, Portada, Carrusel, ProductosDestacados, Beneficios, PieDePagina, PaginaAnimada, SeccionInicio } from '../componentes';
+import { Encabezado, Portada, Carrusel, ProductosDestacados, Beneficios, PieDePagina, PaginaAnimada, SeccionInicio, SeccionRetazosInicio } from '../componentes';
 import { getApiUrl } from '../config';
 
 // Apartados por defecto si el backend no responde (editables desde el admin)
@@ -101,6 +101,7 @@ function Inicio() {
                             bgClass={i % 2 === 1 ? 'bg-white dark:bg-slate-900' : undefined}
                         />
                     ))}
+                    <SeccionRetazosInicio />
                     {isVisible('featured') && <ProductosDestacados />}
                     {isVisible('benefits') && <Beneficios />}
                 </PaginaAnimada>

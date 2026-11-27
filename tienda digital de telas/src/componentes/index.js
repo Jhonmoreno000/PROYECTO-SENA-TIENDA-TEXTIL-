@@ -10,6 +10,8 @@ export { default as Portada } from './Portada';
 export { default as ImageGallery } from './ImageGallery';
 export { default as ResumenPedido } from './ResumenPedido';
 export { default as TarjetaProducto } from './TarjetaProducto';
+export { default as TarjetaRetazo } from './TarjetaRetazo';
+export { default as SeccionRetazosInicio } from './SeccionRetazosInicio';
 export { default as ProductGrid } from './ProductGrid';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as QuantitySelector } from './QuantitySelector';

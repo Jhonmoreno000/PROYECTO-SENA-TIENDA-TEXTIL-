@@ -127,10 +127,21 @@ function Payment() {
     const prepararIntencionOrden = async (metodoNombre) => {
         const infoCliente = obtenerDatosCliente();
         const intencion = await crearIntencionPagoWompi({
-            items: cartItems.map((it) => ({
-                productId: it.id,
-                quantity: it.quantity || 1,
-            })),
+            items: cartItems.map((it) => {
+                const isRetazo = String(it.itemType || 'TELA').toUpperCase() === 'RETAZO';
+                return isRetazo
+                    ? {
+                        type: 'RETAZO',
+                        retazoId: Number(it.retazoId ?? String(it.id).replace('retazo-', '')),
+                        productId: Number(it.productId || 0),
+                        quantity: 1,
+                    }
+                    : {
+                        type: 'TELA',
+                        productId: Number(it.productId ?? it.id),
+                        quantity: Math.round((Number(it.quantity) || 1) * 100) / 100,
+                    };
+            }),
             customerInfo: infoCliente,
             couponCode: appliedCoupon?.code || null,
             userId: user?.id || 4,

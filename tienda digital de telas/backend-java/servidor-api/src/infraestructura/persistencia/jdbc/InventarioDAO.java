@@ -87,9 +87,229 @@ public class InventarioDAO {
     }
 
     /**
-     * Registra un nuevo lote de inventario vinculándolo con el producto correspondiente y su costo real.
+     * Descuenta metraje de forma exacta (BigDecimal) dentro de una transaccion activa:
+     * 1) Si existen rollos fisicos en `rollos_textil`, aplica algoritmo Best-Fit con bloqueo FOR UPDATE,
+     *    reclasifica automaticamente remanentes < 1.00m como retazos en la tabla `retazos` y sincroniza `productos.stock`.
+     * 2) Si el producto aun no tiene rollos fisicos registrados, descuenta `productos.stock` con precision exacta
+     *    y si el remanente cae entre 0.01m y 0.99m lo convierte en retazo y deja stock continuo en 0.
      *
-     * @param b Entidad {@link LoteInventario} con los datos del lote recibido.
+     * @return ID del rollo cortado o null si se descontó de stock global sin rollos.
+     */
+    public Integer descontarStockConRollos(Connection con, int idProducto, java.math.BigDecimal metrosSolicitados, java.math.BigDecimal precioPorMetro) throws SQLException {
+        java.math.BigDecimal metrosDec = metrosSolicitados.setScale(2, java.math.RoundingMode.HALF_UP);
+        if (metrosDec.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new dominio.excepciones.ExcepcionDominio("El metraje solicitado debe ser mayor a cero.");
+        }
+
+        // Bloquear fila del producto
+        java.math.BigDecimal stockGlobalActual;
+        String nombreTela;
+        java.math.BigDecimal precioBd;
+        try (PreparedStatement pstProd = con.prepareStatement("SELECT nombre, stock, precio FROM productos WHERE id = ? FOR UPDATE")) {
+            pstProd.setInt(1, idProducto);
+            try (ResultSet rsP = pstProd.executeQuery()) {
+                if (!rsP.next()) {
+                    throw new dominio.excepciones.ExcepcionDominio("El producto con ID " + idProducto + " no existe.");
+                }
+                nombreTela = rsP.getString("nombre");
+                stockGlobalActual = rsP.getBigDecimal("stock") != null ? rsP.getBigDecimal("stock") : java.math.BigDecimal.ZERO;
+                precioBd = rsP.getBigDecimal("precio") != null ? rsP.getBigDecimal("precio") : java.math.BigDecimal.ZERO;
+            }
+        }
+        java.math.BigDecimal precioEfectivo = (precioPorMetro != null && precioPorMetro.compareTo(java.math.BigDecimal.ZERO) > 0) ? precioPorMetro : precioBd;
+
+        // Buscar rollos disponibles del producto con bloqueo pesimista
+        List<RolloTextil> rollos = new ArrayList<>();
+        String sqlRollos = "SELECT r.*, ? AS nombre_producto FROM rollos_textil r WHERE r.producto_id = ? AND LOWER(r.estado) = 'disponible' ORDER BY r.id ASC FOR UPDATE";
+        try (PreparedStatement pstR = con.prepareStatement(sqlRollos)) {
+            pstR.setString(1, nombreTela);
+            pstR.setInt(2, idProducto);
+            try (ResultSet rsR = pstR.executeQuery()) {
+                while (rsR.next()) {
+                    rollos.add(mapearRollo(rsR));
+                }
+            }
+        }
+
+        if (!rollos.isEmpty()) {
+            aplicacion.servicios.ServicioCorteTextil servicioCorte = new aplicacion.servicios.ServicioCorteTextil();
+            aplicacion.servicios.ServicioCorteTextil.ResultadoValidacionCorte validacion =
+                    servicioCorte.validarMetrajeContinuoBestFit(rollos, metrosDec.doubleValue(), null);
+            if (!validacion.esValido() || validacion.getRolloAsignado() == null) {
+                throw new dominio.excepciones.ExcepcionDominio(validacion.getMensaje());
+            }
+
+            RolloTextil rolloElegido = validacion.getRolloAsignado();
+            aplicacion.servicios.ServicioCorteTextil.ResultadoProcesamientoCorte corte =
+                    servicioCorte.procesarCorteYRemanente(rolloElegido, metrosDec.doubleValue(), precioEfectivo.doubleValue());
+
+            java.math.BigDecimal remanenteDec = aplicacion.servicios.ServicioCorteTextil.redondear2(corte.getMetrajeRemanente());
+            try (PreparedStatement pstUpdRollo = con.prepareStatement("UPDATE rollos_textil SET metraje_remanente = ?, estado = ?, actualizado_en = NOW() WHERE id = ?")) {
+                pstUpdRollo.setBigDecimal(1, remanenteDec);
+                pstUpdRollo.setString(2, corte.getEstadoFinalRollo());
+                pstUpdRollo.setInt(3, rolloElegido.getId());
+                pstUpdRollo.executeUpdate();
+            }
+
+            if (corte.esRetazoLiquidado()) {
+                if (corte.getEventoMerma() != null) {
+                    agregarEventoMermaEnConexion(con, corte.getEventoMerma());
+                }
+                new RetazoDAO().crearRetazoDesdeRollo(con, rolloElegido, remanenteDec, precioEfectivo);
+            }
+
+            String sqlSyncStock = "UPDATE productos SET stock = (SELECT COALESCE(SUM(metraje_remanente), 0) FROM rollos_textil WHERE producto_id = ? AND estado = 'disponible' AND metraje_remanente >= 1.00), actualizado_en = NOW() WHERE id = ?";
+            try (PreparedStatement pstSync = con.prepareStatement(sqlSyncStock)) {
+                pstSync.setInt(1, idProducto);
+                pstSync.setInt(2, idProducto);
+                pstSync.executeUpdate();
+            }
+            return rolloElegido.getId();
+        }
+
+        // Flujo de compatibilidad cuando el producto aun no tiene rollos fisicos cargados
+        if (stockGlobalActual.compareTo(metrosDec) < 0) {
+            throw new dominio.excepciones.ExcepcionDominio(
+                    "Inventario insuficiente para la tela '" + nombreTela + "'. Disponible: "
+                            + stockGlobalActual.toPlainString() + " m, solicitado: " + metrosDec.toPlainString() + " m.");
+        }
+
+        java.math.BigDecimal nuevoStock = stockGlobalActual.subtract(metrosDec).setScale(2, java.math.RoundingMode.HALF_UP);
+        java.math.BigDecimal stockVendible = nuevoStock;
+        if (nuevoStock.compareTo(java.math.BigDecimal.ZERO) > 0 && nuevoStock.compareTo(java.math.BigDecimal.ONE) < 0) {
+            // El remanente sub-metro (< 1.00m) no puede quedar como metraje continuo: se convierte en retazo
+            RolloTextil rolloVirtual = new RolloTextil(0, idProducto, "STOCK-" + idProducto, stockGlobalActual.doubleValue(), nuevoStock.doubleValue(), "SIN-LOTE", "retazo_liquidado");
+            new RetazoDAO().crearRetazoDesdeRollo(con, rolloVirtual, nuevoStock, precioEfectivo);
+            stockVendible = java.math.BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+
+        try (PreparedStatement pstUpdStock = con.prepareStatement("UPDATE productos SET stock = ?, actualizado_en = NOW() WHERE id = ?")) {
+            pstUpdStock.setBigDecimal(1, stockVendible);
+            pstUpdStock.setInt(2, idProducto);
+            pstUpdStock.executeUpdate();
+        }
+        return null;
+    }
+
+    /**
+     * Valida en tiempo real la disponibilidad de una lista hibrida de articulos (telas por metro y retazos unicos).
+     */
+    public Map<String, Object> validarDisponibilidadArticulos(List<Map<String, Object>> articulos) {
+        Map<String, Object> resultado = new LinkedHashMap<>();
+        List<String> errores = new ArrayList<>();
+        List<Map<String, Object>> detalles = new ArrayList<>();
+        aplicacion.servicios.ServicioCorteTextil servicioCorte = new aplicacion.servicios.ServicioCorteTextil();
+
+        if (articulos == null || articulos.isEmpty()) {
+            resultado.put("available", false);
+            errores.add("El carrito esta vacio.");
+            resultado.put("errors", errores);
+            resultado.put("details", detalles);
+            return resultado;
+        }
+
+        try (Connection con = Conexion.obtenerConexion()) {
+            for (Map<String, Object> art : articulos) {
+                String tipo = art.get("type") != null ? String.valueOf(art.get("type"))
+                        : (art.get("itemType") != null ? String.valueOf(art.get("itemType")) : "TELA");
+                Map<String, Object> det = new LinkedHashMap<>();
+                det.put("type", tipo.toUpperCase());
+
+                if ("RETAZO".equalsIgnoreCase(tipo)) {
+                    Object idObj = art.getOrDefault("retazoId", art.getOrDefault("id", art.get("productId")));
+                    int retazoId = idObj instanceof Number ? ((Number) idObj).intValue() : Integer.parseInt(String.valueOf(idObj));
+                    det.put("retazoId", retazoId);
+                    try (PreparedStatement pst = con.prepareStatement("SELECT r.codigo_retazo, r.estado, p.nombre FROM retazos r JOIN productos p ON r.producto_id = p.id WHERE r.id = ?")) {
+                        pst.setInt(1, retazoId);
+                        try (ResultSet rs = pst.executeQuery()) {
+                            if (!rs.next()) {
+                                det.put("ok", false);
+                                String msg = "El retazo #" + retazoId + " ya no existe.";
+                                det.put("message", msg);
+                                errores.add(msg);
+                            } else if (!"DISPONIBLE".equalsIgnoreCase(rs.getString("estado"))) {
+                                det.put("ok", false);
+                                String msg = "El retazo de " + rs.getString("nombre") + " (" + rs.getString("codigo_retazo") + ") ya fue reservado o vendido.";
+                                det.put("message", msg);
+                                errores.add(msg);
+                            } else {
+                                det.put("ok", true);
+                                det.put("availableStock", 1);
+                            }
+                        }
+                    }
+                } else {
+                    Object idObj = art.getOrDefault("productId", art.get("id"));
+                    Object qtyObj = art.getOrDefault("quantity", art.get("cantidad"));
+                    int prodId = idObj instanceof Number ? ((Number) idObj).intValue() : Integer.parseInt(String.valueOf(idObj));
+                    double metros = qtyObj instanceof Number ? ((Number) qtyObj).doubleValue() : Double.parseDouble(String.valueOf(qtyObj));
+                    det.put("productId", prodId);
+                    det.put("requestedMeters", metros);
+
+                    try (PreparedStatement pst = con.prepareStatement("SELECT nombre, stock, activo FROM productos WHERE id = ?")) {
+                        pst.setInt(1, prodId);
+                        try (ResultSet rs = pst.executeQuery()) {
+                            if (!rs.next() || !rs.getBoolean("activo")) {
+                                det.put("ok", false);
+                                String msg = "La tela #" + prodId + " no esta disponible.";
+                                det.put("message", msg);
+                                errores.add(msg);
+                            } else {
+                                String nombre = rs.getString("nombre");
+                                double stockGlobal = rs.getBigDecimal("stock").doubleValue();
+                                List<RolloTextil> rollos = obtenerRollosPorProducto(prodId);
+                                List<RolloTextil> disponibles = new ArrayList<>();
+                                for (RolloTextil r : rollos) {
+                                    if ("disponible".equalsIgnoreCase(r.getEstado())) disponibles.add(r);
+                                }
+                                if (!disponibles.isEmpty()) {
+                                    var val = servicioCorte.validarMetrajeContinuoBestFit(disponibles, metros, null);
+                                    det.put("ok", val.esValido());
+                                    det.put("availableStock", val.getMetrajeTotalLote());
+                                    if (!val.esValido()) {
+                                        det.put("code", val.getCodigo());
+                                        det.put("message", nombre + ": " + val.getMensaje());
+                                        errores.add(nombre + ": " + val.getMensaje());
+                                    }
+                                } else {
+                                    boolean ok = stockGlobal >= metros && stockGlobal >= 0.5;
+                                    det.put("ok", ok);
+                                    det.put("availableStock", stockGlobal);
+                                    if (!ok) {
+                                        String msg = "Stock insuficiente para '" + nombre + "' (disponible: " + stockGlobal + " m, solicitado: " + metros + " m).";
+                                        det.put("message", msg);
+                                        errores.add(msg);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                detalles.add(det);
+            }
+        } catch (SQLException e) {
+            detalles.clear();
+            errores.clear();
+            for (Map<String, Object> art : articulos) {
+                Map<String, Object> det = new LinkedHashMap<>();
+                String tipo = art.get("type") != null ? String.valueOf(art.get("type")) : "TELA";
+                det.put("type", tipo.toUpperCase());
+                det.put("ok", true);
+                det.put("resilientFallback", true);
+                detalles.add(det);
+            }
+        } catch (Exception e) {
+            errores.add("Error validando disponibilidad: " + e.getMessage());
+        }
+
+        resultado.put("available", errores.isEmpty());
+        resultado.put("errors", errores);
+        resultado.put("details", detalles);
+        return resultado;
+    }
+
+    /**
+     * Registra un nuevo lote de inventario vinculándolo con el producto correspondiente y su costo real.
      * @return `true` si el lote fue insertado exitosamente; `false` en caso de error.
      */
     public boolean agregarLote(LoteInventario b) {
@@ -310,7 +530,7 @@ public class InventarioDAO {
             con.setAutoCommit(false);
             try {
                 try (PreparedStatement pst = con.prepareStatement(sqlRollo)) {
-                    pst.setDouble(1, rollo.getMetrajeRemanente());
+                    pst.setBigDecimal(1, aplicacion.servicios.ServicioCorteTextil.redondear2(rollo.getMetrajeRemanente()));
                     pst.setString(2, rollo.getEstado());
                     pst.setInt(3, rollo.getId());
                     pst.executeUpdate();
@@ -319,8 +539,18 @@ public class InventarioDAO {
                     mermaOpcional.setIdProducto(rollo.getProductoId());
                     agregarEventoMermaEnConexion(con, mermaOpcional);
                 }
-                // Sincronizar productos.stock con SUM(metraje_remanente) de rollos disponibles
-                String sqlSyncStock = "UPDATE productos SET stock = (SELECT COALESCE(SUM(metraje_remanente), 0) FROM rollos_textil WHERE producto_id = ? AND estado = 'disponible'), actualizado_en = NOW() WHERE id = ?";
+                if ("retazo_liquidado".equalsIgnoreCase(rollo.getEstado())
+                        && rollo.getMetrajeRemanente() > 0.0
+                        && rollo.getMetrajeRemanente() < aplicacion.servicios.ServicioCorteTextil.UMBRAL_RETAZO_METROS) {
+                    new RetazoDAO().crearRetazoDesdeRollo(
+                            con,
+                            rollo,
+                            aplicacion.servicios.ServicioCorteTextil.redondear2(rollo.getMetrajeRemanente()),
+                            null
+                    );
+                }
+                // Sincronizar productos.stock con SUM(metraje_remanente) de rollos disponibles vendibles (>= 1.00m)
+                String sqlSyncStock = "UPDATE productos SET stock = (SELECT COALESCE(SUM(metraje_remanente), 0) FROM rollos_textil WHERE producto_id = ? AND estado = 'disponible' AND metraje_remanente >= 1.00), actualizado_en = NOW() WHERE id = ?";
                 try (PreparedStatement pstStock = con.prepareStatement(sqlSyncStock)) {
                     pstStock.setInt(1, rollo.getProductoId());
                     pstStock.setInt(2, rollo.getProductoId());

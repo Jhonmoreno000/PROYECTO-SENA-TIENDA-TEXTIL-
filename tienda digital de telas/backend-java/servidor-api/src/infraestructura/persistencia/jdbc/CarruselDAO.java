@@ -22,6 +22,14 @@ public class CarruselDAO {
      */
     public CarruselDAO() {}
 
+    private static List<DiapositivaCarrusel> obtenerDiapositivasPorDefecto() {
+        List<DiapositivaCarrusel> lista = new ArrayList<>();
+        lista.add(new DiapositivaCarrusel("Nueva Colección 2026", "Tendencias exclusivas en telas premium", "/images/carousel-nueva-coleccion.webp", "Ver Más", "nuevas", true, 1));
+        lista.add(new DiapositivaCarrusel("Telas Exclusivas", "Diseños únicos para proyectos especiales", "/images/carousel-telas-exclusivas.webp", "Explorar", "exclusivas", true, 2));
+        lista.add(new DiapositivaCarrusel("Ofertas Especiales", "Descuentos increíbles en telas seleccionadas", "/images/carousel-ofertas-especiales.webp", "Ver Ofertas", "ofertas", true, 3));
+        return lista;
+    }
+
     /**
      * Recupera las diapositivas activas ordenadas por su posición ascendente.
      *
@@ -39,7 +47,10 @@ public class CarruselDAO {
                 diapositivas.add(mapearFila(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[CARRUSEL] Error cargando diapositivas desde BD: " + e.getMessage());
+        }
+        if (diapositivas.isEmpty()) {
+            return obtenerDiapositivasPorDefecto();
         }
         return diapositivas;
     }
@@ -61,7 +72,10 @@ public class CarruselDAO {
                 diapositivas.add(mapearFila(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[CARRUSEL] Error cargando todas las diapositivas desde BD: " + e.getMessage());
+        }
+        if (diapositivas.isEmpty()) {
+            return obtenerDiapositivasPorDefecto();
         }
         return diapositivas;
     }

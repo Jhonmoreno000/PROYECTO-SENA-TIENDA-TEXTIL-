@@ -5,7 +5,7 @@ import { useGSAP } from '@gsap/react';
 import {
     ShoppingBag, Trash2, Plus, Minus,
     Tag, X as XIcon, ArrowRight, ArrowLeft,
-    Truck, ShieldCheck, RefreshCw, ImageOff
+    Truck, ShieldCheck, RefreshCw, ImageOff, Scissors, Ruler, AlertTriangle
 } from 'lucide-react';
 import PaginaAnimada from '../componentes/PaginaAnimada';
 import Encabezado from '../componentes/Encabezado';
@@ -21,6 +21,9 @@ import { staggerItems, EASES, microPress, microRelease } from '../utilidades/ani
 function CartRow({ item, onRemove, onQuantity }) {
     const imageUrl = Array.isArray(item.images) && item.images[0] ? item.images[0] : null;
     const rowRef = useRef(null);
+    const isRetazo = String(item.itemType || 'TELA').toUpperCase() === 'RETAZO';
+    const qtyRounded = Math.round((Number(item.quantity) || 0) * 100) / 100;
+    const qtyLabel = qtyRounded % 1 === 0 ? String(qtyRounded) : String(qtyRounded).replace('.', ',');
 
     return (
         <div
@@ -47,9 +50,21 @@ function CartRow({ item, onRemove, onQuantity }) {
             <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                        <h3 className="font-bold text-base md:text-lg leading-tight truncate">{item.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-base md:text-lg leading-tight truncate">{item.name}</h3>
+                            {isRetazo && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                    <Scissors className="w-3 h-3" /> Pieza única
+                                </span>
+                            )}
+                        </div>
                         <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-0.5">{item.category}</p>
-                        {item.material && (
+                        {isRetazo && item.dimensions && (
+                            <p className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-primary-400 mt-1">
+                                <Ruler className="w-3.5 h-3.5" /> Medida fija: {item.dimensions}
+                            </p>
+                        )}
+                        {!isRetazo && item.material && (
                             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">{item.material}</p>
                         )}
                     </div>
@@ -64,29 +79,36 @@ function CartRow({ item, onRemove, onQuantity }) {
 
                 {/* Cantidad + precio en una fila */}
                 <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
-                    {/* Selector +/- */}
-                    <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-xl p-1">
-                        <button
-                            onClick={() => onQuantity(item.id, (Number(item.quantity) || 0) - 1)}
-                            disabled={item.quantity <= 1}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
-                        >
-                            <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center font-bold text-sm tabular-nums">{item.quantity}</span>
-                        <button
-                            onClick={() => onQuantity(item.id, (Number(item.quantity) || 0) + 1)}
-                            disabled={item.quantity >= (item.stock ?? 99)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
-                        >
-                            <Plus className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {isRetazo ? (
+                        <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-slate-600">
+                            <span>Cantidad fija: 1 ud.</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-xl p-1">
+                            <button
+                                onClick={() => onQuantity(item.id, Math.round((qtyRounded - 0.25) * 100) / 100)}
+                                disabled={qtyRounded <= 0.5}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
+                                aria-label="Disminuir 0.25 metros"
+                            >
+                                <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="min-w-[3.2rem] px-1 text-center font-bold text-sm tabular-nums">{qtyLabel} m</span>
+                            <button
+                                onClick={() => onQuantity(item.id, Math.round((qtyRounded + 0.25) * 100) / 100)}
+                                disabled={qtyRounded >= (item.stock ?? 99)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-90"
+                                aria-label="Aumentar 0.25 metros"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                     <span className="text-xs text-gray-400">
-                        {formatCurrency(item.price)}/m
+                        {isRetazo ? 'Precio cerrado' : `${formatCurrency(item.price)}/m`}
                     </span>
                     <span className="font-bold text-lg text-primary-600 dark:text-primary-400 ml-auto">
-                        {formatCurrency(item.price * item.quantity)}
+                        {formatCurrency(Math.round(item.price * (isRetazo ? 1 : qtyRounded) * 100) / 100)}
                     </span>
                 </div>
             </div>
@@ -99,7 +121,7 @@ function CartRow({ item, onRemove, onQuantity }) {
 ────────────────────────────────────────────── */
 export default function Carrito() {
     const { cartItems, updateQuantity, removeFromCart, clearCart,
-        getCartItemCount, appliedCoupon, setAppliedCoupon, getOrderCalculations } = useCarrito();
+        getCartItemCount, appliedCoupon, setAppliedCoupon, getOrderCalculations, validateCartStock } = useCarrito();
     const { coupons, systemConfig } = useMetricas();
     const navigate = useNavigate();
     const listRef = useRef(null);
@@ -107,6 +129,23 @@ export default function Carrito() {
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setCouponError] = useState('');
+    const [stockErrors, setStockErrors] = useState([]);
+    const [validatingStock, setValidatingStock] = useState(false);
+
+    const handleProceedToCheckout = async () => {
+        setStockErrors([]);
+        setValidatingStock(true);
+        try {
+            const result = await validateCartStock();
+            if (result && result.available === false && Array.isArray(result.errors) && result.errors.length > 0) {
+                setStockErrors(result.errors);
+                return;
+            }
+            navigate('/checkout');
+        } finally {
+            setValidatingStock(false);
+        }
+    };
 
     useGSAP(() => {
         if (listRef.current) {
@@ -322,12 +361,27 @@ export default function Carrito() {
                                     </div>
                                 </div>
 
+                                {stockErrors.length > 0 && (
+                                    <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300 text-xs space-y-1">
+                                        <div className="font-bold flex items-center gap-1.5">
+                                            <AlertTriangle className="w-4 h-4 shrink-0" />
+                                            Revisa la disponibilidad antes de pagar:
+                                        </div>
+                                        <ul className="list-disc pl-5 space-y-0.5">
+                                            {stockErrors.map((err, idx) => (
+                                                <li key={idx}>{err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 {/* Botón checkout */}
                                 <button
-                                    onClick={() => navigate('/checkout')}
-                                    className="w-full btn-primary flex items-center justify-center gap-2 py-3 text-base hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                                    onClick={handleProceedToCheckout}
+                                    disabled={validatingStock}
+                                    className="w-full btn-primary flex items-center justify-center gap-2 py-3 text-base hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-60"
                                 >
-                                    Continuar a Envío y Pago
+                                    {validatingStock ? 'Verificando inventario...' : 'Continuar a Envío y Pago'}
                                     <ArrowRight className="w-5 h-5" />
                                 </button>
 

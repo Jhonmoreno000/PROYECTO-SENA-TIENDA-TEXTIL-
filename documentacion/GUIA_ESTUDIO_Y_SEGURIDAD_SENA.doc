@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Guía Maestra de Estudio y Defensa Técnica - Proyecto D&D Textil (SENA ADSO)</title>
+<style>
+  body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #222; margin: 2.5cm; }
+  h1 { color: #1e3a8a; font-size: 22pt; border-bottom: 2px solid #1e3a8a; padding-bottom: 6px; margin-top: 20px; }
+  h2 { color: #1d4ed8; font-size: 16pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-top: 18px; }
+  h3 { color: #0f766e; font-size: 13pt; margin-top: 14px; }
+  p { margin-bottom: 10px; }
+  ul, ol { margin-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 5px; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10pt; }
+  th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+  th { background-color: #f1f5f9; color: #1e293b; font-weight: bold; }
+  tr:nth-child(even) { background-color: #f8fafc; }
+  .box { background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px; margin: 14px 0; }
+  .box-alert { background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 12px; margin: 14px 0; }
+  .box-info { background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 12px; margin: 14px 0; }
+  code { font-family: 'Consolas', 'Courier New', monospace; background-color: #f1f5f9; padding: 2px 5px; border-radius: 3px; font-size: 9.5pt; color: #b91c1c; }
+  pre { font-family: 'Consolas', 'Courier New', monospace; background-color: #1e293b; color: #f8fafc; padding: 12px; border-radius: 5px; font-size: 9.5pt; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h1>Guía Maestra de Estudio y Defensa Técnica</h1>
+<p><strong>Proyecto:</strong> D&D Textil — Tienda Digital de Telas y ERP Textil<br>
+<strong>Programa:</strong> Tecnólogo en Análisis y Desarrollo de Software (SENA ADSO)<br>
+<strong>Autores:</strong> David Vélez (<code>DEIVID-HAK</code>) &amp; Jhon Moreno (<code>Jhonmoreno000</code>)<br>
+<strong>Fecha de compilación:</strong> Noviembre 2026</p>
+
+<hr>
+
+<h2>1. Resumen Ejecutivo y Arquitectura del Sistema</h2>
+<p>D&D Textil es un ecosistema que combina comercio electrónico especializado y planificación de recursos empresariales (ERP) para la venta de telas por metraje continuo en Colombia. Se construyó bajo los principios de <strong>Clean Architecture (Arquitectura Limpia)</strong> y <strong>Arquitectura Hexagonal</strong>, desacoplando completamente la lógica de negocio de la infraestructura.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Componente</th>
+      <th>Tecnología</th>
+      <th>Función y Justificación Técnica</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Backend API</strong></td>
+      <td>Java 21 LTS</td>
+      <td>Servidor HTTP embebido nativo (<code>com.sun.net.httpserver</code>). Consume menos de 60 MB de RAM y arranca en 0.8s. Sin sobrecarga de frameworks.</td>
+    </tr>
+    <tr>
+      <td><strong>Canal en Vivo</strong></td>
+      <td>WebSockets (RFC 6455)</td>
+      <td>Servidor TCP nativo en puerto 8082 para emitir eventos de stock y nuevos pedidos en tiempo real hacia los navegadores.</td>
+    </tr>
+    <tr>
+      <td><strong>Base de Datos</strong></td>
+      <td>PostgreSQL 17</td>
+      <td>Motor relacional transaccional (ACID) con bloqueos pesimistas (<code>SELECT ... FOR UPDATE</code>) para evitar sobreventa de telas.</td>
+    </tr>
+    <tr>
+      <td><strong>Frontend</strong></td>
+      <td>React 18 + Vite</td>
+      <td>Single Page Application (SPA) con Tailwind CSS, animaciones micro-interactivas con GSAP y contextos modulares de estado.</td>
+    </tr>
+    <tr>
+      <td><strong>Contenedores</strong></td>
+      <td>Docker &amp; Docker Compose</td>
+      <td>Multi-stage builds para backend y frontend con redes virtuales aisladas (<code>backend-net</code> y <code>frontend-net</code>).</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>2. Capas de Seguridad en Profundidad (Defense in Depth)</h2>
+<p>La seguridad del proyecto no depende de una sola barrera, sino de cuatro capas concéntricas que protegen la información sensible y neutralizan las vulnerabilidades del <strong>OWASP Top 10</strong>:</p>
+
+<div class="box-info">
+  <strong>Esquema de las 4 Capas de Seguridad:</strong><br>
+  <strong>Capa 1: Red y Perímetro</strong> &rarr; CORS estricto, Cabeceras HTTP de protección y redes Docker aisladas.<br>
+  <strong>Capa 2: Aplicación y Autenticación</strong> &rarr; PBKDF2 con sal, Tokens de sesión HMAC, RBAC y Anti-Fuerza Bruta.<br>
+  <strong>Capa 3: Datos y Persistencia</strong> &rarr; PreparedStatements (cero SQLi), Bloqueo pesimista y Anti-Path Traversal.<br>
+  <strong>Capa 4: Cumplimiento y Normativa</strong> &rarr; PCI-DSS (tokenización de tarjetas con Wompi) y Habeas Data (Ley 1581).
+</div>
+
+<h3>2.1. Capa 1: Seguridad de Red y Perímetro</h3>
+<ul>
+  <li><strong>CORS Estricto (Cross-Origin Resource Sharing):</strong> En <code>ManejadorBase.java</code> se filtran los orígenes permitidos mediante la variable <code>CORS_ALLOWED_ORIGIN</code>, evitando que sitios web de terceros puedan leer las respuestas de la API.</li>
+  <li><strong>Cabeceras de Seguridad del Navegador:</strong>
+    <ul>
+      <li><code>X-Content-Type-Options: nosniff</code>: Impide la ejecución de scripts camuflados en imágenes o archivos estáticos (MIME Sniffing).</li>
+      <li><code>X-Frame-Options: DENY</code>: Evita que la plataforma sea embebida dentro de iframes maliciosos (protección contra <strong>Clickjacking</strong>).</li>
+    </ul>
+  </li>
+  <li><strong>Aislamiento de Redes en Docker:</strong> El servicio de base de datos vive exclusivamente en la red interna <code>backend-net</code>. El frontend nunca tiene acceso directo por socket al puerto 5432 de PostgreSQL.</li>
+</ul>
+
+<h3>2.2. Capa 2: Autenticación, Criptografía y Control de Acceso (RBAC)</h3>
+<ul>
+  <li><strong>Criptografía de Contraseñas (PBKDF2):</strong>
+    <p>Ubicación: <code>ServicioAutenticacion.java</code>. Se utiliza el algoritmo <strong>PBKDF2WithHmacSHA256</strong> con sal criptográfica individual aleatoria generada mediante <code>SecureRandom</code>. Las miles de iteraciones intencionadas neutralizan ataques de diccionario y tablas arcoíris (Rainbow Tables). <strong>Bajo ninguna circunstancia se guardan contraseñas en texto claro.</strong></p>
+  </li>
+  <li><strong>Tokens de Sesión Criptográficos sin Estado:</strong>
+    <p>Ubicación: <code>TokenSesion.java</code>. Los tokens se firman con HMAC-SHA256 y la clave <code>SESSION_SECRET</code>. Si un atacante altera el payload (por ejemplo, cambia su rol de "cliente" a "administrador"), la firma queda invalidada y el backend responde de inmediato con <code>401 Unauthorized</code>.</p>
+  </li>
+  <li><strong>Control de Acceso Basado en Roles (RBAC):</strong>
+    <p>Existen tres roles: <code>CLIENTE</code>, <code>VENDEDOR</code> y <code>ADMINISTRADOR</code>.</p>
+    <ul>
+      <li><em>Clientes:</em> Pueden navegar el catálogo, gestionar su carrito y pagar sus pedidos.</li>
+      <li><em>Vendedores:</em> Pueden gestionar su stock y visualizar métricas de sus propias telas.</li>
+      <li><em>Administrador:</em> Único rol con autorización para activar o modificar el estado de ofertas (<code>isOffer</code>) y administrar usuarios.</li>
+    </ul>
+  </li>
+  <li><strong>Protección contra Fuerza Bruta (Rate Limiting):</strong>
+    <p>Ubicación: <code>ProtectorFuerzaBruta.java</code>. Si se registran 5 intentos de inicio de sesión fallidos consecutivos para una misma cuenta o IP, se bloquea temporalmente el acceso con penalización exponencial de tiempo.</p>
+  </li>
+</ul>
+
+<h3>2.3. Capa 3: Persistencia Segura y Concurrencia</h3>
+<ul>
+  <li><strong>Prevención Absoluta de Inyección SQL (SQLi):</strong>
+    <p>En todas las clases DAO (<code>ProductoDAO</code>, <code>PedidoDAO</code>, <code>UsuarioDAO</code>), las consultas se realizan <strong>únicamente</strong> mediante <code>PreparedStatement</code> con parámetros parametrizados (<code>?</code>). No existe concatenación de variables en sentencias SQL.</p>
+  </li>
+  <li><strong>Prevención de Path Traversal (Directory Traversal):</strong>
+    <p>En <code>ManejadorArchivosEstaticos.java</code> se sanea toda ruta solicitada mediante <code>File.getCanonicalPath()</code>. Se bloquean accesos que contengan <code>../</code> o rutas del sistema (como <code>/etc/passwd</code> o <code>C:\Windows</code>), limitando el servicio estrictamente a la carpeta autorizada <code>uploads/</code>.</p>
+  </li>
+  <li><strong>Control de Concurrencia y Sobreventa:</strong>
+    <p>En ventas simultáneas sobre rollos con stock limitado, el backend ejecuta un bloqueo pesimista en PostgreSQL:</p>
+    <pre>SELECT existencias FROM productos WHERE id = ? FOR UPDATE;</pre>
+    <p>Esto asegura que dos clientes no compren los mismos metros de tela a la vez.</p>
+  </li>
+</ul>
+
+<h3>2.4. Capa 4: Pagos (PCI-DSS) y Privacidad (Habeas Data)</h3>
+<ul>
+  <li><strong>Cumplimiento PCI-DSS mediante Tokenización (Wompi):</strong>
+    <p>Los datos sensibles de tarjetas (PAN de 16 dígitos, fecha de expiración y código CVV) viajan directamente desde el navegador del cliente a los servidores de Bancolombia/Wompi. <strong>D&D Textil nunca almacena ni toca números de tarjeta de crédito</strong>, alcanzando el estándar de cumplimiento PCI-DSS SAQ A.</p>
+  </li>
+  <li><strong>Firma Criptográfica de Webhooks:</strong>
+    <p>Las confirmaciones de pago enviadas por Wompi se validan calculando un hash SHA-256 con el secreto compartido (<code>WOMPI_INTEGRITY_SECRET</code>). Si la firma no coincide, la orden no se procesa.</p>
+  </li>
+  <li><strong>Habeas Data (Ley 1581 de 2012 de Colombia):</strong>
+    <p>Consentimiento informado y explícito en el registro para el tratamiento ético de datos personales.</p>
+  </li>
+</ul>
+
+<hr>
+
+<h2>3. Reglas de Negocio del Sector Textil</h2>
+<p>El proyecto no es una simple tienda genérica; implementa la lógica real de una distribuidora de telas:</p>
+<ul>
+  <li><strong>Metraje Continuo (Anti-Empates):</strong> Si un confeccionista pide 12 metros de tela para un vestido o cortina, el sistema exige que salgan de un solo rollo continuo, rechazando la fragmentación (evita entregar retazos unidos que dañen la prenda).</li>
+  <li><strong>Lotes de Tintorería (Lot Drift):</strong> Cada partida de tela tiene un código de lote. Dos rollos de la misma tela con lotes diferentes pueden presentar variaciones tonales; el sistema evita mezclar lotes en un mismo pedido.</li>
+  <li><strong>Control de Mermas y Retazos:</strong> Si tras cortar un pedido queda un remanente menor a 1.0 metro (sub-metro), se reclasifica automáticamente como <em>Retazo Liquidado</em> para manualidades.</li>
+  <li><strong>Tarifas Escalonadas:</strong>
+    <ul>
+      <li>Detal (&lt; 15 m): Precio completo (0% descuento).</li>
+      <li>Mayorista (15 a 49.9 m): 15% de descuento automático.</li>
+      <li>Rollo Cerrado (&ge; 50 m): 25% de descuento automático.</li>
+    </ul>
+  </li>
+  <li><strong>Alertas de Stock Crítico:</strong> Disparo automático de correo SMTP al responsable de bodega cuando el metraje baja de 20 metros.</li>
+</ul>
+
+<hr>
+
+<h2>4. Comunicación en Tiempo Real: WebSockets RFC 6455</h2>
+<p>Para complementar la API REST tradicional, se diseñó un canal en vivo con el protocolo estándar RFC 6455:</p>
+<ul>
+  <li><strong>Servidor (Java 21):</strong> <code>ServidorWebSocket.java</code> escucha en el puerto 8082, realiza el handshake HTTP 101 calculando el <code>Sec-WebSocket-Accept</code> con SHA-1 y Base64, y gestiona las conexiones en un hilo secundario sin afectar la API principal.</li>
+  <li><strong>Cliente (React 18):</strong> <code>servicioWebSocket.js</code> mantiene la conexión viva con reconexión automática defensiva (backoff exponencial).</li>
+  <li><strong>Beneficio:</strong> Cuando bodega actualiza existencias o se confirma un pedido, la pantalla del cliente se actualiza al segundo <strong>sin tener que presionar F5 ni hacer peticiones repetitivas al servidor</strong>.</li>
+  <li><strong>Degradación Suave:</strong> Si el socket está cerrado o bloqueado por un firewall corporativo, la tienda sigue funcionando con total normalidad a través de peticiones HTTP REST.</li>
+</ul>
+
+<hr>
+
+<h2>5. Aseguramiento de Calidad y Pruebas Automatizadas</h2>
+<ul>
+  <li><strong>Frontend (46 Pruebas Aprobadas):</strong> Formateo de pesos colombianos COP, cálculo matemático de dobladillos y encogimiento en cortinas, conversión a centavos Wompi y validación de expiración de tokens.</li>
+  <li><strong>Backend Java (5 Suites Automatizadas):</strong>
+    <ol>
+      <li><code>PruebasReglasNegocioTextil</code>: Validación de metraje continuo, lotes, mermas y tarifas.</li>
+      <li><code>PruebasSeguridadIntegridad</code>: Validación de PBKDF2, tokens HMAC, bloqueo de fuerza bruta y anti-SQLi.</li>
+      <li><code>PruebasConcurrenciaYPagos</code>: Simulación de compras simultáneas y bloqueos pesimistas.</li>
+      <li><code>PruebasContratoApi</code>: Conformidad de modelos JSON con especificación OpenAPI v3.0 y generación de facturas en PDF.</li>
+      <li><code>PruebasWebSocket</code>: Handshake RFC 6455, empaque de tramas y serialización de eventos.</li>
+    </ol>
+  </li>
+  <li><strong>CI/CD (GitHub Actions):</strong> Flujo automatizado multi-etapa que compila React, compila Java 21, ejecuta todas las pruebas y construye las imágenes de Docker en cada Pull Request.</li>
+</ul>
+
+<hr>
+
+<h2>6. Simulador de Preguntas y Respuestas para la Sustentación</h2>
+
+<div class="box">
+  <strong>Pregunta 1: ¿Por qué eligieron un servidor Java nativo en lugar de Spring Boot?</strong><br>
+  <em>Respuesta:</em> Elegimos <code>com.sun.net.httpserver</code> nativo de Java 21 por eficiencia y ligereza. Nuestra API consume menos de 60 MB de RAM y arranca en 0.8 segundos (frente a los más de 400 MB y 15 segundos que requiere Spring Boot). Además, nos permitió dominar desde cero el protocolo HTTP, encabezados CORS, concurrencia por hilos y seguridad sin abstracciones innecesarias.
+</div>
+
+<div class="box">
+  <strong>Pregunta 2: ¿Cómo evitan que un atacante suplante la identidad o cambie su rol en el sistema?</strong><br>
+  <em>Respuesta:</em> Empleamos tokens firmados criptográficamente con HMAC-SHA256 y un secreto en servidor (<code>SESSION_SECRET</code>). El token viaja en la cabecera <code>Authorization: Bearer</code>. Si un usuario intenta modificar su identificador o su rol dentro del payload, la firma se corrompe y el servidor rechaza la petición con código 401 Unauthorized.
+</div>
+
+<div class="box">
+  <strong>Pregunta 3: ¿Cómo protegen las tarjetas de crédito de los clientes (PCI-DSS)?</strong><br>
+  <em>Respuesta:</em> Aplicamos tokenización con la pasarela oficial Wompi (Bancolombia). El número de tarjeta, la fecha de vencimiento y el CVV se envían directamente desde el navegador del cliente a Wompi. D&D Textil nunca guarda ni procesa datos bancarios en sus servidores, cumpliendo plenamente con el estándar PCI-DSS.
+</div>
+
+<div class="box">
+  <strong>Pregunta 4: ¿Cómo resuelven la sobreventa si dos personas compran la misma tela a la vez?</strong><br>
+  <em>Respuesta:</em> Aplicamos bloqueo pesimista mediante <code>SELECT ... FOR UPDATE</code> dentro de una transacción en PostgreSQL. La primera compra bloquea la fila del rollo en la base de datos hasta descontar el metraje; la segunda compra espera en cola y, cuando el bloqueo se libera, valida si queda metraje suficiente antes de confirmar la transacción.
+</div>
+
+<div class="box">
+  <strong>Pregunta 5: ¿Por qué es importante el concepto de "Lotes de Tintorería" en el software?</strong><br>
+  <em>Respuesta:</em> En la industria textil real, teñir tela en diferentes tandas produce ligeras variaciones de color llamadas <em>Lot Drift</em>. Si un cliente compra tela para un juego de cortinas o un conjunto de prendas, el sistema garantiza que todos los metros provengan del mismo lote de producción para evitar diferencias visuales en la confección final.
+</div>
+
+<hr>
+<p style="text-align: center; color: #64748b; font-size: 9pt;">Documento técnico de apoyo académico para sustentación presencial o virtual — SENA ADSO 2026</p>
+
+</body>
+</html>
+

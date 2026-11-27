@@ -249,3 +249,4 @@ Prepárate con estas respuestas técnicas para defender el proyecto con segurida
 2. **Muestra la solidez técnica:** Habla de Java 21 LTS, PostgreSQL 17, Clean Architecture, PBKDF2 y PreparedStatements.
 3. **Menciona las pruebas automatizadas:** Recalca que el proyecto cuenta con más de 50 pruebas automatizadas y un pipeline de CI/CD que corre en cada commit.
 4. **Demuestra pasión y dominio:** Conoces cada línea, cada tabla de la base de datos y cada capa de seguridad. ¡Tienes un proyecto de nivel profesional!
+

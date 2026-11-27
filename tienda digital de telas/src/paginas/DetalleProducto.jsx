@@ -149,16 +149,19 @@ function DetalleProducto() {
     const discountPercent = discountInfo?.percent || (isOffer ? (product?.discountPercent || 15) : 0);
     const hasDiscount = (discountInfo?.active && discountInfo?.percent > 0) || (isOffer && discountPercent > 0);
     const discountedPrice = hasDiscount ? product.price * (1 - discountPercent / 100) : product.price;
-    const isOutOfStock = (product.stock ?? 0) <= 0;
+    const isOutOfStock = (product.stock ?? 0) < 1.0;
 
-    // Total de metros = metros por corte × cantidad de cortes
+    // Total de metros = metros por corte × cantidad de cortes (exacto a 2 decimales)
     const totalMeters = Math.round(metersPerCut * cuts * 100) / 100;
     // Máximo de cortes permitidos para no superar el stock disponible
-    const maxCuts = isOutOfStock ? 1 : Math.max(1, Math.floor(product.stock / metersPerCut));
-    // Etiqueta legible del total (3,5 en vez de 3.5)
-    const totalMetersLabel = totalMeters % 1 === 0
-        ? String(totalMeters)
-        : totalMeters.toFixed(1).replace('.', ',');
+    const maxCuts = isOutOfStock ? 1 : Math.max(1, Math.floor((product.stock ?? 0) / metersPerCut));
+    // Etiqueta legible del total (1,25 o 3,5 o 2 sin truncar centésimas)
+    const formatMeters = (val) => {
+        const rounded = Math.round((Number(val) || 0) * 100) / 100;
+        if (rounded % 1 === 0) return String(rounded);
+        return String(rounded).replace('.', ',');
+    };
+    const totalMetersLabel = formatMeters(totalMeters);
 
     // Productos relacionados: misma categoría, máximo 4, excluyendo el actual
     const relatedProducts = products
@@ -393,7 +396,7 @@ function DetalleProducto() {
                                             setQuantity={handleMetersChange}
                                             max={product.stock}
                                             min={0.5}
-                                            step={0.5}
+                                            step={0.25}
                                         />
                                     </div>
                                     <div>
@@ -411,7 +414,7 @@ function DetalleProducto() {
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 bg-primary-50/70 dark:bg-slate-800/80 border border-primary-200/50 dark:border-slate-700/80 rounded-xl">
                                     <div className="text-sm text-slate-700 dark:text-slate-200 font-medium">
                                         Total: <span className="font-black text-slate-900 dark:text-white">{totalMetersLabel} metros</span>
-                                        <span className="text-slate-500 dark:text-slate-400 font-normal"> · {cuts} corte{cuts > 1 ? 's' : ''} de {metersPerCut % 1 === 0 ? metersPerCut : metersPerCut.toFixed(1).replace('.', ',')} m</span>
+                                        <span className="text-slate-500 dark:text-slate-400 font-normal"> · {cuts} corte{cuts > 1 ? 's' : ''} de {formatMeters(metersPerCut)} m</span>
                                     </div>
                                     <div className="font-black text-xl text-primary-600 dark:text-primary-400">
                                         {formatCurrency(discountedPrice * totalMeters)}

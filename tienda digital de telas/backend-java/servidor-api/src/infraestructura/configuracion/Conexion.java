@@ -68,6 +68,12 @@ public final class Conexion {
     /** Bandera de control para apagado ordenado del pool. */
     private static final AtomicBoolean EN_APAGADO = new AtomicBoolean(false);
 
+    /** Marca temporal del último intento fallido de conexión física a PostgreSQL (Circuit Breaker / Fast-Fail). */
+    private static volatile long ultimoFalloConexionMs = 0;
+
+    /** Tiempo de enfriamiento en ms para evitar bloqueos por timeout TCP continuo si la BD está offline. */
+    private static final long COOLDOWN_FALLO_MS = 15000L;
+
     /**
      * Envoltura interna para rastrear marcas temporales de uso y validación física.
      */
@@ -84,6 +90,7 @@ public final class Conexion {
     static {
         try {
             Class.forName("org.postgresql.Driver");
+            DriverManager.setLoginTimeout(2);
         } catch (ClassNotFoundException e) {
             System.err.println("[ERROR CRÍTICO] No se encontró el driver JDBC de PostgreSQL.");
             e.printStackTrace();
@@ -123,6 +130,12 @@ public final class Conexion {
             throw new SQLException("El pool de conexiones de base de datos ha sido cerrado.");
         }
 
+        // Fast-fail si la BD acaba de fallar y no hay conexiones calientes
+        long ahora = System.currentTimeMillis();
+        if (ahora - ultimoFalloConexionMs < COOLDOWN_FALLO_MS && POOL_CONEXIONES.isEmpty() && CONEXIONES_TOTALES.get() == 0) {
+            throw new SQLException("Base de datos no disponible temporalmente.");
+        }
+
         long tiempoLimite = System.currentTimeMillis() + TIMEOUT_CONEXION_MS;
 
         while (System.currentTimeMillis() < tiempoLimite) {
@@ -145,8 +158,10 @@ public final class Conexion {
                         Connection nuevaFisica = DriverManager.getConnection(URL_BD, USUARIO_BD, CONTRASENA_BD);
                         EntradaConexion nuevaEntrada = new EntradaConexion(nuevaFisica);
                         restablecerEstadoConexion(nuevaFisica);
+                        ultimoFalloConexionMs = 0;
                         return envolverConexionEnProxy(nuevaEntrada);
                     } catch (SQLException e) {
+                        ultimoFalloConexionMs = System.currentTimeMillis();
                         CONEXIONES_TOTALES.decrementAndGet();
                         throw e;
                     }
@@ -353,6 +368,7 @@ public final class Conexion {
                 }
             }
         } catch (SQLException e) {
+            ultimoFalloConexionMs = System.currentTimeMillis();
             // Si PostgreSQL no está disponible durante el arranque local/pruebas, se registra y continúa
             System.err.println("[POOL] Advertencia: No se pudieron precalentar conexiones iniciales: " + e.getMessage());
         }
@@ -395,7 +411,11 @@ public final class Conexion {
     private static String resolverUrlBd() {
         String urlDirecta = ConfiguracionEntorno.obtener("DB_URL");
         if (urlDirecta != null && !urlDirecta.isBlank()) {
-            return urlDirecta.trim();
+            String u = urlDirecta.trim();
+            if (!u.contains("connectTimeout")) {
+                u += (u.contains("?") ? "&" : "?") + "connectTimeout=1&socketTimeout=2&loginTimeout=1";
+            }
+            return u;
         }
 
         String host = ConfiguracionEntorno.obtenerPrimera("DB_HOST", "POSTGRES_HOST");
@@ -413,7 +433,7 @@ public final class Conexion {
             baseDatos = "tienda_digital_textiles_db";
         }
 
-        return "jdbc:postgresql://" + host.trim() + ":" + puerto.trim() + "/" + baseDatos.trim();
+        return "jdbc:postgresql://" + host.trim() + ":" + puerto.trim() + "/" + baseDatos.trim() + "?connectTimeout=1&socketTimeout=2&loginTimeout=1";
     }
 
     private static String resolverUsuarioBd() {

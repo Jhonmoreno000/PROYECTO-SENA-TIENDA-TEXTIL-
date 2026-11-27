@@ -9,6 +9,7 @@ import BotonWhatsAppFlotante from './componentes/common/BotonWhatsAppFlotante';
 // Páginas principales de carga inmediata (Eager)
 import Inicio from './paginas/Inicio';
 import Catalogo from './paginas/Catalogo';
+import Retazos from './paginas/Retazos';
 import DetalleProducto from './paginas/DetalleProducto';
 import Carrito from './paginas/Carrito';
 
@@ -80,6 +81,7 @@ function AppRoutes() {
                 {/* Rutas Públicas y Flujo de Compra */}
                 <Route path="/" element={<Inicio />} />
                 <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/retazos" element={<Retazos />} />
                 <Route path="/producto/:id" element={<DetalleProducto />} />
                 <Route path="/carrito" element={<Carrito />} />
                 <Route path="/favoritos" element={<Wishlist />} />

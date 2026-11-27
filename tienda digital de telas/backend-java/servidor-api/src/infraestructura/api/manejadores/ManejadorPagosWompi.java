@@ -167,12 +167,36 @@ public class ManejadorPagosWompi extends ManejadorBase {
         for (JsonElement el : itemsArray) {
             if (el.isJsonObject()) {
                 JsonObject itemObj = el.getAsJsonObject();
-                int prodId = itemObj.has("productId") ? itemObj.get("productId").getAsInt()
-                        : (itemObj.has("id") ? itemObj.get("id").getAsInt() : itemObj.get("idProducto").getAsInt());
-                double cant = itemObj.has("quantity") ? itemObj.get("quantity").getAsDouble()
-                        : (itemObj.has("cantidad") ? itemObj.get("cantidad").getAsDouble() : 1.0);
+                String tipoItem = "TELA";
+                if (itemObj.has("type") && !itemObj.get("type").isJsonNull()) {
+                    tipoItem = itemObj.get("type").getAsString();
+                } else if (itemObj.has("itemType") && !itemObj.get("itemType").isJsonNull()) {
+                    tipoItem = itemObj.get("itemType").getAsString();
+                } else if (itemObj.has("tipoItem") && !itemObj.get("tipoItem").isJsonNull()) {
+                    tipoItem = itemObj.get("tipoItem").getAsString();
+                }
 
-                listaArticulos.add(Map.of("productId", prodId, "quantity", cant));
+                Map<String, Object> fila = new java.util.HashMap<>();
+                fila.put("type", tipoItem.toUpperCase());
+
+                if ("RETAZO".equalsIgnoreCase(tipoItem)) {
+                    int retazoId = itemObj.has("retazoId") && !itemObj.get("retazoId").isJsonNull()
+                            ? itemObj.get("retazoId").getAsInt()
+                            : (itemObj.has("id") ? itemObj.get("id").getAsInt() : 0);
+                    fila.put("retazoId", retazoId);
+                    if (itemObj.has("productId") && !itemObj.get("productId").isJsonNull()) {
+                        fila.put("productId", itemObj.get("productId").getAsInt());
+                    }
+                    fila.put("quantity", 1.0);
+                } else {
+                    int prodId = itemObj.has("productId") ? itemObj.get("productId").getAsInt()
+                            : (itemObj.has("id") ? itemObj.get("id").getAsInt() : itemObj.get("idProducto").getAsInt());
+                    double cant = itemObj.has("quantity") ? itemObj.get("quantity").getAsDouble()
+                            : (itemObj.has("cantidad") ? itemObj.get("cantidad").getAsDouble() : 1.0);
+                    fila.put("productId", prodId);
+                    fila.put("quantity", cant);
+                }
+                listaArticulos.add(fila);
             }
         }
 
