@@ -39,6 +39,10 @@ public final class TokenSesion {
         public boolean esVendedor() {
             return "vendedor".equalsIgnoreCase(rol) || "seller".equalsIgnoreCase(rol);
         }
+
+        public boolean esCliente() {
+            return "cliente".equalsIgnoreCase(rol) || "client".equalsIgnoreCase(rol);
+        }
     }
 
     public static String emitir(int idUsuario, String rol) {

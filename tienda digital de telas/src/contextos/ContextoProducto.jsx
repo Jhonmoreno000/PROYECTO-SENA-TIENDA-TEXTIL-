@@ -18,25 +18,10 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { getApiUrl, RUTAS_API } from '../config';
 import { useNotificacion } from './ContextoNotificacion';
+import { useAutenticacion } from './ContextoAutenticacion';
 import servicioWebSocket from '../servicios/servicioWebSocket';
 
 const CLAVE_CACHE_CATALOGO = 'ddtextil_catalogo_respaldo_v1';
-
-const CATALOGO_SEMILLA_RESPALDO = [
-    { id: '1', name: 'Algodón Premium', category: 'Algodon', price: 25000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Tela de algodón 100% natural, ideal para camisas y blusas.', material: 'Algodón 100%', width: '1.50m', weight: '150g/m2', care: 'Lavar en frío, no blanquear', stock: 100, featured: true, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_12_1775767112691.jpg', '/images/hero-detail-1.webp'] },
-    { id: '2', name: 'Seda Italiana', category: 'Seda', price: 85000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Seda pura con acabado brillante, perfecta para vestidos de gala.', material: 'Seda pura', width: '1.40m', weight: '80g/m2', care: 'Limpieza en seco únicamente', stock: 50, featured: true, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_16_1775766690228.webp', '/images/hero-detail-2.webp'] },
-    { id: '3', name: 'Lino Orgánico', category: 'Lino', price: 45000, sellerId: 3, sellerName: 'María González', description: 'Lino fresco y transpirable para ropa de verano.', material: 'Lino orgánico', width: '1.50m', weight: '200g/m2', care: 'No usar secadora', stock: 80, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_14_1775766898975.webp', '/images/hero-detail-3.webp'] },
-    { id: '4', name: 'Lana Merino', category: 'Lana', price: 65000, sellerId: 3, sellerName: 'María González', description: 'Lana suave y cálida, ideal para abrigos de invierno.', material: 'Lana merino', width: '1.60m', weight: '300g/m2', care: 'Lavar a mano con agua tibia', stock: 30, featured: true, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_14_1775766898975.webp', '/images/hero-detail-1.webp'] },
-    { id: '5', name: 'Dril Elástico', category: 'Algodon', price: 35000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Dril resistente con toque de elasticidad para pantalones.', material: 'Algodón/Lycra 95/5', width: '1.50m', weight: '250g/m2', care: 'Lavar a máquina en ciclo suave', stock: 120, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_10_1775767265179.jpg', '/images/hero-detail-2.webp'] },
-    { id: '6', name: 'Gasa de Seda', category: 'Seda', price: 72000, sellerId: 3, sellerName: 'María González', description: 'Gasa ligera y transparente para pañuelos y cortinas.', material: 'Seda/Poliéster', width: '1.40m', weight: '45g/m2', care: 'Lavar a mano', stock: 60, featured: true, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_16_1775766690228.webp', '/images/hero-detail-3.webp'] },
-    { id: '7', name: 'Tela Polar', category: 'Poliester', price: 22000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Tela polar suave para cobijas y chaquetas.', material: 'Poliéster 100%', width: '1.50m', weight: '280g/m2', care: 'Lavar a máquina, no planchar', stock: 150, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_15_1775767332095.jpg', '/images/hero-detail-1.webp'] },
-    { id: '8', name: 'Oxford Camisa', category: 'Algodon', price: 38000, sellerId: 3, sellerName: 'María González', description: 'Tela oxford clásica para camisas formales.', material: 'Algodón peinado', width: '1.50m', weight: '130g/m2', care: 'Planchar a temperatura media', stock: 90, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_12_1775767112691.jpg', '/images/hero-detail-2.webp'] },
-    { id: '9', name: 'Retazo Algodón', category: 'Algodon', price: 12000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Retazo de algodón premium, disponible para proyectos pequeños.', material: 'Algodón', width: '1.40m', weight: '150g/m2', care: 'Lavar a máquina', stock: 3, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_9_1775766848979.jpg', '/images/hero-detail-3.webp'] },
-    { id: '10', name: 'Seda Cruda', category: 'Seda', price: 95000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Seda cruda sin teñir, última pieza disponible.', material: 'Seda pura', width: '1.10m', weight: '60g/m2', care: 'Limpieza en seco', stock: 8, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: true, isOffer: false, images: ['/uploads/product_10_1775766963190.webp', '/images/hero-detail-1.webp'] },
-    { id: '11', name: 'Lino Arrugado', category: 'Lino', price: 38000, sellerId: 2, sellerName: 'Carlos Pérez', description: 'Lino con textura arrugada natural.', material: 'Lino', width: '1.50m', weight: '180g/m2', care: 'Planchar en caliente', stock: 25, featured: false, active: true, status: 'approved', isNewCollection: false, isExclusive: false, isOffer: true, images: ['/uploads/product_11_1775767027618.jpg', '/images/hero-detail-2.webp'] },
-    { id: '12', name: 'Lana Bebé', category: 'Lana', price: 72000, sellerId: 3, sellerName: 'María González', description: 'Lana ultra suave para ropa de bebé. Quedan pocos metros.', material: 'Lana merino', width: '1.30m', weight: '200g/m2', care: 'Lavar a mano', stock: 5, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_15_1775767332095.jpg', '/images/hero-detail-3.webp'] },
-    { id: '13', name: 'Algodón Estampado', category: 'Algodon', price: 28000, sellerId: 3, sellerName: 'María González', description: 'Algodón con estampado floral, edición limitada.', material: 'Algodón', width: '1.45m', weight: '130g/m2', care: 'Lavar a máquina', stock: 12, featured: false, active: true, status: 'approved', isNewCollection: true, isExclusive: false, isOffer: false, images: ['/uploads/product_13_1777056293881.jpg', '/images/hero-detail-1.webp'] }
-];
 
 function normalizarListaProductos(datos) {
     return (datos || []).map(p => {
@@ -76,6 +61,17 @@ function normalizarListaProductos(datos) {
             isSale: isSaleVal,
             isOffer: isSaleVal,
             esOferta: isSaleVal,
+            discountPercent: Number(p.discountPercent ?? p.porcentajeDescuento ?? 0),
+            porcentajeDescuento: Number(p.discountPercent ?? p.porcentajeDescuento ?? 0),
+            soldMeters: Number(p.soldMeters ?? p.metrosVendidos ?? 0),
+            metrosVendidos: Number(p.soldMeters ?? p.metrosVendidos ?? 0),
+            rating: Number(p.rating ?? p.calificacionPromedio ?? 0),
+            reviewsCount: Number(p.reviewsCount ?? p.totalResenas ?? 0),
+            storeName: p.storeName || p.nombreTienda || p.sellerName || p.nombreVendedor || 'Tienda Textil',
+            sellerAvatar: p.sellerAvatar || p.avatarTienda || '/images/hero-detail-1.webp',
+            sellerRating: Number(p.sellerRating ?? p.calificacionVendedor ?? 0),
+            sellerReviewsCount: Number(p.sellerReviewsCount ?? p.totalResenasVendedor ?? 0),
+            isBestSeller: Boolean(p.isBestSeller ?? p.esMasVendido ?? (Number(p.soldMeters ?? p.metrosVendidos ?? 0) >= 150)),
         };
     });
 }
@@ -86,13 +82,13 @@ function obtenerCatalogoRespaldo() {
         if (guardado) {
             const parseado = JSON.parse(guardado);
             if (Array.isArray(parseado) && parseado.length > 0) {
-                return normalizarListaProductos(parseado);
+                return normalizarListaProductos(parseado).filter(p => !p.isExclusive);
             }
         }
     } catch {
         // Ignorar errores de almacenamiento restringido
     }
-    return normalizarListaProductos(CATALOGO_SEMILLA_RESPALDO);
+    return [];
 }
 
 // Creamos el contexto del catálogo de productos
@@ -114,13 +110,39 @@ export function useProductos() {
  * Carga los productos al iniciar y los mantiene actualizados.
  */
 export function ProductProvider({ children }) {
+    const { user } = useAutenticacion();
     // Lista de todos los productos disponibles en la tienda (inicia con respaldo local instantáneo)
     const [products, setProducts] = useState(() => obtenerCatalogoRespaldo());
-    // true mientras los productos están cargando por primera vez sin caché previa
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(() => obtenerCatalogoRespaldo().length === 0);
+    const [vipEligibility, setVipEligibility] = useState({
+        esClienteFrecuente: false,
+        nivelVip: 'Estándar',
+        comprasCompletadas: 0,
+        metrosAcumulados: 0,
+        umbralPedidos: 3,
+        umbralMetros: 50,
+        faltantePedidos: 3,
+        faltanteMetros: 50
+    });
     // Mensaje de error si la conexión al backend falla y no hay respaldo disponible
     const [error, setError] = useState(null);
     const { showNotification } = useNotificacion();
+
+    const fetchVipEligibility = useCallback(async () => {
+        if (!user?.token) {
+            setVipEligibility(prev => ({ ...prev, esClienteFrecuente: false, nivelVip: 'Estándar', comprasCompletadas: 0, metrosAcumulados: 0 }));
+            return;
+        }
+        try {
+            const res = await fetch(getApiUrl('/api/clientes/elegibilidad-vip'));
+            if (res.ok) {
+                const data = await res.json();
+                setVipEligibility(data);
+            }
+        } catch {
+            // Mantener evaluación por defecto si el endpoint no responde
+        }
+    }, [user?.token]);
 
     /**
      * fetchProducts — Pide la lista de productos al backend Java con reintentos automáticos
@@ -128,6 +150,7 @@ export function ProductProvider({ children }) {
      */
     const fetchProducts = useCallback(async () => {
         setError(null);
+        fetchVipEligibility();
         const rutaProductos = RUTAS_API?.productos || '/api/productos';
         const urlPrincipal = getApiUrl(rutaProductos);
         const urlsCandidatas = urlPrincipal.startsWith('http')
@@ -140,12 +163,16 @@ export function ProductProvider({ children }) {
                     const response = await fetch(url);
                     if (response.ok) {
                         const datos = await response.json();
-                        if (Array.isArray(datos) && datos.length > 0) {
+                        if (Array.isArray(datos)) {
                             const formattedData = normalizarListaProductos(datos);
                             setProducts(formattedData);
                             setError(null);
                             try {
-                                localStorage.setItem(CLAVE_CACHE_CATALOGO, JSON.stringify(formattedData));
+                                const sinBlobs = formattedData.map(item => ({
+                                    ...item,
+                                    images: (item.images || []).filter(img => typeof img === 'string' && !img.startsWith('data:'))
+                                }));
+                                localStorage.setItem(CLAVE_CACHE_CATALOGO, JSON.stringify(sinBlobs));
                             } catch {
                                 // Ignorar cuota de localStorage
                             }
@@ -262,7 +289,8 @@ export function ProductProvider({ children }) {
                 refreshProducts();
                 return true;
             }
-            showNotification('error', 'No se pudo actualizar el producto en el servidor.');
+            const errBody = await response.json().catch(() => ({}));
+            showNotification('error', errBody?.error || 'No se pudo actualizar el producto en el servidor.');
             return false;
         } catch (err) {
             console.error('Error al actualizar el producto:', err);
@@ -333,6 +361,7 @@ export function ProductProvider({ children }) {
     // Datos y funciones disponibles para toda la app
     const value = useMemo(() => ({
         products,            // Lista completa de productos
+        vipEligibility,      // Evaluación de cliente frecuente VIP para telas exclusivas
         loading,             // true mientras carga (para mostrar skeleton)
         error,               // Mensaje de error (o null si todo está bien)
         getProductById,      // Buscar un producto por ID
@@ -341,7 +370,7 @@ export function ProductProvider({ children }) {
         addProduct,          // Crear un producto nuevo
         getFeaturedProducts, // Obtener productos destacados para el Inicio
         refreshProducts      // Recargar la lista desde la API
-    }), [products, loading, error, getProductById, updateProduct, deleteProduct, addProduct, getFeaturedProducts]);
+    }), [products, vipEligibility, loading, error, getProductById, updateProduct, deleteProduct, addProduct, getFeaturedProducts, refreshProducts]);
 
     return (
         <ContextoProducto.Provider value={value}>

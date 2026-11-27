@@ -37,16 +37,16 @@ const enlacesAdmin = [
     {
         label: 'Inventario', icon: Package,
         children: [
-            { label: 'Control de Lotes', path: '/admin/inventario/lotes', icon: Package },
-            { label: 'Calculadora de Merma', path: '/admin/inventario/merma', icon: AlertTriangle },
-            { label: 'Alertas de Stock', path: '/admin/inventario/alertas', icon: AlertTriangle },
+            { label: 'Auditoría de Lotes', path: '/admin/inventario/lotes', icon: Package },
+            { label: 'Auditoría de Mermas', path: '/admin/inventario/merma', icon: AlertTriangle },
+            { label: 'Notificar Stock Bajo', path: '/admin/inventario/alertas', icon: AlertTriangle, badgeKey: 'lowStock' },
             { label: 'Historial de Movimientos', path: '/admin/inventario/historial', icon: FileText },
         ],
     },
     {
         label: 'Moderación', icon: TrendingUp,
         children: [
-            { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion', icon: ShoppingBag, badge: 3 },
+            { label: 'Cola de Aprobación', path: '/admin/moderacion/aprobacion', icon: ShoppingBag, badgeKey: 'pendingModeration' },
             { label: 'Rendimiento', path: '/admin/moderacion/vendedores', icon: TrendingUp },
         ],
     },
@@ -62,7 +62,7 @@ const enlacesAdmin = [
     {
         label: 'Soporte', icon: FileText,
         children: [
-            { label: 'Gestión de Tickets', path: '/admin/soporte/tickets', icon: FileText, badge: 12 },
+            { label: 'Gestión de Tickets', path: '/admin/soporte/tickets', icon: FileText, badgeKey: 'openTickets' },
             { label: 'Crear Cupones', path: '/admin/soporte/cupones', icon: DollarSign },
         ],
     },

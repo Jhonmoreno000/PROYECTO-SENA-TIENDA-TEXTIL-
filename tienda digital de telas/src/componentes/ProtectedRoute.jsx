@@ -22,8 +22,9 @@ import { useAutenticacion } from '../contextos/ContextoAutenticacion';
 /**
  * @param {React.ReactNode}     children - El componente que se quiere proteger
  * @param {string|string[]}     roles    - Rol o roles que pueden acceder (opcional)
+ * @param {boolean}             strict   - Si es true, desactiva la anulación de auditoría de admin
  */
-function ProtectedRoute({ children, roles }) {
+function ProtectedRoute({ children, roles, strict = false }) {
     const { user, isAuthenticated } = useAutenticacion();
     const location = useLocation();
 
@@ -49,9 +50,11 @@ function ProtectedRoute({ children, roles }) {
         const canonicalUserRole = roleAliases[rawRole] || rawRole;
         const canonicalAllowedRoles = rolesArray.map(r => roleAliases[r] || r);
 
-        // Si el usuario es admin, tiene permiso de auditoría en vistas de vendedor y cliente
-        const hasPermission = canonicalAllowedRoles.includes(canonicalUserRole) ||
-            (canonicalUserRole === 'admin' && (canonicalAllowedRoles.includes('vendedor') || canonicalAllowedRoles.includes('cliente')));
+        // Si el modo estricto está activo (ej. checkout/pago), únicamente el rol indicado puede acceder
+        const hasPermission = strict
+            ? canonicalAllowedRoles.includes(canonicalUserRole)
+            : (canonicalAllowedRoles.includes(canonicalUserRole) ||
+               (canonicalUserRole === 'admin' && (canonicalAllowedRoles.includes('vendedor') || canonicalAllowedRoles.includes('cliente'))));
 
         if (!hasPermission) {
             // El usuario está autenticado pero no tiene el rol necesario → lo dirigimos a su propio panel correspondiente

@@ -6,6 +6,7 @@ import LayoutPanel from '../../../componentes/layouts/LayoutPanel';
 import BackButton from '../../../componentes/dashboard/BackButton';
 import { useMetricas } from '../../../contextos/ContextoMetricas';
 import { useProductos } from '../../../contextos/ContextoProducto';
+import { useNotificacion } from '../../../contextos/ContextoNotificacion';
 import { formatCurrency } from '../../../utilidades/formateadores';
 import enlacesAdmin from '../../../datos/enlacesAdmin';
 
@@ -15,6 +16,7 @@ const glassInput = "bg-slate-50 dark:bg-slate-900  border border-slate-200 dark:
 function ColaAprobacion() {
     const { pendingProducts, approveProduct, rejectProduct } = useMetricas();
     const { refreshProducts } = useProductos();
+    const { showNotification } = useNotificacion();
     const [filterSeller, setFilterSeller] = useState('all');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [rejectReason, setRejectReason] = useState('');
@@ -35,7 +37,13 @@ function ColaAprobacion() {
     const filteredProducts = filterSeller === 'all' ? pending : pending.filter(p => getSellerName(p) === filterSeller);
     const sellers = [...new Set(pendingProducts.map(getSellerName))];
 
-    const handleApprove = (productId) => { approveProduct(productId); refreshProducts(); };
+    const handleApprove = async (productId) => {
+        const res = await approveProduct(productId);
+        if (res) {
+            showNotification('success', 'Producto aprobado y notificación enviada al vendedor.');
+            refreshProducts();
+        }
+    };
     
     const closePreview = () => {
         gsap.to(previewModalRef.current, { 
@@ -51,9 +59,14 @@ function ColaAprobacion() {
         });
     };
 
-    const handleReject = (productId) => {
-        if (rejectReason.trim()) { 
-            rejectProduct(productId, rejectReason); 
+    const handleReject = async (productId) => {
+        if (!rejectReason.trim()) {
+            showNotification('error', 'Debes indicar la observación para notificar al vendedor.');
+            return;
+        }
+        const res = await rejectProduct(productId, rejectReason.trim(), 'rejected');
+        if (res) {
+            showNotification('success', 'Producto suspendido y alerta enviada al vendedor con el motivo.');
             closeReject();
         }
     };
@@ -123,7 +136,7 @@ function ColaAprobacion() {
                         <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredProducts.map(product => {
                                 const prodPrice = Number(product.price ?? product.precio ?? 0);
-                                const prodImg = product.images?.[0] || product.image || product.imagen || '/placeholder.webp';
+                                const prodImg = product.images?.[0] || product.image || product.imagen || '/images/hero-telas-premium.webp';
                                 const prodSeller = getSellerName(product);
                                 const prodDate = product.submittedAt || product.createdAt || product.fechaCreacion || new Date();
 
@@ -188,7 +201,7 @@ function ColaAprobacion() {
                                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">Vista Previa</h3>
                                 <button onClick={closePreview} className="p-3 bg-white hover:bg-slate-50 dark:bg-slate-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm transition-all"><X size={20} /></button>
                             </div>
-                            <img src={selectedProduct.images?.[0] || selectedProduct.image || selectedProduct.imagen || '/placeholder.webp'} alt={selectedProduct.name || selectedProduct.nombre} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
+                            <img src={selectedProduct.images?.[0] || selectedProduct.image || selectedProduct.imagen || '/images/hero-telas-premium.webp'} alt={selectedProduct.name || selectedProduct.nombre} className="w-full aspect-square object-cover rounded-2xl mb-6 shadow-lg" />
                             <h4 className="text-xl font-black text-slate-900 dark:text-white mb-1">{selectedProduct.name || selectedProduct.nombre}</h4>
                             <p className="text-2xl font-black text-[#f97316] mb-4">{formatCurrency(selectedProduct.price ?? selectedProduct.precio ?? 0)}<span className="text-sm font-normal text-slate-400 dark:text-slate-500"> /m</span></p>
                             <p className="text-slate-600 dark:text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">{selectedProduct.description || selectedProduct.descripcion}</p>

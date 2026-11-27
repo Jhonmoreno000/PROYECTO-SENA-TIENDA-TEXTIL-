@@ -20,11 +20,11 @@
  *  - TarjetaProducto:       tarjetas de productos relacionados al final de la página
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ArrowLeft, ShoppingCart, Heart, Share2, Check, AlertTriangle, Info, Ruler, Layers, Weight, Droplets, Package } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Share2, Check, AlertTriangle, Info, Ruler, Layers, Weight, Droplets, Package, Store, Star, ShieldCheck, Award, ArrowRight, Lock, Crown, Tag } from 'lucide-react';
 import Encabezado from '../componentes/Encabezado';
 import PieDePagina from '../componentes/PieDePagina';
 import PaginaAnimada from '../componentes/PaginaAnimada';
@@ -38,6 +38,8 @@ import { formatCurrency } from '../utilidades/formateadores';
 import { useProductos } from '../contextos/ContextoProducto';
 import { useMetricas } from '../contextos/ContextoMetricas';
 import { useNotificacion } from '../contextos/ContextoNotificacion';
+import { useAutenticacion } from '../contextos/ContextoAutenticacion';
+import { getApiUrl } from '../config';
 
 // Registramos el plugin de GSAP para que useGSAP funcione correctamente
 gsap.registerPlugin(useGSAP);
@@ -51,6 +53,11 @@ function DetalleProducto() {
     const { getProductById, loading, products } = useProductos(); // Datos de productos
     const { isInWishlist, addToWishlist, removeFromWishlist, productDiscounts } = useMetricas(); // Funciones de wishlist
     const { showNotification } = useNotificacion();
+    const { user, isAuthenticated } = useAutenticacion();
+    const rawRole = String(user?.role || user?.rol || '').toLowerCase();
+    const isClientUser = isAuthenticated && rawRole === 'cliente';
+    const isNonClientLoggedIn = isAuthenticated && rawRole !== 'cliente';
+    const roleLabel = (rawRole === 'admin' || rawRole === 'administrador') ? 'Administrador' : 'Vendedor';
 
     // Cantidad de metros por corte que el cliente quiere comprar (por defecto 1)
     const [metersPerCut, setMetersPerCut] = useState(1);
@@ -59,6 +66,15 @@ function DetalleProducto() {
     // Controla si se muestra el mensaje verde "¡Producto agregado al carrito!"
     const [showSuccess, setShowSuccess] = useState(false);
     const [showStockError, setShowStockError] = useState(false);
+    const [competitors, setCompetitors] = useState([]);
+
+    useEffect(() => {
+        if (!id) return;
+        fetch(getApiUrl(`/api/productos/${id}/competencia`))
+            .then(r => r.ok ? r.json() : [])
+            .then(data => setCompetitors(Array.isArray(data) ? data : []))
+            .catch(() => setCompetitors([]));
+    }, [id]);
 
     // Referencias para las animaciones GSAP
     const contentRef = useRef(null); // Contenedor de la sección principal
@@ -145,11 +161,17 @@ function DetalleProducto() {
     }
 
     const discountInfo = productDiscounts?.[product.id];
-    const isOffer = Boolean(product?.isOffer || product?.esOferta);
-    const discountPercent = discountInfo?.percent || (isOffer ? (product?.discountPercent || 15) : 0);
-    const hasDiscount = (discountInfo?.active && discountInfo?.percent > 0) || (isOffer && discountPercent > 0);
+    const directDiscount = Number(product?.discountPercent ?? product?.porcentajeDescuento ?? 0);
+    const isOffer = Boolean(product?.isOffer || product?.esOferta || directDiscount > 0 || discountInfo?.active);
+    const discountPercent = directDiscount > 0 ? directDiscount : (discountInfo?.percent || (isOffer ? 15 : 0));
+    const hasDiscount = discountPercent > 0;
     const discountedPrice = hasDiscount ? product.price * (1 - discountPercent / 100) : product.price;
     const isOutOfStock = (product.stock ?? 0) < 1.0;
+    const sellerId = product.sellerId || product.idVendedor || 2;
+    const storeName = product.storeName || product.nombreTienda || product.sellerName || product.nombreVendedor || 'Proveedor Textil';
+    const sellerRating = Number(product.sellerRating ?? 0);
+    const sellerReviewsCount = Number(product.sellerReviewsCount ?? 0);
+    const soldMeters = Number(product.soldMeters ?? product.metrosVendidos ?? 0);
 
     // Total de metros = metros por corte × cantidad de cortes (exacto a 2 decimales)
     const totalMeters = Math.round(metersPerCut * cuts * 100) / 100;
@@ -173,6 +195,12 @@ function DetalleProducto() {
      * El mensaje de confirmación desaparece automáticamente después de 3 segundos.
      */
     const handleAddToCart = () => {
+        if (isNonClientLoggedIn) {
+            if (showNotification) {
+                showNotification('error', 'Solo las cuentas con rol Cliente pueden comprar telas.');
+            }
+            return;
+        }
         const productToAdd = hasDiscount
             ? { ...product, price: discountedPrice, originalPrice: product.price }
             : product;
@@ -188,15 +216,28 @@ function DetalleProducto() {
     };
 
     /**
-     * handleBuyNow — Agrega al carrito y lleva directamente a la pantalla del carrito
+     * handleBuyNow — Valida cuenta de cliente y lleva a compra o login
      */
     const handleBuyNow = () => {
+        if (isNonClientLoggedIn) {
+            if (showNotification) {
+                showNotification('error', 'Solo las cuentas con rol Cliente pueden comprar telas.');
+            }
+            return;
+        }
         const productToAdd = hasDiscount
             ? { ...product, price: discountedPrice, originalPrice: product.price }
             : product;
         const added = addToCart(productToAdd, totalMeters);
         if (added) {
-            navigate('/carrito');
+            if (!isClientUser) {
+                if (showNotification) {
+                    showNotification('info', 'Inicia sesión o regístrate como cliente para completar tu compra.');
+                }
+                navigate('/login', { state: { from: { pathname: '/checkout' } } });
+            } else {
+                navigate('/carrito');
+            }
         } else {
             setShowStockError(true);
             setTimeout(() => setShowStockError(false), 3000);
@@ -289,9 +330,57 @@ function DetalleProducto() {
 
                         {/* Columna derecha: todos los datos del producto (animada desde la derecha) */}
                         <div className="pd-right space-y-6">
-                            {/* Etiqueta de categoría */}
-                            <div className="inline-block bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-4 py-1 rounded-full text-sm font-semibold">
-                                {product.category}
+                            {/* Etiqueta de categoría, Exclusivo y Más Vendido con psicología del color */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-3.5 py-1 rounded-full text-xs font-bold">
+                                    {product.category}
+                                </span>
+                                {(product.isExclusive || product.esExclusivo) && (
+                                    <span className="inline-flex items-center gap-1.5 bg-slate-950 text-amber-300 border border-amber-400/40 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
+                                        <Crown className="w-3.5 h-3.5" /> Exclusivo VIP
+                                    </span>
+                                )}
+                                {(product.isBestSeller || soldMeters >= 150) && (
+                                    <span className="inline-flex items-center gap-1.5 bg-amber-500/12 dark:bg-amber-400/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                        <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Más Vendido · {Math.round(soldMeters)}m vendidos
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Tarjeta del Proveedor / Vendedor con Glassmorfismo */}
+                            <div className="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3.5">
+                                    <img
+                                        src={product.sellerAvatar || '/images/hero-detail-1.webp'}
+                                        alt={storeName}
+                                        className="w-12 h-12 rounded-xl object-cover border-2 border-primary-500/60 shadow-sm shrink-0"
+                                    />
+                                    <div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Vendido por</span>
+                                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" title="Proveedor verificado" />
+                                        </div>
+                                        <Link
+                                            to={`/tienda/${sellerId}`}
+                                            className="font-bold text-base text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1"
+                                        >
+                                            {storeName}
+                                        </Link>
+                                        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                                            <span className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
+                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                                {sellerRating > 0 ? sellerRating.toFixed(1) : 'Nuevo'}
+                                            </span>
+                                            <span>({sellerReviewsCount} {sellerReviewsCount === 1 ? 'reseña' : 'reseñas'} reales)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Link
+                                    to={`/tienda/${sellerId}`}
+                                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shadow-sm shadow-primary-500/20 transition-colors shrink-0"
+                                >
+                                    <Store className="w-3.5 h-3.5" /> Visitar Tienda
+                                </Link>
                             </div>
 
                             {/* Nombre del producto */}
@@ -300,29 +389,29 @@ function DetalleProducto() {
                             </h1>
 
                             {/* Precio por metro */}
-                            <div className="flex items-baseline gap-3">
+                            <div className="flex flex-wrap items-baseline gap-3">
                                 <div className="text-4xl font-bold text-primary-600 dark:text-primary-400">
                                     {formatCurrency(hasDiscount ? discountedPrice : product.price)}
                                 </div>
                                 {hasDiscount && (
-                                    <div className="text-xl text-gray-400 line-through">
+                                    <div className="text-xl text-slate-400 line-through">
                                         {formatCurrency(product.price)}
                                     </div>
                                 )}
-                                <div className="text-gray-500 dark:text-gray-400">por metro</div>
+                                <div className="text-slate-500 dark:text-slate-400">por metro</div>
                                 {hasDiscount && (
-                                    <span className="ml-2 px-3 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-black uppercase tracking-wider rounded-full shadow-sm animate-pulse">
-                                        -{discountPercent}% OFF
+                                    <span className="ml-1 inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-sm">
+                                        <Tag className="w-3 h-3" /> -{discountPercent}% OFF
                                     </span>
                                 )}
                             </div>
 
                             {/* Alerta de Oferta Especial */}
                             {hasDiscount && (
-                                <div className="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 dark:border-amber-400/25 flex items-center gap-3 text-amber-900 dark:text-amber-200">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                                <div className="p-3.5 rounded-2xl bg-primary-500/10 dark:bg-primary-500/15 border border-primary-500/30 flex items-center gap-3 text-primary-900 dark:text-primary-200">
+                                    <Tag className="w-4 h-4 text-primary-600 dark:text-primary-400 shrink-0" />
                                     <p className="text-xs sm:text-sm font-semibold">
-                                        ¡Oferta activa de administración! Ahorras {formatCurrency(product.price - discountedPrice)} por cada metro adquirido.
+                                        ¡Promoción especial del proveedor! Ahorras {formatCurrency(product.price - discountedPrice)} por cada metro adquirido.
                                     </p>
                                 </div>
                             )}
@@ -422,23 +511,31 @@ function DetalleProducto() {
                                 </div>
                             </div>
 
+                            {isNonClientLoggedIn && (
+                                <div className="p-3.5 rounded-xl bg-amber-500/12 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center gap-2.5">
+                                    <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                    <span>Vista de consulta ({roleLabel}): las compras están habilitadas únicamente para cuentas con rol Cliente.</span>
+                                </div>
+                            )}
+
                             {/* Botones principales: Agregar al carrito + Comprar ahora */}
                             <div className="flex gap-4">
                                 <button
                                     onClick={handleAddToCart}
-                                    disabled={isOutOfStock}
-                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl py-3.5 px-6 font-bold shadow-lg ${isOutOfStock
-                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    disabled={isOutOfStock || isNonClientLoggedIn}
+                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl py-3.5 px-6 font-bold shadow-lg ${(isOutOfStock || isNonClientLoggedIn)
+                                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
                                         : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/25 cursor-pointer'
                                     }`}
                                 >
-                                    <ShoppingCart className="w-5 h-5" /> {isOutOfStock ? 'Agotado' : 'Agregar al Carrito'}
+                                    {isNonClientLoggedIn ? <Lock className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
+                                    {isOutOfStock ? 'Agotado' : isNonClientLoggedIn ? 'Solo Clientes' : 'Agregar al Carrito'}
                                 </button>
                                 <button
                                     onClick={handleBuyNow}
-                                    disabled={isOutOfStock}
-                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl py-3.5 px-6 font-bold shadow-sm ${isOutOfStock
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    disabled={isOutOfStock || isNonClientLoggedIn}
+                                    className={`flex-1 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl py-3.5 px-6 font-bold shadow-sm ${(isOutOfStock || isNonClientLoggedIn)
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                         : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-700/50 cursor-pointer'
                                     }`}
                                 >
@@ -486,6 +583,61 @@ function DetalleProducto() {
                             )}
                         </div>
                     </div>
+
+                    {/* Comparador de Competencia entre Proveedores (estilo Marketplace) */}
+                    {competitors.length > 0 && (
+                        <div className="mb-14">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">
+                                        Compara con otros proveedores en {product.category}
+                                    </h2>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Otras tiendas textiles verificadas con telas disponibles en esta categoría
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {competitors.slice(0, 3).map((comp) => {
+                                    const compDisc = Number(comp.discountPercent ?? comp.porcentajeDescuento ?? (comp.isOffer ? 15 : 0));
+                                    const compFinalPrice = compDisc > 0 ? comp.price * (1 - compDisc / 100) : comp.price;
+                                    const compStore = comp.storeName || comp.nombreTienda || comp.sellerName || 'Proveedor';
+                                    return (
+                                        <div key={comp.id} className="glass-panel rounded-2xl p-4 flex flex-col justify-between gap-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <Link to={`/tienda/${comp.sellerId}`} className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
+                                                        <Store className="w-3.5 h-3.5" /> {compStore}
+                                                    </Link>
+                                                    <h3 className="font-bold text-slate-900 dark:text-white mt-0.5 line-clamp-1">{comp.name}</h3>
+                                                </div>
+                                                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 shrink-0">
+                                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                                    {Number(comp.sellerRating) > 0 ? Number(comp.sellerRating).toFixed(1) : 'Nuevo'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-2 border-t border-slate-200/70 dark:border-slate-700/70">
+                                                <div>
+                                                    <div className="font-black text-lg text-slate-900 dark:text-white">
+                                                        {formatCurrency(compFinalPrice)} <span className="text-xs font-normal text-slate-500">/m</span>
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500">
+                                                        Stock: <strong>{comp.stock} m</strong> {compDisc > 0 && <span className="text-primary-600 font-bold">· -{compDisc}%</span>}
+                                                    </div>
+                                                </div>
+                                                <Link
+                                                    to={`/producto/${comp.id}`}
+                                                    className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold transition-colors"
+                                                >
+                                                    Ver oferta <ArrowRight className="w-3.5 h-3.5" />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Sección de reseñas de clientes */}
                     <ReviewsSection productId={product.id} />

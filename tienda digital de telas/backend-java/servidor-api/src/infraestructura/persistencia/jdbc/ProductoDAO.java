@@ -21,6 +21,21 @@ import infraestructura.configuracion.Conexion;
  */
 public class ProductoDAO {
 
+    private static final String SELECT_PRODUCTO_COMPLETO =
+            "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
+            "pv.nombre_tienda, pv.url_avatar AS avatar_tienda, " +
+            "COALESCE((SELECT ROUND(AVG(rv.calificacion)::numeric, 2) FROM resenas_vendedor rv WHERE rv.vendedor_id = p.vendedor_id), 0) AS calificacion_vendedor, " +
+            "(SELECT COUNT(*) FROM resenas_vendedor rv WHERE rv.vendedor_id = p.vendedor_id) AS total_resenas_vendedor, " +
+            "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
+            "FROM productos p " +
+            "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+            "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
+            "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = p.vendedor_id " +
+            "LEFT JOIN imagenes_producto img ON img.producto_id = p.id ";
+
+    private static final String GROUP_BY_PRODUCTO_COMPLETO =
+            "GROUP BY p.id, c.nombre, u.nombre, pv.nombre_tienda, pv.url_avatar, pv.calificacion_promedio, pv.total_resenas ";
+
     private static Producto crearProductoSemilla(String id, String nombre, String categoria, double precio,
                                                 String vendedor, String desc, String material, String ancho,
                                                 String peso, String cuidado, double stock, boolean destacado,
@@ -68,14 +83,24 @@ public class ProductoDAO {
      * @return Instancia de `Producto` o `null` si no existe o está inactivo.
      */
     public Producto obtenerProductoPorId(int idProducto) {
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
-                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
-                "FROM productos p " +
-                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
-                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
-                "WHERE p.id = ? AND p.activo = true " +
-                "GROUP BY p.id, c.nombre, u.nombre";
+        return obtenerProductoPorId(idProducto, false);
+    }
+
+    /**
+     * Recupera un producto para auditoría administrativa incluso si fue suspendido (`activo = false`).
+     *
+     * @param idProducto Identificador numérico del producto (`int`).
+     * @return Instancia de `Producto` o `null` si no existe.
+     */
+    public Producto obtenerProductoPorIdParaAuditoria(int idProducto) {
+        return obtenerProductoPorId(idProducto, true);
+    }
+
+    private Producto obtenerProductoPorId(int idProducto, boolean incluirInactivos) {
+        String filtroActivo = incluirInactivos ? "" : " AND p.activo = true ";
+        String consulta = SELECT_PRODUCTO_COMPLETO +
+                "WHERE p.id = ?" + filtroActivo + " " +
+                GROUP_BY_PRODUCTO_COMPLETO;
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
@@ -102,17 +127,23 @@ public class ProductoDAO {
      * @return Lista de objetos `Producto` activos.
      */
     public List<Producto> obtenerTodosLosProductos() {
-        List<Producto> productos = new ArrayList<>();
+        return obtenerTodosLosProductos(false);
+    }
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
-                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
-                "FROM productos p " +
-                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
-                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
-                "WHERE p.activo = true " +
-                "GROUP BY p.id, c.nombre, u.nombre " +
-                "ORDER BY p.id ASC";
+    /**
+     * Recupera los productos del catálogo; si `incluirInactivos` es `true`, incluye suspendidos para auditoría.
+     *
+     * @param incluirInactivos Indica si se incluyen registros con `activo = false` (`boolean`).
+     * @return Lista de objetos `Producto`.
+     */
+    public List<Producto> obtenerTodosLosProductos(boolean incluirInactivos) {
+        List<Producto> productos = new ArrayList<>();
+        String whereClause = incluirInactivos ? "" : "WHERE p.activo = true ";
+
+        String consulta = SELECT_PRODUCTO_COMPLETO +
+                whereClause +
+                GROUP_BY_PRODUCTO_COMPLETO +
+                "ORDER BY p.metros_vendidos DESC, p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta);
@@ -139,15 +170,10 @@ public class ProductoDAO {
     public List<Producto> obtenerProductosPorVendedor(int idVendedor) {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
-                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
-                "FROM productos p " +
-                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
-                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
+        String consulta = SELECT_PRODUCTO_COMPLETO +
                 "WHERE p.vendedor_id = ? AND p.activo = true " +
-                "GROUP BY p.id, c.nombre, u.nombre " +
-                "ORDER BY p.id ASC";
+                GROUP_BY_PRODUCTO_COMPLETO +
+                "ORDER BY p.metros_vendidos DESC, p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
@@ -160,6 +186,97 @@ public class ProductoDAO {
         } catch (SQLException e) {
             System.err.println("[ERROR] Error obteniendo productos por vendedor: " + e.getMessage());
             e.printStackTrace();
+        }
+        return productos;
+    }
+
+    /**
+     * Obtiene ofertas competitivas de otros vendedores dentro de la misma categoría textil.
+     */
+    public List<Producto> obtenerCompetenciaProducto(int idProducto, boolean incluirExclusivos) {
+        List<Producto> competidores = new ArrayList<>();
+        String filtroExclusivo = incluirExclusivos ? "" : "AND COALESCE(p.es_exclusivo, false) = false ";
+        String consulta = SELECT_PRODUCTO_COMPLETO +
+                "WHERE p.activo = true AND p.id <> ? " +
+                filtroExclusivo +
+                "AND p.categoria_id = (SELECT categoria_id FROM productos WHERE id = ?) " +
+                "AND p.vendedor_id <> (SELECT vendedor_id FROM productos WHERE id = ?) " +
+                GROUP_BY_PRODUCTO_COMPLETO +
+                "ORDER BY (p.precio * (1 - COALESCE(p.porcentaje_descuento, 0) / 100.0)) ASC, COALESCE(pv.calificacion_promedio, 0) DESC " +
+                "LIMIT 6";
+
+        try (Connection conexion = Conexion.obtenerConexion();
+             PreparedStatement pst = conexion.prepareStatement(consulta)) {
+            pst.setInt(1, idProducto);
+            pst.setInt(2, idProducto);
+            pst.setInt(3, idProducto);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    competidores.add(mapearProducto(conexion, rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error consultando competencia de producto: " + e.getMessage());
+        }
+        return competidores;
+    }
+
+    /**
+     * Consulta paginada y filtrada en base de datos para soportar grandes volúmenes sin lag en el cliente.
+     */
+    public List<Producto> obtenerProductosPaginados(
+            int pagina, int limite, String categoria, String busqueda, String orden, Integer idVendedor, boolean incluirExclusivos) {
+        List<Producto> productos = new ArrayList<>();
+        int pageSafe = Math.max(1, pagina);
+        int limitSafe = Math.max(1, Math.min(100, limite));
+        int offset = (pageSafe - 1) * limitSafe;
+
+        StringBuilder where = new StringBuilder("WHERE p.activo = true ");
+        List<Object> params = new ArrayList<>();
+
+        if (!incluirExclusivos) {
+            where.append("AND COALESCE(p.es_exclusivo, false) = false ");
+        }
+        if (idVendedor != null && idVendedor > 0) {
+            where.append("AND p.vendedor_id = ? ");
+            params.add(idVendedor);
+        }
+        if (categoria != null && !categoria.isBlank() && !"Todos".equalsIgnoreCase(categoria)) {
+            where.append("AND LOWER(c.nombre) = LOWER(?) ");
+            params.add(categoria.trim());
+        }
+        if (busqueda != null && !busqueda.isBlank()) {
+            where.append("AND (LOWER(p.nombre) LIKE LOWER(?) OR LOWER(COALESCE(p.material, '')) LIKE LOWER(?) OR LOWER(COALESCE(pv.nombre_tienda, u.nombre, '')) LIKE LOWER(?)) ");
+            String patron = "%" + busqueda.trim() + "%";
+            params.add(patron);
+            params.add(patron);
+            params.add(patron);
+        }
+
+        String orderBy = switch (orden != null ? orden.toLowerCase() : "mas_vendidos") {
+            case "precio_asc", "price-asc" -> "ORDER BY (p.precio * (1 - COALESCE(p.porcentaje_descuento, 0) / 100.0)) ASC, p.id ASC ";
+            case "precio_desc", "price-desc" -> "ORDER BY (p.precio * (1 - COALESCE(p.porcentaje_descuento, 0) / 100.0)) DESC, p.id ASC ";
+            case "mejor_calificado", "rating" -> "ORDER BY COALESCE(p.calificacion_promedio, 0) DESC, COALESCE(pv.calificacion_promedio, 0) DESC ";
+            case "mas_vendidos", "bestsellers" -> "ORDER BY COALESCE(p.metros_vendidos, 0) DESC, p.destacado DESC, p.id ASC ";
+            default -> "ORDER BY p.destacado DESC, COALESCE(p.metros_vendidos, 0) DESC, p.id ASC ";
+        };
+
+        String consulta = SELECT_PRODUCTO_COMPLETO + where + GROUP_BY_PRODUCTO_COMPLETO + orderBy + "LIMIT ? OFFSET ?";
+        try (Connection conexion = Conexion.obtenerConexion();
+             PreparedStatement pst = conexion.prepareStatement(consulta)) {
+            int idx = 1;
+            for (Object param : params) {
+                pst.setObject(idx++, param);
+            }
+            pst.setInt(idx++, limitSafe);
+            pst.setInt(idx, offset);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    productos.add(mapearProducto(conexion, rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Error en consulta paginada de productos: " + e.getMessage());
         }
         return productos;
     }
@@ -333,15 +450,10 @@ public class ProductoDAO {
             columna = "es_nueva_coleccion";
         }
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
-                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
-                "FROM productos p " +
-                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
-                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
+        String consulta = SELECT_PRODUCTO_COMPLETO +
                 "WHERE p.activo = true AND p." + columna + " = true " +
-                "GROUP BY p.id, c.nombre, u.nombre " +
-                "ORDER BY p.id ASC";
+                GROUP_BY_PRODUCTO_COMPLETO +
+                "ORDER BY p.metros_vendidos DESC, p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta);
@@ -365,14 +477,9 @@ public class ProductoDAO {
     public List<Producto> obtenerProductosPendientes() {
         List<Producto> productos = new ArrayList<>();
 
-        String consulta = "SELECT p.*, c.nombre AS nombre_categoria, u.nombre AS nombre_vendedor, " +
-                "COALESCE(STRING_AGG(img.url_imagen, '|||' ORDER BY img.orden_visualizacion ASC), '') AS imagenes_agrupadas " +
-                "FROM productos p " +
-                "LEFT JOIN categorias c ON p.categoria_id = c.id " +
-                "LEFT JOIN usuarios u ON p.vendedor_id = u.id " +
-                "LEFT JOIN imagenes_producto img ON img.producto_id = p.id " +
+        String consulta = SELECT_PRODUCTO_COMPLETO +
                 "WHERE p.estado_moderacion = 'pending' " +
-                "GROUP BY p.id, c.nombre, u.nombre " +
+                GROUP_BY_PRODUCTO_COMPLETO +
                 "ORDER BY p.id ASC";
 
         try (Connection conexion = Conexion.obtenerConexion();
@@ -398,11 +505,14 @@ public class ProductoDAO {
      * @return `true` si se actualizó el registro; `false` en caso contrario.
      */
     public boolean actualizarEstadoModeracion(int idProducto, String estado, String motivo) {
-        boolean activo = "approved".equalsIgnoreCase(estado) || "aprobado".equalsIgnoreCase(estado);
+        String estadoNorm = normalizarEstado(estado);
+        // Solo la suspensión definitiva ('rejected') oculta el producto del catálogo activo;
+        // 'changes_requested' y 'pending' mantienen activo=true para que el vendedor pueda corregirlo y verlo.
+        boolean activo = !"rejected".equalsIgnoreCase(estadoNorm);
         String consulta = "UPDATE productos SET estado_moderacion = ?, motivo_rechazo = ?, activo = ?, actualizado_en = NOW() WHERE id = ?";
         try (Connection conexion = Conexion.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(consulta)) {
-            sentencia.setString(1, estado);
+            sentencia.setString(1, estadoNorm);
             sentencia.setString(2, motivo);
             sentencia.setBoolean(3, activo);
             sentencia.setInt(4, idProducto);
@@ -412,6 +522,16 @@ public class ProductoDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private String normalizarEstado(String estado) {
+        if (estado == null) return "pending";
+        return switch (estado.trim().toLowerCase()) {
+            case "approved", "aprobado" -> "approved";
+            case "changes_requested", "cambios_solicitados" -> "changes_requested";
+            case "rejected", "rechazado" -> "rejected";
+            default -> "pending";
+        };
     }
 
     /**
@@ -430,8 +550,8 @@ public class ProductoDAO {
 
             String consulta = "INSERT INTO productos (" +
                     "nombre, categoria_id, precio, vendedor_id, descripcion, material, ancho, peso, cuidados, " +
-                    "stock, destacado, es_nueva_coleccion, es_exclusivo, es_oferta, activo, estado_moderacion" +
-                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, ?)";
+                    "stock, destacado, es_nueva_coleccion, es_exclusivo, es_oferta, porcentaje_descuento, activo, estado_moderacion" +
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, ?)";
 
             int idGenerado = -1;
             try (PreparedStatement sentencia = conexion.prepareStatement(consulta, Statement.RETURN_GENERATED_KEYS)) {
@@ -449,7 +569,8 @@ public class ProductoDAO {
                 sentencia.setBoolean(12, producto.isEsNuevaColeccion());
                 sentencia.setBoolean(13, producto.isEsExclusivo());
                 sentencia.setBoolean(14, producto.isEsOferta());
-                sentencia.setString(15, estadoMod);
+                sentencia.setDouble(15, Math.max(0.0, Math.min(90.0, producto.getPorcentajeDescuento())));
+                sentencia.setString(16, estadoMod);
 
                 int filas = sentencia.executeUpdate();
                 if (filas <= 0) {
@@ -527,11 +648,27 @@ public class ProductoDAO {
             Boolean esExclusivo,
             Boolean esOferta,
             Double stockExplicito) {
+        return actualizarProductoSelectivo(id, actualizaciones, destacado, esNuevaColeccion, esExclusivo, esOferta, stockExplicito, null);
+    }
+
+    public boolean actualizarProductoSelectivo(
+            int id,
+            Producto actualizaciones,
+            Boolean destacado,
+            Boolean esNuevaColeccion,
+            Boolean esExclusivo,
+            Boolean esOferta,
+            Double stockExplicito,
+            Double descuentoExplicito) {
         try (Connection conexion = Conexion.obtenerConexion()) {
             Integer idCategoria = null;
             if (actualizaciones.getCategoria() != null && !actualizaciones.getCategoria().isBlank()) {
                 idCategoria = resolverOCrearCategoria(conexion, actualizaciones.getCategoria());
             }
+
+            Double descVal = (descuentoExplicito != null && descuentoExplicito >= 0 && descuentoExplicito <= 90)
+                    ? descuentoExplicito
+                    : null;
 
             String consulta = "UPDATE productos SET " +
                     "nombre = COALESCE(?, nombre), " +
@@ -547,6 +684,7 @@ public class ProductoDAO {
                     "es_nueva_coleccion = COALESCE(?, es_nueva_coleccion), " +
                     "es_exclusivo = COALESCE(?, es_exclusivo), " +
                     "es_oferta = COALESCE(?, es_oferta), " +
+                    "porcentaje_descuento = COALESCE(?, porcentaje_descuento), " +
                     "actualizado_en = NOW() " +
                     "WHERE id = ?";
 
@@ -564,7 +702,8 @@ public class ProductoDAO {
                 sentencia.setObject(11, esNuevaColeccion);
                 sentencia.setObject(12, esExclusivo);
                 sentencia.setObject(13, esOferta);
-                sentencia.setInt(14, id);
+                sentencia.setObject(14, descVal);
+                sentencia.setInt(15, id);
 
                 boolean actualizado = sentencia.executeUpdate() > 0;
                 if (actualizado && actualizaciones.getImagenes() != null && !actualizaciones.getImagenes().isEmpty()) {
@@ -666,6 +805,23 @@ public class ProductoDAO {
         producto.setEstadoModeracion(resultado.getString("estado_moderacion"));
         producto.setMotivoRechazo(resultado.getString("motivo_rechazo"));
         producto.setActivo(resultado.getBoolean("activo"));
+
+        try {
+            double desc = resultado.getDouble("porcentaje_descuento");
+            producto.setPorcentajeDescuento(desc);
+            if (desc > 0) producto.setEsOferta(true);
+            double vendidos = resultado.getDouble("metros_vendidos");
+            producto.setMetrosVendidos(vendidos);
+            producto.setEsMasVendido(vendidos >= 150.0);
+            producto.setCalificacionPromedio(resultado.getDouble("calificacion_promedio"));
+            producto.setTotalResenas(resultado.getInt("total_resenas"));
+            String store = resultado.getString("nombre_tienda");
+            producto.setNombreTienda((store != null && !store.isBlank()) ? store : producto.getNombreVendedor());
+            producto.setAvatarTienda(resultado.getString("avatar_tienda"));
+            producto.setCalificacionVendedor(resultado.getDouble("calificacion_vendedor"));
+            producto.setTotalResenasVendedor(resultado.getInt("total_resenas_vendedor"));
+        } catch (SQLException ignored) {}
+
         if (resultado.getTimestamp("creado_en") != null) {
             producto.setFechaCreacion(resultado.getTimestamp("creado_en").toString().split(" ")[0]);
         }

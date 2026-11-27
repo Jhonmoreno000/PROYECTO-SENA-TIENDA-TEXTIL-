@@ -2,9 +2,22 @@
 -- 02_datos_iniciales.sql — Población de Datos Iniciales para D&D Textil
 -- ============================================================================
 
--- Asegurar hashes SHA-256 en UTF-8 para las cuentas iniciales
-UPDATE usuarios SET contrasena_hash = '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044' WHERE correo IN ('vendedor@ddtextil.com', 'maria.gonzalez@ddtextil.com');
+-- Asegurar hashes SHA-256 en UTF-8 y cuentas reales iniciales
+UPDATE usuarios SET contrasena_hash = '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044',
+    telefono = COALESCE(NULLIF(telefono, ''), '+57 301 482 1940')
+WHERE correo = 'vendedor@ddtextil.com';
+UPDATE usuarios SET contrasena_hash = '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044',
+    telefono = COALESCE(NULLIF(telefono, ''), '+57 312 654 8821')
+WHERE correo = 'maria.gonzalez@ddtextil.com';
 UPDATE usuarios SET contrasena_hash = '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9' WHERE correo IN ('cliente@gmail.com', 'cliente@ddtextil.com');
+
+INSERT INTO usuarios (nombre, correo, telefono, contrasena_hash, rol, activo, tasa_comision) VALUES
+('Andrés Restrepo', 'andres.restrepo@hilosdelvalle.com', '+57 318 742 3319', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true, 10.00),
+('Valentina Castro', 'valentina.castro@telasdelcaribe.com', '+57 300 915 4472', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true, 10.00),
+('Camila Ruiz', 'camila.ruiz@correo.com', '+57 315 809 2214', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true, NULL)
+ON CONFLICT (correo) DO UPDATE SET
+    contrasena_hash = EXCLUDED.contrasena_hash,
+    telefono = COALESCE(NULLIF(usuarios.telefono, ''), EXCLUDED.telefono);
 
 -- 1. PRODUCTOS
 INSERT INTO productos (id, nombre, categoria_id, precio, vendedor_id, descripcion, material, ancho, peso, cuidados, stock, destacado, activo, estado_moderacion, es_nueva_coleccion, es_exclusivo, es_oferta) VALUES
@@ -154,3 +167,202 @@ INSERT INTO metricas_ventas_erp (fecha_registro, ventas_reales, ventas_objetivo,
 (CURRENT_DATE - INTERVAL '1 day', 3490000.00, 3000000.00, 35.10),
 (CURRENT_DATE, 2890000.00, 3100000.00, 33.40)
 ON CONFLICT (fecha_registro) DO NOTHING;
+
+-- 12. PERFILES PÚBLICOS DE VENDEDORES (TIENDAS MARKETPLACE TIPO FACEBOOK)
+UPDATE usuarios SET tasa_comision = COALESCE(tasa_comision, 10.00) WHERE rol = 'vendedor';
+
+-- Productos adicionales para Hilos del Valle Textil y Telas & Seda del Caribe
+INSERT INTO productos (id, nombre, categoria_id, precio, vendedor_id, descripcion, material, ancho, peso, cuidados, stock, destacado, activo, estado_moderacion, es_nueva_coleccion, es_exclusivo, es_oferta, porcentaje_descuento, metros_vendidos, calificacion_promedio, total_resenas) VALUES
+(14, 'Mezclilla Denim Heavy 14oz', 8, 41000.00, (SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'), 'Mezclilla rígida tejida en telar tradicional de 14 onzas para jeans, chaquetas y overoles.', 'Algodón 100%', '1.50m', '420g/m2', 'Lavar al revés con colores oscuros', 140, true, true, 'approved', true, false, false, 0.00, 165.00, 4.90, 9),
+(15, 'Dril Técnico Antifluido', 7, 32500.00, (SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'), 'Dril industrial con repelencia a líquidos ideal para dotación empresarial y ropa utilitaria.', 'Algodón 65% / Poliéster 35%', '1.55m', '260g/m2', 'No usar suavizante para preservar acabado', 180, false, true, 'approved', false, false, true, 12.00, 140.00, 4.75, 7),
+(16, 'Poliéster Deportivo Dry-Fit', 5, 19500.00, (SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'), 'Microfibra transpirable de secado ultrarrápido con protección UV para líneas deportivas.', 'Microfibra Poliéster', '1.60m', '145g/m2', 'Lavado en agua fría', 210, false, true, 'approved', true, false, false, 0.00, 120.00, 4.80, 6),
+(17, 'Lino Tropical Caribeño', 3, 43000.00, (SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'), 'Lino liviano de fibra larga pensado para guayaberas, vestidos frescos y sastrería de clima cálido.', 'Lino 85% / Viscosa 15%', '1.48m', '170g/m2', 'Planchado a vapor suave', 95, true, true, 'approved', true, false, true, 10.00, 178.00, 4.95, 11),
+(18, 'Terciopelo Esmeralda Real', 6, 92000.00, (SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'), 'Terciopelo denso de pelo corto y brillo sedoso para alta costura y decoración de lujo.', 'Seda / Rayón Viscosa', '1.40m', '340g/m2', 'Limpieza profesional en seco', 36, true, true, 'approved', false, true, false, 0.00, 74.00, 4.90, 5),
+(19, 'Seda Satinada Champagne', 2, 79000.00, (SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'), 'Seda satinada fluida con caída elegante en tono champaña natural para novias y gala.', 'Seda Mulberry', '1.40m', '90g/m2', 'Lavar en seco únicamente', 54, false, true, 'approved', false, false, false, 0.00, 88.00, 4.85, 6)
+ON CONFLICT (id) DO UPDATE SET
+    vendedor_id = EXCLUDED.vendedor_id,
+    precio = EXCLUDED.precio,
+    activo = true,
+    porcentaje_descuento = EXCLUDED.porcentaje_descuento,
+    metros_vendidos = EXCLUDED.metros_vendidos;
+
+SELECT pg_catalog.setval('public.productos_id_seq', GREATEST(19, (SELECT COALESCE(MAX(id), 1) FROM productos)), true);
+
+DELETE FROM imagenes_producto WHERE producto_id BETWEEN 14 AND 19;
+INSERT INTO imagenes_producto (producto_id, url_imagen, orden_visualizacion) VALUES
+(14, '/uploads/product_11_1775767027618.jpg', 0),
+(15, '/uploads/product_10_1775767265179.jpg', 0),
+(16, '/uploads/product_15_1775767332095.jpg', 0),
+(17, '/uploads/product_14_1775766898975.webp', 0),
+(18, '/uploads/product_10_1775766963190.webp', 0),
+(19, '/uploads/product_16_1775766690228.webp', 0);
+
+INSERT INTO perfiles_vendedor (
+    vendedor_id, nombre_tienda, slug_tienda, descripcion_bio, url_avatar, url_portada,
+    ciudad, pais, especialidad, verificado, politica_envio, calificacion_promedio, total_resenas, total_ventas_metros
+) VALUES
+(
+    (SELECT id FROM usuarios WHERE correo = 'vendedor@ddtextil.com'),
+    'Textiles Pérez & Cía',
+    'textiles-perez-cia',
+    'Proveedores mayoristas y al detal de algodones peinados, driles industriales y sedas importadas con más de 15 años vistiendo confecciones en toda Latinoamérica.',
+    '/images/hero-detail-1.webp',
+    '/images/carousel-nueva-coleccion.webp',
+    'Medellín',
+    'Colombia',
+    'Algodón Peinado, Dril y Seda Importada',
+    true,
+    'Despachos express en 24 horas hábiles desde Medellín. Cortes exactos certificados sin merma.',
+    0.00, 0, 0.00
+),
+(
+    (SELECT id FROM usuarios WHERE correo = 'maria.gonzalez@ddtextil.com'),
+    'Casa Textil González',
+    'casa-textil-gonzalez',
+    'Boutique textil especializada en linos orgánicos certificados, lanas merino y gasas de alta costura para diseñadores y talleres exigentes.',
+    '/images/hero-detail-2.webp',
+    '/images/carousel-telas-exclusivas.webp',
+    'Bogotá',
+    'Colombia',
+    'Lino Orgánico, Lana Merino y Alta Costura',
+    true,
+    'Envío asegurado nacional e internacional desde Bogotá. Muestras físicas disponibles bajo pedido.',
+    0.00, 0, 0.00
+),
+(
+    (SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'),
+    'Hilos del Valle Textil',
+    'hilos-del-valle-textil',
+    'Fábrica y distribuidora vallecaucana líder en mezclilla denim heavy, driles antifluido y textiles técnicos de alto rendimiento para dotación y moda urbana.',
+    '/images/hero-detail-3.webp',
+    '/images/hero-telas-premium.webp',
+    'Cali',
+    'Colombia',
+    'Denim Heavy, Dril Técnico y Poliéster Deportivo',
+    true,
+    'Entrega en 24-48h a todo el país con control de calidad rollo a rollo y descuento por volumen.',
+    0.00, 0, 0.00
+),
+(
+    (SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'),
+    'Telas & Seda del Caribe',
+    'telas-y-seda-del-caribe',
+    'Curaduría de linos tropicales frescos, terciopelos de autor y sedas satinadas inspiradas en la luz del Caribe colombiano para diseñadores de ocasión.',
+    '/uploads/product_10_1775766963190.webp',
+    '/images/carousel-ofertas-especiales.webp',
+    'Barranquilla',
+    'Colombia',
+    'Lino Tropical, Terciopelo y Seda Satinada',
+    true,
+    'Despacho refrigerado contra humedad en empaque sellado. Envíos prioritarios a costa e interior.',
+    0.00, 0, 0.00
+)
+ON CONFLICT (vendedor_id) DO UPDATE SET
+    nombre_tienda = EXCLUDED.nombre_tienda,
+    descripcion_bio = EXCLUDED.descripcion_bio,
+    url_avatar = EXCLUDED.url_avatar,
+    url_portada = EXCLUDED.url_portada,
+    ciudad = EXCLUDED.ciudad,
+    especialidad = EXCLUDED.especialidad,
+    politica_envio = EXCLUDED.politica_envio;
+
+-- Métricas iniciales competitivas en productos base
+UPDATE productos SET metros_vendidos = 245.50, calificacion_promedio = 4.90, total_resenas = 14 WHERE id = 1;
+UPDATE productos SET metros_vendidos = 132.00, calificacion_promedio = 4.85, total_resenas = 9 WHERE id = 2;
+UPDATE productos SET metros_vendidos = 198.00, calificacion_promedio = 4.95, total_resenas = 16 WHERE id = 3;
+UPDATE productos SET metros_vendidos = 84.00,  calificacion_promedio = 4.80, total_resenas = 7 WHERE id = 4;
+UPDATE productos SET metros_vendidos = 175.00, porcentaje_descuento = 15.00, calificacion_promedio = 4.75, total_resenas = 11 WHERE id = 5;
+UPDATE productos SET metros_vendidos = 96.00,  calificacion_promedio = 4.90, total_resenas = 8 WHERE id = 6;
+UPDATE productos SET metros_vendidos = 160.00, porcentaje_descuento = 12.00, calificacion_promedio = 4.65, total_resenas = 10 WHERE id = 7;
+UPDATE productos SET metros_vendidos = 210.00, calificacion_promedio = 4.88, total_resenas = 12 WHERE id = 8;
+UPDATE productos SET metros_vendidos = 64.00,  porcentaje_descuento = 20.00, calificacion_promedio = 4.70, total_resenas = 5 WHERE id = 9;
+UPDATE productos SET metros_vendidos = 52.00,  calificacion_promedio = 4.95, total_resenas = 4 WHERE id = 10;
+UPDATE productos SET metros_vendidos = 115.00, porcentaje_descuento = 10.00, calificacion_promedio = 4.60, total_resenas = 6 WHERE id = 11;
+
+-- 13. RESEÑAS REALES INICIALES DE VENDEDORES
+INSERT INTO resenas_vendedor (vendedor_id, usuario_id, calificacion, comentario) VALUES
+((SELECT id FROM usuarios WHERE correo = 'vendedor@ddtextil.com'), (SELECT id FROM usuarios WHERE correo = 'cliente@gmail.com'), 5, 'Excelente proveedor, el algodón llegó con el metraje exacto y empacado al vacío sin arrugas.'),
+((SELECT id FROM usuarios WHERE correo = 'vendedor@ddtextil.com'), (SELECT id FROM usuarios WHERE correo = 'cliente@ddtextil.com'), 5, 'Muy buena atención y despacho rápido desde Medellín. Recomendado para producción en serie.'),
+((SELECT id FROM usuarios WHERE correo = 'vendedor@ddtextil.com'), (SELECT id FROM usuarios WHERE correo = 'camila.ruiz@correo.com'), 4, 'Excelente rendimiento del dril elástico en corte industrial; el envío tardó un día adicional pero llegó intacto.'),
+((SELECT id FROM usuarios WHERE correo = 'maria.gonzalez@ddtextil.com'), (SELECT id FROM usuarios WHERE correo = 'cliente@gmail.com'), 5, 'El lino orgánico de Casa Textil González tiene una caída incomparable. Muy cumplidos.'),
+((SELECT id FROM usuarios WHERE correo = 'maria.gonzalez@ddtextil.com'), (SELECT id FROM usuarios WHERE correo = 'cliente@ddtextil.com'), 5, 'Calidad superior en lanas merino, siempre responden rápido todas las dudas técnicas.'),
+((SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'), (SELECT id FROM usuarios WHERE correo = 'cliente@gmail.com'), 5, 'La mezclilla heavy 14oz conserva el teñido perfecto después de lavandería industrial.'),
+((SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'), (SELECT id FROM usuarios WHERE correo = 'camila.ruiz@correo.com'), 4, 'Muy buen dril antifluido para dotaciones clínicas, corte limpio de punta a punta.'),
+((SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'), (SELECT id FROM usuarios WHERE correo = 'cliente@ddtextil.com'), 5, 'El lino tropical caribeño es fresquísimo para camisería de verano y viene sin fallas de urdimbre.'),
+((SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'), (SELECT id FROM usuarios WHERE correo = 'camila.ruiz@correo.com'), 5, 'La seda satinada champagne tiene un brillo delicado espectacular, ideal para colección de fiesta.')
+ON CONFLICT (vendedor_id, usuario_id) DO NOTHING;
+
+-- Recalcular métricas agregadas reales desde resenas_vendedor y productos
+UPDATE perfiles_vendedor pv SET
+    calificacion_promedio = COALESCE((SELECT ROUND(AVG(rv.calificacion)::numeric, 2) FROM resenas_vendedor rv WHERE rv.vendedor_id = pv.vendedor_id), 0.00),
+    total_resenas = COALESCE((SELECT COUNT(*) FROM resenas_vendedor rv WHERE rv.vendedor_id = pv.vendedor_id), 0),
+    total_ventas_metros = COALESCE((SELECT SUM(COALESCE(p.metros_vendidos, 0)) FROM productos p WHERE p.vendedor_id = pv.vendedor_id AND p.activo = true), 0.00);
+
+-- 14. ALERTAS INTELIGENTES DE OPORTUNIDAD PARA VENDEDORES
+INSERT INTO alertas_vendedor (vendedor_id, producto_id, tipo_alerta, titulo, mensaje, sugerencia_accion, descuento_sugerido)
+SELECT (SELECT id FROM usuarios WHERE correo = 'vendedor@ddtextil.com'), 1, 'demanda_vip', 'Alta demanda de clientes frecuentes en Algodón', 'Clientes recurrentes buscan telas premium de Algodón. Activa exclusividad o una oferta especial en tu tela líder para capturar compras VIP.', 'activar_exclusivo', 10.00
+WHERE NOT EXISTS (SELECT 1 FROM alertas_vendedor WHERE vendedor_id = (SELECT id FROM usuarios WHERE correo = 'vendedor@ddtextil.com') AND producto_id = 1 AND tipo_alerta = 'demanda_vip');
+
+INSERT INTO alertas_vendedor (vendedor_id, producto_id, tipo_alerta, titulo, mensaje, sugerencia_accion, descuento_sugerido)
+SELECT (SELECT id FROM usuarios WHERE correo = 'maria.gonzalez@ddtextil.com'), 8, 'competencia_precio', 'Competencia activa en categoría Algodón', 'Otro proveedor lidera el volumen de ventas en Algodón. Activa un descuento del 12% en Oxford Camisa para mejorar tu posicionamiento competitivo.', 'activar_descuento', 12.00
+WHERE NOT EXISTS (SELECT 1 FROM alertas_vendedor WHERE vendedor_id = (SELECT id FROM usuarios WHERE correo = 'maria.gonzalez@ddtextil.com') AND producto_id = 8 AND tipo_alerta = 'competencia_precio');
+
+INSERT INTO alertas_vendedor (vendedor_id, producto_id, tipo_alerta, titulo, mensaje, sugerencia_accion, descuento_sugerido)
+SELECT (SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com'), 14, 'demanda_vip', 'Tendencia en Denim Heavy para clientes recurrentes', 'Tus compradores de dotación y moda urbana consultan telas exclusivas. Considera promover tu línea Denim o activar un descuento competitivo.', 'activar_descuento', 10.00
+WHERE NOT EXISTS (SELECT 1 FROM alertas_vendedor WHERE vendedor_id = (SELECT id FROM usuarios WHERE correo = 'andres.restrepo@hilosdelvalle.com') AND tipo_alerta = 'demanda_vip');
+
+INSERT INTO alertas_vendedor (vendedor_id, producto_id, tipo_alerta, titulo, mensaje, sugerencia_accion, descuento_sugerido)
+SELECT (SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com'), 19, 'demanda_vip', 'Alta demanda VIP en Sedas de Gala', 'Clientes frecuentes VIP están buscando sedas satinadas importadas. Activa exclusividad VIP en Seda Satinada Champagne para maximizar margen.', 'activar_exclusivo', 0.00
+WHERE NOT EXISTS (SELECT 1 FROM alertas_vendedor WHERE vendedor_id = (SELECT id FROM usuarios WHERE correo = 'valentina.castro@telasdelcaribe.com') AND producto_id = 19 AND tipo_alerta = 'demanda_vip');
+
+-- 15. LOTES REALES POR VENDEDOR Y EVENTOS REALES DE MERMA PARA AUDITORÍA
+UPDATE lotes_inventario l SET proveedor = pv.nombre_tienda
+FROM productos p JOIN perfiles_vendedor pv ON pv.vendedor_id = p.vendedor_id
+WHERE l.producto_id = p.id;
+
+INSERT INTO lotes_inventario (producto_id, numero_lote, metros_recibidos, metros_actuales, costo_por_metro, proveedor, estado, notas)
+SELECT p.id, 'LOT-2026-RET09', 45.00, 3.00, 7440.00, COALESCE(pv.nombre_tienda, 'Textiles Pérez & Cía'), 'critical', 'Lote con stock crítico para reposición prioritaria'
+FROM productos p LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = p.vendedor_id
+WHERE p.nombre = 'Retazo Algodón' AND NOT EXISTS (SELECT 1 FROM lotes_inventario WHERE numero_lote = 'LOT-2026-RET09');
+
+INSERT INTO lotes_inventario (producto_id, numero_lote, metros_recibidos, metros_actuales, costo_por_metro, proveedor, estado, notas)
+SELECT p.id, 'LOT-2026-LNB12', 40.00, 5.00, 44640.00, COALESCE(pv.nombre_tienda, 'Casa Textil González'), 'critical', 'Lana Bebé en nivel crítico de inventario'
+FROM productos p LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = p.vendedor_id
+WHERE p.nombre = 'Lana Bebé' AND NOT EXISTS (SELECT 1 FROM lotes_inventario WHERE numero_lote = 'LOT-2026-LNB12');
+
+INSERT INTO lotes_inventario (producto_id, numero_lote, metros_recibidos, metros_actuales, costo_por_metro, proveedor, estado, notas)
+SELECT p.id, 'LOT-2026-DNM14', 180.00, 140.00, 25420.00, COALESCE(pv.nombre_tienda, 'Hilos del Valle Textil'), 'active', 'Lote principal Mezclilla Denim Heavy 14oz'
+FROM productos p LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = p.vendedor_id
+WHERE p.nombre = 'Mezclilla Denim Heavy 14oz' AND NOT EXISTS (SELECT 1 FROM lotes_inventario WHERE numero_lote = 'LOT-2026-DNM14');
+
+INSERT INTO lotes_inventario (producto_id, numero_lote, metros_recibidos, metros_actuales, costo_por_metro, proveedor, estado, notas)
+SELECT p.id, 'LOT-2026-LTC17', 120.00, 95.00, 26660.00, COALESCE(pv.nombre_tienda, 'Telas & Seda del Caribe'), 'active', 'Lino Tropical Caribeño lote costero'
+FROM productos p LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = p.vendedor_id
+WHERE p.nombre = 'Lino Tropical Caribeño' AND NOT EXISTS (SELECT 1 FROM lotes_inventario WHERE numero_lote = 'LOT-2026-LTC17');
+
+SELECT pg_catalog.setval('public.lotes_inventario_id_seq', GREATEST(1, (SELECT COALESCE(MAX(id), 1) FROM lotes_inventario)), true);
+
+INSERT INTO eventos_merma (producto_id, id_lote, metros_perdidos, motivo, descripcion, impacto_costo, responsable, usuario_id)
+SELECT p.id, l.numero_lote, 4.50, 'cutting_error', 'Descuadre inicial de mesa en trazado de lote Algodón Premium.', ROUND((4.50 * l.costo_por_metro)::numeric, 2), u.nombre, u.id
+FROM lotes_inventario l JOIN productos p ON p.id = l.producto_id JOIN usuarios u ON u.id = p.vendedor_id
+WHERE l.numero_lote = 'LOT-2026-ALG01' AND NOT EXISTS (SELECT 1 FROM eventos_merma);
+
+INSERT INTO eventos_merma (producto_id, id_lote, metros_perdidos, motivo, descripcion, impacto_costo, responsable, usuario_id)
+SELECT p.id, l.numero_lote, 3.20, 'factory_defect', 'Falla de tejeduría en orillo registrada al recibir rollo de Dril Elástico.', ROUND((3.20 * l.costo_por_metro)::numeric, 2), u.nombre, u.id
+FROM lotes_inventario l JOIN productos p ON p.id = l.producto_id JOIN usuarios u ON u.id = p.vendedor_id
+WHERE l.numero_lote = 'LOT-2026-DRL01' AND NOT EXISTS (SELECT 1 FROM eventos_merma e WHERE e.id_lote = 'LOT-2026-DRL01');
+
+INSERT INTO eventos_merma (producto_id, id_lote, metros_perdidos, motivo, descripcion, impacto_costo, responsable, usuario_id)
+SELECT p.id, l.numero_lote, 2.80, 'quality_control', 'Muestras técnicas de laboratorio textil extraídas de Lana Merino.', ROUND((2.80 * l.costo_por_metro)::numeric, 2), u.nombre, u.id
+FROM lotes_inventario l JOIN productos p ON p.id = l.producto_id JOIN usuarios u ON u.id = p.vendedor_id
+WHERE l.numero_lote = 'LOT-2026-LAN01' AND NOT EXISTS (SELECT 1 FROM eventos_merma e WHERE e.id_lote = 'LOT-2026-LAN01');
+
+INSERT INTO eventos_merma (producto_id, id_lote, metros_perdidos, motivo, descripcion, impacto_costo, responsable, usuario_id)
+SELECT p.id, l.numero_lote, 5.00, 'damaged', 'Humedad superficial detectada en extremo de rollo Mezclilla Denim 14oz.', ROUND((5.00 * l.costo_por_metro)::numeric, 2), u.nombre, u.id
+FROM lotes_inventario l JOIN productos p ON p.id = l.producto_id JOIN usuarios u ON u.id = p.vendedor_id
+WHERE l.numero_lote = 'LOT-2026-DNM14' AND NOT EXISTS (SELECT 1 FROM eventos_merma e WHERE e.id_lote = 'LOT-2026-DNM14');
+
+INSERT INTO eventos_merma (producto_id, id_lote, metros_perdidos, motivo, descripcion, impacto_costo, responsable, usuario_id)
+SELECT p.id, l.numero_lote, 2.50, 'cutting_error', 'Ajuste por sesgo de trama en punta inicial de Lino Tropical Caribeño.', ROUND((2.50 * l.costo_por_metro)::numeric, 2), u.nombre, u.id
+FROM lotes_inventario l JOIN productos p ON p.id = l.producto_id JOIN usuarios u ON u.id = p.vendedor_id
+WHERE l.numero_lote = 'LOT-2026-LTC17' AND NOT EXISTS (SELECT 1 FROM eventos_merma e WHERE e.id_lote = 'LOT-2026-LTC17');

@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --color-bg-primary: #ffffff;
     --color-bg-secondary: #f9fafb;
     --color-text-primary: #111827;
@@ -12,6 +13,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --color-bg-primary: #0f172a;
     --color-bg-secondary: #1e293b;
     --color-text-primary: #f1f5f9;
@@ -91,6 +93,20 @@
 
   .login-card-glass {
     @apply relative;
+  }
+
+  .glass-panel {
+    @apply bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/90 dark:border-white/15 shadow-lg shadow-slate-900/5;
+  }
+
+  .glass-card-subtle {
+    @apply bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/85 dark:border-white/15 shadow-sm;
+  }
+
+  .product-card-opt {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 440px;
+    contain: layout style paint;
   }
 
   .section-container {

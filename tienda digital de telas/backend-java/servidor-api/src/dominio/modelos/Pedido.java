@@ -87,6 +87,26 @@ public class Pedido {
     @SerializedName(value = "trackingNumber", alternate = {"numeroGuia"})
     private String numeroGuia;
 
+    /** Código de agrupamiento para sub-pedidos de un mismo checkout multi-vendedor (`String`). */
+    @SerializedName(value = "checkoutGroup", alternate = {"grupoCheckout"})
+    private String grupoCheckout;
+
+    /** Porcentaje de comisión cobrado por la plataforma sobre el subtotal (`double`). */
+    @SerializedName(value = "commissionRate", alternate = {"porcentajeComision", "tasaComision"})
+    private double porcentajeComision = 10.0;
+
+    /** Monto de comisión percibido por el administrador (`double`). */
+    @SerializedName(value = "adminCommission", alternate = {"montoComisionAdmin"})
+    private double montoComisionAdmin;
+
+    /** Ganancia neta para el vendedor tras descontar la comisión (`double`). */
+    @SerializedName(value = "sellerNetEarnings", alternate = {"gananciaNetaVendedor"})
+    private double gananciaNetaVendedor;
+
+    /** Nombre comercial de la tienda vendedora (`String`). */
+    @SerializedName(value = "storeName", alternate = {"nombreTienda"})
+    private String nombreTienda;
+
     /** Notas u observaciones adicionales del pedido (`String`). */
     @SerializedName(value = "notes", alternate = {"notas"})
     private String notas;
@@ -520,4 +540,19 @@ public class Pedido {
             this.lineItems.add(linea);
         }
     }
+
+    public String getGrupoCheckout() { return grupoCheckout; }
+    public void setGrupoCheckout(String grupoCheckout) { this.grupoCheckout = grupoCheckout; }
+
+    public double getPorcentajeComision() { return porcentajeComision; }
+    public void setPorcentajeComision(double porcentajeComision) { this.porcentajeComision = porcentajeComision; }
+
+    public double getMontoComisionAdmin() { return montoComisionAdmin; }
+    public void setMontoComisionAdmin(double montoComisionAdmin) { this.montoComisionAdmin = montoComisionAdmin; }
+
+    public double getGananciaNetaVendedor() { return gananciaNetaVendedor; }
+    public void setGananciaNetaVendedor(double gananciaNetaVendedor) { this.gananciaNetaVendedor = gananciaNetaVendedor; }
+
+    public String getNombreTienda() { return nombreTienda; }
+    public void setNombreTienda(String nombreTienda) { this.nombreTienda = nombreTienda; }
 }

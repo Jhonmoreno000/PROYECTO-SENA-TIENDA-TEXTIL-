@@ -40,10 +40,13 @@ public class InventarioDAO {
         List<LoteInventario> lista = new ArrayList<>();
         String consulta = "SELECT l.id, l.producto_id, l.numero_lote, l.metros_recibidos, l.metros_actuales, " +
                           "l.costo_por_metro, l.proveedor, l.estado, l.fecha_recepcion, l.notas, l.creado_en, " +
-                          "p.nombre as producto_nombre, c.nombre as producto_categoria " +
+                          "p.nombre as producto_nombre, p.vendedor_id, c.nombre as producto_categoria, " +
+                          "uv.nombre AS nombre_vendedor, uv.correo AS correo_vendedor, pv.nombre_tienda " +
                           "FROM lotes_inventario l " +
                           "LEFT JOIN productos p ON l.producto_id = p.id " +
                           "LEFT JOIN categorias c ON p.categoria_id = c.id " +
+                          "LEFT JOIN usuarios uv ON p.vendedor_id = uv.id " +
+                          "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = uv.id " +
                           "ORDER BY l.id ASC";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -54,14 +57,30 @@ public class InventarioDAO {
                 if (rs.getObject("producto_id") != null) {
                     b.setIdProducto(rs.getInt("producto_id"));
                 }
+                if (rs.getObject("vendedor_id") != null) {
+                    b.setIdVendedor(rs.getInt("vendedor_id"));
+                }
                 b.setNumeroLote(rs.getString("numero_lote"));
                 String nom = rs.getString("producto_nombre");
                 String cat = rs.getString("producto_categoria");
                 String notas = rs.getString("notas");
                 String tipoTela = (nom != null && !nom.isBlank()) ? nom
                         : ((cat != null && !cat.isBlank()) ? cat : (notas != null && !notas.isBlank() ? notas : ""));
+                b.setNombreProducto(nom);
                 b.setTipoTela(tipoTela);
-                b.setProveedor(rs.getString("proveedor") != null ? rs.getString("proveedor") : "");
+
+                String nombreTienda = rs.getString("nombre_tienda");
+                String nombreVendedor = rs.getString("nombre_vendedor");
+                b.setNombreVendedor(nombreVendedor);
+                b.setNombreTienda((nombreTienda != null && !nombreTienda.isBlank()) ? nombreTienda : nombreVendedor);
+                b.setCorreoVendedor(rs.getString("correo_vendedor"));
+
+                String proveedorRaw = rs.getString("proveedor");
+                String proveedorReal = (nombreTienda != null && !nombreTienda.isBlank())
+                        ? nombreTienda
+                        : (proveedorRaw != null ? proveedorRaw : "");
+                b.setProveedor(proveedorReal);
+
                 double metrosRecibidos = rs.getDouble("metros_recibidos");
                 double metrosActuales = rs.getObject("metros_actuales") != null
                         ? rs.getDouble("metros_actuales")
@@ -651,9 +670,14 @@ public class InventarioDAO {
      */
     public List<EventoMerma> obtenerTodosLosEventosMerma() {
         List<EventoMerma> lista = new ArrayList<>();
-        String consulta = "SELECT e.*, u.nombre AS usuario_nombre " +
+        String consulta = "SELECT e.*, u.nombre AS usuario_nombre, " +
+                          "p.nombre AS producto_nombre, p.vendedor_id, " +
+                          "uv.nombre AS nombre_vendedor, uv.correo AS correo_vendedor, pv.nombre_tienda " +
                           "FROM eventos_merma e " +
                           "LEFT JOIN usuarios u ON e.usuario_id = u.id " +
+                          "LEFT JOIN productos p ON e.producto_id = p.id " +
+                          "LEFT JOIN usuarios uv ON p.vendedor_id = uv.id " +
+                          "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = uv.id " +
                           "ORDER BY e.id DESC";
         try (Connection con = Conexion.obtenerConexion();
              PreparedStatement pst = con.prepareStatement(consulta);
@@ -664,6 +688,16 @@ public class InventarioDAO {
                 if (rs.getObject("producto_id") != null) {
                     w.setIdProducto(rs.getInt("producto_id"));
                 }
+                if (rs.getObject("vendedor_id") != null) {
+                    w.setIdVendedor(rs.getInt("vendedor_id"));
+                }
+                w.setNombreProducto(rs.getString("producto_nombre"));
+                String nombreTienda = rs.getString("nombre_tienda");
+                String nombreVendedor = rs.getString("nombre_vendedor");
+                w.setNombreVendedor(nombreVendedor);
+                w.setNombreTienda((nombreTienda != null && !nombreTienda.isBlank()) ? nombreTienda : nombreVendedor);
+                w.setCorreoVendedor(rs.getString("correo_vendedor"));
+
                 String lote = rs.getString("id_lote");
                 if (lote == null || lote.isBlank()) {
                     lote = rs.getObject("producto_id") != null ? String.valueOf(rs.getInt("producto_id")) : "";
@@ -681,7 +715,7 @@ public class InventarioDAO {
                 if (resp == null || resp.isBlank()) {
                     resp = rs.getString("usuario_nombre");
                 }
-                w.setResponsable(resp != null && !resp.isBlank() ? resp : "");
+                w.setResponsable(resp != null && !resp.isBlank() ? resp : (nombreVendedor != null ? nombreVendedor : ""));
                 String fecha = rs.getTimestamp("creado_en") != null ? rs.getTimestamp("creado_en").toString().split(" ")[0] : "";
                 w.setFechaCreacion(fecha);
                 w.setFechaEvento(fecha);
@@ -692,6 +726,112 @@ public class InventarioDAO {
             e.printStackTrace();
         }
         return lista;
+    }
+
+    /**
+     * Obtiene el identificador del vendedor propietario de un lote (vía `productos.vendedor_id`).
+     */
+    public Integer obtenerIdVendedorDeLote(String idLote) {
+        if (idLote == null || idLote.isBlank()) return null;
+        int idNum = -1;
+        try { idNum = Integer.parseInt(idLote.trim()); } catch (NumberFormatException ignored) {}
+        String sql = "SELECT p.vendedor_id FROM lotes_inventario l " +
+                     "JOIN productos p ON l.producto_id = p.id " +
+                     "WHERE l.id = ? OR l.numero_lote = ? LIMIT 1";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, idNum);
+            pst.setString(2, idLote.trim());
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) return rs.getInt("vendedor_id");
+            }
+        } catch (SQLException e) {
+            System.err.println("[INVENTARIO] Error consultando vendedor de lote: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene el identificador del vendedor propietario de un producto o rollo.
+     */
+    public Integer obtenerIdVendedorDeProducto(int idProducto) {
+        if (idProducto <= 0) return null;
+        String sql = "SELECT vendedor_id FROM productos WHERE id = ? LIMIT 1";
+        try (Connection con = Conexion.obtenerConexion();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, idProducto);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) return rs.getInt("vendedor_id");
+            }
+        } catch (SQLException e) {
+            System.err.println("[INVENTARIO] Error consultando vendedor de producto: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Calcula las métricas reales de mermas de un vendedor directamente en PostgreSQL para auditoría y envío de reporte.
+     */
+    public Map<String, Object> obtenerResumenMermasPorVendedor(int idVendedor) {
+        Map<String, Object> resumen = new LinkedHashMap<>();
+        if (idVendedor <= 0) return resumen;
+
+        String sqlVendedor = "SELECT u.id, u.nombre, u.correo, pv.nombre_tienda " +
+                             "FROM usuarios u LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = u.id " +
+                             "WHERE u.id = ? AND u.rol = 'vendedor' LIMIT 1";
+        String sqlAgg = "SELECT COUNT(e.id) AS total_eventos, " +
+                        "COALESCE(SUM(e.metros_perdidos), 0) AS metros_perdidos, " +
+                        "COALESCE(SUM(e.impacto_costo), 0) AS impacto_costo, " +
+                        "COUNT(DISTINCT e.producto_id) AS productos_afectados " +
+                        "FROM eventos_merma e " +
+                        "JOIN productos p ON e.producto_id = p.id " +
+                        "WHERE p.vendedor_id = ?";
+        String sqlTop = "SELECT e.motivo, SUM(e.metros_perdidos) AS total_metros " +
+                        "FROM eventos_merma e " +
+                        "JOIN productos p ON e.producto_id = p.id " +
+                        "WHERE p.vendedor_id = ? " +
+                        "GROUP BY e.motivo ORDER BY total_metros DESC LIMIT 1";
+
+        try (Connection con = Conexion.obtenerConexion()) {
+            try (PreparedStatement pstV = con.prepareStatement(sqlVendedor)) {
+                pstV.setInt(1, idVendedor);
+                try (ResultSet rsV = pstV.executeQuery()) {
+                    if (!rsV.next()) {
+                        return resumen;
+                    }
+                    String nombre = rsV.getString("nombre");
+                    String tienda = rsV.getString("nombre_tienda");
+                    resumen.put("sellerId", rsV.getInt("id"));
+                    resumen.put("sellerName", nombre);
+                    resumen.put("storeName", (tienda != null && !tienda.isBlank()) ? tienda : nombre);
+                    resumen.put("sellerEmail", rsV.getString("correo"));
+                }
+            }
+            try (PreparedStatement pstA = con.prepareStatement(sqlAgg)) {
+                pstA.setInt(1, idVendedor);
+                try (ResultSet rsA = pstA.executeQuery()) {
+                    if (rsA.next()) {
+                        resumen.put("totalEvents", rsA.getInt("total_eventos"));
+                        resumen.put("totalMetersLost", Math.round(rsA.getDouble("metros_perdidos") * 100.0) / 100.0);
+                        resumen.put("totalCostImpact", Math.round(rsA.getDouble("impacto_costo") * 100.0) / 100.0);
+                        resumen.put("affectedProducts", rsA.getInt("productos_afectados"));
+                    }
+                }
+            }
+            String topReason = "sin_eventos";
+            try (PreparedStatement pstT = con.prepareStatement(sqlTop)) {
+                pstT.setInt(1, idVendedor);
+                try (ResultSet rsT = pstT.executeQuery()) {
+                    if (rsT.next() && rsT.getString("motivo") != null) {
+                        topReason = rsT.getString("motivo");
+                    }
+                }
+            }
+            resumen.put("topReason", topReason);
+        } catch (SQLException e) {
+            System.err.println("[INVENTARIO] Error calculando resumen de mermas por vendedor: " + e.getMessage());
+        }
+        return resumen;
     }
 
     /**

@@ -11,7 +11,7 @@
 
 Este directorio contiene los artefactos de inicialización, definición DDL, datos semilla y respaldos de la base de datos relacional para el entorno productivo y de desarrollo:
 
-* **`01_esquema_espanol.sql`**: Script DDL principal que define las 29 tablas relacionales en español, sus restricciones de integridad (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`), valores por defecto y tipos de datos numéricos de alta precisión para textiles y moneda.
+* **`01_esquema_espanol.sql`**: Script DDL principal que define las 31 tablas relacionales en español (complementado de forma idempotente por `MigradorEsquemaMarketplace` y `MigradorEsquemaPagos`), sus restricciones de integridad (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`), valores por defecto y tipos de datos numéricos de alta precisión para textiles y moneda.
 * **`02_datos_iniciales.sql`**: Script DML con datos iniciales para categorías textiles, telas base de alta rotación, usuarios con roles tipificados (Administrador, Vendedor, Cliente), métricas y configuración global del sistema.
 * **`legado/TIENDA DIGITAL TEXTIL.sql`**: Volcado antiguo con las tablas en inglés. Está en una subcarpeta para que Docker no lo ejecute al iniciar la base de datos; el backend no lo usa.
 * **`README.md`**: Este documento de especificación formal del **Modelo Relacional** y el patrón **Modelo-Vista-Controlador (MVC)**.
@@ -24,11 +24,11 @@ El modelo de datos relacional de **D&D Textil** se encuentra normalizado hasta l
 
 ### 2.1. Diagrama Gráfico Vectorial del Modelo Relacional
 
-A continuación se presenta el **diagrama entidad-relación** de las 29 tablas, agrupadas por módulo con colores, con sus 25 llaves foráneas. Se genera directamente desde `01_esquema_espanol.sql` con `documentacion/diagramas/fuentes/generar_der.py`, así que siempre coincide con el esquema:
+A continuación se presenta el **esquema gráfico completo** de las 31 tablas relacionales (con 31 llaves foráneas) organizadas por clústeres de negocio (Marketplace y Tiendas, Catálogo Textil, Usuarios y Seguridad, Ventas con Comisión y Split Multi-Vendedor, Cupones y Métricas ERP), detallando claves primarias (PK en amarillo), claves foráneas (FK en celeste), restricciones únicas (UK en violeta) y líneas de integridad referencial:
 
-![Diagrama entidad-relación - D&D Textil](../documentacion/diagramas/der_simple.svg)
+![Modelo Relacional de Base de Datos - D&D Textil](diagramas/modelo_relacional_actualizado.svg)
 
-> **Nota:** La versión con todas las columnas está en [der_completo.svg](../documentacion/diagramas/der_completo.svg). Los archivos `diagramas/modelo_relacional.svg` y `diagramas/modelo_relacional_actualizado.svg` son versiones anteriores que no incluyen las tablas agregadas en noviembre; ya nada los enlaza y se pueden borrar. El visor [`diagramas/visor_interactivo_mvc_relacional.html`](diagramas/visor_interactivo_mvc_relacional.html) muestra el DER actual y la arquitectura.
+> **Nota:** Puedes abrir o visualizar directamente el archivo vectorial en alta definición: [modelo_relacional_actualizado.svg](diagramas/modelo_relacional_actualizado.svg) o [modelo_relacional.svg](diagramas/modelo_relacional.svg).
 
 ---
 
@@ -40,7 +40,7 @@ En la notación relacional, cada tabla se define con su nombre, atributos, clave
    `CATEGORIAS(`<u>`id`</u>, `nombre` [UK], `descripcion`, `creado_en`)
 
 2. **`USUARIOS`**  
-   `USUARIOS(`<u>`id`</u>, `nombre`, `correo` [UK], `telefono`, `contrasena_hash`, `rol`, `activo`, `suspendido`, `motivo_suspension`, `tasa_comision`, `registrado_en`, `ultimo_acceso`)
+   `USUARIOS(`<u>`id`</u>, `nombre`, `correo` [UK], `contrasena_hash`, `rol`, `activo`, `suspendido`, `motivo_suspension`, `tasa_comision`, `registrado_en`, `ultimo_acceso`)
 
 3. **`PRODUCTOS`**  
    `PRODUCTOS(`<u>`id`</u>, `nombre`, `categoria_id` [FK &rarr; `CATEGORIAS.id`], `precio`, `vendedor_id` [FK &rarr; `USUARIOS.id`], `descripcion`, `material`, `ancho`, `peso`, `cuidados`, `stock`, `destacado`, `activo`, `estado_moderacion`, `motivo_rechazo`, `es_nueva_coleccion`, `es_exclusivo`, `es_oferta`, `creado_en`, `actualizado_en`)
@@ -49,22 +49,22 @@ En la notación relacional, cada tabla se define con su nombre, atributos, clave
    `IMAGENES_PRODUCTO(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `url_imagen`, `orden_visualizacion`)
 
 5. **`LOTES_INVENTARIO`**  
-   `LOTES_INVENTARIO(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `numero_lote`, `metros_recibidos`, `metros_actuales`, `costo_por_metro`, `proveedor`, `estado`, `fecha_recepcion`, `notas`, `creado_en`)
+   `LOTES_INVENTARIO(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `numero_lote`, `metros_recibidos`, `costo_por_metro`, `proveedor`, `fecha_recepcion`, `notas`, `creado_en`)
 
 6. **`EVENTOS_MERMA`**  
-   `EVENTOS_MERMA(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `id_lote`, `metros_perdidos`, `motivo`, `descripcion`, `impacto_costo`, `responsable`, `usuario_id` [FK &rarr; `USUARIOS.id`], `creado_en`)
+   `EVENTOS_MERMA(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `metros_perdidos`, `motivo`, `impacto_costo`, `creado_en`)
 
 7. **`UMBRALES_STOCK`**  
    `UMBRALES_STOCK(`<u>`id`</u>, `tipo_tela` [UK], `metros_minimos`, `alerta_activa`)
 
 8. **`CUPONES`**  
-   `CUPONES(`<u>`id`</u>, `codigo` [UK], `tipo_descuento`, `valor_descuento`, `expira_en`, `compra_minima`, `usos_maximos`, `solo_primera_vez`, `conteo_usos`, `activo`, `creado_en`)
+   `CUPONES(`<u>`id`</u>, `codigo` [UK], `code`, `tipo_descuento`, `valor_descuento`, `expira_en`, `compra_minima`, `usos_maximos`, `solo_primera_vez`, `conteo_usos`, `activo`, `active`, `creado_en`)
 
 9. **`CATEGORIAS_CUPON`**  
    `CATEGORIAS_CUPON(`<u>`id`</u>, `cupon_id` [FK &rarr; `CUPONES.id`], `categoria_id` [FK &rarr; `CATEGORIAS.id`])
 
 10. **`PEDIDOS`**  
-    `PEDIDOS(`<u>`id`</u>, `usuario_id` [FK &rarr; `USUARIOS.id`], `vendedor_id` [FK &rarr; `USUARIOS.id`], `nombre_cliente`, `correo_cliente`, `telefono_cliente`, `documento_cliente`, `direccion_envio`, `ciudad_envio`, `departamento_envio`, `monto_total`, `subtotal`, `monto_impuesto`, `costo_envio`, `monto_descuento`, `codigo_cupon`, `estado`, `metodo_pago`, `estado_pago`, `referencia_pago` [UK], `monto_centavos`, `moneda`, `wompi_transaccion_id`, `pagado_en`, `numero_guia`, `notas`, `creado_en`, `actualizado_en`)
+    `PEDIDOS(`<u>`id`</u>, `usuario_id` [FK &rarr; `USUARIOS.id`], `vendedor_id` [FK &rarr; `USUARIOS.id`], `nombre_cliente`, `correo_cliente`, `telefono_cliente`, `direccion_envio`, `ciudad_envio`, `departamento_envio`, `monto_total`, `subtotal`, `monto_impuesto`, `costo_envio`, `monto_descuento`, `codigo_cupon`, `estado`, `metodo_pago`, `estado_pago`, `numero_guia`, `notas`, `creado_en`, `actualizado_en`)
 
 11. **`ITEMS_PEDIDO`**  
     `ITEMS_PEDIDO(`<u>`id`</u>, `pedido_id` [FK &rarr; `PEDIDOS.id`], `producto_id` [FK &rarr; `PRODUCTOS.id`], `cantidad`, `precio_por_metro`, `subtotal`)
@@ -76,19 +76,19 @@ En la notación relacional, cada tabla se define con su nombre, atributos, clave
     `RESENAS(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `usuario_id` [FK &rarr; `USUARIOS.id`], `calificacion`, `comentario`, `creado_en`)
 
 14. **`TICKETS_SOPORTE`**  
-    `TICKETS_SOPORTE(`<u>`id`</u>, `usuario_id` [FK &rarr; `USUARIOS.id`], `pedido_id` [FK &rarr; `PEDIDOS.id`], `nombre_usuario`, `correo_usuario`, `categoria`, `asunto`, `descripcion`, `estado`, `prioridad`, `asignado_a` [FK &rarr; `USUARIOS.id`], `creado_en`, `actualizado_en`, `resuelto_en`)
+    `TICKETS_SOPORTE(`<u>`id`</u>, `usuario_id` [FK &rarr; `USUARIOS.id`], `nombre_usuario`, `correo_usuario`, `asunto`, `descripcion`, `estado`, `prioridad`, `asignado_a` [FK &rarr; `USUARIOS.id`], `creado_en`, `actualizado_en`, `resuelto_en`)
 
 15. **`REPORTES_ERRORES`**  
-    `REPORTES_ERRORES(`<u>`id`</u>, `vendedor_id` [FK &rarr; `USUARIOS.id`], `nombre_vendedor`, `correo_reportante`, `titulo`, `area`, `severidad`, `producto_id` [FK &rarr; `PRODUCTOS.id`], `nombre_producto`, `descripcion`, `pasos`, `estado`, `prioridad`, `asignado_a` [FK &rarr; `USUARIOS.id`], `reportado_en`, `resuelto_en`)
+    `REPORTES_ERRORES(`<u>`id`</u>, `vendedor_id` [FK &rarr; `USUARIOS.id`], `nombre_vendedor`, `area`, `descripcion`, `pasos`, `estado`, `prioridad`, `asignado_a` [FK &rarr; `USUARIOS.id`], `reportado_en`, `resuelto_en`)
 
 16. **`CONFIGURACION_SISTEMA`**  
     `CONFIGURACION_SISTEMA(`<u>`id`</u>, `clave` [UK], `valor`, `actualizado_en`)
 
 17. **`SECCIONES_INICIO`**  
-    `SECCIONES_INICIO(`<u>`id`</u>, `clave` [UK], `titulo`, `subtitulo`, `activo`, `orden`, `creado_en`)
+    `SECCIONES_INICIO(`<u>`id`</u>, `clave` [UK], `titulo`, `subtitulo`, `activo`, `orden`, `creado_en`, `active`)
 
 18. **`DIAPOSITIVAS_CARRUSEL`**  
-    `DIAPOSITIVAS_CARRUSEL(`<u>`id`</u>, `titulo`, `subtitulo`, `imagen`, `cta`, `clave_seccion`, `activo`, `orden`, `creado_en`)
+    `DIAPOSITIVAS_CARRUSEL(`<u>`id`</u>, `titulo`, `subtitulo`, `imagen`, `cta`, `clave_seccion`, `activo`, `orden`, `creado_en`, `image`, `active`)
 
 19. **`BANNER_GLOBAL`**  
     `BANNER_GLOBAL(`<u>`id`</u>, `activo`, `mensaje`, `tipo_banner`, `actualizado_en`)
@@ -100,19 +100,19 @@ En la notación relacional, cada tabla se define con su nombre, atributos, clave
     `VENTAS_DIARIAS(`<u>`id`</u>, `fecha_venta` [UK], `ventas_totales`, `pedidos_totales`, `creado_en`)
 
 22. **`VENTAS_REGION`**  
-    `VENTAS_REGION(`<u>`id`</u>, `region` [UK], `capital`, `ventas_totales`, `pedidos_totales`, `porcentaje`, `creado_en`)
+    `VENTAS_REGION(`<u>`id`</u>, `region`, `ventas_totales`, `porcentaje`, `creado_en`)
 
 23. **`ACTIVIDAD_RECIENTE`**  
     `ACTIVIDAD_RECIENTE(`<u>`id`</u>, `tipo`, `usuario_id` [FK &rarr; `USUARIOS.id`], `nombre_usuario`, `accion`, `creado_en`)
 
 24. **`NOTIFICACIONES_SISTEMA_ERP`**  
-    `NOTIFICACIONES_SISTEMA_ERP(`<u>`id`</u>, `tipo`, `titulo`, `mensaje`, `leido`, `creado_en`)
+    `NOTIFICACIONES_SISTEMA_ERP(`<u>`id`</u>, `tipo`, `titulo`, `mensaje`, `leido`, `creado_en`, `type`)
 
 25. **`INVENTARIO_TELAS_ERP`**  
     `INVENTARIO_TELAS_ERP(`<u>`id`</u>, `sku` [UK], `nombre_tela`, `categoria`, `proveedor`, `metros_actuales`, `metros_minimos`, `costo_por_metro`, `fecha_ultima_reposicion`)
 
 26. **`ROLLOS_TEXTIL`**  
-    `ROLLOS_TEXTIL(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `codigo_rollo` [UK], `metraje_inicial`, `metraje_remanente`, `lote_tintoreria`, `estado`, `ubicacion_bodega`, `creado_en`, `actualizado_en`)
+    `ROLLOS_TEXTIL(`<u>`id`</u>, `producto_id` [FK &rarr; `PRODUCTOS.id`], `lote_id` [FK &rarr; `LOTES_INVENTARIO.id`], `codigo_rollo` [UK], `metraje_inicial`, `metraje_remanente`, `lote_tintoreria`, `estado`, `ubicacion_bodega`)
 
 27. **`EVENTOS_PAGO_WOMPI`**  
     `EVENTOS_PAGO_WOMPI(`<u>`id`</u>, `referencia_pago`, `transaccion_id`, `estado`, `origen`, `resultado`, `carga_util`, `recibido_en`)
@@ -120,18 +120,207 @@ En la notación relacional, cada tabla se define con su nombre, atributos, clave
 28. **`DIRECCIONES_USUARIO`**  
     `DIRECCIONES_USUARIO(`<u>`id`</u>, `usuario_id` [FK &rarr; `USUARIOS.id`], `etiqueta`, `nombre_destinatario`, `telefono`, `direccion`, `ciudad`, `departamento`, `codigo_postal`, `predeterminada`, `creado_en`)
 
-29. **`AUDITORIA_SISTEMA`**  
-    `AUDITORIA_SISTEMA(`<u>`id`</u>, `usuario_id`, `rol`, `accion`, `recurso`, `ip_origen`, `detalles`, `fecha_creacion`)
+29. **`PERFILES_VENDEDOR`** *(Marketplace)*  
+    `PERFILES_VENDEDOR(`<u>`vendedor_id`</u> [PK/FK &rarr; `USUARIOS.id`], `nombre_tienda`, `slug_tienda` [UK], `descripcion_bio`, `url_avatar`, `url_portada`, `ciudad`, `pais`, `especialidad`, `verificado`, `politica_envio`, `calificacion_promedio`, `total_resenas`, `total_ventas_metros`, `actualizado_en`)
+
+30. **`RESENAS_VENDEDOR`** *(Marketplace)*  
+    `RESENAS_VENDEDOR(`<u>`id`</u>, `vendedor_id` [FK &rarr; `USUARIOS.id`], `usuario_id` [FK &rarr; `USUARIOS.id`], `pedido_id` [FK &rarr; `PEDIDOS.id`], `calificacion`, `comentario`, `creado_en`)
+
+31. **`ALERTAS_VENDEDOR`** *(VIP, Auditoría, Stock y Mermas)*  
+    `ALERTAS_VENDEDOR(`<u>`id`</u>, `vendedor_id` [FK &rarr; `USUARIOS.id`], `producto_id` [FK &rarr; `PRODUCTOS.id`], `tipo_alerta`, `titulo`, `mensaje`, `sugerencia_accion`, `descuento_sugerido`, `leida`, `aplicada`, `creado_en`)
 
 ---
 
-### 2.3. Diagrama Entidad-Relación (DER)
+### 2.2. Diagrama Entidad-Relación (DER)
 
-El DER completo (29 tablas, 25 llaves foráneas y cardinalidad) está en [documentacion/08-modelo-entidad-relacion.md](../documentacion/08-modelo-entidad-relacion.md), en imagen y en versión Mermaid. El diccionario de datos de todas las tablas está en [documentacion/04-base-de-datos-diseno-y-esquema.md](../documentacion/04-base-de-datos-diseno-y-esquema.md).
+```mermaid
+erDiagram
+    %% Relaciones de Usuarios y Clientes
+    USUARIOS ||--o| PERFILES_VENDEDOR : "posee perfil de tienda"
+    USUARIOS ||--o{ PRODUCTOS : "publica (vendedor)"
+    USUARIOS ||--o{ PEDIDOS : "realiza (cliente)"
+    USUARIOS ||--o{ PEDIDOS : "gestiona (vendedor)"
+    USUARIOS ||--o{ DIRECCIONES_USUARIO : "guarda"
+    USUARIOS ||--o{ ITEMS_CARRITO : "posee"
+    USUARIOS ||--o{ RESENAS : "escribe"
+    USUARIOS ||--o{ RESENAS_VENDEDOR : "recibe / escribe"
+    USUARIOS ||--o{ ALERTAS_VENDEDOR : "recibe alertas"
+    USUARIOS ||--o{ TICKETS_SOPORTE : "radica"
 
-### 2.4. Vistas de Base de Datos (SQL Views)
+    %% Relaciones de Catalogo e Inventario
+    CATEGORIAS ||--o{ PRODUCTOS : "clasifica"
+    PRODUCTOS ||--o{ IMAGENES_PRODUCTO : "contiene"
+    PRODUCTOS ||--o{ LOTES_INVENTARIO : "abastecido_por"
+    PRODUCTOS ||--o{ EVENTOS_MERMA : "registra"
+    PRODUCTOS ||--o{ ITEMS_PEDIDO : "incluido_en"
+    PRODUCTOS ||--o{ ITEMS_CARRITO : "agregado_en"
+    PRODUCTOS ||--o{ RESENAS : "recibe"
+    LOTES_INVENTARIO ||--o{ ROLLOS_TEXTIL : "genera_rollos"
 
-El esquema actual **no define vistas SQL**. Las consultas de agregación (métricas, alertas de stock, facturas) están en los DAO del backend, principalmente `InventarioDAO` y `PedidoDAO`.
+    %% Relaciones Comerciales y Pagos
+    PEDIDOS ||--|{ ITEMS_PEDIDO : "contiene"
+    PEDIDOS ||--o{ EVENTOS_PAGO_WOMPI : "audita_transacciones"
+    CUPONES ||--o{ CATEGORIAS_CUPON : "restringe"
+    CATEGORIAS ||--o{ CATEGORIAS_CUPON : "aplica_a"
+
+    USUARIOS {
+        int id PK
+        string nombre
+        string correo UK
+        string contrasena_hash
+        string rol
+        boolean activo
+    }
+
+    CATEGORIAS {
+        int id PK
+        string nombre UK
+        text descripcion
+    }
+
+    PRODUCTOS {
+        int id PK
+        string nombre
+        int categoria_id FK
+        numeric precio
+        int vendedor_id FK
+        int stock
+        boolean activo
+    }
+
+    PEDIDOS {
+        int id PK
+        int usuario_id FK
+        numeric monto_total
+        string estado
+        string estado_pago
+        timestamp creado_en
+    }
+
+    ITEMS_PEDIDO {
+        int id PK
+        int pedido_id FK
+        int producto_id FK
+        numeric cantidad
+        numeric precio_por_metro
+    }
+
+    EVENTOS_PAGO_WOMPI {
+        int id PK
+        string referencia_pago
+        string transaccion_id
+        string estado
+        string origen
+        string resultado
+        timestamp recibido_en
+    }
+
+    PERFILES_VENDEDOR {
+        int vendedor_id PK
+        string nombre_tienda
+        string slug_tienda UK
+        string ciudad
+        string especialidad
+        numeric calificacion_promedio
+        numeric total_ventas_metros
+    }
+
+    RESENAS_VENDEDOR {
+        int id PK
+        int vendedor_id FK
+        int usuario_id FK
+        int pedido_id FK
+        int calificacion
+        text comentario
+        timestamp creado_en
+    }
+
+    ALERTAS_VENDEDOR {
+        int id PK
+        int vendedor_id FK
+        int producto_id FK
+        string tipo_alerta
+        string titulo
+        numeric descuento_sugerido
+        boolean leida
+        boolean aplicada
+    }
+
+    CUPONES {
+        int id PK
+        string codigo UK
+        string tipo_descuento
+        numeric valor_descuento
+        boolean activo
+    }
+```
+
+---
+
+### 2.3. Vistas de Base de Datos (SQL Views)
+
+En PostgreSQL, las **Vistas** encapsulan consultas complejas de agregación, uniones frecuentes y reportes de auditoría, mejorando el desacoplamiento con el backend:
+
+#### Vista 1: Catálogo Consolidado de Telas con Imágenes
+```sql
+CREATE OR REPLACE VIEW vista_catalogo_telas AS
+SELECT 
+    p.id AS producto_id,
+    p.nombre AS nombre_tela,
+    c.nombre AS categoria,
+    p.precio,
+    p.stock AS metros_disponibles,
+    p.material,
+    p.ancho,
+    u.nombre AS vendedor,
+    (SELECT ip.url_imagen 
+     FROM imagenes_producto ip 
+     WHERE ip.producto_id = p.id 
+     ORDER BY ip.orden_visualizacion ASC LIMIT 1) AS imagen_principal,
+    COALESCE(AVG(r.calificacion), 5.0) AS calificacion_promedio,
+    COUNT(r.id) AS total_resenas
+FROM productos p
+JOIN categorias c ON p.categoria_id = c.id
+LEFT JOIN usuarios u ON p.vendedor_id = u.id
+LEFT JOIN resenas r ON p.id = r.producto_id
+WHERE p.activo = true AND p.estado_moderacion = 'approved'
+GROUP BY p.id, c.nombre, u.nombre;
+```
+
+#### Vista 2: Alertas de Stock Crítico de Inventario
+```sql
+CREATE OR REPLACE VIEW vista_alertas_stock_critico AS
+SELECT 
+    p.id AS producto_id,
+    p.nombre AS nombre_tela,
+    p.stock AS metros_actuales,
+    COALESCE(u.metros_minimos, 20.0) AS umbral_minimo,
+    CASE 
+        WHEN p.stock <= 0 THEN 'AGOTADO'
+        WHEN p.stock <= COALESCE(u.metros_minimos, 20.0) THEN 'CRITICO'
+        ELSE 'OPTIMO'
+    END AS estado_alerta
+FROM productos p
+LEFT JOIN umbrales_stock u ON p.nombre = u.tipo_tela OR p.material = u.tipo_tela
+WHERE p.activo = true;
+```
+
+#### Vista 3: Resumen de Ventas por Vendedor
+```sql
+CREATE OR REPLACE VIEW vista_ventas_vendedores AS
+SELECT 
+    u.id AS vendedor_id,
+    u.nombre AS vendedor_nombre,
+    u.correo AS vendedor_correo,
+    COUNT(DISTINCT p.id) AS total_pedidos,
+    COALESCE(SUM(ip.subtotal), 0.00) AS total_ventas,
+    COALESCE(SUM(ip.subtotal * (u.tasa_comision / 100.0)), 0.00) AS comisiones_acumuladas
+FROM usuarios u
+LEFT JOIN pedidos p ON p.vendedor_id = u.id AND p.estado NOT IN ('cancelled', 'refunded')
+LEFT JOIN items_pedido ip ON ip.pedido_id = p.id
+WHERE u.rol = 'vendedor'
+GROUP BY u.id, u.nombre, u.correo;
+```
 
 ---
 
@@ -162,17 +351,17 @@ flowchart TD
 
     subgraph VISTA ["1. CAPA VISTA (View - React 18 + TailwindCSS)"]
         direction TB
-        UI_Store["Tienda Pública & Catálogo<br/>(Catalogo.jsx, Carrito.jsx, Payment.jsx)"]:::vistaStyle
-        UI_Admin["Paneles de Gestión por Rol<br/>(AdminDashboard, SellerDashboard, MesaCorte)"]:::vistaStyle
-        UI_Context["Estado Global Reactivo<br/>(ContextoAutenticacion, ContextoCarrito)"]:::vistaStyle
+        UI_Store["Marketplace Público & Tiendas<br/>(Catalogo.jsx, DirectorioTiendas.jsx, PerfilTiendaPublico.jsx, Payment.jsx)"]:::vistaStyle
+        UI_Admin["Paneles de Gestión por Rol<br/>(ResumenAdmin, MiTiendaVendedor, AlertasOportunidad, PanelCliente)"]:::vistaStyle
+        UI_Context["Estado Global Reactivo<br/>(ContextoAutenticacion, ContextoCarrito, ContextoProducto)"]:::vistaStyle
         UI_Store --> UI_Context
         UI_Admin --> UI_Context
     end
 
     subgraph CONTROLADOR ["2. CAPA CONTROLADOR (Controller - Java 21 HttpServer)"]
         direction TB
-        BaseHandler["ManejadorBase<br/>(CORS, Rate Limit 1200 req/min, Correlation-ID)"]:::controllerStyle
-        Handlers["Manejadores REST Especializados<br/>(ManejadorProductos, ManejadorPedidos, ManejadorInventario)"]:::controllerStyle
+        BaseHandler["ManejadorBase<br/>(CORS, Rate Limit 1200 req/min, Correlation-ID, RBAC)"]:::controllerStyle
+        Handlers["18 Manejadores REST Especializados<br/>(ManejadorProductos, ManejadorTiendas, ManejadorPedidos, ManejadorInventario)"]:::controllerStyle
         Gson["Transformador JSON<br/>(Google Gson DTOs Bidireccionales)"]:::controllerStyle
         BaseHandler --> Handlers
         Handlers --- Gson
@@ -180,15 +369,15 @@ flowchart TD
 
     subgraph MODELO ["3. CAPA MODELO (Model - Java Domain + JDBC DAOs)"]
         direction TB
-        Domain["Entidades de Negocio y Servicios<br/>(Producto, Pedido, RolloTextil, ServicioCorteTextil)"]:::modelStyle
-        DAOs["DAOs de Persistencia JDBC<br/>(ProductoDAO, PedidoDAO, InventarioDAO, PagoWompiDAO)"]:::modelStyle
-        PoolCon["Pool de Conexiones propio<br/>(Conexion.java, 24 por defecto)"]:::modelStyle
+        Domain["22 Entidades de Negocio y 8 Servicios<br/>(Producto, PerfilVendedor, Pedido, ServicioExclusividadVIP, ServicioCorteTextil)"]:::modelStyle
+        DAOs["15 DAOs y Migradores JDBC<br/>(ProductoDAO, TiendaVendedorDAO, PedidoDAO, InventarioDAO, PagoWompiDAO)"]:::modelStyle
+        Hikari["Pool de Conexiones<br/>(HikariCP 20 Conexiones)"]:::modelStyle
         Domain --> DAOs
-        DAOs --> PoolCon
+        DAOs --> Hikari
     end
 
     subgraph PERSISTENCIA ["4. CAPA DE BASE DE DATOS"]
-        Postgres[("PostgreSQL 17<br/>29 Tablas Relacionales, Índices B-Tree, SELECT FOR UPDATE")]:::modelStyle
+        Postgres[("PostgreSQL 17<br/>31 Tablas Relacionales · 31 FKs · SELECT FOR UPDATE")]:::modelStyle
     end
 
     %% Flujo ordenado de capas
@@ -210,10 +399,10 @@ El **Modelo** es el núcleo de la lógica de negocio y la persistencia de datos.
 1. **Persistencia Relacional (PostgreSQL 17):**
    * Almacenamiento seguro, índices B-Tree de alto rendimiento, transacciones ACID y bloqueos a nivel de fila (`SELECT ... FOR UPDATE`) para evitar condiciones de carrera en compras simultáneas de tela.
 2. **Entidades de Dominio (`dominio.modelos.*`):**
-   * 19 clases Java en `dominio.modelos` (`Producto`, `Pedido`, `Usuario`, `ItemCarrito`, `RolloTextil`, `LoteInventario`, `EventoMerma`, `Cupon`, `Resena`, `TicketSoporte`, entre otras, y el registro `TransaccionWompi`).
+   * Clases Java encapsuladas (`Producto`, `Pedido`, `Usuario`, `ItemCarrito`, `LoteInventario`, `UmbralStock`, `VentaRegion`, `ActividadReciente`).
    * Manejo bilingüe con anotaciones `@SerializedName` de Google Gson para serialización transparente.
 3. **Objetos de Acceso a Datos (`infraestructura.persistencia.jdbc.*`):**
-   * DAOs especializados (`ProductoDAO`, `PedidoDAO`, `InventarioDAO`, `CarritoDAO`, `JdbcRepositorioUsuarioImpl`, `CuponDAO`).
+   * DAOs especializados (`ProductoDAO`, `TiendaVendedorDAO`, `PedidoDAO`, `InventarioDAO`, `CarritoDAO`, `JdbcRepositorioUsuarioImpl`, `CuponDAO`, `PagoWompiDAO`).
    * Consultas SQL parametrizadas mediante `PreparedStatement` para mitigar ataques de inyección SQL (OWASP Top 10).
 
 ---
@@ -226,10 +415,11 @@ La **Vista** es la interfaz visual reactiva con la que interactúan los diferent
    * Estructura SPA (Single Page Application) modular y desacoplada del backend.
    * Estilizado con Tailwind CSS bajo principios de ergonomía visual y accesibilidad (WCAG 2.1).
 2. **Componentes Clave de Vista:**
-   * `src/paginas/Catalogo.jsx`: Renderizado del catálogo textil con filtros dinámicos por tipo de tela y precio.
-   * `src/paginas/Carrito.jsx`: Carrito con cálculo de totales y aplicación de cupones.
-   * `src/paginas/admin/ResumenAdmin.jsx`: Panel de control con gráficos Recharts para métricas comerciales.
-   * `src/paginas/admin/Inventario/ConfiguracionStock.jsx`: Vista de configuración de umbrales y alertas de stock.
+   * `src/paginas/Catalogo.jsx`: Renderizado del catálogo textil con scroll incremental, exclusividad VIP y comparación multivendedor.
+   * `src/paginas/DirectorioTiendas.jsx` y `PerfilTiendaPublico.jsx`: Directorio público y perfil de tienda tipo red social.
+   * `src/paginas/vendedor/MiTiendaVendedor.jsx` y `AlertasOportunidad.jsx`: Editor en vivo de perfil comercial y bandeja de alertas reales.
+   * `src/paginas/admin/ResumenAdmin.jsx`: Panel de control con métricas reales de comisiones administrativas y ventas globales.
+   * `src/paginas/admin/Inventario/ConfiguracionStock.jsx`: Alertas reales de stock crítico para notificar a cada vendedor sin mutar su inventario.
 3. **Consumo Desacoplado:**
    * La Vista no accede jamás de forma directa a la base de datos; delega toda obtención de información mediante peticiones asíncronas `fetch()` hacia la API REST.
 
@@ -253,9 +443,7 @@ El **Controlador** actúa como puente intermediario e inteligente entre la Vista
 
 ### 3.4. Ciclo de Vida de una Petición (Ejemplo: Compra de Tela)
 
-A continuación se ilustra la interacción coordinada entre la Vista, el Controlador, el Modelo y la Base de Datos con el endpoint `POST /api/pedidos` (`PedidoDAO`).
-
-> **Nota:** el checkout de la tienda no usa este endpoint sino `POST /api/pagos/intencion` (`PagoWompiDAO`), que valida el stock sin descontarlo y lo descuenta al aprobar el pago (ver `documentacion/12-diagramas-de-secuencia.md`).
+A continuación se ilustra la interacción coordinada entre la Vista, el Controlador, el Modelo y la Base de Datos:
 
 ```mermaid
 sequenceDiagram
@@ -283,8 +471,8 @@ sequenceDiagram
         Vista-->>Cliente: Notificación exitosa y factura generada
     else Stock insuficiente
         Modelo->>BD: ROLLBACK TRANSACTION
-        Modelo-->>Controlador: -1 (la excepción de stock se registra en el log)
-        Controlador-->>Vista: HTTP 500 {"error": "Error al crear el pedido"}
+        Modelo-->>Controlador: Excepción de Stock Insuficiente
+        Controlador-->>Vista: HTTP 400 Bad Request {"error": "Stock insuficiente"}
         Vista-->>Cliente: Alerta visual de metros no disponibles
     end
 ```
@@ -308,8 +496,8 @@ docker compose ps
 # 4. Probar endpoints del Modelo y Controlador
 curl -s http://localhost:8081/health/live
 curl -s http://localhost:8081/api/productos
-curl -s http://localhost:8081/api/inventario/umbrales
-curl -s http://localhost:8081/api/metricas/regiones
+curl -s http://localhost:8081/api/inventory/thresholds
+curl -s http://localhost:8081/api/metrics/regions
 
 # 5. Verificar logs del backend en tiempo real
 docker compose logs -f backend

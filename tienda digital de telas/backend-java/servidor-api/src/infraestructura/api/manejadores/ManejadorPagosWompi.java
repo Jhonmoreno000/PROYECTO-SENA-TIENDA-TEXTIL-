@@ -14,11 +14,14 @@ import com.sun.net.httpserver.HttpExchange;
 
 import aplicacion.servicios.ServicioAutenticacion;
 import aplicacion.servicios.ServicioCriptoWompi;
+import aplicacion.servicios.ServicioExclusividadVIP;
 import aplicacion.servicios.ServicioNotificacionesEmail;
+import dominio.modelos.Producto;
 import dominio.modelos.TransaccionWompi;
 import infraestructura.configuracion.ConfiguracionWompi;
 import infraestructura.persistencia.jdbc.PagoWompiDAO;
 import infraestructura.persistencia.jdbc.PagoWompiDAO.ResultadoIntencionPago;
+import infraestructura.persistencia.jdbc.ProductoDAO;
 
 /**
  * Controlador REST para el flujo de pagos seguros con Wompi (Bancolombia).
@@ -109,6 +112,16 @@ public class ManejadorPagosWompi extends ManejadorBase {
      * @throws Exception Si ocurre un error validando precios o persistiendo el pedido.
      */
     private void manejarIntencionPago(HttpExchange intercambio) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaError(intercambio, 401, "Debes registrarte o iniciar sesión como cliente para iniciar un pago.");
+            return;
+        }
+        if (!identidad.get().esCliente()) {
+            enviarRespuestaError(intercambio, 403, "Solo las cuentas con rol Cliente pueden realizar compras y pagos.");
+            return;
+        }
+
         String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         if (ServicioAutenticacion.contieneDatosTarjetaSensibles(cuerpo)) {
@@ -124,16 +137,7 @@ public class ManejadorPagosWompi extends ManejadorBase {
             return;
         }
 
-        int userId = -1;
-        if (json.has("userId") && !json.get("userId").isJsonNull()) {
-            userId = json.get("userId").getAsInt();
-        } else if (json.has("idUsuario") && !json.get("idUsuario").isJsonNull()) {
-            userId = json.get("idUsuario").getAsInt();
-        }
-        if (userId <= 0) {
-            enviarRespuestaError(intercambio, 400, "El identificador del usuario es obligatorio.");
-            return;
-        }
+        int userId = identidad.get().idUsuario();
 
         JsonObject customer = json.has("customerInfo") && json.get("customerInfo").isJsonObject()
                 ? json.getAsJsonObject("customerInfo")
@@ -162,6 +166,10 @@ public class ManejadorPagosWompi extends ManejadorBase {
             enviarRespuestaError(intercambio, 400, "Debe enviar al menos un producto en la lista de items.");
             return;
         }
+
+        ProductoDAO productoDAO = new ProductoDAO();
+        ServicioExclusividadVIP servicioVIP = new ServicioExclusividadVIP();
+        boolean esVip = servicioVIP.esClienteFrecuente(userId);
 
         List<Map<String, Object>> listaArticulos = new ArrayList<>();
         for (JsonElement el : itemsArray) {
@@ -193,6 +201,13 @@ public class ManejadorPagosWompi extends ManejadorBase {
                             : (itemObj.has("id") ? itemObj.get("id").getAsInt() : itemObj.get("idProducto").getAsInt());
                     double cant = itemObj.has("quantity") ? itemObj.get("quantity").getAsDouble()
                             : (itemObj.has("cantidad") ? itemObj.get("cantidad").getAsDouble() : 1.0);
+
+                    Producto prod = productoDAO.obtenerProductoPorId(prodId);
+                    if (prod != null && prod.isEsExclusivo() && !esVip) {
+                        enviarRespuestaError(intercambio, 403, "La tela '" + prod.getNombre() + "' es exclusiva para clientes frecuentes VIP.");
+                        return;
+                    }
+
                     fila.put("productId", prodId);
                     fila.put("quantity", cant);
                 }
@@ -234,6 +249,16 @@ public class ManejadorPagosWompi extends ManejadorBase {
      * @throws Exception Si ocurre un error procesando la confirmación.
      */
     private void manejarConfirmarPago(HttpExchange intercambio) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaError(intercambio, 401, "Debes iniciar sesión como cliente para confirmar un pago.");
+            return;
+        }
+        if (!identidad.get().esCliente()) {
+            enviarRespuestaError(intercambio, 403, "Solo las cuentas con rol Cliente pueden confirmar pagos de compra.");
+            return;
+        }
+
         String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
         if (ServicioAutenticacion.contieneDatosTarjetaSensibles(cuerpo)) {

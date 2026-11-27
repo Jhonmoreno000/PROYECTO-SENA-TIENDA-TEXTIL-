@@ -12,6 +12,7 @@ import dominio.modelos.LoteInventario;
 import dominio.modelos.RolloTextil;
 import infraestructura.configuracion.Conexion;
 import infraestructura.persistencia.jdbc.InventarioDAO;
+import infraestructura.persistencia.jdbc.TiendaVendedorDAO;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,6 +27,8 @@ import java.util.Map;
 public class ManejadorInventario extends ManejadorBase {
     /** Objeto de acceso a datos de inventario y métricas (`InventarioDAO`). */
     private final InventarioDAO dao = new InventarioDAO();
+    /** Objeto de acceso a datos para alertas persistentes hacia vendedores (`TiendaVendedorDAO`). */
+    private final TiendaVendedorDAO tiendaDAO = new TiendaVendedorDAO();
     /** Serializador JSON (`Gson`). */
     private final Gson gson = new Gson();
     /** Servicio generador de etiquetas vectoriales SVG y HTML (`ServicioEtiquetasBodega`). */
@@ -155,18 +158,37 @@ public class ManejadorInventario extends ManejadorBase {
     private void manejarPost(String ruta, HttpExchange intercambio) throws Exception {
         String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
 
-        if (ruta.endsWith("/batches") || ruta.endsWith("/lotes")) {
+        if (ruta.endsWith("/notificar-stock") || ruta.endsWith("/notify-stock")) {
+            manejarNotificarStockBajo(intercambio, cuerpo);
+        } else if (ruta.endsWith("/enviar-reporte-mermas") || ruta.endsWith("/send-waste-report")) {
+            manejarEnviarReporteMermas(intercambio, cuerpo);
+        } else if (ruta.endsWith("/batches") || ruta.endsWith("/lotes")) {
             LoteInventario lote = gson.fromJson(cuerpo, LoteInventario.class);
+            if (!verificarPropietarioVendedorAntifraude(intercambio, lote != null ? lote.getIdProducto() : null, null)) {
+                return;
+            }
             boolean exito = dao.agregarLote(lote);
             enviarRespuestaJson(intercambio, exito ? 200 : 500,
                     exito ? "{\"success\":true,\"id\":" + gson.toJson(lote.getId()) + "}" : "{\"success\":false}");
         } else if (ruta.endsWith("/waste") || ruta.endsWith("/mermas")) {
             EventoMerma merma = gson.fromJson(cuerpo, EventoMerma.class);
+            if (!verificarPropietarioVendedorAntifraude(
+                    intercambio,
+                    merma != null ? merma.getIdProducto() : null,
+                    merma != null ? merma.getIdLote() : null)) {
+                return;
+            }
             boolean exito = dao.agregarEventoMerma(merma);
             enviarRespuestaJson(intercambio, exito ? 200 : 500,
                     exito ? "{\"success\":true,\"id\":" + gson.toJson(merma.getId()) + "}" : "{\"success\":false}");
         } else if (ruta.endsWith("/rolls") || ruta.endsWith("/rollos")) {
             RolloTextil rollo = gson.fromJson(cuerpo, RolloTextil.class);
+            if (!verificarPropietarioVendedorAntifraude(
+                    intercambio,
+                    rollo != null ? rollo.getProductoId() : null,
+                    null)) {
+                return;
+            }
             boolean exito = dao.agregarRollo(rollo);
             enviarRespuestaJson(intercambio, exito ? 200 : 500,
                     exito ? "{\"success\":true,\"id\":" + rollo.getId() + "}" : "{\"success\":false}");
@@ -182,6 +204,9 @@ public class ManejadorInventario extends ManejadorBase {
             RolloTextil rollo = dao.obtenerRolloPorCodigoOId(codigoRollo);
             if (rollo == null) {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Rollo textil no encontrado\"}");
+                return;
+            }
+            if (!verificarPropietarioVendedorAntifraude(intercambio, rollo.getProductoId(), null)) {
                 return;
             }
 
@@ -220,6 +245,11 @@ public class ManejadorInventario extends ManejadorBase {
             resp.addProperty("totalPrice", totalCalculado);
             enviarRespuestaJson(intercambio, actualizado ? 200 : 500, gson.toJson(resp));
         } else if (ruta.equals("/api/activity") || ruta.equals("/api/actividad")) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
             ActividadReciente actividad = gson.fromJson(cuerpo, ActividadReciente.class);
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.agregarActividad(actividad) + "}");
         } else if (ruta.endsWith("/validar-disponibilidad") || ruta.endsWith("/validate-availability")) {
@@ -255,6 +285,9 @@ public class ManejadorInventario extends ManejadorBase {
         if (ruta.contains("/batches/") || ruta.contains("/lotes/")) {
             String[] partes = ruta.split("/");
             String idLote = partes[partes.length - 1];
+            if (!verificarPropietarioVendedorAntifraude(intercambio, null, idLote)) {
+                return;
+            }
             double metros = json.has("currentMeters") ? json.get("currentMeters").getAsDouble()
                           : (json.has("metrosActuales") ? json.get("metrosActuales").getAsDouble() : 0.0);
             String estado = json.has("status") ? json.get("status").getAsString()
@@ -262,6 +295,15 @@ public class ManejadorInventario extends ManejadorBase {
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.actualizarLote(idLote, metros, estado) + "}");
 
         } else if (ruta.endsWith("/thresholds") || ruta.endsWith("/umbrales")) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+            if (!identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Solo los administradores pueden configurar umbrales globales\"}");
+                return;
+            }
             String tela = json.has("fabricType") ? json.get("fabricType").getAsString()
                         : (json.has("tipoTela") ? json.get("tipoTela").getAsString() : "");
             double metrosMinimos = json.has("minMeters") ? json.get("minMeters").getAsDouble()
@@ -269,6 +311,15 @@ public class ManejadorInventario extends ManejadorBase {
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.actualizarUmbral(tela, metrosMinimos) + "}");
 
         } else if (ruta.equals("/api/banner")) {
+            var identidad = obtenerIdentidad(intercambio);
+            if (identidad.isEmpty()) {
+                enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+                return;
+            }
+            if (!identidad.get().esAdministrador()) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Solo los administradores pueden actualizar el banner global\"}");
+                return;
+            }
             boolean habilitado = json.has("enabled") ? json.get("enabled").getAsBoolean()
                                : (json.has("habilitado") ? json.get("habilitado").getAsBoolean()
                                : (json.has("activo") ? json.get("activo").getAsBoolean() : false));
@@ -280,5 +331,206 @@ public class ManejadorInventario extends ManejadorBase {
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
         }
+    }
+
+    /**
+     * Control antifraude: impide que administradores o terceros alteren lotes, rollos, cortes o mermas.
+     * Solo el vendedor propietario autenticado puede modificar su propio inventario.
+     */
+    private boolean verificarPropietarioVendedorAntifraude(
+            HttpExchange intercambio,
+            Integer idProductoOpcional,
+            String idLoteOpcional
+    ) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return false;
+        }
+        if (identidad.get().esAdministrador()) {
+            enviarRespuestaJson(intercambio, 403,
+                    "{\"error\":\"Control antifraude: el administrador no puede crear ni modificar lotes, rollos, cortes ni mermas de vendedores. Solo puede revisar métricas y enviar notificaciones.\"}");
+            return false;
+        }
+        if (!identidad.get().esVendedor()) {
+            enviarRespuestaJson(intercambio, 403, "{\"error\":\"Solo el vendedor propietario puede modificar su inventario.\"}");
+            return false;
+        }
+
+        int idUsuario = identidad.get().idUsuario();
+        if (idLoteOpcional != null && !idLoteOpcional.isBlank()) {
+            Integer duenioLote = dao.obtenerIdVendedorDeLote(idLoteOpcional);
+            if (duenioLote != null && duenioLote != idUsuario) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Control antifraude: este lote pertenece a otro vendedor.\"}");
+                return false;
+            }
+        }
+        if (idProductoOpcional != null && idProductoOpcional > 0) {
+            Integer duenioProd = dao.obtenerIdVendedorDeProducto(idProductoOpcional);
+            if (duenioProd == null || duenioProd != idUsuario) {
+                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Control antifraude: este producto pertenece a otro vendedor.\"}");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Endpoint administrativo: envía una notificación persistente de stock bajo al vendedor correspondiente.
+     */
+    private void manejarNotificarStockBajo(HttpExchange intercambio, String cuerpo) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return;
+        }
+        if (!identidad.get().esAdministrador()) {
+            enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: solo el administrador puede emitir notificaciones de auditoría.\"}");
+            return;
+        }
+
+        JsonObject json;
+        try {
+            json = JsonParser.parseString(cuerpo).getAsJsonObject();
+        } catch (Exception e) {
+            enviarRespuestaJson(intercambio, 400, "{\"error\":\"JSON inválido\"}");
+            return;
+        }
+
+        int sellerId = json.has("sellerId") && !json.get("sellerId").isJsonNull() ? json.get("sellerId").getAsInt() : -1;
+        if (sellerId <= 0) {
+            enviarRespuestaJson(intercambio, 400, "{\"error\":\"El identificador del vendedor (sellerId) es obligatorio\"}");
+            return;
+        }
+
+        Integer productId = (json.has("productId") && !json.get("productId").isJsonNull())
+                ? json.get("productId").getAsInt() : null;
+        String fabricName = (json.has("fabricName") && !json.get("fabricName").isJsonNull())
+                ? json.get("fabricName").getAsString().trim() : "Tela de tu catálogo";
+        String batchNumber = (json.has("batchNumber") && !json.get("batchNumber").isJsonNull())
+                ? json.get("batchNumber").getAsString().trim() : "";
+        double currentMeters = (json.has("currentMeters") && !json.get("currentMeters").isJsonNull())
+                ? json.get("currentMeters").getAsDouble() : 0.0;
+        double threshold = (json.has("threshold") && !json.get("threshold").isJsonNull())
+                ? json.get("threshold").getAsDouble() : 20.0;
+        String observacion = (json.has("message") && !json.get("message").isJsonNull())
+                ? json.get("message").getAsString().trim()
+                : ((json.has("observacion") && !json.get("observacion").isJsonNull()) ? json.get("observacion").getAsString().trim() : "");
+
+        String nombreAuditor = obtenerNombreUsuario(identidad.get().idUsuario());
+        String loteInfo = !batchNumber.isBlank() ? (" (Lote " + batchNumber + ")") : "";
+        String titulo = "Alerta de Stock Bajo: " + fabricName;
+        String mensaje = "El equipo de auditoría (" + nombreAuditor + ") te notifica que \"" + fabricName + "\"" + loteInfo +
+                " registra " + String.format(java.util.Locale.US, "%.1f", currentMeters) + "m disponibles, por debajo del umbral mínimo de " +
+                String.format(java.util.Locale.US, "%.1f", threshold) + "m." +
+                (!observacion.isBlank() ? " Nota: " + observacion : " Por favor programa reposición en tu panel de vendedor.");
+
+        int alertId = tiendaDAO.crearAlertaAdministrativa(sellerId, productId, "stock_bajo", titulo, mensaje, "reponer_stock");
+        if (alertId <= 0) {
+            enviarRespuestaJson(intercambio, 500, "{\"error\":\"No se pudo registrar la notificación de stock en la base de datos\"}");
+            return;
+        }
+
+        ActividadReciente act = new ActividadReciente();
+        act.setTipo("stock_alert_sent");
+        act.setIdUsuario(identidad.get().idUsuario());
+        act.setNombreUsuario(nombreAuditor);
+        act.setAccion("Notificación de stock bajo enviada al vendedor #" + sellerId + " por " + fabricName);
+        dao.agregarActividad(act);
+
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("alertId", alertId);
+        resp.addProperty("sellerId", sellerId);
+        resp.addProperty("message", "Alerta de stock bajo enviada al vendedor.");
+        enviarRespuestaJson(intercambio, 201, gson.toJson(resp));
+    }
+
+    /**
+     * Endpoint administrativo: calcula las métricas reales de mermas de un vendedor desde PostgreSQL y le envía su reporte.
+     */
+    private void manejarEnviarReporteMermas(HttpExchange intercambio, String cuerpo) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        if (identidad.isEmpty()) {
+            enviarRespuestaJson(intercambio, 401, "{\"error\":\"Autenticación requerida\"}");
+            return;
+        }
+        if (!identidad.get().esAdministrador()) {
+            enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: solo el administrador puede enviar reportes de auditoría.\"}");
+            return;
+        }
+
+        JsonObject json;
+        try {
+            json = JsonParser.parseString(cuerpo).getAsJsonObject();
+        } catch (Exception e) {
+            enviarRespuestaJson(intercambio, 400, "{\"error\":\"JSON inválido\"}");
+            return;
+        }
+
+        int sellerId = json.has("sellerId") && !json.get("sellerId").isJsonNull() ? json.get("sellerId").getAsInt() : -1;
+        if (sellerId <= 0) {
+            enviarRespuestaJson(intercambio, 400, "{\"error\":\"El identificador del vendedor (sellerId) es obligatorio\"}");
+            return;
+        }
+        String observacion = (json.has("observacion") && !json.get("observacion").isJsonNull())
+                ? json.get("observacion").getAsString().trim()
+                : ((json.has("message") && !json.get("message").isJsonNull()) ? json.get("message").getAsString().trim() : "");
+
+        Map<String, Object> resumen = dao.obtenerResumenMermasPorVendedor(sellerId);
+        if (resumen.isEmpty()) {
+            enviarRespuestaJson(intercambio, 404, "{\"error\":\"Vendedor no encontrado\"}");
+            return;
+        }
+
+        int totalEventos = ((Number) resumen.getOrDefault("totalEvents", 0)).intValue();
+        double metrosPerdidos = ((Number) resumen.getOrDefault("totalMetersLost", 0.0)).doubleValue();
+        double impactoCosto = ((Number) resumen.getOrDefault("totalCostImpact", 0.0)).doubleValue();
+        String causaRaw = String.valueOf(resumen.getOrDefault("topReason", "sin_eventos"));
+        String storeName = String.valueOf(resumen.getOrDefault("storeName", "Tu Tienda"));
+        String causaEs = traducirCausaMerma(causaRaw);
+
+        String nombreAuditor = obtenerNombreUsuario(identidad.get().idUsuario());
+        String titulo = "Reporte Oficial de Mermas — " + storeName;
+        String mensaje = "Auditoría de mermas emitida por " + nombreAuditor + ": " + totalEventos +
+                " incidente(s) documentado(s), " + String.format(java.util.Locale.US, "%.2f", metrosPerdidos) +
+                "m perdidos con impacto financiero real de $" + String.format(java.util.Locale.US, "%,.0f", impactoCosto).replace(",", ".") +
+                " COP. Causa principal: " + causaEs + "." +
+                (!observacion.isBlank() ? " Observación del auditor: " + observacion : "");
+
+        int alertId = tiendaDAO.crearAlertaAdministrativa(sellerId, null, "reporte_mermas", titulo, mensaje, "revisar_mermas");
+        if (alertId <= 0) {
+            enviarRespuestaJson(intercambio, 500, "{\"error\":\"No se pudo enviar el reporte de mermas\"}");
+            return;
+        }
+
+        ActividadReciente act = new ActividadReciente();
+        act.setTipo("waste_report_sent");
+        act.setIdUsuario(identidad.get().idUsuario());
+        act.setNombreUsuario(nombreAuditor);
+        act.setAccion("Reporte de mermas enviado a " + storeName + " (" + String.format(java.util.Locale.US, "%.1f", metrosPerdidos) + "m)");
+        dao.agregarActividad(act);
+
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("alertId", alertId);
+        resp.addProperty("sellerId", sellerId);
+        resp.add("metrics", gson.toJsonTree(resumen));
+        enviarRespuestaJson(intercambio, 201, gson.toJson(resp));
+    }
+
+    private String traducirCausaMerma(String causa) {
+        if (causa == null) return "Sin clasificar";
+        return switch (causa.trim().toLowerCase()) {
+            case "cutting_error" -> "Error de corte";
+            case "factory_defect" -> "Defecto de fábrica";
+            case "damaged" -> "Daño en almacén";
+            case "quality_control" -> "Control de calidad";
+            case "stain" -> "Mancha / contaminación";
+            case "sample" -> "Muestras";
+            case "end_of_roll", "retazo_submetro" -> "Retazo fin de rollo";
+            case "sin_eventos" -> "Sin incidentes registrados";
+            default -> causa;
+        };
     }
 }

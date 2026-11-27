@@ -1,24 +1,61 @@
 package infraestructura.api.manejadores;
 
+import aplicacion.servicios.ServicioExclusividadVIP;
 import aplicacion.servicios.ServicioNotificacionesEmail;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
+import dominio.modelos.ActividadReciente;
 import dominio.modelos.Producto;
 import infraestructura.configuracion.ConfiguracionEntorno;
+import infraestructura.persistencia.jdbc.InventarioDAO;
 import infraestructura.persistencia.jdbc.ProductoDAO;
+import infraestructura.persistencia.jdbc.TiendaVendedorDAO;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Controlador HTTP para la gestión del catálogo de productos (CRUD, moderación y carga de imágenes).
+ * Controlador HTTP para la gestión del catálogo de productos (CRUD, moderación, competencia, VIP y carga de imágenes).
  * Rutas soportadas: `/api/products` y `/api/productos`.
  */
 public class ManejadorProductos extends ManejadorBase {
 
     /** Servicio de envío de alertas por correo electrónico (`ServicioNotificacionesEmail`). */
     private final ServicioNotificacionesEmail servicioNotificaciones = new ServicioNotificacionesEmail();
+    /** Servicio de evaluación de elegibilidad VIP para telas exclusivas. */
+    private final ServicioExclusividadVIP servicioVIP = new ServicioExclusividadVIP();
+    /** DAO de alertas y perfiles de tienda para notificar auditorías reales al vendedor. */
+    private final TiendaVendedorDAO tiendaDAO = new TiendaVendedorDAO();
+    /** DAO de inventario y actividad reciente para registrar auditorías. */
+    private final InventarioDAO inventarioDAO = new InventarioDAO();
+
+    /**
+     * Normaliza un estado de moderación recibido en inglés o español a su código canónico.
+     */
+    public static String normalizarEstadoModeracion(String estado) {
+        if (estado == null) return "";
+        return switch (estado.trim().toLowerCase()) {
+            case "approved", "aprobado" -> "approved";
+            case "changes_requested", "cambios_solicitados" -> "changes_requested";
+            case "rejected", "rechazado" -> "rejected";
+            case "pending", "pendiente" -> "pending";
+            default -> "";
+        };
+    }
+
+    /**
+     * Devuelve la etiqueta localizada en español para mostrar al usuario sin exponer códigos internos.
+     */
+    public static String obtenerEtiquetaEstadoModeracion(String estado) {
+        return switch (normalizarEstadoModeracion(estado)) {
+            case "approved" -> "Aprobado";
+            case "changes_requested" -> "Cambios solicitados";
+            case "rejected" -> "Suspendido";
+            case "pending" -> "Pendiente";
+            default -> "Pendiente";
+        };
+    }
 
     /**
      * Enruta las solicitudes `GET`, `POST`, `PUT` y `DELETE` sobre el catálogo de productos.
@@ -52,11 +89,29 @@ public class ManejadorProductos extends ManejadorBase {
      * @throws Exception Si falla la consulta o serialización.
      */
     private void manejarGet(HttpExchange intercambio, String ruta, ProductoDAO dao, Gson gson) throws Exception {
+        var identidad = obtenerIdentidad(intercambio);
+        boolean esStaffAdmin = identidad.isPresent() && identidad.get().esAdministrador();
+        boolean esClienteVip = identidad.isPresent() && (esStaffAdmin || servicioVIP.esClienteFrecuente(identidad.get().idUsuario()));
+
+        if (ruta.matches("^/api/(products|productos)/\\d+/(competencia|competition)/?$")) {
+            int id = extraerIdRuta(ruta);
+            if (id > 0) {
+                List<Producto> competidores = dao.obtenerCompetenciaProducto(id, esClienteVip);
+                enviarRespuestaJson(intercambio, 200, gson.toJson(competidores));
+                return;
+            }
+        }
+
         if (ruta.matches("^/api/(products|productos)/\\d+/?$")) {
             int id = extraerIdRuta(ruta);
             if (id > 0) {
                 Producto producto = dao.obtenerProductoPorId(id);
                 if (producto != null) {
+                    boolean esDuenio = identidad.isPresent() && identidad.get().idUsuario() == producto.getIdVendedor();
+                    if (producto.isEsExclusivo() && !esClienteVip && !esDuenio) {
+                        enviarRespuestaJson(intercambio, 403, "{\"error\":\"Tela exclusiva reservada para clientes frecuentes VIP.\"}");
+                        return;
+                    }
                     enviarRespuestaJson(intercambio, 200, gson.toJson(producto));
                 } else {
                     enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
@@ -76,19 +131,43 @@ public class ManejadorProductos extends ManejadorBase {
             seccion = obtenerParametroConsulta(intercambio, "seccion");
         }
 
+        boolean esDuenioConsultando = identidad.isPresent() && idVendedor > 0 && identidad.get().idUsuario() == idVendedor;
+        boolean puedeVerExclusivos = esClienteVip || esDuenioConsultando;
+
+        int pagina = obtenerParametroConsultaEntero(intercambio, "page", -1);
+        int limite = obtenerParametroConsultaEntero(intercambio, "limit", -1);
+
         if (ruta.endsWith("/pending") || ruta.endsWith("/pendientes")) {
-            var identidad = obtenerIdentidad(intercambio);
             if (identidad.isEmpty() || (!identidad.get().esAdministrador() && !identidad.get().esVendedor())) {
                 enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: se requieren permisos de vendedor o administrador\"}");
                 return;
             }
             productos = dao.obtenerProductosPendientes();
+        } else if (pagina > 0 || limite > 0) {
+            String categoria = obtenerParametroConsulta(intercambio, "categoria");
+            if (categoria == null) categoria = obtenerParametroConsulta(intercambio, "category");
+            String busqueda = obtenerParametroConsulta(intercambio, "busqueda");
+            if (busqueda == null) busqueda = obtenerParametroConsulta(intercambio, "search");
+            String orden = obtenerParametroConsulta(intercambio, "orden");
+            if (orden == null) orden = obtenerParametroConsulta(intercambio, "sort");
+            productos = dao.obtenerProductosPaginados(
+                    pagina > 0 ? pagina : 1,
+                    limite > 0 ? limite : 24,
+                    categoria, busqueda, orden,
+                    idVendedor > 0 ? idVendedor : null,
+                    puedeVerExclusivos
+            );
         } else if (idVendedor > 0) {
             productos = dao.obtenerProductosPorVendedor(idVendedor);
         } else if (seccion != null && !seccion.isBlank()) {
             productos = dao.obtenerProductosPorSeccion(seccion);
         } else {
-            productos = dao.obtenerTodosLosProductos();
+            boolean incluirInactivos = esStaffAdmin && "true".equalsIgnoreCase(obtenerParametroConsulta(intercambio, "includeInactive"));
+            productos = dao.obtenerTodosLosProductos(incluirInactivos);
+        }
+
+        if (!puedeVerExclusivos && productos != null) {
+            productos = productos.stream().filter(p -> !p.isEsExclusivo()).toList();
         }
         enviarRespuestaJson(intercambio, 200, gson.toJson(productos));
     }
@@ -121,25 +200,81 @@ public class ManejadorProductos extends ManejadorBase {
                 return;
             }
 
+            Producto existente = dao.obtenerProductoPorIdParaAuditoria(idProducto);
+            if (existente == null) {
+                enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
+                return;
+            }
+
             String cuerpo = new String(leerCuerpoSeguro(intercambio), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
-            String estado = (json.has("status") && !json.get("status").isJsonNull()) ? json.get("status").getAsString()
+            String estadoRaw = (json.has("status") && !json.get("status").isJsonNull()) ? json.get("status").getAsString()
                           : ((json.has("estado") && !json.get("estado").isJsonNull()) ? json.get("estado").getAsString() : null);
-            java.util.Set<String> estadosPermitidos = java.util.Set.of(
-                    "approved", "rejected", "pending", "changes_requested",
-                    "aprobado", "rechazado", "pendiente", "cambios_solicitados"
-            );
-            if (estado == null || !estadosPermitidos.contains(estado.trim().toLowerCase())) {
+            String estadoNorm = normalizarEstadoModeracion(estadoRaw);
+            if (estadoNorm.isEmpty()) {
                 enviarRespuestaJson(intercambio, 400, "{\"error\":\"Estado de moderación inválido o faltante\"}");
                 return;
             }
-            String motivo = json.has("reason") && !json.get("reason").isJsonNull() ? json.get("reason").getAsString()
-                          : (json.has("motivo") && !json.get("motivo").isJsonNull() ? json.get("motivo").getAsString() : null);
-            boolean exito = dao.actualizarEstadoModeracion(idProducto, estado.trim().toLowerCase(), motivo);
-            enviarRespuestaJson(intercambio, exito ? 200 : 500, exito ? "{\"success\":true}" : "{\"error\":\"Error en moderación\"}");
+
+            String motivo = json.has("reason") && !json.get("reason").isJsonNull() ? json.get("reason").getAsString().trim()
+                          : (json.has("motivo") && !json.get("motivo").isJsonNull() ? json.get("motivo").getAsString().trim() : "");
+            if (("changes_requested".equals(estadoNorm) || "rejected".equals(estadoNorm)) && motivo.isBlank()) {
+                enviarRespuestaJson(intercambio, 400, "{\"error\":\"Debes especificar una observación real de auditoría para notificar al vendedor.\"}");
+                return;
+            }
+
+            boolean exito = dao.actualizarEstadoModeracion(idProducto, estadoNorm, motivo.isBlank() ? null : motivo);
+            if (!exito) {
+                enviarRespuestaJson(intercambio, 500, "{\"error\":\"Error en moderación\"}");
+                return;
+            }
+
+            String etiquetaEstado = obtenerEtiquetaEstadoModeracion(estadoNorm);
+            String nombreAuditor = obtenerNombreUsuario(identidad.get().idUsuario());
+            int alertaId = -1;
+            if (existente.getIdVendedor() > 0) {
+                String prefijoTitulo = switch (estadoNorm) {
+                    case "changes_requested" -> "Auditoría: Cambios solicitados en ";
+                    case "rejected" -> "Auditoría: Producto suspendido — ";
+                    case "approved" -> "Auditoría aprobada: ";
+                    default -> "Revisión administrativa: ";
+                };
+                String detalleMotivo = !motivo.isBlank()
+                        ? " Observación de auditoría (" + nombreAuditor + "): " + motivo
+                        : " Revisado por " + nombreAuditor + ". Precios e inventario permanecen intactos.";
+                String mensajeAlerta = "Estado actual: " + etiquetaEstado + " en \"" + existente.getNombre() + "\"." + detalleMotivo;
+                String sugerencia = ("changes_requested".equals(estadoNorm) || "rejected".equals(estadoNorm))
+                        ? "revisar_auditoria" : "confirmar_lectura";
+                alertaId = tiendaDAO.crearAlertaAdministrativa(
+                        existente.getIdVendedor(),
+                        idProducto,
+                        "auditoria_admin",
+                        prefijoTitulo + existente.getNombre(),
+                        mensajeAlerta,
+                        sugerencia
+                );
+            }
+
+            ActividadReciente actividad = new ActividadReciente();
+            actividad.setTipo("product_audit");
+            actividad.setIdUsuario(identidad.get().idUsuario());
+            actividad.setNombreUsuario(nombreAuditor);
+            actividad.setAccion("Auditoría a \"" + existente.getNombre() + "\" -> " + etiquetaEstado
+                    + (!motivo.isBlank() ? " (" + motivo + ")" : ""));
+            inventarioDAO.agregarActividad(actividad);
+
+            JsonObject resp = new JsonObject();
+            resp.addProperty("success", true);
+            resp.addProperty("productId", idProducto);
+            resp.addProperty("status", estadoNorm);
+            resp.addProperty("statusLabel", etiquetaEstado);
+            resp.addProperty("alertSent", alertaId > 0);
+            resp.addProperty("alertId", alertaId);
+            resp.addProperty("sellerId", existente.getIdVendedor());
+            enviarRespuestaJson(intercambio, 200, gson.toJson(resp));
 
         } else if (ruta.matches("^/api/(products|productos)/\\d+/image$") || ruta.matches("^/api/(products|productos)/\\d+/imagen$")) {
-            Producto existente = dao.obtenerProductoPorId(idProducto);
+            Producto existente = dao.obtenerProductoPorIdParaAuditoria(idProducto);
             if (existente == null) {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
                 return;
@@ -172,14 +307,19 @@ public class ManejadorProductos extends ManejadorBase {
             }
 
         } else if (ruta.matches("^/api/(products|productos)/\\d+/?$")) {
-            Producto existente = dao.obtenerProductoPorId(idProducto);
+            Producto existente = dao.obtenerProductoPorIdParaAuditoria(idProducto);
             if (existente == null) {
                 enviarRespuestaJson(intercambio, 404, "{\"error\":\"Producto no encontrado\"}");
                 return;
             }
             boolean esAdmin = identidad.get().esAdministrador();
             boolean esDuenio = (identidad.get().idUsuario() == existente.getIdVendedor());
-            if (!esAdmin && !esDuenio) {
+            if (!esDuenio) {
+                if (esAdmin) {
+                    enviarRespuestaJson(intercambio, 403,
+                            "{\"error\":\"Acceso de solo lectura: el administrador no puede modificar precios, descuentos ni inventario de un vendedor externo. Use /moderar para auditar.\"}");
+                    return;
+                }
                 enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso denegado: no tiene permisos para modificar este producto\"}");
                 return;
             }
@@ -191,23 +331,28 @@ public class ManejadorProductos extends ManejadorBase {
             Boolean destacado = extraerBooleano(json, "featured", "destacado");
             Boolean esNueva = extraerBooleano(json, "isNewCollection", "esNuevaColeccion");
             Boolean esExclusivo = extraerBooleano(json, "isExclusive", "esExclusivo");
-            Boolean esOferta = extraerBooleano(json, "isOffer", "esOferta");
-
-            // Regla de negocio: Solo el administrador puede activar o desactivar ofertas en los productos
-            if (esOferta != null && !identidad.get().esAdministrador()) {
-                enviarRespuestaJson(intercambio, 403, "{\"error\":\"Acceso restringido: Solo el administrador puede activar o modificar ofertas en los productos\"}");
-                return;
+            Boolean esOferta = extraerBooleano(json, "isOffer", "esOferta", "isSale");
+            Double descuentoExplicito = extraerDouble(json, "discountPercent", "porcentajeDescuento");
+            if (descuentoExplicito != null) {
+                descuentoExplicito = Math.max(0.0, Math.min(90.0, descuentoExplicito));
+                if (esOferta == null) {
+                    esOferta = descuentoExplicito > 0.0;
+                }
             }
             Double stockExplicito = extraerDouble(json, "stock", "existencias");
 
-            boolean exito = dao.actualizarProductoSelectivo(idProducto, actualizaciones, destacado, esNueva, esExclusivo, esOferta, stockExplicito);
+            boolean exito = dao.actualizarProductoSelectivo(
+                    idProducto, actualizaciones, destacado, esNueva, esExclusivo, esOferta, stockExplicito, descuentoExplicito
+            );
             if (exito) {
-                if (stockExplicito != null) {
-                    infraestructura.api.websocket.ServidorWebSocket.transmitirStock(idProducto, stockExplicito);
-                }
-                if (esOferta != null) {
-                    infraestructura.api.websocket.ServidorWebSocket.transmitir("OFERTA_ACTUALIZADA", java.util.Map.of("idProducto", idProducto, "esOferta", esOferta));
-                }
+                try {
+                    if (stockExplicito != null) {
+                        infraestructura.api.websocket.ServidorWebSocket.transmitirStock(idProducto, stockExplicito);
+                    }
+                    if (esOferta != null) {
+                        infraestructura.api.websocket.ServidorWebSocket.transmitir("OFERTA_ACTUALIZADA", java.util.Map.of("idProducto", idProducto, "esOferta", esOferta));
+                    }
+                } catch (RuntimeException ignored) {}
             }
             if (exito && stockExplicito != null && stockExplicito <= 20.0) {
                 try {
@@ -253,6 +398,14 @@ public class ManejadorProductos extends ManejadorBase {
 
         if (!identidad.get().esAdministrador()) {
             nuevoProducto.setIdVendedor(identidad.get().idUsuario());
+        } else if (nuevoProducto.getIdVendedor() <= 0) {
+            nuevoProducto.setIdVendedor(identidad.get().idUsuario());
+        }
+        if (nuevoProducto.getEstadoModeracion() == null || nuevoProducto.getEstadoModeracion().isBlank()) {
+            nuevoProducto.setEstadoModeracion("approved");
+        }
+        if (nuevoProducto.getPorcentajeDescuento() > 0) {
+            nuevoProducto.setEsOferta(true);
         }
 
         boolean exito = dao.agregarProducto(nuevoProducto);

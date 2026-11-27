@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 // Íconos de lucide-react usados en todo el panel
 import {
@@ -33,7 +33,12 @@ import {
  BarChart3,      // Sección de productos estrella
  Filter,         // Barra de filtros
  RefreshCw,      // Refrescar datos
- Star            // Banner decorativo / productos
+ Star,           // Banner decorativo / productos
+ Store,          // Perfil de tienda
+ Bell,           // Alertas inteligentes
+ Crown,          // Telas exclusivas VIP
+ Tag,            // Promoción / descuento
+ AlertCircle     // Banner de auditoría admin
 } from 'lucide-react';
 
 // Layout compartido: sidebar + header
@@ -75,7 +80,7 @@ export default function PanelVendedor() {
   const { showNotification } = useNotificacion();
   const { user } = useAutenticacion();
   const {
-    products, orders, bugReports,
+    products, orders, bugReports, sellerAlerts,
     getProductsBySeller, getOrdersBySeller, getBugReportsBySeller,
     deleteProduct, refreshData,
   } = useMetricas();
@@ -93,8 +98,14 @@ export default function PanelVendedor() {
     price: '',
     stock: '',
     category: 'algodon',
+    material: '',
+    width: '1.50m',
+    weight: '180g/m2',
+    care: 'Lavar en frío, no usar blanqueador',
+    discountPercent: 0,
+    isExclusive: false,
     description: '',
-    images: ['https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80']
+    images: ['/images/hero-telas-premium.webp']
   });
 
   // ── Estado para editar un producto directamente en la tabla ───────────
@@ -164,8 +175,13 @@ export default function PanelVendedor() {
 
   // Métricas reactivas calculadas según los filtros activos
   const liveTotalSales = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const liveNetEarnings = filteredOrders.reduce((sum, o) => sum + (o.sellerNetEarnings || ((o.total || 0) * 0.9)), 0);
   const liveTotalOrders = filteredOrders.length;
   const liveAverageTicket = liveTotalOrders > 0 ? Math.round(liveTotalSales / liveTotalOrders) : 0;
+  const unappliedAlertsCount = (sellerAlerts || []).filter(a => !a.applied).length;
+  const adminActionAlerts = (sellerAlerts || []).filter(
+    a => !a.applied && ['auditoria_admin', 'stock_bajo', 'reporte_mermas'].includes(a.alertType)
+  );
 
   // Los 5 productos estrella según los pedidos filtrados
   const topProducts = getTopProducts(filteredOrders, filteredProducts, 5);
@@ -351,24 +367,47 @@ export default function PanelVendedor() {
     }
     setIsSubmitting(true);
     try {
+      const discPct = Math.max(0, Math.min(90, Number(newProduct.discountPercent) || 0));
+      const rawImages = [...(newProduct.images || [])];
+      const hasBase64 = rawImages[0]?.startsWith('data:');
       const creado = await addProduct({
         ...newProduct,
         price: Number(newProduct.price),
         stock: Number(newProduct.stock),
-        sellerId: user?.id || 2,
+        discountPercent: discPct,
+        porcentajeDescuento: discPct,
+        isOffer: discPct > 0,
+        esOferta: discPct > 0,
+        isExclusive: Boolean(newProduct.isExclusive),
+        esExclusivo: Boolean(newProduct.isExclusive),
+        images: hasBase64 ? ['/images/hero-telas-premium.webp'] : rawImages,
+        sellerId: user?.id,
         sellerName: user?.name || user?.nombre || 'Vendedor',
         status: 'approved'
       });
       if (creado) {
-        showNotification('success', 'Producto publicado con éxito.');
+        if (hasBase64 && creado.id) {
+          await fetch(getApiUrl(`/api/productos/${creado.id}/imagen`), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: rawImages[0], imagen: rawImages[0] })
+          }).catch(() => {});
+        }
+        showNotification('success', 'Producto publicado en el Marketplace con éxito.');
         setShowNewModal(false);
         setNewProduct({
           name: '',
           price: '',
           stock: '',
           category: 'algodon',
+          material: '',
+          width: '1.50m',
+          weight: '180g/m2',
+          care: 'Lavar en frío, no usar blanqueador',
+          discountPercent: 0,
+          isExclusive: false,
           description: '',
-          images: ['https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80']
+          images: ['/images/hero-telas-premium.webp']
         });
         refreshData();
         refreshProducts();
@@ -389,6 +428,65 @@ export default function PanelVendedor() {
       subtitle={`Panel de control de ${user?.name || 'Vendedor'}`}
     >
       <PaginaAnimada>
+
+        {adminActionAlerts.length > 0 && (
+          <div className="glass-panel rounded-2xl p-4 mb-6 border-l-4 border-l-rose-500 bg-rose-50/70 dark:bg-rose-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-rose-900 dark:text-rose-200">
+                  Tienes {adminActionAlerts.length} notificación{adminActionAlerts.length === 1 ? '' : 'es'} oficial{adminActionAlerts.length === 1 ? '' : 'es'} de Auditoría / Stock
+                </h3>
+                <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5 line-clamp-2">
+                  {adminActionAlerts[0].title}: {adminActionAlerts[0].message}
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/vendedor/alertas"
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0 shadow-sm text-center"
+            >
+              Revisar Ahora
+            </Link>
+          </div>
+        )}
+
+        {/* --- ACCESOS RÁPIDOS DE MARKETPLACE (PERFIL TIPO FACEBOOK & ALERTAS VIP) --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="glass-panel rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-primary-500/15 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+                <Store className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">Tu Perfil de Tienda (Estilo Facebook)</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Edita tu portada, foto, bio y visualiza tus telas y reseñas</p>
+              </div>
+            </div>
+            <Link to="/vendedor/mi-tienda" className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shrink-0 shadow-sm">
+              Ver / Editar Perfil
+            </Link>
+          </div>
+
+          <div className="glass-panel rounded-2xl p-4 flex items-center justify-between gap-4 border-amber-400/30">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  Alertas de Oportunidad ({unappliedAlertsCount} pendientes)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Activa Telas Exclusivas VIP y descuentos competitivos</p>
+              </div>
+            </div>
+            <Link to="/vendedor/alertas" className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shrink-0">
+              Gestionar Alertas
+            </Link>
+          </div>
+        </div>
 
         {/* --- BARRA DE FILTROS DINÁMICOS (Enterprise Design) --- */}
         <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 mb-6 gap-4">
@@ -432,11 +530,11 @@ export default function PanelVendedor() {
         {/* --- MÉTRICAS FINANCIERAS Y STOCK (DATA-DENSE GRID) --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <ErpMetricCard
-                title="Mis Ventas Totales"
-                value={formatCurrency(liveTotalSales)}
+                title="Ingresos Netos Vendedor"
+                value={formatCurrency(liveNetEarnings)}
                 icon={DollarSign}
                 trendData={salesTrendData}
-                trendValue={filters.dateRange === '7d' ? '7 días' : filters.dateRange === '30d' ? '30 días' : 'Año'}
+                trendValue={`Bruto: ${formatCurrency(liveTotalSales)}`}
                 trendDirection="up"
                 colorKey="green"
             />
@@ -628,11 +726,21 @@ export default function PanelVendedor() {
                             />
                           </div>
                           <div>
-                            <div className="font-bold text-gray-900 dark:text-white">
-                              {product.name}
+                            <div className="font-bold text-gray-900 dark:text-white flex flex-wrap items-center gap-1.5">
+                              <span>{product.name}</span>
+                              {product.isExclusive && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                                  <Crown size={10} /> VIP
+                                </span>
+                              )}
+                              {(product.discountPercent > 0 || product.isOffer) && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-primary-500/15 text-primary-700 dark:text-primary-300 text-[10px] font-bold">
+                                  <Tag size={10} /> -{product.discountPercent || 15}%
+                                </span>
+                              )}
                             </div>
                             <div className="text-[10px] font-mono text-gray-500 uppercase">
-                              ID: {product.id}
+                              ID: {product.id} · Vendidos: {Math.round(product.soldMeters || 0)}m
                             </div>
                           </div>
                         </div>
@@ -730,7 +838,7 @@ export default function PanelVendedor() {
         {/* --- MODAL PARA NUEVO PRODUCTO --- */}
         {showNewModal && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
               <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold">
@@ -815,6 +923,82 @@ export default function PanelVendedor() {
                     <option value="lana">Lana</option>
                     <option value="viscosa">Viscosa</option>
                   </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Material</label>
+                    <input
+                      type="text"
+                      name="material"
+                      value={newProduct.material || ''}
+                      onChange={handleNewProductChange}
+                      placeholder="100% Algodón"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Ancho</label>
+                    <input
+                      type="text"
+                      name="width"
+                      value={newProduct.width || ''}
+                      onChange={handleNewProductChange}
+                      placeholder="1.50m"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Peso / Gramaje</label>
+                    <input
+                      type="text"
+                      name="weight"
+                      value={newProduct.weight || ''}
+                      onChange={handleNewProductChange}
+                      placeholder="180g/m2"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Descuento Promo (%)</label>
+                    <input
+                      type="number"
+                      name="discountPercent"
+                      min="0"
+                      max="80"
+                      value={newProduct.discountPercent ?? 0}
+                      onChange={handleNewProductChange}
+                      className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer pt-4 sm:pt-0">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(newProduct.isExclusive)}
+                      onChange={(e) => setNewProduct(p => ({ ...p, isExclusive: e.target.checked }))}
+                      className="w-4 h-4 accent-amber-500"
+                    />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Marcar como Tela Exclusiva VIP</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Imagen de la Tela</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onloadend = () => setNewProduct(prev => ({ ...prev, images: [reader.result] }));
+                      reader.readAsDataURL(file);
+                    }}
+                    className="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary-600 file:text-white file:font-bold cursor-pointer"
+                  />
                 </div>
 
                 <div>

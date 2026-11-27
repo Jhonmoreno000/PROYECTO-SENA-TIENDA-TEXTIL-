@@ -1,17 +1,17 @@
 <div align="center">
 
-# D&D Textil
+# D&D Textil — Marketplace Textil Multi-Vendedor
 
-### Ecosistema tecnológico para la industria textil
+### Ecosistema B2B/B2C por Comisión + Venta para la Industria Textil
 
-Plataforma integral para la comercialización, distribución y gestión de inventario de telas, construida con una arquitectura reactiva, un backend corporativo ligero y un modelo relacional en tiempo real.
+Plataforma marketplace multi-vendedor para la comercialización, comparación de proveedores, control logístico de corte continuo e inventario antifraude de telas, construida con React 18, Java 21, PostgreSQL 17 y Docker.
 
 <p>
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
-  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL_17-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/ISO%2FIEC_25010-Software_Quality-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/DevSecOps-OWASP_ASVS-blueviolet?style=for-the-badge" />
@@ -37,27 +37,26 @@ Plataforma integral para la comercialización, distribución y gestión de inven
 
 ## Visión general
 
-Un solo ecosistema que une tienda en línea, paneles de administración y control de inventario. Los tres bloques comparten una misma base de datos y una API REST, de modo que cada cambio en catálogo, reseñas o apartados del inicio se refleja al instante en todas las interfaces.
-
+**D&D Textil** conecta en un solo marketplace a **múltiples proveedores textiles verificados** con clientes minoristas (B2C) y talleres de confección (B2B). Cada vendedor administra su propia vitrina tipo red social, catálogo, precios, promociones y lotes; la plataforma procesa compras multi-vendedor en un solo pago unificado (**Wompi**) dividiendo automáticamente los sub-pedidos y liquidando la **comisión de plataforma** para el administrador.
 
 **Lo esencial en pocas líneas**
 
-- Tienda pública con catálogo filtrable, fichas de tela, reseñas reales guardadas en base de datos, carrito con cupones y ecosistema multi-pasarela con tarjeta 3D interactiva (**Wompi Bancolombia**, **Mercado Pago Checkout Pro**, **Nequi / Daviplata / Llave Bre-B**, **ePayco / PayU Efecty-Baloto-Gana**, **Tarjeta Crédito/Débito** y **PSE ACH / Contraentrega**). Los medios de pago funcionan en modo simulado: el backend registra la intención y la confirmación del pago, sin conexión real con las pasarelas.
-- Inicio de sesión con correo y contraseña o con cuentas de **Google** y **Microsoft**.
-- Paneles para tres roles: cliente (pedidos, soporte, calculadora de metraje), vendedor (sus telas, pedidos y alertas de stock) y administrador (usuarios, moderación, inventario, contenido, cupones, facturación y analítica).
-- Despliegue completo con Docker Compose: tres contenedores listos en un solo comando.
+- **Marketplace Multi-Vendedor (`/tiendas`, `/tienda/:id`)**: 4 casas proveedoras reales con perfiles tipo Facebook editables (`/vendedor/mi-tienda`), calificación real y reseñas directas al vendedor, comparador competitivo entre tiendas, insignia *Más Vendido* y *Oferta*, y diseño Glassmorphism bajo psicología del color **60-30-10** accesible (WCAG).
+- **Motor VIP y Alertas Reales**: Algoritmo `ServicioExclusividadVIP` que desbloquea colecciones exclusivas para clientes frecuentes ($\ge 3$ pedidos o $\ge 50\text{ m}$) y envía oportunidades inteligentes + notificaciones administrativas reales al vendedor (`/vendedor/alertas`).
+- **Seguridad de Compras y Control Antifraude**: Solo usuarios autenticados con rol **`cliente`** pueden comprar y calificar (`401`/`403` en backend + `ProtectedRoute` estricto). El **`administrador`** no puede alterar precios, descuentos, lotes ni mermas de los vendedores (`HTTP 403`), operando como auditor de solo lectura que notifica cambios, stock bajo y reportes reales de mermas.
+- **Despliegue completo con Docker Compose**: Tres contenedores listos en un solo comando (`postgres:17`, `backend-java` Java 21, `frontend` React + Nginx).
 
 ## Arquitectura
 
 ```
 ┌──────────────────────────┐     ┌──────────────────────────┐
-│  Frontend  React + Vite  │     │  App Android (Capacitor) │
-│  http://localhost:3001   │     │  WebView con la misma SPA│
+│  Frontend  React + Vite  │     │  Frontend  App Android   │
+│  http://localhost:3001   │     │  WebView + Kotlin        │
 └────────────┬─────────────┘     └────────────┬─────────────┘
              │  REST / JSON                    │  REST / JSON
              ▼                                ▼
 ┌────────────────────────────────────────────────────────────┐
-│              Backend  Java (HTTPServer + JDBC)             │
+│            Backend  Java 21 (HTTPServer + JDBC)            │
 │                http://localhost:8081/api/*                 │
 └──────────────┬─────────────────────────────┬───────────────┘
                │  JDBC                       │  HTTPS + webhook
@@ -67,25 +66,23 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 └──────────────────────────────┘   └──────────────────────────┘
 ```
 
-| Capa | En cifras |
+| Capa | En cifras verificadas |
 | :--- | :--- |
-| Frontend | 54 rutas en `App.jsx` repartidas entre sitio público, proceso de compra y tres paneles por rol |
-| Backend | Manejadores HTTP sobre `ManejadorBase` (CORS, límite de 1200 peticiones/min por IP y logs JSON), servicios de aplicación y DAO sobre JDBC, en capas `dominio`, `aplicacion` e `infraestructura` |
-| Base de datos | 29 tablas y 25 llaves foráneas en `BASE DE DATOS/01_esquema_espanol.sql`. Al iniciar, el backend comprueba que existan las tablas de pagos, direcciones y auditoría |
+| Frontend | **58 rutas** en `App.jsx` entre tienda pública, directorio/perfiles de tiendas, checkout estricto para cliente y paneles Cliente, Vendedor y Administrador, **sin datos hardcodeados** |
+| Backend | **Java 21**: **18 manejadores HTTP** + **ServidorWebSocket** (`RFC 6455`, puerto **8082**) sobre `ManejadorBase` (CORS, tokens `HmacSHA256`, tasa 1200 req/min por IP, `ProtectorFuerzaBruta`, logs JSON), **8 servicios** de aplicación, **15 DAOs/migradores** JDBC y **22 modelos** en `dominio` |
+| Base de datos | **32 tablas** y **31 llaves foráneas** en `BASE DE DATOS/01_esquema_espanol.sql` (incluye `perfiles_vendedor`, `resenas_vendedor`, `alertas_vendedor`, `auditoria_sistema`, `rollos_textil`, `eventos_pago_wompi`, `direcciones_usuario`) |
 
 ## Características
 
 | Área | Detalle |
 | :--- | :--- |
-| Tienda | Catálogo con filtros por apartado, proyecto, precio y orden; fichas de tela; reseñas de 1 a 5 estrellas; carrito con cupones. |
-| Pagos | Checkout multi-pasarela con tarjeta holográfica 3D: Wompi (firma SHA-256), Mercado Pago Checkout Pro, Nequi / Daviplata / Llave Bre-B (`302 705 8951` + QR), ePayco Efecty/Baloto/Gana, Tarjeta 3D-Secure y PSE ACH. Todos en modo simulado (sin cobro real). |
-| Acceso | Registro con autorización de datos personales (Ley 1581 de 2012), inicio de sesión con correo o SSO de Google y Microsoft. El backend valida cada token directamente con el proveedor y usa el correo que este certifica; la cuenta SSO se crea sola la primera vez. |
-| Home dinámico | Carrusel, banner global y apartados del inicio (nuevas colecciones, exclusivas, ofertas) editables desde el panel admin. |
-| Cliente | Historial y rastreo de pedidos, factura en PDF, tickets de soporte, lista de deseos y calculadora de metraje por proyecto. |
-| Vendedor | Edición de precio, stock e imagen de sus telas, gestión de pedidos y alertas de stock bajo. |
-| Gestión | Usuarios y roles, moderación de productos, lotes de inventario, mermas, umbrales de stock, cupones, tickets, configuración de marca y analítica de ventas. |
-| Roles | Cliente, vendedor y administrador con accesos diferenciados a cada panel. |
-| Despliegue | Docker Compose levanta frontend, backend y base de datos con una sola orden. |
+| **Marketplace y Tiendas** | Catálogo paginado por BD sin lag de scroll, comparador competitivo entre vendedores, directorio `/tiendas`, perfil público tipo Facebook `/tienda/:id` con portada, avatar, biografía, políticas de envío y reseñas al vendedor. |
+| **Pagos y Comisiones** | Checkout exclusivo para `cliente` registrado con división automática multi-vendedor (`grupo_checkout`, `porcentaje_comision`, `monto_comision_admin`, `ganancia_neta_vendedor`) y pasarela unificada Wompi (SHA-256), Nequi / Bre-B, Mercado Pago, ePayco, Tarjeta y PSE. |
+| **Acceso y Seguridad** | Registro con Habeas Data (Ley 1581/2012), inicio de sesión por correo o SSO (**Google** / **Microsoft**), sesiones `HmacSHA256` verificadas contra PostgreSQL en cada petición y controles antifraude (`HTTP 403`). |
+| **Cliente** | Historial y rastreo de pedidos, factura PDF con CUFE, tickets de soporte, lista de deseos, reseñas 1–5 estrellas y calculadora de metraje por proyecto. |
+| **Vendedor** | Editor en vivo de su perfil de tienda (`/vendedor/mi-tienda`), gestión de sus telas/precios/descuentos/exclusividad VIP, control propio de stock/lotes y centro de alertas reales (`/vendedor/alertas`: `auditoria_admin`, `stock_bajo`, `reporte_mermas`, `demanda_vip`, `competencia_precio`). |
+| **Administrador (Auditoría Antifraude)** | Moderación de productos con observación obligatoria y alerta automática al vendedor, auditoría de lotes en solo lectura (`/admin/inventario/lotes`), notificación real de stock bajo (`/admin/inventario/alertas`), envío de métricas reales de mermas por vendedor (`/admin/inventario/merma`), comisiones por proveedor, cupones, tickets y analítica. |
+| **Despliegue** | `docker compose up -d --build` levanta base de datos, backend Java 21 y frontend Nginx saludables. |
 
 ## Inicio rápido
 
@@ -98,38 +95,37 @@ Un solo ecosistema que une tienda en línea, paneles de administración y contro
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-
+git clone https://github.com/Jhonmoreno000/PROYECTO-SENA-TIENDA-TEXTIL-.git
 cd PROYECTO-SENA-TIENDA-TEXTIL-
 
 # Configurar variables de entorno
 cp .env.example .env
 
 # Levantar los tres servicios en segundo plano
-docker compose up -d
+docker compose up -d --build
 ```
 
 ### Puertos
 
 | Servicio | Acceso |
 | :--- | :--- |
-| Frontend de la aplicacion | http://localhost:3001 (Docker y `npm run dev`) |
+| Frontend de la aplicación | http://localhost:3001 (Docker) / http://localhost:5173 (Dev) |
 | Backend API (REST) | http://localhost:8081 |
-| WebSocket (tiempo real) | ws://localhost:8082 |
-| Base de Datos PostgreSQL | localhost:5432 |
+| Base de Datos PostgreSQL 17 | localhost:5432 |
 
 ### Variables de pagos y SSO
 
-Se definen en el archivo `.env`. Sin ellas la tienda funciona (el pago es simulado en todos los medios), pero no se puede entrar con Google o Microsoft. Las llaves de Wompi se usan para firmar la intención de pago y verificar el webhook.
+Se definen en el archivo `.env`. Sin ellas la tienda funciona en entorno local, pero la pasarela real o el SSO externo requieren configurarlas:
 
 | Variable | Uso |
 | :--- | :--- |
 | `WOMPI_PUBLIC_KEY` / `WOMPI_PRIVATE_KEY` | Llaves del comercio en Wompi |
-| `WOMPI_INTEGRITY_SECRET` / `WOMPI_EVENTS_SECRET` | Firma de la intención de pago y verificación del webhook |
-| `WOMPI_ENV` | `sandbox` (pruebas, sin cobro real) o `production` |
-| `VITE_GOOGLE_CLIENT_ID` | Client ID de Google Cloud Console. El backend también lo usa para verificar que cada token de Google fue emitido para esta aplicación |
-| `VITE_AZURE_CLIENT_ID` / `VITE_AZURE_TENANT_ID` | Aplicación de Microsoft Entra ID (tenant por defecto: `common`). El backend verifica con este ID los tokens de Microsoft |
+| `WOMPI_INTEGRITY_SECRET` / `WOMPI_EVENTS_SECRET` | Firma SHA-256 de pago y verificación del webhook |
+| `WOMPI_ENV` | `sandbox` (pruebas) o `production` |
+| `VITE_GOOGLE_CLIENT_ID` | Client ID de Google Cloud Console validado por el backend |
+| `VITE_AZURE_CLIENT_ID` / `VITE_AZURE_TENANT_ID` | Aplicación de Microsoft Entra ID validada por el backend |
 
-> `docker-compose.yml` trae llaves de prueba de Wompi como valor por defecto. Antes de un despliegue real, reemplázalas en el `.env` y no las subas al repositorio.
+> `docker-compose.yml` incluye valores de desarrollo seguros/sandbox. Reemplázalos en `.env` para producción y nunca subas secretos reales al repositorio.
 
 ### Detener y limpiar
 
@@ -137,166 +133,122 @@ Se definen en el archivo `.env`. Sin ellas la tienda funciona (el pago es simula
 # Detener los contenedores
 docker compose down
 
-# Detener y eliminar los datos persistidos (reset total)
+# Detener y eliminar los datos persistidos (reset total de BD)
 docker compose down -v
 ```
 
-## Credenciales de prueba
+## Credenciales y Proveedores Reales Sembrados
 
-Usuarios sembrados en la base de datos para validar los niveles de acceso del software. Todos los usuarios cuentan con sus credenciales operativas listas para autenticacion directa o mediante los botones de acceso rapido en la interfaz.
+Usuarios reales poblados automáticamente en PostgreSQL para validar los tres roles y la competencia multi-vendedor:
 
-| Rol | Correo electronico | Contrasena | Acceso / Panel |
-| :--- | :--- | :--- | :--- |
-| Administrador | `admin@ddtextil.com` | `admin123` | Control total, inventario, moderacion, cupones y metricas (`/admin`) |
-| Vendedor | `vendedor@ddtextil.com` | `vendedor123` | Gestion de telas, ordenes asignadas y alertas de stock (`/vendedor`) |
-| Vendedor | `maria.gonzalez@ddtextil.com` | `vendedor123` | Gestion de telas y pedidos asignados (`/vendedor`) |
-| Cliente | `cliente@ddtextil.com` | `cliente123` | Compras, calculadora textil, rastreo y facturas PDF (`/cliente`) |
-| Cliente | `cliente@gmail.com` | `cliente123` | Cuenta alternativa de compras y pruebas de pasarela (`/cliente`) |
+| Rol | Tienda / Perfil | Correo electrónico | Contraseña | Acceso / Panel |
+| :--- | :--- | :--- | :--- | :--- |
+| **Administrador** | Administración D&D Textil | `admin@ddtextil.com` | `admin123` | Auditoría, moderación, comisiones, alertas stock/mermas y métricas (`/admin`) |
+| **Vendedor** | **Textiles Pérez & Cía** (Medellín) | `vendedor@ddtextil.com` | `vendedor123` | Gestión de telas, tienda tipo Facebook, alertas y pedidos (`/vendedor`) |
+| **Vendedor** | **Casa Textil González** (Bogotá) | `maria.gonzalez@ddtextil.com` | `vendedor123` | Gestión de linos, lanas, tienda propia y alertas (`/vendedor`) |
+| **Vendedor** | **Hilos del Valle Textil** (Cali) | `andres.restrepo@hilosdelvalle.com` | `vendedor123` | Gestión de denim, driles técnicos y pedidos (`/vendedor`) |
+| **Vendedor** | **Telas & Seda del Caribe** (Barranquilla) | `valentina.castro@telasdelcaribe.com` | `vendedor123` | Gestión de sedas, terciopelos y linos tropicales (`/vendedor`) |
+| **Cliente** | Cliente Principal / VIP | `cliente@ddtextil.com` | `cliente123` | Checkout, calculadora textil, rastreo, reseñas y VIP (`/cliente`) |
+| **Cliente** | Cliente Secundario | `cliente@gmail.com` | `cliente123` | Cuenta de compras y calificación a proveedores (`/cliente`) |
+| **Cliente** | Camila Ruiz | `camila.ruiz@correo.com` | `cliente123` | Cuenta de cliente adicional (`/cliente`) |
 
 ## Calidad de Software y Suite de Pruebas Automatizadas
 
-El proyecto implementa los estandares de la norma **ISO/IEC 25010** y las directrices de aseguramiento de calidad del **SENA**. Cuenta con pruebas unitarias de frontend, cinco suites integrales en Java nativo (reglas de negocio textiles, seguridad e integridad con PBKDF2 y Best-Fit, concurrencia y pagos Wompi, contratos OpenAPI v3 y tiempo real con WebSocket), con 59 pruebas de backend y 46 de frontend aprobadas en la ejecucion del 16/11/2026, ademas de un framework completo de pruebas de carga y desempeno.
+El proyecto implementa los estándares **ISO/IEC 25010** y **OWASP ASVS** con **113 pruebas automatizadas (100 % aprobadas)**: **67 pruebas Backend Java 21 (6 suites)** + **46 pruebas Frontend (Node/ESM)**.
 
-### 🧪 Guia de Comandos de Terminal para Pruebas y Validaciones (CLI)
+### Guía de Comandos de Terminal para Pruebas y Validaciones (CLI)
 
-#### 1. Pruebas y Compilacion del Frontend (React + Vite + ESLint)
-Ejecutar desde el directorio del frontend:
+#### 1. Pruebas, Lint y Compilación del Frontend (React + Vite + ESLint)
 ```bash
-# Navegar al directorio de la aplicacion React
 cd "tienda digital de telas"
-
-# 1.1. Instalar dependencias oficiales
 npm ci
-
-# 1.2. Validar reglas de estilo y sintaxis (ESLint)
-npm run lint
-
-# 1.3. Ejecutar las 46 pruebas automatizadas del frontend (node ejecutar-pruebas-frontend.mjs)
-npm test
-
-# 1.4. Validar compilacion de produccion
-npm run build
+npm run lint    # 0 errores
+npm test        # 46/46 pruebas aprobadas
+npm run build   # Build de producción limpio
 ```
 
-#### 2. Compilacion y Ejecucion de Pruebas del Backend (Java 21)
-El backend dispone de 5 suites de pruebas automatizadas:
+#### 2. Compilación y Ejecución de las 6 Suites del Backend (Java 21)
 ```bash
-# Navegar al directorio del servidor backend
 cd "tienda digital de telas/backend-java/servidor-api"
 
-# 2.1. Compilacion en Linux / macOS / Git Bash:
-mkdir -p bin
-find src -name "*.java" > sources.txt
-javac -d bin -cp "lib/*" @sources.txt
+# Compilar (Linux/macOS/Docker):
+mkdir -p bin && find src -name "*.java" > sources.txt
+javac --release 21 -encoding UTF-8 -cp "lib/*" -d bin @sources.txt
 
-# 2.1. Compilacion en Windows PowerShell:
-New-Item -ItemType Directory -Force -Path bin
-javac -encoding UTF-8 -d bin -cp "lib/*" (Get-ChildItem -Recurse src/*.java | ForEach-Object { $_.FullName })
-
-# 2.2. Ejecutar las 5 suites de pruebas:
-# En Windows (PowerShell / CMD - separador punto y coma ';'):
-java -cp "bin;lib/*" PruebasReglasNegocioTextil
-java -cp "bin;lib/*" PruebasSeguridadIntegridad
-java -cp "bin;lib/*" PruebasConcurrenciaYPagos
-java -cp "bin;lib/*" PruebasContratoApi
-java -cp "bin;lib/*" PruebasWebSocket
-
-# En Linux / macOS / Docker (separador dos puntos ':'):
-java -cp "bin:lib/*" PruebasReglasNegocioTextil
-java -cp "bin:lib/*" PruebasSeguridadIntegridad
-java -cp "bin:lib/*" PruebasConcurrenciaYPagos
-java -cp "bin:lib/*" PruebasContratoApi
-java -cp "bin:lib/*" PruebasWebSocket
+# Ejecutar las 6 suites (67 pruebas en total):
+java -cp "bin:lib/*" PruebasReglasNegocioTextil    # 14/14
+java -cp "bin:lib/*" PruebasSeguridadIntegridad   # 21/21
+java -cp "bin:lib/*" PruebasConcurrenciaYPagos    # 11/11
+java -cp "bin:lib/*" PruebasContratoApi           #  9/9
+java -cp "bin:lib/*" PruebasMarketplace           #  8/8
+java -cp "bin:lib/*" PruebasWebSocket             #  4/4
 ```
+> En PowerShell nativo de Windows utiliza `;` en lugar de `:` para `-cp "bin;lib/*"`.
 
-#### 3. Validacion de Infraestructura y Contenedores (Docker)
+#### 3. Validación de Infraestructura y Contenedores (Docker)
 ```bash
-# 3.1. Validar sintaxis y variables de docker-compose
 docker compose config
-
-# 3.2. Levantar los tres servicios y reconstruir imagenes
 docker compose up -d --build
-
-# 3.3. Consultar estado y salud de los contenedores
 docker compose ps
-
-# 3.4. Validar sondas de salud (Healthchecks):
 curl -I http://localhost:8081/health/live
 curl -I http://localhost:8081/health/ready
 curl -I http://localhost:3001
 ```
 
-#### 4. Validacion de Seguridad y RBAC via Terminal (cURL)
+#### 4. Validación Rápida RBAC y Antifraude vía Terminal (cURL)
 ```bash
-# 4.1. Probar rechazo sin autenticacion a usuarios protegidos (esperado: 401 Unauthorized):
+# Rechazo sin sesión en usuarios (esperado: 401):
 curl -i http://localhost:8081/api/usuarios
 
-# 4.2. Probar proteccion estricta PCI-DSS ante datos de tarjeta (esperado: 400 Bad Request):
-curl -i -X POST http://localhost:8081/api/pedidos \
-  -H "Content-Type: application/json" \
-  -d '{"pan": "4532012345678910", "cvv": "123"}'
+# Rechazo de compra a visitante anónimo (esperado: 401):
+curl -i -X POST http://localhost:8081/api/pedidos -H "Content-Type: application/json" -d '{}'
 
-# 4.3. Probar trazabilidad con identificador unico X-Correlation-ID:
-curl -i -H "X-Correlation-ID: test-sena-2026" http://localhost:8081/api/productos
-```
-
-#### 5. Monitoreo y Verificacion de CI/CD con GitHub CLI (`gh`)
-```bash
-# 5.1. Listar las ultimas ejecuciones de los flujos de integracion continua:
-gh run list
-
-# 5.2. Ver el detalle de jobs de la ejecucion mas reciente:
-gh run view
-
-# 5.3. Inspeccionar logs detallados en caso de diagnostico:
-gh run view --log-failed
+# Rechazo PCI-DSS ante datos crudos de tarjeta (esperado: 400):
+curl -i -X POST http://localhost:8081/api/pedidos -H "Content-Type: application/json" -d '{"pan":"4532012345678910","cvv":"123"}'
 ```
 
 ### Pruebas de Carga y Rendimiento Concurrente
 
-Disponibles en el directorio [`pruebas-carga/`](pruebas-carga/README.md):
+Disponibles en [`pruebas-carga/`](pruebas-carga/README.md):
 - **Grafana k6:** `k6 run pruebas-carga/script_k6_estres_tienda.js`
-- **PowerShell (Nativo Windows):** `powershell -ExecutionPolicy Bypass -File pruebas-carga/simulador_carga_concurrente.ps1 -TotalPeticiones 100 -Concurrencia 10`
-- **Bash (Nativo Linux/macOS):** `./pruebas-carga/simulador_carga_concurrente.sh http://localhost:8081 100 10`
+- **PowerShell:** `powershell -ExecutionPolicy Bypass -File pruebas-carga/simulador_carga_concurrente.ps1 -TotalPeticiones 100 -Concurrencia 10`
+- **Bash:** `./pruebas-carga/simulador_carga_concurrente.sh http://localhost:8081 100 10`
 
 ### Probes de Observabilidad (Health Checks)
-* **Liveness Probe**: `GET http://localhost:8081/health/live`
-* **Readiness Probe**: `GET http://localhost:8081/health/ready`
-* **Reporte Global**: `GET http://localhost:8081/api/health`
+- **Liveness Probe:** `GET http://localhost:8081/health/live`
+- **Readiness Probe:** `GET http://localhost:8081/health/ready`
+- **Reporte Global:** `GET http://localhost:8081/api/health`
 
-## Portal Central de Documentacion Tecnica
+## Portal Central de Documentación Técnica
 
-El cuerpo documental oficial del sistema esta estructurado de forma modular en la carpeta `documentacion/`:
+El cuerpo documental oficial está estructurado en `documentacion/` y sincronizado con la arquitectura actual:
 
-* **[Indice General de Documentacion](DOCUMENTACION.md)**
-* **[Modelo de Negocio y Estrategia de Producto (B2B/B2C)](MODELO_DE_NEGOCIO.md)**
-* 01. **[Especificacion de Requerimientos de Software (IEEE 830 y BDD)](documentacion/01-especificacion-requerimientos-ieee830.md)**
-* 02. **[Arquitectura de Software, Modelo C4 y Backend Java](documentacion/02-arquitectura-software-c4-y-backend.md)**
-* 03. **[Arquitectura del Frontend y Gestion de Roles de Usuario](documentacion/03-arquitectura-frontend-y-roles.md)**
-* 04. **[Diseno, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md)** | **[Esquema Relacional y Arquitectura MVC](BASE%20DE%20DATOS/README.md)**
-* 05. **[Politicas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)**
-* 06. **[Manual Tecnico de Instalacion, Configuracion y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)**
+* **[Índice General de Documentación](DOCUMENTACION.md)**
+* **[Modelo de Negocio y Estrategia Marketplace (Comisión + Venta)](MODELO_DE_NEGOCIO.md)**
+* 01. **[Especificación de Requerimientos de Software (IEEE 830 y BDD)](documentacion/01-especificacion-requerimientos-ieee830.md)**
+* 02. **[Arquitectura de Software, Modelo C4 y Backend Java 21](documentacion/02-arquitectura-software-c4-y-backend.md)**
+* 03. **[Arquitectura del Frontend y Gestión de Roles de Usuario](documentacion/03-arquitectura-frontend-y-roles.md)**
+* 04. **[Diseño, Estructura y Esquema de Base de Datos Relacional](documentacion/04-base-de-datos-diseno-y-esquema.md)** | **[Esquema Relacional (32 tablas)](BASE%20DE%20DATOS/README.md)**
+* 05. **[Políticas de Seguridad, Resiliencia y Calidad de Software](documentacion/05-politicas-seguridad-resiliencia-y-calidad.md)**
+* 06. **[Manual Técnico de Instalación, Configuración y Despliegue](documentacion/06-manual-tecnico-instalacion-y-despliegue.md)**
 * 07. **[Motor Textil, Reglas de Negocio y Suite de Pruebas Automatizadas](documentacion/07-motor-textil-reglas-negocio-y-pruebas.md)**
-* 08. **[Modelo Entidad-Relacion (DER completo de las 29 tablas)](documentacion/08-modelo-entidad-relacion.md)**
-* 09. **[Mapa de Navegacion por Rol](documentacion/09-mapa-de-navegacion.md)**
+* 08. **[Modelo Entidad-Relación (DER completo de 32 tablas)](documentacion/08-modelo-entidad-relacion.md)**
+* 09. **[Mapa de Navegación por Rol (58 rutas)](documentacion/09-mapa-de-navegacion.md)**
 * 10. **[Casos de Uso](documentacion/10-casos-de-uso.md)**
 * 11. **[Diagrama de Clases del Backend](documentacion/11-diagrama-de-clases.md)**
 * 12. **[Diagramas de Secuencia](documentacion/12-diagramas-de-secuencia.md)**
-* 13. **[Manual de Usuario Oficial (Web Markdown)](documentacion/13-manual-de-usuario.md)** | **[Manual de Usuario (PDF Oficial)](documentacion/Manual_de_usuario_DD_Textil.pdf)**
-* 14. **[Plan Maestro y Reporte de Pruebas (ISO/IEC 25010)](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)**
-* 15. **[Glosario Tecnico y Catalogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)**
-* 16. **[Guion de Demostracion para Sustentacion SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)**
-* 17. **[Manual de Identidad Visual (Web Markdown)](documentacion/17-manual-de-identidad-visual.md)** | **[Manual de Identidad Visual (PDF Oficial)](documentacion/Manual_de_identidad_visual_DD_Textil.pdf)**
-* 18. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
-* 19. **[Matriz de Requerimientos (RF, RNF y Trazabilidad)](documentacion/Matriz_de_requerimientos_v3.xlsx)**
-* 20. **[Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)**
+* 13. **[Manual de Usuario Oficial (Markdown)](documentacion/13-manual-de-usuario.md)** | **[Manual de Usuario (PDF Oficial)](documentacion/Manual_de_usuario_DD_Textil.pdf)**
+* 14. **[Plan Maestro y Reporte de Pruebas (ISO/IEC 25010 — 113 pruebas)](documentacion/14-plan-y-reporte-de-pruebas-iso25010.md)**
+* 15. **[Glosario Técnico y Catálogo Maestro Textil](documentacion/15-glosario-tecnico-y-catalogo-maestro-textil.md)**
+* 16. **[Guion de Demostración para Sustentación SENA ADSO](documentacion/16-guion-demostracion-sustentacion-sena.md)**
+* 17. **[Contrato de Interfaz OpenAPI v3.0](documentacion/openapi_tienda_textil.yaml)**
+* 18. **[Matriz de Requerimientos (RF, RNF y Trazabilidad)](documentacion/Matriz_de_requerimientos_v2.xlsx)**
+* 19. **[Framework de Pruebas de Carga y Rendimiento](pruebas-carga/README.md)**
 
 ---
 
 <div align="center">
 
-<sub>Proyecto formativo SENA · D&D Textil · Calidad ISO/IEC 25010 & DevSecOps</sub>
+<sub>Proyecto formativo SENA · D&D Textil Marketplace · Calidad ISO/IEC 25010 & DevSecOps · 113 pruebas automatizadas (67 backend + 46 frontend)</sub>
 
 </div>
-
-46 pruebas unitarias de utilidades, calculadora textil, pagos Wompi y sesiones

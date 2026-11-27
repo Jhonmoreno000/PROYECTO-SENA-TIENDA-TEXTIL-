@@ -34,7 +34,7 @@ const bottomNavLinks = [
     { name: 'Inicio', path: '/', icon: Inicio },
     { name: 'Catálogo', path: '/catalogo', icon: Store },
     { name: 'Retazos', path: '/retazos', icon: Scissors },
-    { name: 'Contacto', path: '/contacto', icon: Phone },
+    { name: 'Tiendas', path: '/tiendas', icon: LayoutDashboard },
 ];
 
 function Encabezado() {
@@ -75,6 +75,7 @@ function Encabezado() {
     const navLinks = [
         { name: 'Inicio', path: '/' },
         { name: 'Catálogo', path: '/catalogo', hasDropdown: true },
+        { name: 'Tiendas', path: '/tiendas' },
         { name: 'Nosotros', path: '/nosotros' },
         { name: 'Contacto', path: '/contacto' },
     ];

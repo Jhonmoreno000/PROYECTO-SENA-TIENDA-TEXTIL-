@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import infraestructura.configuracion.Conexion;
+import infraestructura.persistencia.jdbc.MigradorEsquemaMarketplace;
 import infraestructura.persistencia.jdbc.MigradorEsquemaPagos;
 
 /**
@@ -362,12 +363,15 @@ public class SembradorDatosPrueba {
                 );
 
                 conexion.commit();
+                MigradorEsquemaMarketplace.ejecutar();
                 System.out.println("\n=== BASE DE DATOS POSTGRESQL POBLADA EXITOSAMENTE ===");
                 System.out.println("Cuentas preparadas para verificación:");
                 System.out.println("  1. Administrador: admin@ddtextil.com / admin123");
                 System.out.println("  2. Vendedor 1:    vendedor@ddtextil.com / vendedor123");
                 System.out.println("  3. Vendedor 2:    maria.gonzalez@ddtextil.com / vendedor123");
-                System.out.println("  4. Cliente:       cliente@ddtextil.com o cliente@gmail.com / cliente123");
+                System.out.println("  4. Vendedor 3:    andres.restrepo@hilosdelvalle.com / vendedor123");
+                System.out.println("  5. Vendedor 4:    valentina.castro@telasdelcaribe.com / vendedor123");
+                System.out.println("  6. Cliente:       cliente@ddtextil.com o cliente@gmail.com / cliente123");
             } catch (Exception e) {
                 System.err.println("ERROR poblando la base de datos: " + e.getMessage());
                 e.printStackTrace();

@@ -111,7 +111,12 @@ const normalizarPedido = (o) => ({
     shippingAddress: o.shippingAddress ?? o.direccionEnvio ?? '',
     shippingCity: o.shippingCity ?? o.ciudadEnvio ?? '',
     shippingDepartment: o.shippingDepartment ?? o.departamentoEnvio ?? '',
-    trackingNumber: o.trackingNumber ?? o.numeroGuia ?? ''
+    trackingNumber: o.trackingNumber ?? o.numeroGuia ?? '',
+    checkoutGroup: o.checkoutGroup ?? o.grupoCheckout ?? '',
+    commissionRate: Number(o.commissionRate ?? o.porcentajeComision ?? 10),
+    adminCommission: Number(o.adminCommission ?? o.montoComisionAdmin ?? 0),
+    sellerNetEarnings: Number(o.sellerNetEarnings ?? o.gananciaNetaVendedor ?? (Number(o.subtotal ?? o.total ?? 0) * 0.9)),
+    storeName: o.storeName ?? o.nombreTienda ?? '',
 });
 
 const normalizarCupon = (c) => ({
@@ -177,26 +182,66 @@ const normalizarReporte = (r) => ({
 });
 const normalizarReporteError = normalizarReporte;
 
-const normalizarLote = (b) => ({
-    ...b,
-    id: b.id,
-    batchCode: b.batchCode || b.codigoLote || String(b.id),
-    codigoLote: b.codigoLote || b.batchCode || String(b.id),
-    fabricType: b.fabricType || b.tipoTela || '',
-    tipoTela: b.tipoTela || b.fabricType || '',
-    color: b.color || '',
-    initialMeters: Number(b.initialMeters ?? b.metrosIniciales ?? 0),
-    metrosIniciales: Number(b.metrosIniciales ?? b.initialMeters ?? 0),
-    currentMeters: Number(b.currentMeters ?? b.metrosActuales ?? 0),
-    metrosActuales: Number(b.metrosActuales ?? b.currentMeters ?? 0),
-    status: b.status || b.estado || 'active',
-    estado: b.estado || b.status || 'activo',
-    supplier: b.supplier || b.proveedor || '',
-    proveedor: b.proveedor || b.supplier || '',
-    entryDate: b.entryDate || b.fechaIngreso || '',
-    fechaIngreso: b.fechaIngreso || b.entryDate || '',
-    lastUpdate: b.lastUpdate || b.ultimaActualizacion || ''
-});
+const normalizarLote = (b) => {
+    const batchNum = b.batchNumber || b.numeroLote || b.batchCode || b.codigoLote || String(b.id);
+    const store = b.storeName || b.nombreTienda || b.supplier || b.proveedor || '';
+    return {
+        ...b,
+        id: String(b.id),
+        productId: b.productId ?? b.idProducto ?? b.productoId ?? null,
+        productName: b.productName || b.nombreProducto || b.fabricType || b.tipoTela || '',
+        batchNumber: batchNum,
+        batchCode: batchNum,
+        codigoLote: batchNum,
+        fabricType: b.fabricType || b.tipoTela || b.productName || '',
+        tipoTela: b.tipoTela || b.fabricType || b.productName || '',
+        color: b.color || '',
+        initialMeters: Number(b.initialMeters ?? b.metrosIniciales ?? b.metrosRecibidos ?? 0),
+        metrosIniciales: Number(b.metrosIniciales ?? b.initialMeters ?? b.metrosRecibidos ?? 0),
+        currentMeters: Number(b.currentMeters ?? b.metrosActuales ?? 0),
+        metrosActuales: Number(b.metrosActuales ?? b.currentMeters ?? 0),
+        costPerMeter: Number(b.costPerMeter ?? b.costoPorMetro ?? b.unitCost ?? 0),
+        costoPorMetro: Number(b.costPerMeter ?? b.costoPorMetro ?? b.unitCost ?? 0),
+        status: b.status || b.estado || 'active',
+        estado: b.estado || b.status || 'active',
+        supplier: store,
+        proveedor: store,
+        storeName: store,
+        sellerId: b.sellerId ?? b.idVendedor ?? b.vendedorId ?? null,
+        sellerName: b.sellerName || b.nombreVendedor || '',
+        sellerEmail: b.sellerEmail || b.correoVendedor || '',
+        entryDate: b.entryDate || b.fechaIngreso || b.createdAt || b.fechaCreacion || '',
+        createdAt: b.createdAt || b.fechaCreacion || b.entryDate || '',
+        lastUpdate: b.lastUpdate || b.ultimaActualizacion || b.createdAt || ''
+    };
+};
+
+const normalizarEventoMerma = (w) => {
+    const batchRef = w.batchId ?? w.idLote ?? w.rollId ?? '';
+    const fecha = w.eventDate || w.fechaEvento || w.date || w.createdAt || w.fechaCreacion || '';
+    const store = w.storeName || w.nombreTienda || w.sellerName || w.nombreVendedor || '';
+    return {
+        ...w,
+        id: w.id,
+        productId: w.productId ?? w.idProducto ?? w.productoId ?? null,
+        productName: w.productName || w.nombreProducto || '',
+        batchId: String(batchRef || ''),
+        rollId: String(w.rollId ?? batchRef ?? ''),
+        meters: Number(w.meters ?? w.metros ?? w.metersLost ?? w.metrosPerdidos ?? 0),
+        reason: w.reason || w.motivo || 'quality_control',
+        description: w.description || w.descripcion || '',
+        costImpact: Number(w.costImpact ?? w.impactoCosto ?? 0),
+        responsible: w.responsible || w.responsable || w.sellerName || '',
+        sellerId: w.sellerId ?? w.idVendedor ?? w.vendedorId ?? null,
+        sellerName: w.sellerName || w.nombreVendedor || '',
+        storeName: store,
+        sellerEmail: w.sellerEmail || w.correoVendedor || '',
+        date: fecha,
+        eventDate: fecha,
+        createdAt: w.createdAt || w.fechaCreacion || fecha,
+        userId: w.userId ?? w.idUsuario ?? 0
+    };
+};
 
 /**
  * Función auxiliar: hace fetch a un endpoint del backend Java y retorna el JSON o null si falla.
@@ -294,6 +339,7 @@ export function MetricsProvider({ children }) {
     const [erpSalesMetrics,   setErpSalesMetrics]   = useState([]);
     // Notificaciones del ERP
     const [erpNotifications,  setErpNotifications]  = useState([]);
+    const [sellerAlerts,      setSellerAlerts]      = useState([]);
     // Inventario de telas para ERP
     const [erpFabricInventory,setErpFabricInventory]= useState([]);
     // Estado de carga
@@ -362,7 +408,7 @@ export function MetricsProvider({ children }) {
             if (apiTickets?.length > 0) setSupportTickets(apiTickets.map(normalizarTicket));
             if (apiBugs?.length > 0) setBugReports(apiBugs.map(normalizarReporte));
             if (apiBatches?.length > 0) setInventoryBatches(apiBatches.map(normalizarLote));
-            if (apiWaste?.length > 0) setWasteEvents(apiWaste);
+            if (apiWaste?.length > 0) setWasteEvents(apiWaste.map(normalizarEventoMerma));
             if (apiThresholds?.length > 0) setStockThresholds(apiThresholds);
             if (apiSales?.length > 0) {
                 setSalesData(apiSales.map(s => ({
@@ -397,6 +443,10 @@ export function MetricsProvider({ children }) {
                 })));
             }
             if (apiErpFabric?.length > 0) setErpFabricInventory(apiErpFabric);
+            if (role === 'vendedor' || role === 'administrador' || role === 'admin') {
+                const alertasVendedor = await apiFetch('/api/vendedor/alertas', tokenSesion);
+                if (Array.isArray(alertasVendedor)) setSellerAlerts(alertasVendedor);
+            }
             if (apiConfigRaw && typeof apiConfigRaw === 'object' && Object.keys(apiConfigRaw).length > 0) {
                 setSystemConfig(prev => ({ ...prev, ...apiConfigRaw }));
             }
@@ -549,11 +599,16 @@ export function MetricsProvider({ children }) {
             const isTwoArgs = maybeUpdates !== undefined;
             const productId = isTwoArgs ? idOrProduct : idOrProduct?.id;
             const updates = isTwoArgs ? maybeUpdates : idOrProduct;
-            await fetch(getApiUrl(`/api/productos/${productId}`), {
+            const res = await fetch(getApiUrl(`/api/productos/${productId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
             });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                showNotification('error', err?.error || 'No se pudo actualizar el producto.');
+                return false;
+            }
             refreshProducts();
             return true;
         } catch (e) {
@@ -594,44 +649,48 @@ export function MetricsProvider({ children }) {
      * Aprueba un producto pendiente.
      * @param {number} productId
      */
-    const approveProduct = async (productId) => {
+    const approveProduct = async (productId, reason = '') => {
         const prevPending = pendingProducts;
         setPendingProducts(prev => prev.filter(p => String(p.id) !== String(productId)));
         try {
             const res = await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'approved', estado: 'approved' })
+                body: JSON.stringify({ status: 'approved', estado: 'approved', reason, motivo: reason })
             });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'HTTP ' + res.status);
             refreshProducts();
-            return true;
+            fetchAllData();
+            return data;
         } catch (e) {
             console.error('Error al aprobar producto:', e);
             setPendingProducts(prevPending);
-            showNotification('error', 'No se pudo aprobar el producto.');
+            showNotification('error', e?.message || 'No se pudo aprobar el producto.');
             return false;
         }
     };
 
-    const rejectProduct = async (productId, reason) => {
+    const rejectProduct = async (productId, reason, status = 'rejected') => {
         const prevPending = pendingProducts;
         setPendingProducts(prev => prev.map(p =>
-            String(p.id) === String(productId) ? { ...p, status: 'rejected', estado: 'rejected', rejectionReason: reason, motivo: reason } : p
+            String(p.id) === String(productId) ? { ...p, status, estado: status, rejectionReason: reason, motivo: reason } : p
         ));
         try {
             const res = await fetch(getApiUrl(`/api/productos/${productId}/moderar`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'rejected', estado: 'rejected', reason, motivo: reason })
+                body: JSON.stringify({ status, estado: status, reason, motivo: reason })
             });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'HTTP ' + res.status);
             refreshProducts();
-            return true;
+            fetchAllData();
+            return data;
         } catch (e) {
-            console.error('Error al rechazar producto:', e);
+            console.error('Error al moderar producto:', e);
             setPendingProducts(prevPending);
-            showNotification('error', 'No se pudo rechazar el producto.');
+            showNotification('error', e?.message || 'No se pudo completar la auditoría del producto.');
             return false;
         }
     };
@@ -1117,28 +1176,96 @@ export function MetricsProvider({ children }) {
     // ── FUNCIONES DE DESCUENTOS POR PRODUCTO ───────────────────────────────
 
     const saveProductDiscount = async (productId, discount) => {
-        const updated = { ...productDiscounts, [productId]: discount };
+        const percentVal = Number(discount?.percent ?? 0);
+        const isActive = Boolean(discount?.active && percentVal > 0);
+        const updated = { ...productDiscounts, [productId]: { active: isActive, percent: percentVal } };
         setProductDiscounts(updated);
         try {
-            const token = localStorage.getItem('token') || '';
-            await fetch(getApiUrl('/api/configuracion'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                body: JSON.stringify({
-                    key: 'product_discounts',
-                    clave: 'product_discounts',
-                    value: JSON.stringify(updated),
-                    valor: JSON.stringify(updated)
-                })
+            const ok = await updateProduct(productId, {
+                isOffer: isActive,
+                esOferta: isActive,
+                discountPercent: isActive ? percentVal : 0,
+                porcentajeDescuento: isActive ? percentVal : 0
             });
-            showNotification('success', 'Oferta y descuento del producto actualizados.');
+            if (ok) {
+                showNotification('success', 'Promoción del producto actualizada por el vendedor.');
+            }
+            return ok;
         } catch (e) {
             console.error('Error al guardar descuento:', e);
             showNotification('error', 'Error al guardar el descuento del producto.');
+            return false;
         }
+    };
+
+    const refreshSellerAlerts = async () => {
+        const alertas = await apiFetch('/api/vendedor/alertas', tokenSesion);
+        if (Array.isArray(alertas)) setSellerAlerts(alertas);
+        return alertas || [];
+    };
+
+    const markSellerAlertApplied = async (alertId, applied = true) => {
+        try {
+            const res = await fetch(getApiUrl(`/api/vendedor/alertas/${alertId}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ applied })
+            });
+            if (res.ok) {
+                setSellerAlerts(prev => prev.map(a => a.id === alertId ? { ...a, isRead: true, applied } : a));
+                return true;
+            }
+        } catch (e) {
+            console.error('Error marcando alerta de vendedor:', e);
+        }
+        return false;
+    };
+
+    /**
+     * Envía una notificación oficial y persistente de stock bajo desde el Admin al vendedor propietario.
+     */
+    const notifyVendorLowStock = async ({ sellerId, productId, fabricName, batchNumber, currentMeters, threshold, message }) => {
+        const res = await fetch(getApiUrl('/api/inventario/notificar-stock'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sellerId: Number(sellerId),
+                productId: productId ? Number(productId) : null,
+                fabricName,
+                batchNumber,
+                currentMeters: Number(currentMeters ?? 0),
+                threshold: Number(threshold ?? 20),
+                message: message || ''
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(data?.error || 'No se pudo enviar la alerta de stock al vendedor.');
+        }
+        const apiAct = await apiFetch(RUTAS_API?.actividad || '/api/actividad');
+        if (Array.isArray(apiAct)) setRecentActivity(apiAct);
+        return data;
+    };
+
+    /**
+     * Envía al vendedor un reporte oficial con sus métricas reales de mermas calculadas en PostgreSQL.
+     */
+    const sendVendorWasteReport = async (sellerId, observacion = '') => {
+        const res = await fetch(getApiUrl('/api/inventario/enviar-reporte-mermas'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sellerId: Number(sellerId),
+                observacion: observacion || ''
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(data?.error || 'No se pudo enviar el reporte de mermas al vendedor.');
+        }
+        const apiAct = await apiFetch(RUTAS_API?.actividad || '/api/actividad');
+        if (Array.isArray(apiAct)) setRecentActivity(apiAct);
+        return data;
     };
 
     // ── Valor del contexto ───────────────────────────────────────────────
@@ -1219,9 +1346,14 @@ export function MetricsProvider({ children }) {
         // Configuración
         updateSystemConfig,
 
-        // Descuentos por producto
+        // Descuentos por producto y alertas de oportunidad del vendedor
         productDiscounts,
         saveProductDiscount,
+        sellerAlerts,
+        refreshSellerAlerts,
+        markSellerAlertApplied,
+        notifyVendorLowStock,
+        sendVendorWasteReport,
 
         // Wishlist
         addToWishlist,

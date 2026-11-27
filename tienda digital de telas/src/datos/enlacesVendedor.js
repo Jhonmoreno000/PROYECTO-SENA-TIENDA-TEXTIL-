@@ -1,4 +1,4 @@
-import { Package, ShoppingBag, TrendingUp, Settings, LifeBuoy } from 'lucide-react';
+import { Package, ShoppingBag, TrendingUp, Settings, LifeBuoy, Store, Bell } from 'lucide-react';
 
 const enlacesVendedor = [
     {
@@ -7,20 +7,29 @@ const enlacesVendedor = [
         icon: TrendingUp
     },
     {
+        label: 'Mi Tienda (Perfil)',
+        path: '/vendedor/mi-tienda',
+        icon: Store
+    },
+    {
+        label: 'Alertas y Auditorías',
+        path: '/vendedor/alertas',
+        icon: Bell,
+        badgeKey: 'sellerAlerts'
+    },
+    {
         label: 'Inventario',
         icon: Package,
-        badge: 2,
         children: [
             { label: 'Mis Productos', path: '/vendedor/productos' },
-            { label: 'Alertas de Stock', path: '/vendedor/stock', badge: 2 },
+            { label: 'Alertas de Stock', path: '/vendedor/stock', badgeKey: 'vendorLowStock' },
         ]
     },
     {
         label: 'Ventas',
         icon: ShoppingBag,
-        badge: 5,
         children: [
-            { label: 'Gestión de Pedidos', path: '/vendedor/pedidos', badge: 5 },
+            { label: 'Gestión de Pedidos', path: '/vendedor/pedidos', badgeKey: 'vendorActiveOrders' },
         ]
     },
     {

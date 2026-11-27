@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     activo BOOLEAN DEFAULT true,
     suspendido BOOLEAN DEFAULT false,
     motivo_suspension TEXT,
-    tasa_comision NUMERIC(5,2),
+    tasa_comision NUMERIC(5,2) DEFAULT 10.00,
     registrado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ultimo_acceso TIMESTAMP
 );
@@ -53,6 +53,10 @@ CREATE TABLE IF NOT EXISTS productos (
     es_nueva_coleccion BOOLEAN DEFAULT false,
     es_exclusivo BOOLEAN DEFAULT false,
     es_oferta BOOLEAN DEFAULT false,
+    porcentaje_descuento NUMERIC(5,2) DEFAULT 0.00 CHECK (porcentaje_descuento >= 0 AND porcentaje_descuento <= 90),
+    metros_vendidos NUMERIC(12,2) DEFAULT 0.00,
+    calificacion_promedio NUMERIC(3,2) DEFAULT 0.00,
+    total_resenas INTEGER DEFAULT 0,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP
 );
@@ -151,6 +155,10 @@ CREATE TABLE IF NOT EXISTS pedidos (
     wompi_transaccion_id VARCHAR(100),
     pagado_en TIMESTAMP,
     numero_guia VARCHAR(100),
+    grupo_checkout VARCHAR(64),
+    porcentaje_comision NUMERIC(5,2) DEFAULT 10.00,
+    monto_comision_admin NUMERIC(12,2) DEFAULT 0.00,
+    ganancia_neta_vendedor NUMERIC(12,2) DEFAULT 0.00,
     notas TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP
@@ -330,13 +338,18 @@ INSERT INTO categorias (nombre, descripcion) VALUES
 ('Mezclilla', 'Telas de alta calidad tipo Mezclilla')
 ON CONFLICT (nombre) DO NOTHING;
 
-INSERT INTO usuarios (nombre, correo, contrasena_hash, rol, activo) VALUES
-('Anderson Moreno', 'admin@ddtextil.com', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'administrador', true),
-('Carlos Pérez', 'vendedor@ddtextil.com', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true),
-('María González', 'maria.gonzalez@ddtextil.com', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true),
-('Juan Cliente', 'cliente@gmail.com', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true),
-('Cliente Demo', 'cliente@ddtextil.com', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true)
-ON CONFLICT (correo) DO UPDATE SET contrasena_hash = EXCLUDED.contrasena_hash;
+INSERT INTO usuarios (nombre, correo, telefono, contrasena_hash, rol, activo, tasa_comision) VALUES
+('Anderson Moreno', 'admin@ddtextil.com', '+57 300 100 2030', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'administrador', true, NULL),
+('Carlos Pérez', 'vendedor@ddtextil.com', '+57 301 482 1940', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true, 10.00),
+('María González', 'maria.gonzalez@ddtextil.com', '+57 312 654 8821', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true, 10.00),
+('Juan Cliente', 'cliente@gmail.com', '+57 300 123 4567', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true, NULL),
+('Cliente Demo', 'cliente@ddtextil.com', '+57 302 705 8951', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true, NULL),
+('Andrés Restrepo', 'andres.restrepo@hilosdelvalle.com', '+57 318 742 3319', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true, 10.00),
+('Valentina Castro', 'valentina.castro@telasdelcaribe.com', '+57 300 915 4472', '56976bf24998ca63e35fe4f1e2469b5751d1856003e8d16fef0aafef496ed044', 'vendedor', true, 10.00),
+('Camila Ruiz', 'camila.ruiz@correo.com', '+57 315 809 2214', '09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9', 'cliente', true, NULL)
+ON CONFLICT (correo) DO UPDATE SET
+    contrasena_hash = EXCLUDED.contrasena_hash,
+    telefono = COALESCE(NULLIF(usuarios.telefono, ''), EXCLUDED.telefono);
 
 INSERT INTO secciones_inicio (clave, titulo, subtitulo, activo, orden) VALUES
 ('nuevas', 'Nuevas Colecciones', 'Lo último en tendencias de moda y textiles', true, 1),
@@ -435,7 +448,10 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_usuario_estado ON pedidos(usuario_id, est
 CREATE INDEX IF NOT EXISTS idx_rollos_textil_prod_estado_rem ON rollos_textil(producto_id, estado, metraje_remanente);
 CREATE INDEX IF NOT EXISTS idx_cupones_codigo_activo ON cupones(codigo, activo);
 
--- 29. TABLA: auditoria_sistema (Registro forense de eventos y seguridad)
+CREATE INDEX IF NOT EXISTS idx_resenas_vendedor_id ON resenas_vendedor(vendedor_id);
+CREATE INDEX IF NOT EXISTS idx_alertas_vendedor_id ON alertas_vendedor(vendedor_id, leida);
+
+-- 32. TABLA: auditoria_sistema (Registro forense de eventos y seguridad)
 CREATE TABLE IF NOT EXISTS auditoria_sistema (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER,
