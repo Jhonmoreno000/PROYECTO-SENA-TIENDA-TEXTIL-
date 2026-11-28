@@ -1,4 +1,4 @@
-# Uso: python3 generar_mapa.py "tienda digital de telas/src" documentacion/diagramas
+npm run dev# Uso: python3 generar_mapa.py "tienda digital de telas/src" documentacion/diagramas
 # Requiere Graphviz (dot). Genera mapa_navegacion.png y mapa_navegacion.svg a partir de
 # src/App.jsx (rutas) y src/datos/enlaces*.js (menús laterales de cada rol).
 import re, sys, html, subprocess, pathlib

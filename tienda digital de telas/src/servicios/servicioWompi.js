@@ -89,10 +89,22 @@ export const crearIntencionPagoWompi = async ({ items, customerInfo, couponCode,
                 notes: customerInfo?.notes || ''
             },
             couponCode: couponCode || null,
-            items: items.map(it => ({
-                productId: Number(it.productId ?? it.id),
-                quantity: Number(it.quantity || 1)
-            }))
+            items: items.map(it => {
+                const isRetazo = String(it.type || it.itemType || 'TELA').toUpperCase() === 'RETAZO';
+                if (isRetazo) {
+                    return {
+                        type: 'RETAZO',
+                        retazoId: Number(it.retazoId ?? String(it.id).replace('retazo-', '')),
+                        productId: Number(it.productId || 0),
+                        quantity: 1
+                    };
+                }
+                return {
+                    type: 'TELA',
+                    productId: Number(it.productId ?? it.id),
+                    quantity: Math.round((Number(it.quantity) || 1) * 100) / 100
+                };
+            })
         })
     });
 

@@ -21,6 +21,14 @@ public class SeccionesInicioDAO {
      */
     public SeccionesInicioDAO() {}
 
+    private static List<SeccionInicio> obtenerSeccionesPorDefecto() {
+        List<SeccionInicio> lista = new ArrayList<>();
+        lista.add(new SeccionInicio("nuevas", "Nuevas Colecciones", "Descubre las telas más recientes que llegan a la tienda", true, 1));
+        lista.add(new SeccionInicio("exclusivas", "Telas Exclusivas", "Diseños únicos seleccionados para tus proyectos especiales", true, 2));
+        lista.add(new SeccionInicio("ofertas", "Ofertas Especiales", "Precios especiales en telas seleccionadas por tiempo limitado", true, 3));
+        return lista;
+    }
+
     /**
      * Recupera todas las secciones de inicio ordenadas por posición ascendente.
      *
@@ -38,7 +46,10 @@ public class SeccionesInicioDAO {
                 secciones.add(mapearFila(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[SECCIONES] Error cargando secciones desde BD: " + e.getMessage());
+        }
+        if (secciones.isEmpty()) {
+            return obtenerSeccionesPorDefecto();
         }
         return secciones;
     }
@@ -60,7 +71,10 @@ public class SeccionesInicioDAO {
                 secciones.add(mapearFila(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[SECCIONES] Error cargando secciones activas desde BD: " + e.getMessage());
+        }
+        if (secciones.isEmpty()) {
+            return obtenerSeccionesPorDefecto();
         }
         return secciones;
     }

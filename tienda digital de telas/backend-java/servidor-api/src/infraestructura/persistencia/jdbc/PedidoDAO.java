@@ -32,12 +32,15 @@ public class PedidoDAO {
 
         String consulta = "SELECT o.*, pv.nombre_tienda, " +
                 "oi.id AS item_id, oi.producto_id, oi.cantidad, oi.precio_por_metro, oi.subtotal AS item_subtotal, " +
+                "COALESCE(oi.tipo_item, 'TELA') AS tipo_item, oi.retazo_id, " +
+                "r.codigo_retazo, r.largo_metros AS retazo_largo, r.ancho_metros AS retazo_ancho, " +
                 "p.nombre AS nombre_producto, " +
                 "(SELECT ip.url_imagen FROM imagenes_producto ip WHERE ip.producto_id = p.id ORDER BY ip.orden_visualizacion ASC LIMIT 1) AS url_imagen " +
                 "FROM pedidos o " +
                 "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = o.vendedor_id " +
                 "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "LEFT JOIN productos p ON oi.producto_id = p.id " +
+                "LEFT JOIN retazos r ON oi.retazo_id = r.id " +
                 (clausulaWhere != null && !clausulaWhere.isBlank() ? " " + clausulaWhere : "") + " " +
                 "ORDER BY o.id ASC, oi.id ASC";
 
@@ -294,64 +297,102 @@ public class PedidoDAO {
                         }
                     }));
 
-                    String sqlBloqueoPesimista = "SELECT id, stock, nombre, precio, vendedor_id FROM productos WHERE id = ? FOR UPDATE";
-                    String sqlActualizarStock = "UPDATE productos SET stock = stock - ?, metros_vendidos = COALESCE(metros_vendidos, 0) + ?, actualizado_en = NOW() WHERE id = ?";
+                    InventarioDAO inventarioDAO = new InventarioDAO();
+                    RetazoDAO retazoDAO = new RetazoDAO();
                     String sqlActualizarVentasTienda = "UPDATE perfiles_vendedor SET total_ventas_metros = COALESCE(total_ventas_metros, 0) + ? WHERE vendedor_id = ?";
-                    String sqlArticulo = "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal) VALUES (?, ?, ?, ?, ?)";
+                    String sqlActualizarMetrosProd = "UPDATE productos SET metros_vendidos = COALESCE(metros_vendidos, 0) + ?, actualizado_en = NOW() WHERE id = ?";
+                    String sqlArticulo = "INSERT INTO items_pedido (pedido_id, producto_id, cantidad, precio_por_metro, subtotal, tipo_item, retazo_id, rollo_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-                    try (PreparedStatement pstBloqueo = con.prepareStatement(sqlBloqueoPesimista);
-                         PreparedStatement pstActualizarStock = con.prepareStatement(sqlActualizarStock);
+                    try (PreparedStatement pstActualizarMetrosProd = con.prepareStatement(sqlActualizarMetrosProd);
                          PreparedStatement pstTiendaMetros = con.prepareStatement(sqlActualizarVentasTienda);
                          PreparedStatement pstItem = con.prepareStatement(sqlArticulo)) {
-
                         for (Map<String, Object> articulo : articulosOrdenados) {
-                            Object objProd = articulo.getOrDefault("productId", articulo.getOrDefault("idProducto", articulo.get("id")));
-                            Object objCant = articulo.getOrDefault("quantity", articulo.getOrDefault("cantidad", articulo.get("meters")));
-                            Object objPrecio = articulo.getOrDefault("unitPrice", articulo.getOrDefault("precioUnitario", articulo.get("price")));
+                            String tipoItem = comoTexto(articulo.getOrDefault("type", articulo.getOrDefault("itemType", articulo.get("tipoItem"))));
+                            boolean esRetazo = "RETAZO".equalsIgnoreCase(tipoItem);
 
-                            int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
-                            double cant = (objCant instanceof Number) ? ((Number) objCant).doubleValue() : Double.parseDouble(String.valueOf(objCant));
-                            double precio = -1.0;
-                            if (objPrecio != null) {
-                                precio = (objPrecio instanceof Number) ? ((Number) objPrecio).doubleValue() : Double.parseDouble(String.valueOf(objPrecio));
-                            }
-
-                            int idVendProd = idVendedor;
-                            pstBloqueo.setInt(1, idProd);
-                            try (ResultSet rsBloqueo = pstBloqueo.executeQuery()) {
-                                if (!rsBloqueo.next()) {
-                                    throw new SQLException("El producto con ID " + idProd + " no existe en el catálogo.");
+                            if (esRetazo) {
+                                Object objRetazo = articulo.getOrDefault("retazoId", articulo.get("id"));
+                                int retazoId = (objRetazo instanceof Number) ? ((Number) objRetazo).intValue() : Integer.parseInt(String.valueOf(objRetazo));
+                                int idProdRetazo = 0;
+                                java.math.BigDecimal precioRetazo = java.math.BigDecimal.ZERO;
+                                try (PreparedStatement pstR = con.prepareStatement("SELECT producto_id, precio_liquidacion FROM retazos WHERE id = ? FOR UPDATE")) {
+                                    pstR.setInt(1, retazoId);
+                                    try (ResultSet rsR = pstR.executeQuery()) {
+                                        if (!rsR.next()) {
+                                            throw new SQLException("El retazo #" + retazoId + " no existe.");
+                                        }
+                                        idProdRetazo = rsR.getInt("producto_id");
+                                        precioRetazo = rsR.getBigDecimal("precio_liquidacion");
+                                    }
                                 }
-                                double stockDisponible = rsBloqueo.getDouble("stock");
-                                String nombreTela = rsBloqueo.getString("nombre");
-                                idVendProd = rsBloqueo.getInt("vendedor_id");
-                                if (precio < 0) {
-                                    precio = rsBloqueo.getDouble("precio");
+                                retazoDAO.marcarRetazoVendido(con, retazoId, idPedido);
+
+                                pstItem.setInt(1, idPedido);
+                                pstItem.setInt(2, idProdRetazo);
+                                pstItem.setBigDecimal(3, java.math.BigDecimal.ONE.setScale(2, java.math.RoundingMode.HALF_UP));
+                                pstItem.setBigDecimal(4, precioRetazo);
+                                pstItem.setBigDecimal(5, precioRetazo);
+                                pstItem.setString(6, "RETAZO");
+                                pstItem.setInt(7, retazoId);
+                                pstItem.setNull(8, java.sql.Types.INTEGER);
+                                pstItem.addBatch();
+                            } else {
+                                Object objProd = articulo.getOrDefault("productId", articulo.getOrDefault("idProducto", articulo.get("id")));
+                                Object objCant = articulo.getOrDefault("quantity", articulo.getOrDefault("cantidad", articulo.get("meters")));
+                                Object objPrecio = articulo.getOrDefault("unitPrice", articulo.getOrDefault("precioUnitario", articulo.get("price")));
+
+                                int idProd = (objProd instanceof Number) ? ((Number) objProd).intValue() : Integer.parseInt(String.valueOf(objProd));
+                                double cantRaw = (objCant instanceof Number) ? ((Number) objCant).doubleValue() : Double.parseDouble(String.valueOf(objCant));
+                                java.math.BigDecimal cantDec = java.math.BigDecimal.valueOf(cantRaw).setScale(2, java.math.RoundingMode.HALF_UP);
+                                java.math.BigDecimal precioDec = null;
+                                if (objPrecio != null) {
+                                    double pRaw = (objPrecio instanceof Number) ? ((Number) objPrecio).doubleValue() : Double.parseDouble(String.valueOf(objPrecio));
+                                    if (pRaw >= 0) {
+                                        precioDec = java.math.BigDecimal.valueOf(pRaw).setScale(2, java.math.RoundingMode.HALF_UP);
+                                    }
                                 }
 
-                                if (stockDisponible < cant) {
-                                    throw new SQLException("Inventario insuficiente para la tela '" + nombreTela + "'. Metraje disponible: "
-                                            + stockDisponible + " m, metraje solicitado: " + cant + " m.");
+                                int idVendProd = idVendedor;
+                                try (PreparedStatement pstP = con.prepareStatement("SELECT precio, vendedor_id FROM productos WHERE id = ?")) {
+                                    pstP.setInt(1, idProd);
+                                    try (ResultSet rsP = pstP.executeQuery()) {
+                                        if (rsP.next()) {
+                                            if (precioDec == null) {
+                                                precioDec = rsP.getBigDecimal("precio");
+                                            }
+                                            idVendProd = rsP.getInt("vendedor_id");
+                                        }
+                                    }
                                 }
+                                if (precioDec == null) precioDec = java.math.BigDecimal.ZERO;
+
+                                Integer rolloCortadoId = inventarioDAO.descontarStockConRollos(con, idProd, cantDec, precioDec);
+                                java.math.BigDecimal subtotalLinea = cantDec.multiply(precioDec).setScale(2, java.math.RoundingMode.HALF_UP);
+
+                                pstActualizarMetrosProd.setBigDecimal(1, cantDec);
+                                pstActualizarMetrosProd.setInt(2, idProd);
+                                pstActualizarMetrosProd.executeUpdate();
+
+                                if (idVendProd > 0) {
+                                    pstTiendaMetros.setBigDecimal(1, cantDec);
+                                    pstTiendaMetros.setInt(2, idVendProd);
+                                    pstTiendaMetros.executeUpdate();
+                                }
+
+                                pstItem.setInt(1, idPedido);
+                                pstItem.setInt(2, idProd);
+                                pstItem.setBigDecimal(3, cantDec);
+                                pstItem.setBigDecimal(4, precioDec);
+                                pstItem.setBigDecimal(5, subtotalLinea);
+                                pstItem.setString(6, "TELA");
+                                pstItem.setNull(7, java.sql.Types.INTEGER);
+                                if (rolloCortadoId != null && rolloCortadoId > 0) {
+                                    pstItem.setInt(8, rolloCortadoId);
+                                } else {
+                                    pstItem.setNull(8, java.sql.Types.INTEGER);
+                                }
+                                pstItem.addBatch();
                             }
-
-                            pstActualizarStock.setDouble(1, cant);
-                            pstActualizarStock.setDouble(2, cant);
-                            pstActualizarStock.setInt(3, idProd);
-                            pstActualizarStock.executeUpdate();
-
-                            if (idVendProd > 0) {
-                                pstTiendaMetros.setDouble(1, cant);
-                                pstTiendaMetros.setInt(2, idVendProd);
-                                pstTiendaMetros.executeUpdate();
-                            }
-
-                            pstItem.setInt(1, idPedido);
-                            pstItem.setInt(2, idProd);
-                            pstItem.setDouble(3, cant);
-                            pstItem.setDouble(4, precio);
-                            pstItem.setDouble(5, Math.round((cant * precio) * 100.0) / 100.0);
-                            pstItem.addBatch();
                         }
                         pstItem.executeBatch();
                     }
@@ -485,12 +526,15 @@ public class PedidoDAO {
     public Pedido obtenerPedidoPorId(int idPedido) {
         String consulta = "SELECT o.*, pv.nombre_tienda, " +
                 "oi.id AS item_id, oi.producto_id, oi.cantidad, oi.precio_por_metro, oi.subtotal AS item_subtotal, " +
+                "COALESCE(oi.tipo_item, 'TELA') AS tipo_item, oi.retazo_id, " +
+                "r.codigo_retazo, r.largo_metros AS retazo_largo, r.ancho_metros AS retazo_ancho, " +
                 "p.nombre AS nombre_producto, " +
                 "(SELECT ip.url_imagen FROM imagenes_producto ip WHERE ip.producto_id = p.id ORDER BY ip.orden_visualizacion ASC LIMIT 1) AS url_imagen " +
                 "FROM pedidos o " +
                 "LEFT JOIN perfiles_vendedor pv ON pv.vendedor_id = o.vendedor_id " +
                 "LEFT JOIN items_pedido oi ON o.id = oi.pedido_id " +
                 "LEFT JOIN productos p ON oi.producto_id = p.id " +
+                "LEFT JOIN retazos r ON oi.retazo_id = r.id " +
                 "WHERE o.id = ? " +
                 "ORDER BY oi.id ASC";
         Pedido pedido = null;
@@ -707,30 +751,54 @@ public class PedidoDAO {
         if (rs.wasNull()) {
             return;
         }
-        double cantidadMetros = rs.getDouble("cantidad");
-        int cantidadEntera = rs.getInt("cantidad");
+        java.math.BigDecimal cantBd = rs.getBigDecimal("cantidad");
+        double cantidadMetros = cantBd != null ? cantBd.setScale(2, java.math.RoundingMode.HALF_UP).doubleValue() : rs.getDouble("cantidad");
         double precioUnitario = rs.getDouble("precio_por_metro");
         double subtotalItem = rs.getDouble("item_subtotal");
         String nombreProducto = rs.getString("nombre_producto");
         String urlImagen = rs.getString("url_imagen");
+        String tipoItem = "TELA";
+        Integer retazoId = null;
+        String codigoRetazo = null;
+        try {
+            if (rs.getString("tipo_item") != null) tipoItem = rs.getString("tipo_item");
+            if (rs.getObject("retazo_id") != null) retazoId = rs.getInt("retazo_id");
+            codigoRetazo = rs.getString("codigo_retazo");
+        } catch (SQLException ignored) {}
+
+        String nombreMostrado = nombreProducto != null ? nombreProducto : ("Producto #" + idProducto);
+        if ("RETAZO".equalsIgnoreCase(tipoItem)) {
+            try {
+                double largo = rs.getDouble("retazo_largo");
+                double ancho = rs.getDouble("retazo_ancho");
+                nombreMostrado = "Retazo " + nombreMostrado + " (" + String.format(java.util.Locale.US, "%.2fm x %.2fm", largo, ancho) + ")";
+            } catch (SQLException ignored) {
+                nombreMostrado = "Retazo " + nombreMostrado;
+            }
+        }
 
         pedido.agregarIdProducto(idProducto);
-        pedido.setCantidadArticulos(pedido.getCantidadArticulos() + (cantidadEntera > 0 ? cantidadEntera : (cantidadMetros > 0 ? 1 : 0)));
-        pedido.setTotalMeters(Math.round((pedido.getTotalMeters() + cantidadMetros) * 100.0) / 100.0);
+        pedido.setCantidadArticulos(pedido.getCantidadArticulos() + 1);
+        if (!"RETAZO".equalsIgnoreCase(tipoItem)) {
+            pedido.setTotalMeters(aplicacion.servicios.ServicioCorteTextil.redondear2(pedido.getTotalMeters() + cantidadMetros).doubleValue());
+        }
 
-        if (nombreProducto != null && !pedido.getProductNames().contains(nombreProducto)) {
-            pedido.getProductNames().add(nombreProducto);
+        if (!pedido.getProductNames().contains(nombreMostrado)) {
+            pedido.getProductNames().add(nombreMostrado);
         }
 
         Map<String, Object> linea = new HashMap<>();
         linea.put("id", rs.getInt("item_id"));
         linea.put("productId", idProducto);
-        linea.put("name", nombreProducto != null ? nombreProducto : ("Producto #" + idProducto));
+        linea.put("itemType", tipoItem);
+        if (retazoId != null) linea.put("retazoId", retazoId);
+        if (codigoRetazo != null) linea.put("remnantCode", codigoRetazo);
+        linea.put("name", nombreMostrado);
         linea.put("quantity", cantidadMetros);
         linea.put("meters", cantidadMetros);
         linea.put("unitPrice", precioUnitario);
         linea.put("price", precioUnitario);
-        linea.put("subtotal", subtotalItem > 0 ? subtotalItem : Math.round((cantidadMetros * precioUnitario) * 100.0) / 100.0);
+        linea.put("subtotal", subtotalItem > 0 ? subtotalItem : aplicacion.servicios.ServicioCorteTextil.redondear2(cantidadMetros * precioUnitario).doubleValue());
         if (urlImagen != null) {
             linea.put("image", urlImagen);
         }

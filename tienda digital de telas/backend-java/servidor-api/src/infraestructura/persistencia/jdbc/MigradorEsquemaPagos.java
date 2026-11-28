@@ -101,7 +101,37 @@ public final class MigradorEsquemaPagos {
             ")",
             "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_usuario ON auditoria_sistema(usuario_id)",
             "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_accion ON auditoria_sistema(accion)",
-            "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_fecha ON auditoria_sistema(fecha_creacion)"
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_sistema_fecha ON auditoria_sistema(fecha_creacion)",
+
+            // 30. Modulo de Venta de Retazos (piezas unicas < 1.0m) y soporte hibrido en carrito/pedidos
+            "CREATE TABLE IF NOT EXISTS retazos (" +
+            "  id SERIAL PRIMARY KEY," +
+            "  codigo_retazo VARCHAR(60) NOT NULL UNIQUE," +
+            "  producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE," +
+            "  rollo_id INTEGER REFERENCES rollos_textil(id) ON DELETE SET NULL," +
+            "  largo_metros NUMERIC(10,2) NOT NULL CHECK (largo_metros > 0 AND largo_metros < 1.00)," +
+            "  ancho_metros NUMERIC(10,2) NOT NULL DEFAULT 1.50 CHECK (ancho_metros > 0)," +
+            "  precio_original NUMERIC(12,2) NOT NULL CHECK (precio_original >= 0)," +
+            "  precio_liquidacion NUMERIC(12,2) NOT NULL CHECK (precio_liquidacion >= 0)," +
+            "  porcentaje_descuento NUMERIC(5,2) NOT NULL DEFAULT 40.00," +
+            "  estado VARCHAR(30) NOT NULL DEFAULT 'DISPONIBLE' CHECK (estado IN ('DISPONIBLE', 'RESERVADO', 'VENDIDO'))," +
+            "  lote_tintoreria VARCHAR(50)," +
+            "  ubicacion_bodega VARCHAR(100)," +
+            "  notas TEXT," +
+            "  pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL," +
+            "  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+            "  vendido_en TIMESTAMP," +
+            "  actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+            ")",
+            "CREATE INDEX IF NOT EXISTS idx_retazos_estado ON retazos(estado)",
+            "CREATE INDEX IF NOT EXISTS idx_retazos_producto_id ON retazos(producto_id)",
+            "CREATE INDEX IF NOT EXISTS idx_retazos_rollo_id ON retazos(rollo_id)",
+            "ALTER TABLE items_pedido ADD COLUMN IF NOT EXISTS tipo_item VARCHAR(20) DEFAULT 'TELA'",
+            "ALTER TABLE items_pedido ADD COLUMN IF NOT EXISTS retazo_id INTEGER REFERENCES retazos(id) ON DELETE SET NULL",
+            "ALTER TABLE items_pedido ADD COLUMN IF NOT EXISTS rollo_id INTEGER REFERENCES rollos_textil(id) ON DELETE SET NULL",
+            "CREATE INDEX IF NOT EXISTS idx_items_pedido_retazo_id ON items_pedido(retazo_id)",
+            "ALTER TABLE items_carrito ADD COLUMN IF NOT EXISTS tipo_item VARCHAR(20) DEFAULT 'TELA'",
+            "ALTER TABLE items_carrito ADD COLUMN IF NOT EXISTS retazo_id INTEGER REFERENCES retazos(id) ON DELETE SET NULL"
         };
 
         try (Connection con = Conexion.obtenerConexion(); Statement st = con.createStatement()) {

@@ -63,6 +63,7 @@ public class ServidorApi {
         ManejadorArchivosEstaticos manejadorArchivosEstaticos = new ManejadorArchivosEstaticos();
         ManejadorSalud manejadorSalud = new ManejadorSalud();
         ManejadorPagosWompi manejadorPagosWompi = new ManejadorPagosWompi();
+        ManejadorRetazos manejadorRetazos = new ManejadorRetazos();
         ManejadorTiendas manejadorTiendas = new ManejadorTiendas();
 
         // Ejecutar migración de columnas y tablas de Wompi y Marketplace de manera segura
@@ -86,6 +87,10 @@ public class ServidorApi {
         // Productos
         servidor.createContext("/api/products", manejadorProductos);
         servidor.createContext("/api/productos", manejadorProductos);
+
+        // Retazos (Piezas unicas con descuento)
+        servidor.createContext("/api/retazos", manejadorRetazos);
+        servidor.createContext("/api/remnants", manejadorRetazos);
 
         // Reseñas
         servidor.createContext("/api/reviews", manejadorResenas);

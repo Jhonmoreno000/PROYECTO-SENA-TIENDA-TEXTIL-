@@ -17,6 +17,9 @@
 import React, { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage'; // Guarda datos en el navegador automáticamente
 import { useMetricas } from './ContextoMetricas';
+import { getApiUrl } from '../config';
+
+const round2 = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
 // Creamos el contexto del carrito para compartirlo con toda la app
 const ContextoCarrito = createContext();
@@ -57,24 +60,27 @@ export function CartProvider({ children }) {
     }, [cartItems]);
 
     const addToCart = useCallback((product, quantity = 1) => {
-        const maxStock = Number(product.stock ?? product.existencias ?? 99);
-        const qty = Number(quantity) || 1;
-        if (maxStock <= 0) return false;
+        const isRetazo = String(product.itemType || 'TELA').toUpperCase() === 'RETAZO';
+        const maxStock = isRetazo ? 1 : round2(product.stock ?? product.existencias ?? 0);
+        const qty = isRetazo ? 1 : round2(quantity || 1);
+        if (maxStock <= 0 || qty <= 0) return false;
 
-        const currentQty = Number(getProductQuantity(product.id)) || 0;
-        if (currentQty + qty > maxStock) return false;
+        const currentQty = round2(getProductQuantity(product.id));
+        if (isRetazo && currentQty >= 1) return false;
+        if (round2(currentQty + qty) > maxStock) return false;
 
         setCartItems((prevItems) => {
             const items = Array.isArray(prevItems) ? prevItems : [];
             const existingItem = items.find((item) => item.id === product.id);
             if (existingItem) {
+                if (isRetazo) return items;
                 return items.map((item) =>
                     item.id === product.id
-                        ? { ...item, quantity: (Number(item.quantity) || 0) + qty }
+                        ? { ...item, quantity: round2((Number(item.quantity) || 0) + qty) }
                         : item
                 );
             }
-            return [...items, { ...product, quantity: qty }];
+            return [...items, { ...product, itemType: isRetazo ? 'RETAZO' : 'TELA', quantity: qty }];
         });
         return true;
     }, [getProductQuantity, setCartItems]);
@@ -93,11 +99,10 @@ export function CartProvider({ children }) {
     /**
      * updateQuantity — Cambia la cantidad de un producto en el carrito
      * Si la nueva cantidad es 0 o menor, el producto se elimina del carrito.
-     * @param {string|number} productId - ID del producto a modificar
-     * @param {number} newQuantity      - Nueva cantidad deseada
+     * Para retazos (pieza única), la cantidad permanece bloqueada en 1.
      */
     const updateQuantity = useCallback((productId, newQuantity) => {
-        const parsedQuantity = Number(newQuantity);
+        const parsedQuantity = round2(newQuantity);
         if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
             removeFromCart(productId);
             return;
@@ -107,12 +112,43 @@ export function CartProvider({ children }) {
             const items = Array.isArray(prevItems) ? prevItems : [];
             return items.map((item) => {
                 if (item.id !== productId) return item;
-                const maxStock = Number(item.stock ?? item.existencias ?? 99);
+                if (String(item.itemType || 'TELA').toUpperCase() === 'RETAZO') {
+                    return { ...item, quantity: 1 };
+                }
+                const maxStock = round2(item.stock ?? item.existencias ?? 0);
                 const limitedQuantity = maxStock > 0 ? Math.min(parsedQuantity, maxStock) : parsedQuantity;
-                return { ...item, quantity: limitedQuantity };
+                return { ...item, quantity: round2(limitedQuantity) };
             });
         });
     }, [removeFromCart, setCartItems]);
+
+    /**
+     * validateCartStock — Valida en tiempo real la disponibilidad de telas y retazos en el backend.
+     */
+    const validateCartStock = useCallback(async () => {
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        if (items.length === 0) return { available: false, errors: ['El carrito está vacío.'] };
+        try {
+            const payload = {
+                items: items.map((it) => {
+                    const isRetazo = String(it.itemType || 'TELA').toUpperCase() === 'RETAZO';
+                    return isRetazo
+                        ? { type: 'RETAZO', retazoId: Number(it.retazoId ?? String(it.id).replace('retazo-', '')), productId: Number(it.productId || 0), quantity: 1 }
+                        : { type: 'TELA', productId: Number(it.productId ?? it.id), quantity: round2(it.quantity || 1) };
+                }),
+            };
+            const res = await fetch(getApiUrl('/api/inventario/validar-disponibilidad'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) return { available: true, errors: [] };
+            return await res.json();
+        } catch {
+            // Si el backend no responde en modo offline, no bloqueamos el flujo local
+            return { available: true, errors: [] };
+        }
+    }, [cartItems]);
 
     /**
      * clearCart — Vacía el carrito por completo y quita el cupón aplicado
@@ -136,16 +172,15 @@ export function CartProvider({ children }) {
      */
     const getCartTotal = useCallback(() => {
         const items = Array.isArray(cartItems) ? cartItems : [];
-        return items.reduce((total, item) => total + Number(item.price ?? item.precio ?? 0) * (Number(item.quantity) || 0), 0);
+        return round2(items.reduce((total, item) => total + round2(Number(item.price ?? item.precio ?? 0) * (Number(item.quantity) || 0)), 0));
     }, [cartItems]);
 
     /**
-     * getCartItemCount — Cuenta cuántos artículos hay en el carrito (suma de cantidades)
-     * @returns {number} Total de unidades/metros en el carrito
+     * getCartItemCount — Cuenta cuántos artículos/metros hay en el carrito
      */
     const getCartItemCount = useCallback(() => {
         const items = Array.isArray(cartItems) ? cartItems : [];
-        return items.reduce((count, item) => count + (Number(item.quantity) || 0), 0);
+        return round2(items.reduce((count, item) => count + (Number(item.quantity) || 0), 0));
     }, [cartItems]);
 
     /**
@@ -198,6 +233,7 @@ export function CartProvider({ children }) {
         getOrderCalculations,// Calcular descuento, envío, IVA, total
         isInCart,            // Saber si un producto ya está en el carrito
         getProductQuantity,  // Saber la cantidad de un producto específico
+        validateCartStock,   // Validar stock en tiempo real contra el backend
     }), [
         cartItems,
         appliedCoupon,
@@ -211,6 +247,7 @@ export function CartProvider({ children }) {
         getOrderCalculations,
         isInCart,
         getProductQuantity,
+        validateCartStock,
     ]);
 
     return <ContextoCarrito.Provider value={value}>{children}</ContextoCarrito.Provider>;

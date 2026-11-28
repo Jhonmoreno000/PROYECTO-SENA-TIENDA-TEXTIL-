@@ -2,8 +2,12 @@ package aplicacion.servicios;
 
 import dominio.modelos.RolloTextil;
 import dominio.modelos.EventoMerma;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Servicio de dominio para el motor de cálculo textil, continuidad de corte y tarifas escalonadas.
@@ -358,7 +362,10 @@ public class ServicioCorteTextil {
             throw new IllegalStateException("Sobrecorte no permitido: solicitado " + metrajeACortar + " m, disponible " + rollo.getMetrajeRemanente() + " m.");
         }
 
-        double remanente = Math.round((rollo.getMetrajeRemanente() - metrajeACortar) * 100.0) / 100.0;
+        BigDecimal remInicial = BigDecimal.valueOf(rollo.getMetrajeRemanente()).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal corteDec = BigDecimal.valueOf(metrajeACortar).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal remFinal = remInicial.subtract(corteDec).setScale(2, RoundingMode.HALF_UP);
+        double remanente = remFinal.doubleValue();
         rollo.setMetrajeRemanente(remanente);
 
         boolean esRetazo = false;
@@ -366,19 +373,21 @@ public class ServicioCorteTextil {
         double precioRetazo = 0.0;
         String nuevoEstado;
 
-        if (remanente == 0.0) {
+        if (remFinal.compareTo(BigDecimal.ZERO) == 0) {
             nuevoEstado = "agotado";
-        } else if (remanente < UMBRAL_RETAZO_METROS) {
+        } else if (remFinal.compareTo(BigDecimal.valueOf(UMBRAL_RETAZO_METROS)) < 0) {
             nuevoEstado = "retazo_liquidado";
             esRetazo = true;
-            precioRetazo = Math.round(precioBasePorMetro * (1.0 - DESCUENTO_RETAZO_LIQUIDADO) * 100.0) / 100.0;
+            BigDecimal precioBaseDec = BigDecimal.valueOf(precioBasePorMetro);
+            BigDecimal factorDesc = BigDecimal.ONE.subtract(BigDecimal.valueOf(DESCUENTO_RETAZO_LIQUIDADO));
+            precioRetazo = precioBaseDec.multiply(factorDesc).setScale(2, RoundingMode.HALF_UP).doubleValue();
 
             eventoMerma = new EventoMerma();
             eventoMerma.setIdProducto(rollo.getProductoId());
             eventoMerma.setIdLote(rollo.getCodigoRollo());
             eventoMerma.setMetros(remanente);
             eventoMerma.setMotivo("remanente_sub_metro");
-            eventoMerma.setDescripcion("Remanente de " + remanente + " m reclasificado automáticamente a retazo con 40% de descuento");
+            eventoMerma.setDescripcion("Remanente de " + remFinal.toPlainString() + " m reclasificado automáticamente a retazo con 40% de descuento");
         } else {
             nuevoEstado = "disponible";
         }
@@ -527,20 +536,51 @@ public class ServicioCorteTextil {
             porcentajeDescuento = 0.0;
         }
 
-        double precioUnitario = Math.round(precioBasePorMetro * (1.0 - porcentajeDescuento) * 100.0) / 100.0;
-        double subtotalBruto = Math.round(precioBasePorMetro * metrajeTotal * 100.0) / 100.0;
-        double totalNeto = Math.round(precioUnitario * metrajeTotal * 100.0) / 100.0;
-        double montoDescuento = Math.round((subtotalBruto - totalNeto) * 100.0) / 100.0;
+        BigDecimal baseDec = BigDecimal.valueOf(precioBasePorMetro);
+        BigDecimal metrajeDec = BigDecimal.valueOf(metrajeTotal).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal factor = BigDecimal.ONE.subtract(BigDecimal.valueOf(porcentajeDescuento));
+
+        BigDecimal precioUnitarioDec = baseDec.multiply(factor).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal subtotalBrutoDec = baseDec.multiply(metrajeDec).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalNetoDec = precioUnitarioDec.multiply(metrajeDec).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal montoDescuentoDec = subtotalBrutoDec.subtract(totalNetoDec).setScale(2, RoundingMode.HALF_UP);
 
         return new TarifaCalculada(
             tipoTarifa,
-            metrajeTotal,
+            metrajeDec.doubleValue(),
             precioBasePorMetro,
             porcentajeDescuento,
-            precioUnitario,
-            subtotalBruto,
-            montoDescuento,
-            totalNeto
+            precioUnitarioDec.doubleValue(),
+            subtotalBrutoDec.doubleValue(),
+            montoDescuentoDec.doubleValue(),
+            totalNetoDec.doubleValue()
         );
+    }
+
+    /**
+     * Redondea un valor decimal a exactamente 2 decimales usando RoundingMode.HALF_UP.
+     */
+    public static BigDecimal redondear2(double valor) {
+        return BigDecimal.valueOf(valor).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Parsea textos de ancho de tela (ej. "1.50 m", "150 cm", "1,45m") a metros decimales.
+     */
+    public static double parsearAnchoMetros(String anchoTexto) {
+        if (anchoTexto == null || anchoTexto.isBlank()) return 1.50;
+        Matcher m = Pattern.compile("(\\d+(?:[.,]\\d+)?)").matcher(anchoTexto);
+        if (m.find()) {
+            try {
+                double val = Double.parseDouble(m.group(1).replace(',', '.'));
+                if (anchoTexto.toLowerCase().contains("cm") || val > 5.0) {
+                    val = val / 100.0;
+                }
+                if (val > 0.1 && val <= 5.0) {
+                    return BigDecimal.valueOf(val).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+        return 1.50;
     }
 }

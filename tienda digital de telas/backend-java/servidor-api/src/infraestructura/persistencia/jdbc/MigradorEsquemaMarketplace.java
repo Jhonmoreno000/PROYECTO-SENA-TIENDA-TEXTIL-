@@ -31,6 +31,7 @@ public final class MigradorEsquemaMarketplace {
             "ALTER TABLE productos ADD COLUMN IF NOT EXISTS total_resenas INTEGER DEFAULT 0",
 
             // 3. Columnas de desglose multi-vendedor y comisión de plataforma en pedidos
+            "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS vendedor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL",
             "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS grupo_checkout VARCHAR(64)",
             "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS porcentaje_comision NUMERIC(5,2) DEFAULT 10.00",
             "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS monto_comision_admin NUMERIC(12,2) DEFAULT 0.00",

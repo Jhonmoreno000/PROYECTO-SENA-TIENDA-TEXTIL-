@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import gsap from 'gsap';
@@ -16,8 +16,10 @@ import {
     LayoutDashboard,
     Home as Inicio,
     Store,
+    Scissors,
     Info,
     Phone,
+    ChevronDown,
 } from 'lucide-react';
 
 import { useCarrito } from '../contextos/ContextoCarrito';
@@ -31,13 +33,14 @@ const isNative = Capacitor.isNativePlatform();
 const bottomNavLinks = [
     { name: 'Inicio', path: '/', icon: Inicio },
     { name: 'Catálogo', path: '/catalogo', icon: Store },
+    { name: 'Retazos', path: '/retazos', icon: Scissors },
     { name: 'Tiendas', path: '/tiendas', icon: LayoutDashboard },
-    { name: 'Contacto', path: '/contacto', icon: Phone },
 ];
 
 function Encabezado() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [catalogMenuOpen, setCatalogMenuOpen] = useState(false);
     const [bannerDismissed, setBannerDismissed] = useState(false);
     const { getCartItemCount } = useCarrito();
     const { wishlistItems, globalBanner } = useMetricas();
@@ -51,10 +54,27 @@ function Encabezado() {
     const cartCount = getCartItemCount();
     const wishlistCount = Array.isArray(wishlistItems) ? wishlistItems.length : 0;
     const containerRef = useRef(null);
+    const catalogMenuRef = useRef(null);
+
+    const catalogSubLinks = [
+        {
+            name: 'Telas por Metro',
+            description: 'Metraje continuo, mayorista y rollos',
+            path: '/catalogo',
+            icon: Store,
+        },
+        {
+            name: 'Retazos',
+            description: 'Piezas únicas con hasta 40% OFF',
+            path: '/retazos',
+            icon: Scissors,
+            badge: '40% OFF',
+        },
+    ];
 
     const navLinks = [
         { name: 'Inicio', path: '/' },
-        { name: 'Catálogo', path: '/catalogo' },
+        { name: 'Catálogo', path: '/catalogo', hasDropdown: true },
         { name: 'Tiendas', path: '/tiendas' },
         { name: 'Nosotros', path: '/nosotros' },
         { name: 'Contacto', path: '/contacto' },
@@ -64,6 +84,21 @@ function Encabezado() {
     const logoRef = useRef(null);
     const navRef = useRef(null);
     const mobileMenuRef = useRef(null);
+
+    useEffect(() => {
+        setCatalogMenuOpen(false);
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (catalogMenuRef.current && !catalogMenuRef.current.contains(event.target)) {
+                setCatalogMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useGSAP(() => {
         if (logoRef.current) {
@@ -338,16 +373,94 @@ function Encabezado() {
 
                     {/* ===== NAVEGACIÓN DE ESCRITORIO ===== */}
                     <div ref={navRef} className="hidden md:flex items-center space-x-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.path}
-                                to={link.path}
-                                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors duration-200 relative group"
-                            >
-                                {link.name}
-                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
-                            </Link>
-                        ))}
+                        {navLinks.map((link) =>
+                            link.hasDropdown ? (
+                                <div
+                                    key={link.path}
+                                    ref={catalogMenuRef}
+                                    className="relative"
+                                    onMouseEnter={() => setCatalogMenuOpen(true)}
+                                    onMouseLeave={() => setCatalogMenuOpen(false)}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => setCatalogMenuOpen((prev) => !prev)}
+                                        aria-expanded={catalogMenuOpen}
+                                        aria-haspopup="true"
+                                        className={`inline-flex items-center gap-1 font-medium transition-colors duration-200 relative group py-2 ${
+                                            location.pathname === '/catalogo' || location.pathname === '/retazos'
+                                                ? 'text-primary-600 dark:text-primary-400'
+                                                : 'text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400'
+                                        }`}
+                                    >
+                                        <span>{link.name}</span>
+                                        <ChevronDown
+                                            className={`w-4 h-4 transition-transform duration-200 ${
+                                                catalogMenuOpen ? 'rotate-180 text-primary-600 dark:text-primary-400' : ''
+                                            }`}
+                                        />
+                                        <span className="absolute bottom-1 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
+                                    </button>
+
+                                    <div
+                                        className={`absolute left-0 top-full pt-2 w-72 transition-all duration-200 origin-top-left z-50 ${
+                                            catalogMenuOpen
+                                                ? 'opacity-100 scale-100 pointer-events-auto'
+                                                : 'opacity-0 scale-95 pointer-events-none'
+                                        }`}
+                                    >
+                                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/70 dark:border-slate-700/70 p-2 space-y-1">
+                                            {catalogSubLinks.map((sub) => {
+                                                const SubIcon = sub.icon;
+                                                const isSubActive = location.pathname === sub.path;
+                                                return (
+                                                    <Link
+                                                        key={sub.path}
+                                                        to={sub.path}
+                                                        onClick={() => setCatalogMenuOpen(false)}
+                                                        className={`flex items-start gap-3 p-3 rounded-xl transition-colors duration-150 ${
+                                                            isSubActive
+                                                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300'
+                                                                : 'hover:bg-gray-100/80 dark:hover:bg-slate-800/80 text-gray-800 dark:text-gray-200'
+                                                        }`}
+                                                    >
+                                                        <div className={`p-2 rounded-lg shrink-0 ${
+                                                            sub.path === '/retazos'
+                                                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                                                : 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                                                        }`}>
+                                                            <SubIcon className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="text-sm font-semibold">{sub.name}</span>
+                                                                {sub.badge && (
+                                                                    <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                                                        {sub.badge}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                                {sub.description}
+                                                            </p>
+                                                        </div>
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Link
+                                    key={link.path}
+                                    to={link.path}
+                                    className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors duration-200 relative group"
+                                >
+                                    {link.name}
+                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 group-hover:w-full transition-all duration-300"></span>
+                                </Link>
+                            )
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-2.5">
@@ -491,20 +604,49 @@ function Encabezado() {
 
                 <div
                     className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-                        mobileMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+                        mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                 >
                     <div ref={mobileMenuRef} className="py-4 space-y-2">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.path}
-                                to={link.path}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors"
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
+                        {navLinks.map((link) =>
+                            link.hasDropdown ? (
+                                <div key={link.path} className="space-y-1">
+                                    <div className="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                        {link.name}
+                                    </div>
+                                    {catalogSubLinks.map((sub) => {
+                                        const SubIcon = sub.icon;
+                                        return (
+                                            <Link
+                                                key={sub.path}
+                                                to={sub.path}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="flex items-center justify-between pl-6 pr-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                                            >
+                                                <span className="inline-flex items-center gap-2">
+                                                    <SubIcon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                                    <span>{sub.name}</span>
+                                                </span>
+                                                {sub.badge && (
+                                                    <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                                        {sub.badge}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <Link
+                                    key={link.path}
+                                    to={link.path}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium transition-colors"
+                                >
+                                    {link.name}
+                                </Link>
+                            )
+                        )}
                     </div>
                 </div>
             </nav>

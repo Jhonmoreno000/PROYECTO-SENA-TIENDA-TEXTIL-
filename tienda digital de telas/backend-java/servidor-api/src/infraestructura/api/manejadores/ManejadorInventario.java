@@ -252,6 +252,14 @@ public class ManejadorInventario extends ManejadorBase {
             }
             ActividadReciente actividad = gson.fromJson(cuerpo, ActividadReciente.class);
             enviarRespuestaJson(intercambio, 200, "{\"success\":" + dao.agregarActividad(actividad) + "}");
+        } else if (ruta.endsWith("/validar-disponibilidad") || ruta.endsWith("/validate-availability")) {
+            JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
+            java.lang.reflect.Type tipoLista = new com.google.gson.reflect.TypeToken<java.util.List<Map<String, Object>>>(){}.getType();
+            java.util.List<Map<String, Object>> items = json.has("items")
+                    ? gson.fromJson(json.get("items"), tipoLista)
+                    : java.util.List.of();
+            Map<String, Object> validacion = dao.validarDisponibilidadArticulos(items);
+            enviarRespuestaJson(intercambio, 200, gson.toJson(validacion));
         } else {
             enviarRespuestaJson(intercambio, 404, "{\"error\":\"Ruta no encontrada\"}");
         }
